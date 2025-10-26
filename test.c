@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include "lazybios.h"
 
-void print_bios_info(void) {
+void print_bios_info(lazybios_ctx_t* ctx) {
     printf("=== BIOS INFORMATION ===\n");
-    bios_info_t *bios = get_bios_info();
+    bios_info_t *bios = lazybios_get_bios_info(ctx);
     if (bios) {
         printf("Vendor: %s\n", bios->vendor);
         printf("Version: %s\n", bios->version);
@@ -16,9 +16,9 @@ void print_bios_info(void) {
     }
 }
 
-void print_system_info(void) {
+void print_system_info(lazybios_ctx_t* ctx) {
     printf("=== SYSTEM INFORMATION ===\n");
-    system_info_t *sys = get_system_info();
+    system_info_t *sys = lazybios_get_system_info(ctx);
     if (sys) {
         printf("Manufacturer: %s\n", sys->manufacturer);
         printf("Product Name: %s\n", sys->product_name);
@@ -30,9 +30,9 @@ void print_system_info(void) {
     }
 }
 
-void print_chassis_info(void) {
+void print_chassis_info(lazybios_ctx_t* ctx) {
     printf("=== CHASSIS INFORMATION ===\n");
-    chassis_info_t *chassis = get_chassis_info();
+    chassis_info_t *chassis = lazybios_get_chassis_info(ctx);
     if (chassis) {
         printf("Asset Tag: %s\n", chassis->asset_tag);
         printf("SKU: %s\n", chassis->sku);
@@ -42,14 +42,14 @@ void print_chassis_info(void) {
     }
 }
 
-void print_processor_info(void) {
+void print_processor_info(lazybios_ctx_t* ctx) {
     printf("=== PROCESSOR INFORMATION ===\n");
-    processor_info_t *proc = get_processor_info();
+    processor_info_t *proc = lazybios_get_processor_info(ctx);
     if (proc) {
         printf("Socket: %s\n", proc->socket_designation);
         printf("Version: %s\n", proc->version);
         printf("Family: %s (0x%02X)\n",
-               get_processor_family_string(proc->processor_family),
+               lazybios_get_processor_family_string(proc->processor_family),
                proc->processor_family);
         printf("Type: %u\n", proc->processor_type);
         printf("Cores: %u physical, %u enabled\n",
@@ -69,10 +69,10 @@ void print_processor_info(void) {
     }
 }
 
-void print_memory_info(void) {
+void print_memory_info(lazybios_ctx_t* ctx) {
     printf("=== MEMORY DEVICES ===\n");
     size_t mem_count;
-    memory_device_t *memories = get_memory_devices(&mem_count);
+    memory_device_t *memories = lazybios_get_memory_devices(ctx, &mem_count);
 
     if (memories && mem_count > 0) {
         printf("Found %zu memory devices:\n", mem_count);
@@ -100,7 +100,6 @@ void print_memory_info(void) {
             printf("\n");
         }
 
-        // Calculate total memory
         size_t total_memory_mb = 0;
         size_t populated_slots = 0;
 
@@ -121,11 +120,11 @@ void print_memory_info(void) {
     }
 }
 
-void print_smbios_version_info(void) {
+void print_smbios_version_info(lazybios_ctx_t* ctx) {
     printf("=== SMBIOS VERSION INFORMATION ===\n");
-    smbios_ver();
+    lazybios_smbios_ver(ctx);
 
-    const smbios_entry_info_t *entry = get_entry_info();
+    const smbios_entry_info_t *entry = lazybios_get_entry_info(ctx);
     if (entry) {
         printf("Table Length: %u bytes\n", entry->table_length);
         printf("Table Address: 0x%lX\n", entry->table_address);
@@ -134,21 +133,20 @@ void print_smbios_version_info(void) {
     }
 }
 
-void print_system_summary(void) {
+void print_system_summary(lazybios_ctx_t* ctx) {
     printf("=== SYSTEM SUMMARY ===\n");
 
-    system_info_t *sys = get_system_info();
-    processor_info_t *proc = get_processor_info();
+    system_info_t *sys = lazybios_get_system_info(ctx);
+    processor_info_t *proc = lazybios_get_processor_info(ctx);
 
     if (sys && proc) {
         printf("%s %s\n", sys->manufacturer, sys->product_name);
-        printf("%s Processor\n", get_processor_family_string(proc->processor_family));
+        printf("%s Processor\n", lazybios_get_processor_family_string(proc->processor_family));
         printf("%u cores, %u threads total\n",
                proc->core_count, proc->core_count * proc->thread_count);
 
-        // Memory summary
         size_t mem_count;
-        memory_device_t *memories = get_memory_devices(&mem_count);
+        memory_device_t *memories = lazybios_get_memory_devices(ctx, &mem_count);
         size_t total_memory_mb = 0;
         size_t populated_slots = 0;
 
@@ -171,25 +169,29 @@ int main(void) {
     printf("lazybios - Comprehensive System Information\n");
     printf("=============================================\n\n");
 
-    // Initialize the library
-    if (init() != 0) {
-        fprintf(stderr, "❌ Failed to initialize lazybios library\n");
+    lazybios_ctx_t* ctx = lazybios_ctx_new();
+    if (!ctx) {
+        fprintf(stderr, "Failed to create lazybios context\n");
         return 1;
     }
 
-    printf("✅ Library initialized successfully!\n\n");
+    if (lazybios_init(ctx) != 0) {
+        fprintf(stderr, "Failed to initialize lazybios library\n");
+        lazybios_ctx_free(ctx);
+        return 1;
+    }
 
-    // Show everything the library can do
-    print_smbios_version_info();
-    print_system_summary();
-    print_bios_info();
-    print_system_info();
-    print_chassis_info();
-    print_processor_info();
-    print_memory_info();
+    printf("Library initialized successfully!\n\n");
 
-    // Cleanup
-    cleanup();
+    print_smbios_version_info(ctx);
+    print_system_summary(ctx);
+    print_bios_info(ctx);
+    print_system_info(ctx);
+    print_chassis_info(ctx);
+    print_processor_info(ctx);
+    print_memory_info(ctx);
+
+    lazybios_ctx_free(ctx);
     printf("Library cleanup completed!\n");
     printf("All tests passed successfully!\n");
 

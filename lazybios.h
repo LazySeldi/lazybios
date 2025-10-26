@@ -208,22 +208,45 @@ typedef struct {
     uint16_t l3_cache_handle;
 } processor_info_t;
 
+// ===== Context Structure =====
+typedef struct lazybios_ctx {
+    // Raw SMBIOS data
+    uint8_t *dmi_data;
+    size_t dmi_len;
+    smbios_entry_info_t entry_info;
+
+    // Cached parsed data
+    bios_info_t *bios_info_ptr;
+    system_info_t *system_info_ptr;
+    chassis_info_t *chassis_info_ptr;
+    processor_info_t *processor_info_ptr;
+    memory_device_t *memory_devices_ptr;
+    size_t memory_devices_count;
+} lazybios_ctx_t;
+
 // ===== Public API =====
-int init(void);
-void cleanup(void);
-void smbios_ver(void);
-const smbios_entry_info_t *get_entry_info(void);
+// Context management
+lazybios_ctx_t* lazybios_ctx_new(void);
+void lazybios_ctx_free(lazybios_ctx_t* ctx);
+
+// Initialization and cleanup
+int lazybios_init(lazybios_ctx_t* ctx);
+void lazybios_cleanup(lazybios_ctx_t* ctx);
+
+// Version info
+void lazybios_smbios_ver(const lazybios_ctx_t* ctx);
+const smbios_entry_info_t* lazybios_get_entry_info(const lazybios_ctx_t* ctx);
 
 // Basic info retrievers
-bios_info_t *get_bios_info(void);
-system_info_t *get_system_info(void);
-chassis_info_t *get_chassis_info(void);
-processor_info_t *get_processor_info(void);
-memory_device_t *get_memory_devices(size_t *count);
+bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx);
+system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx);
+chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx);
+processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx);
+memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count);
 
 // Helper functions
-size_t get_smbios_structure_min_length(uint8_t type);
-bool is_smbios_version_at_least(uint8_t major, uint8_t minor);
-const char* get_processor_family_string(uint8_t family);
+size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8_t type);
+bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t major, uint8_t minor);
+const char* lazybios_get_processor_family_string(uint8_t family);
 
 #endif // LAZYBIOS_H
