@@ -141,9 +141,9 @@ void print_system_summary(void) {
     processor_info_t *proc = get_processor_info();
 
     if (sys && proc) {
-        printf("💻 %s %s\n", sys->manufacturer, sys->product_name);
-        printf("🚀 %s Processor\n", get_processor_family_string(proc->processor_family));
-        printf("🎯 %u cores, %u threads total\n",
+        printf("%s %s\n", sys->manufacturer, sys->product_name);
+        printf("%s Processor\n", get_processor_family_string(proc->processor_family));
+        printf("%u cores, %u threads total\n",
                proc->core_count, proc->core_count * proc->thread_count);
 
         // Memory summary
@@ -161,14 +161,14 @@ void print_system_summary(void) {
             }
         }
 
-        printf("💾 %zu GB RAM across %zu slots\n",
+        printf("%zu GB RAM across %zu slots\n",
                total_memory_mb / 1024, populated_slots);
     }
     printf("\n");
 }
 
 int main(void) {
-    printf("🦥 lazybios - Comprehensive System Information\n");
+    printf("lazybios - Comprehensive System Information\n");
     printf("=============================================\n\n");
 
     // Initialize the library
@@ -190,8 +190,8 @@ int main(void) {
 
     // Cleanup
     cleanup();
-    printf("✅ Library cleanup completed!\n");
-    printf("🎉 All tests passed successfully!\n");
+    printf("Library cleanup completed!\n");
+    printf("All tests passed successfully!\n");
 
     return 0;
 }
