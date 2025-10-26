@@ -33,7 +33,7 @@ sudo ./build/lazybios_test
 
 ## API Reference
 ```c
-int init(void);
+int lazybios_init(lazybios_ctx_t* ctx);
 ```
 - Initializes the Library and exits.
 - Exit code 0 means success and -1 means something went wrong.
@@ -41,7 +41,7 @@ int init(void);
 --------------------
 
 ```c
-void cleanup(void);
+void lazybios_cleanup(lazybios_ctx_t* ctx);
 ```
 - Cleans up the memory that the library used.
 - Should be added at the end just before the programs exit.
@@ -50,7 +50,7 @@ void cleanup(void);
 ----------------------
 
 ```c
-void smbios_ver(void);
+void lazybios_smbios_ver(const lazybios_ctx_t* ctx);
 ```
 - Prints the SMBIOS version to stdout
 - Printed Example "SMBIOS version 2.5"
@@ -58,7 +58,7 @@ void smbios_ver(void);
 ----------------------
 
 ```c
-const smbios_entry_info_t *get_entry_info(void);
+const smbios_entry_info_t* lazybios_get_entry_info(const lazybios_ctx_t* ctx);
 ```
 - Returns SMBIOS entry information.
 - Returns pointer to smbios_entry_info_t struct
@@ -72,7 +72,7 @@ const smbios_entry_info_t *get_entry_info(void);
 ```
 ---------------------------
 ```c
-bios_info_t *get_bios_info(void);
+bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx);
 ```
 - Returns BIOS Information (SMBIOS Type 0).
 - Returns Pointer to bios_info_t or NULL on failure.
@@ -86,7 +86,7 @@ bios_info_t *get_bios_info(void);
 ---------------
 
 ```c
-system_info_t *get_system_info(void);
+system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx);
 ```
 - Returns System Information (SMBIOS Type 1).
 - Returns Pointer to system_info_t or NULL on failure.
@@ -100,7 +100,7 @@ system_info_t *get_system_info(void);
 --------------------------------
 
 ```c
-chassis_info_t *get_chassis_info(void);
+chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx);
 ```
 - Returns CHASSIS Information (SMBIOS Type 3). 
 - Returns Pointer to chassis_info_t or NULL on failure.
@@ -112,7 +112,7 @@ chassis_info_t *get_chassis_info(void);
 ------------------------
 
 ```c
-processor_info_t *get_processor_info(void);
+processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx);
 ```
 - Returns processor information (SMBIOS Type 4).
 - Returns Pointer to processor_info_t or NULL on failure.
@@ -139,7 +139,7 @@ processor_info_t *get_processor_info(void);
 -------------------------------
 
 ```c
-memory_device_t *get_memory_devices(size_t *count);
+memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count);
 ```
 - Returns array of memory device information (SMBIOS Type 17).
 - Parameters: count - pointer to store number of memory devices.
@@ -163,7 +163,7 @@ memory_device_t *get_memory_devices(size_t *count);
 # Helper Functions
 
 ```c
-const char *get_processor_family_string(uint8_t family);
+const char* lazybios_get_processor_family_string(uint8_t family);
 ```
 - Converts processor family code to human-readable string.
 - Parameters: family - processor family code from processor_info_t.
@@ -176,7 +176,7 @@ printf("CPU: %s\n", get_processor_family_string(cpu->processor_family));
 --------------------
 
 ```c
-size_t get_smbios_structure_min_length(uint8_t type);
+size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8_t type);
 ```
 - Returns minimum required length for SMBIOS structure type.
 - Parameters: type - SMBIOS structure type.
@@ -185,7 +185,7 @@ size_t get_smbios_structure_min_length(uint8_t type);
 ---------------
 
 ```c
-bool is_smbios_version_at_least(uint8_t major, uint8_t minor);
+bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t major, uint8_t minor);
 ```
 - Checks if current SMBIOS version meets minimum requirement.
 - Parameters: major, minor - version to check against.
