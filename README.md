@@ -18,3 +18,7 @@ This library was first made as a learning experience for me to learn C and get b
 
 ## For complete usage instructions, API reference, and integration guide, see:
 - **[USE.md](USE.md)** - Complete usage documentation and API reference
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
