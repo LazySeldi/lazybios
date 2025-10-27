@@ -215,11 +215,13 @@ typedef struct lazybios_ctx {
     size_t dmi_len;
     smbios_entry_info_t entry_info;
 
-    // Cached parsed data
-    bios_info_t *bios_info_ptr;
-    system_info_t *system_info_ptr;
-    chassis_info_t *chassis_info_ptr;
-    processor_info_t *processor_info_ptr;
+    // Cached parsed data - direct structs for these
+    bios_info_t bios_info;
+    system_info_t system_info;
+    chassis_info_t chassis_info;
+    processor_info_t processor_info;
+
+    // Pointer since we need dynamic arrays for N devices
     memory_device_t *memory_devices_ptr;
     size_t memory_devices_count;
 } lazybios_ctx_t;

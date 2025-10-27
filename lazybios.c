@@ -45,7 +45,6 @@ bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t majo
 // ===== Comprehensive Processor Family String Mapping =====
 const char* lazybios_get_processor_family_string(uint8_t family) {
     switch(family) {
-        // Intel Families
         case INTEL_8086: return "8086";
         case INTEL_80286: return "80286";
         case INTEL_80386: return "80386";
@@ -70,7 +69,6 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
         case INTEL_XEON_5XXX: return "Xeon 5xxx Series";
         case INTEL_XEON_7XXX: return "Xeon 7xxx Series";
 
-        // AMD Families
         case AMD_K5: return "K5";
         case AMD_K6: return "K6";
         case AMD_ATHLON: return "Athlon";
@@ -89,7 +87,6 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
         case AMD_RYZEN_THREADRIPPER: return "Ryzen Threadripper";
         case AMD_EPYC: return "EPYC";
 
-        // Other Architectures
         case ARM_CORTEX: return "ARM Cortex";
         case ARM_APPLE_M1: return "Apple M1";
         case ARM_APPLE_M2: return "Apple M2";
@@ -227,7 +224,6 @@ int lazybios_init(lazybios_ctx_t* ctx) {
 // ===== Basic Info Getters =====
 bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx) {
     if (!ctx) return NULL;
-    if (ctx->bios_info_ptr) return ctx->bios_info_ptr;
     if (!ctx->dmi_data) return NULL;
 
     const uint8_t *p = ctx->dmi_data;
@@ -240,12 +236,11 @@ bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx) {
 
         if (type == SMBIOS_TYPE_END) break;
         if (type == SMBIOS_TYPE_BIOS && length >= min_length) {
-            ctx->bios_info_ptr = calloc(1, sizeof(bios_info_t));
-            ctx->bios_info_ptr->vendor = strdup(dmi_string(p, length, p[BIOS_VENDOR_OFFSET]));
-            ctx->bios_info_ptr->version = strdup(dmi_string(p, length, p[BIOS_VERSION_OFFSET]));
-            ctx->bios_info_ptr->release_date = strdup(dmi_string(p, length, p[BIOS_RELEASE_DATE_OFFSET]));
-            ctx->bios_info_ptr->rom_size_kb = (p[BIOS_ROM_SIZE_OFFSET] + 1) * BIOS_ROM_SIZE_MULTIPLIER;
-            return ctx->bios_info_ptr;
+            ctx->bios_info.vendor = strdup(dmi_string(p, length, p[BIOS_VENDOR_OFFSET]));
+            ctx->bios_info.version = strdup(dmi_string(p, length, p[BIOS_VERSION_OFFSET]));
+            ctx->bios_info.release_date = strdup(dmi_string(p, length, p[BIOS_RELEASE_DATE_OFFSET]));
+            ctx->bios_info.rom_size_kb = (p[BIOS_ROM_SIZE_OFFSET] + 1) * BIOS_ROM_SIZE_MULTIPLIER;
+            return &ctx->bios_info;
         }
         p = dmi_next(p, end);
     }
@@ -254,7 +249,6 @@ bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx) {
 
 system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx) {
     if (!ctx) return NULL;
-    if (ctx->system_info_ptr) return ctx->system_info_ptr;
     if (!ctx->dmi_data) return NULL;
 
     const uint8_t *p = ctx->dmi_data;
@@ -267,12 +261,11 @@ system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx) {
 
         if (type == SMBIOS_TYPE_END) break;
         if (type == SMBIOS_TYPE_SYSTEM && length >= min_length) {
-            ctx->system_info_ptr = calloc(1, sizeof(system_info_t));
-            ctx->system_info_ptr->manufacturer = strdup(dmi_string(p, length, p[SYS_MANUFACTURER_OFFSET]));
-            ctx->system_info_ptr->product_name = strdup(dmi_string(p, length, p[SYS_PRODUCT_OFFSET]));
-            ctx->system_info_ptr->version = strdup(dmi_string(p, length, p[SYS_VERSION_OFFSET]));
-            ctx->system_info_ptr->serial_number = strdup(dmi_string(p, length, p[SYS_SERIAL_OFFSET]));
-            return ctx->system_info_ptr;
+            ctx->system_info.manufacturer = strdup(dmi_string(p, length, p[SYS_MANUFACTURER_OFFSET]));
+            ctx->system_info.product_name = strdup(dmi_string(p, length, p[SYS_PRODUCT_OFFSET]));
+            ctx->system_info.version = strdup(dmi_string(p, length, p[SYS_VERSION_OFFSET]));
+            ctx->system_info.serial_number = strdup(dmi_string(p, length, p[SYS_SERIAL_OFFSET]));
+            return &ctx->system_info;
         }
         p = dmi_next(p, end);
     }
@@ -281,7 +274,6 @@ system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx) {
 
 chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx) {
     if (!ctx) return NULL;
-    if (ctx->chassis_info_ptr) return ctx->chassis_info_ptr;
     if (!ctx->dmi_data) return NULL;
 
     const uint8_t *p = ctx->dmi_data;
@@ -294,10 +286,9 @@ chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx) {
 
         if (type == SMBIOS_TYPE_END) break;
         if (type == SMBIOS_TYPE_CHASSIS && length >= min_length) {
-            ctx->chassis_info_ptr = calloc(1, sizeof(chassis_info_t));
-            ctx->chassis_info_ptr->asset_tag = strdup(dmi_string(p, length, p[CHASSIS_ASSET_TAG_OFFSET]));
-            ctx->chassis_info_ptr->sku = strdup(dmi_string(p, length, p[CHASSIS_SKU_OFFSET]));
-            return ctx->chassis_info_ptr;
+            ctx->chassis_info.asset_tag = strdup(dmi_string(p, length, p[CHASSIS_ASSET_TAG_OFFSET]));
+            ctx->chassis_info.sku = strdup(dmi_string(p, length, p[CHASSIS_SKU_OFFSET]));
+            return &ctx->chassis_info;
         }
         p = dmi_next(p, end);
     }
@@ -307,7 +298,6 @@ chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx) {
 // ===== Processor Info Getter =====
 processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
     if (!ctx) return NULL;
-    if (ctx->processor_info_ptr) return ctx->processor_info_ptr;
     if (!ctx->dmi_data) return NULL;
 
     const uint8_t *p = ctx->dmi_data;
@@ -321,40 +311,33 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
         if (type == SMBIOS_TYPE_END) break;
 
         if (type == SMBIOS_TYPE_PROCESSOR && length >= min_length) {
-            ctx->processor_info_ptr = calloc(1, sizeof(processor_info_t));
+            ctx->processor_info.socket_designation = strdup(dmi_string(p, length, p[PROC_SOCKET_OFFSET]));
+            ctx->processor_info.version = strdup(dmi_string(p, length, p[PROC_VERSION_OFFSET]));
+            ctx->processor_info.max_speed_mhz = *(uint16_t*)(p + PROC_MAX_SPEED_OFFSET);
+            ctx->processor_info.external_clock_mhz = *(uint16_t*)(p + PROC_EXTERNAL_CLOCK_OFFSET);
+            ctx->processor_info.voltage = p[PROC_VOLTAGE_OFFSET];
+            ctx->processor_info.processor_type = p[PROC_TYPE_OFFSET];
+            ctx->processor_info.processor_family = p[PROC_FAMILY_OFFSET];
+            ctx->processor_info.core_count = p[PROC_CORE_COUNT_OFFSET];
+            ctx->processor_info.core_enabled = p[PROC_CORE_ENABLED_OFFSET];
+            ctx->processor_info.thread_count = p[PROC_THREAD_COUNT_OFFSET];
 
-            // Parse all fields
-            ctx->processor_info_ptr->socket_designation = strdup(dmi_string(p, length, p[PROC_SOCKET_OFFSET]));
-            ctx->processor_info_ptr->version = strdup(dmi_string(p, length, p[PROC_VERSION_OFFSET]));
-            ctx->processor_info_ptr->max_speed_mhz = *(uint16_t*)(p + PROC_MAX_SPEED_OFFSET);
-            ctx->processor_info_ptr->external_clock_mhz = *(uint16_t*)(p + PROC_EXTERNAL_CLOCK_OFFSET);
-            ctx->processor_info_ptr->voltage = p[PROC_VOLTAGE_OFFSET];
-            ctx->processor_info_ptr->processor_type = p[PROC_TYPE_OFFSET];
-            ctx->processor_info_ptr->processor_family = p[PROC_FAMILY_OFFSET];
-
-            // Core information - using correct offsets for all SMBIOS versions
-            ctx->processor_info_ptr->core_count = p[PROC_CORE_COUNT_OFFSET];
-            ctx->processor_info_ptr->core_enabled = p[PROC_CORE_ENABLED_OFFSET];
-            ctx->processor_info_ptr->thread_count = p[PROC_THREAD_COUNT_OFFSET];
-
-            // String fields
             if (length > PROC_SERIAL_OFFSET_2_5) {
-                ctx->processor_info_ptr->serial_number = strdup(dmi_string(p, length, p[PROC_SERIAL_OFFSET_2_5]));
+                ctx->processor_info.serial_number = strdup(dmi_string(p, length, p[PROC_SERIAL_OFFSET_2_5]));
             } else {
-                ctx->processor_info_ptr->serial_number = strdup("N/A");
+                ctx->processor_info.serial_number = strdup("N/A");
             }
 
-            ctx->processor_info_ptr->asset_tag = strdup("N/A");
-            ctx->processor_info_ptr->part_number = strdup("N/A");
+            ctx->processor_info.asset_tag = strdup("N/A");
+            ctx->processor_info.part_number = strdup("N/A");
 
-            // Optional fields based on structure length
             if (length > PROC_CHARACTERISTICS_OFFSET + 1) {
-                ctx->processor_info_ptr->characteristics = *(uint16_t*)(p + PROC_CHARACTERISTICS_OFFSET);
+                ctx->processor_info.characteristics = *(uint16_t*)(p + PROC_CHARACTERISTICS_OFFSET);
             } else {
-                ctx->processor_info_ptr->characteristics = 0;
+                ctx->processor_info.characteristics = 0;
             }
 
-            return ctx->processor_info_ptr;
+            return &ctx->processor_info;
         }
         p = dmi_next(p, end);
     }
@@ -378,21 +361,18 @@ memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count)
         return NULL;
     }
 
-    // Count memory devices
     ctx->memory_devices_count = count_structures_by_type(ctx, SMBIOS_TYPE_MEMDEVICE);
     if (ctx->memory_devices_count == 0) {
         *count = 0;
         return NULL;
     }
 
-    // Allocate array
     ctx->memory_devices_ptr = calloc(ctx->memory_devices_count, sizeof(memory_device_t));
     if (!ctx->memory_devices_ptr) {
         *count = 0;
         return NULL;
     }
 
-    // Parse memory devices
     size_t index = 0;
     const uint8_t *p = ctx->dmi_data;
     const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
@@ -431,43 +411,24 @@ memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count)
 void lazybios_cleanup(lazybios_ctx_t* ctx) {
     if (!ctx) return;
 
-    // Basic info cleanup
-    if (ctx->bios_info_ptr) {
-        free(ctx->bios_info_ptr->vendor);
-        free(ctx->bios_info_ptr->version);
-        free(ctx->bios_info_ptr->release_date);
-        free(ctx->bios_info_ptr);
-        ctx->bios_info_ptr = NULL;
-    }
+    free(ctx->bios_info.vendor);
+    free(ctx->bios_info.version);
+    free(ctx->bios_info.release_date);
 
-    if (ctx->system_info_ptr) {
-        free(ctx->system_info_ptr->manufacturer);
-        free(ctx->system_info_ptr->product_name);
-        free(ctx->system_info_ptr->version);
-        free(ctx->system_info_ptr->serial_number);
-        free(ctx->system_info_ptr);
-        ctx->system_info_ptr = NULL;
-    }
+    free(ctx->system_info.manufacturer);
+    free(ctx->system_info.product_name);
+    free(ctx->system_info.version);
+    free(ctx->system_info.serial_number);
 
-    if (ctx->chassis_info_ptr) {
-        free(ctx->chassis_info_ptr->asset_tag);
-        free(ctx->chassis_info_ptr->sku);
-        free(ctx->chassis_info_ptr);
-        ctx->chassis_info_ptr = NULL;
-    }
+    free(ctx->chassis_info.asset_tag);
+    free(ctx->chassis_info.sku);
 
-    // Processor cleanup
-    if (ctx->processor_info_ptr) {
-        free(ctx->processor_info_ptr->socket_designation);
-        free(ctx->processor_info_ptr->version);
-        free(ctx->processor_info_ptr->serial_number);
-        free(ctx->processor_info_ptr->asset_tag);
-        free(ctx->processor_info_ptr->part_number);
-        free(ctx->processor_info_ptr);
-        ctx->processor_info_ptr = NULL;
-    }
+    free(ctx->processor_info.socket_designation);
+    free(ctx->processor_info.version);
+    free(ctx->processor_info.serial_number);
+    free(ctx->processor_info.asset_tag);
+    free(ctx->processor_info.part_number);
 
-    // Memory devices cleanup
     if (ctx->memory_devices_ptr) {
         for (size_t i = 0; i < ctx->memory_devices_count; i++) {
             free(ctx->memory_devices_ptr[i].locator);
@@ -481,7 +442,6 @@ void lazybios_cleanup(lazybios_ctx_t* ctx) {
     }
     ctx->memory_devices_count = 0;
 
-    // Raw data cleanup
     if (ctx->dmi_data) {
         free(ctx->dmi_data);
         ctx->dmi_data = NULL;
