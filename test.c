@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "lazybios.h"
 
 void print_bios_info(lazybios_ctx_t* ctx) {
@@ -24,9 +25,25 @@ void print_system_info(lazybios_ctx_t* ctx) {
         printf("Product Name: %s\n", sys->product_name);
         printf("Version: %s\n", sys->version);
         printf("Serial Number: %s\n", sys->serial_number);
+        printf("UUID: %s\n", sys->uuid);
         printf("\n");
     } else {
         printf("Failed to get system information\n\n");
+    }
+}
+
+void print_baseboard_info(lazybios_ctx_t* ctx) {
+    printf("=== BASEBOARD INFORMATION ===\n");
+    baseboard_info_t *baseboard = lazybios_get_baseboard_info(ctx);
+    if (baseboard) {
+        printf("Manufacturer: %s\n", baseboard->manufacturer);
+        printf("Product: %s\n", baseboard->product);
+        printf("Version: %s\n", baseboard->version);
+        printf("Serial Number: %s\n", baseboard->serial_number);
+        printf("Asset Tag: %s\n", baseboard->asset_tag);
+        printf("\n");
+    } else {
+        printf("Failed to get baseboard information\n\n");
     }
 }
 
@@ -85,17 +102,28 @@ void print_memory_info(lazybios_ctx_t* ctx) {
             printf("  Serial: %s\n", memories[i].serial_number);
             printf("  Part Number: %s\n", memories[i].part_number);
 
-            if (memories[i].size_mb == 0) {
-                printf("  Size: EMPTY SLOT\n");
-            } else if (memories[i].size_mb == 0xFFFF) {
-                printf("  Size: UNKNOWN\n");
+            // ===== FIXED SIZE DISPLAY =====
+            if (memories[i].size_mb == 0 && !memories[i].size_extended) {
+                if (strcmp(memories[i].manufacturer, "Not Specified") != 0 &&
+                    strcmp(memories[i].serial_number, "Not Specified") != 0) {
+                    printf("  Size: PRESENT BUT SIZE UNKNOWN\n");
+                } else {
+                    printf("  Size: EMPTY SLOT\n");
+                }
+            } else if (memories[i].size_extended) {
+                printf("  Size: %u MB (Extended)\n", memories[i].size_mb);
             } else {
                 printf("  Size: %u MB\n", memories[i].size_mb);
             }
+            // ===== END FIX =====
 
             printf("  Speed: %u MHz\n", memories[i].speed_mhz);
-            printf("  Type: 0x%02X\n", memories[i].memory_type);
-            printf("  Form Factor: 0x%02X\n", memories[i].form_factor);
+            printf("  Type: %s (0x%02X)\n",
+                   lazybios_get_memory_type_string(memories[i].memory_type),
+                   memories[i].memory_type);
+            printf("  Form Factor: %s (0x%02X)\n",
+                   lazybios_get_memory_form_factor_string(memories[i].form_factor),
+                   memories[i].form_factor);
             printf("  Data Width: %u bits\n", memories[i].data_width);
             printf("\n");
         }
@@ -104,7 +132,10 @@ void print_memory_info(lazybios_ctx_t* ctx) {
         size_t populated_slots = 0;
 
         for (size_t i = 0; i < mem_count; i++) {
-            if (memories[i].size_mb > 0 && memories[i].size_mb != 0xFFFF) {
+            // ===== FIXED POPULATED SLOT DETECTION =====
+            if (memories[i].size_mb > 0 ||
+                (strcmp(memories[i].manufacturer, "Not Specified") != 0 &&
+                 strcmp(memories[i].serial_number, "Not Specified") != 0)) {
                 total_memory_mb += memories[i].size_mb;
                 populated_slots++;
             }
@@ -152,7 +183,7 @@ void print_system_summary(lazybios_ctx_t* ctx) {
 
         if (memories) {
             for (size_t i = 0; i < mem_count; i++) {
-                if (memories[i].size_mb > 0 && memories[i].size_mb != 0xFFFF) {
+                if (memories[i].size_mb > 0 || memories[i].size_extended) {
                     total_memory_mb += memories[i].size_mb;
                     populated_slots++;
                 }
@@ -161,6 +192,8 @@ void print_system_summary(lazybios_ctx_t* ctx) {
 
         printf("%zu GB RAM across %zu slots\n",
                total_memory_mb / 1024, populated_slots);
+    } else {
+        printf("Failed to get system summary information\n");
     }
     printf("\n");
 }
@@ -187,6 +220,7 @@ int main(void) {
     print_system_summary(ctx);
     print_bios_info(ctx);
     print_system_info(ctx);
+    print_baseboard_info(ctx);
     print_chassis_info(ctx);
     print_processor_info(ctx);
     print_memory_info(ctx);

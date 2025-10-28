@@ -25,7 +25,9 @@
 #define SMBIOS_TYPE_BASEBOARD  2
 #define SMBIOS_TYPE_CHASSIS    3
 #define SMBIOS_TYPE_PROCESSOR  4
+#define SMBIOS_TYPE_MEMARRAY   16
 #define SMBIOS_TYPE_MEMDEVICE  17
+#define SMBIOS_TYPE_MEMARRAY_MAPPED 19
 #define SMBIOS_TYPE_END        127
 
 // ===== Version-Aware Minimum Lengths =====
@@ -39,6 +41,7 @@
 #define MEMORY_MIN_LENGTH_3_0   0x2C
 #define PROC_MIN_LENGTH_2_0     0x1A
 #define PROC_MIN_LENGTH_2_6     0x2A
+#define BASEBOARD_MIN_LENGTH    0x08
 
 // ===== BIOS Info (Type 0) Field Offsets =====
 #define BIOS_VENDOR_OFFSET         0x04
@@ -51,6 +54,14 @@
 #define SYS_PRODUCT_OFFSET         0x05
 #define SYS_VERSION_OFFSET         0x06
 #define SYS_SERIAL_OFFSET          0x07
+#define SYS_UUID_OFFSET            0x08
+
+// ===== Baseboard Info (Type 2) Field Offsets =====
+#define BASEBOARD_MANUFACTURER_OFFSET  0x04
+#define BASEBOARD_PRODUCT_OFFSET       0x05
+#define BASEBOARD_VERSION_OFFSET       0x06
+#define BASEBOARD_SERIAL_OFFSET        0x07
+#define BASEBOARD_ASSET_TAG_OFFSET     0x08
 
 // ===== Chassis Info (Type 3) Field Offsets =====
 #define CHASSIS_ASSET_TAG_OFFSET   0x08
@@ -81,11 +92,26 @@
 #define MEM_DEVICE_TYPE_OFFSET         0x12
 #define MEM_DEVICE_FORM_FACTOR_OFFSET  0x0E
 #define MEM_DEVICE_WIDTH_OFFSET        0x08
+#define MEM_DEVICE_EXT_SIZE_OFFSET     0x1C
 
 // ===== Memory Type Constants =====
-#define MEMORY_TYPE_DDR3   0x18
-#define MEMORY_TYPE_DDR4   0x1A
-#define MEMORY_TYPE_DDR5   0x22
+#define MEMORY_TYPE_UNDEFINED   0x02
+#define MEMORY_TYPE_DRAM        0x07
+#define MEMORY_TYPE_DDR         0x14
+#define MEMORY_TYPE_DDR2        0x15
+#define MEMORY_TYPE_DDR3        0x18
+#define MEMORY_TYPE_DDR4        0x1A
+#define MEMORY_TYPE_DDR5        0x22
+#define MEMORY_TYPE_LPDDR       0x1B
+#define MEMORY_TYPE_LPDDR2      0x1C
+#define MEMORY_TYPE_LPDDR3      0x1D
+#define MEMORY_TYPE_LPDDR4      0x1E
+#define MEMORY_TYPE_LPDDR5      0x1F
+
+// ===== Memory Form Factor Constants =====
+#define MEMORY_FORM_FACTOR_DIMM     0x09
+#define MEMORY_FORM_FACTOR_SODIMM   0x0D
+#define MEMORY_FORM_FACTOR_RIMM     0x11
 
 // ===== Comprehensive Processor Family Constants =====
 // Intel Processor Families
@@ -142,6 +168,8 @@
 // ===== General Constants =====
 #define SMBIOS_HEADER_SIZE         4
 #define BIOS_ROM_SIZE_MULTIPLIER   64
+#define MEMORY_SIZE_UNKNOWN        0xFFFF
+#define MEMORY_SIZE_EXTENDED       0x7FFF
 
 // ===== File Paths =====
 #define SMBIOS_ENTRY "/sys/firmware/dmi/tables/smbios_entry_point"
@@ -168,11 +196,22 @@ typedef struct {
     char *product_name;
     char *version;
     char *serial_number;
+    char *uuid;
 } system_info_t;
+
+typedef struct {
+    char *manufacturer;
+    char *product;
+    char *version;
+    char *serial_number;
+    char *asset_tag;
+} baseboard_info_t;
 
 typedef struct {
     char *asset_tag;
     char *sku;
+    uint8_t type;
+    uint8_t state;
 } chassis_info_t;
 
 typedef struct {
@@ -181,11 +220,12 @@ typedef struct {
     char *manufacturer;
     char *serial_number;
     char *part_number;
-    uint16_t size_mb;
+    uint32_t size_mb;
     uint16_t speed_mhz;
     uint8_t memory_type;
     uint8_t form_factor;
     uint8_t data_width;
+    bool size_extended;
 } memory_device_t;
 
 typedef struct {
@@ -203,52 +243,45 @@ typedef struct {
     uint16_t characteristics;
     uint8_t voltage;
     uint16_t external_clock_mhz;
-    uint16_t l1_cache_handle;
-    uint16_t l2_cache_handle;
-    uint16_t l3_cache_handle;
 } processor_info_t;
 
 // ===== Context Structure =====
 typedef struct lazybios_ctx {
-    // Raw SMBIOS data
     uint8_t *dmi_data;
     size_t dmi_len;
     smbios_entry_info_t entry_info;
 
-    // Cached parsed data - direct structs for these
     bios_info_t bios_info;
     system_info_t system_info;
+    baseboard_info_t baseboard_info;
     chassis_info_t chassis_info;
     processor_info_t processor_info;
 
-    // Pointer since we need dynamic arrays for N devices
     memory_device_t *memory_devices_ptr;
     size_t memory_devices_count;
 } lazybios_ctx_t;
 
 // ===== Public API =====
-// Context management
 lazybios_ctx_t* lazybios_ctx_new(void);
 void lazybios_ctx_free(lazybios_ctx_t* ctx);
 
-// Initialization and cleanup
 int lazybios_init(lazybios_ctx_t* ctx);
 void lazybios_cleanup(lazybios_ctx_t* ctx);
 
-// Version info
 void lazybios_smbios_ver(const lazybios_ctx_t* ctx);
 const smbios_entry_info_t* lazybios_get_entry_info(const lazybios_ctx_t* ctx);
 
-// Basic info retrievers
 bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx);
 system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx);
+baseboard_info_t* lazybios_get_baseboard_info(lazybios_ctx_t* ctx);
 chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx);
 processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx);
 memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count);
 
-// Helper functions
 size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8_t type);
 bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t major, uint8_t minor);
 const char* lazybios_get_processor_family_string(uint8_t family);
+const char* lazybios_get_memory_type_string(uint8_t type);
+const char* lazybios_get_memory_form_factor_string(uint8_t form_factor);
 
 #endif // LAZYBIOS_H
