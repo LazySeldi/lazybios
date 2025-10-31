@@ -378,7 +378,7 @@ int lazybios_init(lazybios_ctx_t* ctx) {
         return -1;
     }
 
-    // Try SMBIOS 3.x first, then fall back to 2.x
+    // Try SMBIOS 3.x first, then "fall back" to 2.x
     if (parse_smbios3_entry(ctx, entry_buf) == 0) {
         // Successfully parsed as SMBIOS 3.x
     } else if (parse_smbios2_entry(ctx, entry_buf) == 0) {
