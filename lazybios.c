@@ -181,35 +181,6 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
         case 0x12: return "M1 Family";
         case 0x13: return "M2 Family";
 
-        // PowerPC
-        case 0x1E: return "AMD29000";
-        case 0x20: return "PowerPC";
-        case 0x21: return "PowerPC 601";
-        case 0x22: return "PowerPC 603";
-        case 0x23: return "PowerPC 603+";
-        case 0x24: return "PowerPC 604";
-        case 0x25: return "PowerPC 620";
-        case 0x26: return "PowerPC x704";
-        case 0x27: return "PowerPC 750";
-
-        // Alpha
-        case 0x30: return "Alpha";
-        case 0x31: return "Alpha 21064";
-        case 0x32: return "Alpha 21066";
-        case 0x33: return "Alpha 21164";
-        case 0x34: return "Alpha 21164PC";
-        case 0x35: return "Alpha 21164a";
-        case 0x36: return "Alpha 21264";
-        case 0x37: return "Alpha 21364";
-
-        // MIPS
-        case 0x40: return "MIPS";
-        case 0x41: return "MIPS R4000";
-        case 0x42: return "MIPS R4200";
-        case 0x43: return "MIPS R4400";
-        case 0x44: return "MIPS R4600";
-        case 0x45: return "MIPS R10000";
-
         // SPARC
         case 0x50: return "SPARC";
         case 0x51: return "SuperSPARC";
@@ -221,36 +192,7 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
         case 0x57: return "UltraSPARC III";
         case 0x58: return "UltraSPARC IIIi";
 
-        // Motorola 68k
-        case 0x60: return "68040";
-        case 0x61: return "68xxx";
-        case 0x62: return "68000";
-        case 0x63: return "68010";
-        case 0x64: return "68020";
-        case 0x65: return "68030";
-
-        // Other
-        case 0x70: return "Hobbit";
-        case 0x78: return "Crusoe TM5000";
-        case 0x79: return "Crusoe TM3000";
-        case 0x7A: return "Efficeon TM8000";
-        case 0x80: return "Weitek";
-        case 0x82: return "Itanium";
-        case 0x90: return "PA-RISC";
-        case 0x91: return "PA-RISC 8500";
-        case 0x92: return "PA-RISC 8000";
-        case 0x93: return "PA-RISC 7300LC";
-        case 0x94: return "PA-RISC 7200";
-        case 0x95: return "PA-RISC 7100LC";
-        case 0x96: return "PA-RISC 7100";
-        case 0xA0: return "V30";
-        case 0xB4: return "AS400";
-        case 0xB8: return "Intel Itanium 2";
-        case 0xC8: return "IBM390";
-        case 0xC9: return "G4";
-        case 0xCA: return "G5";
-        case 0xCB: return "ESA/390 G6";
-        case 0xCC: return "z/Architecture";
+        // VIA (x86-compatible, runs Linux)
         case 0xD2: return "VIA C7-M";
         case 0xD3: return "VIA C7-D";
         case 0xD4: return "VIA C7";
