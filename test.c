@@ -164,40 +164,6 @@ void print_smbios_version_info(lazybios_ctx_t* ctx) {
     }
 }
 
-void print_system_summary(lazybios_ctx_t* ctx) {
-    printf("=== SYSTEM SUMMARY ===\n");
-
-    system_info_t *sys = lazybios_get_system_info(ctx);
-    processor_info_t *proc = lazybios_get_processor_info(ctx);
-
-    if (sys && proc) {
-        printf("%s %s\n", sys->manufacturer, sys->product_name);
-        printf("%s Processor\n", lazybios_get_processor_family_string(proc->processor_family));
-        printf("%u cores, %u threads total\n",
-               proc->core_count, proc->core_count * proc->thread_count);
-
-        size_t mem_count;
-        memory_device_t *memories = lazybios_get_memory_devices(ctx, &mem_count);
-        size_t total_memory_mb = 0;
-        size_t populated_slots = 0;
-
-        if (memories) {
-            for (size_t i = 0; i < mem_count; i++) {
-                if (memories[i].size_mb > 0 || memories[i].size_extended) {
-                    total_memory_mb += memories[i].size_mb;
-                    populated_slots++;
-                }
-            }
-        }
-
-        printf("%zu GB RAM across %zu slots\n",
-               total_memory_mb / 1024, populated_slots);
-    } else {
-        printf("Failed to get system summary information\n");
-    }
-    printf("\n");
-}
-
 int main(void) {
     printf("lazybios - Comprehensive System Information\n");
     printf("=============================================\n\n");
@@ -217,7 +183,6 @@ int main(void) {
     printf("Library initialized successfully!\n\n");
 
     print_smbios_version_info(ctx);
-    print_system_summary(ctx);
     print_bios_info(ctx);
     print_system_info(ctx);
     print_baseboard_info(ctx);
