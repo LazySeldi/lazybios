@@ -39,6 +39,13 @@ int lazybios_init(lazybios_ctx_t* ctx);
 - Exit code 0 means success and -1 means something went wrong.
 
 --------------------
+```c
+void lazybios_ctx_free(lazybios_ctx_t* ctx);
+```
+- Cleans up the lazybios_ctx struct.
+- Also runs lazybios_cleanup(lazybios_ctx_t* ctx);
+
+-----------------
 
 ```c
 void lazybios_cleanup(lazybios_ctx_t* ctx);
@@ -46,6 +53,7 @@ void lazybios_cleanup(lazybios_ctx_t* ctx);
 - Cleans up the memory that the library used.
 - Should be added at the end just before the programs exit.
 - Don't use the library again if you used cleanup().
+- Do not run after running "lazybios_ctx_free(lazybios_ctx_t* ctx);"
 
 ----------------------
 
@@ -66,6 +74,7 @@ const smbios_entry_info_t* lazybios_get_entry_info(const lazybios_ctx_t* ctx);
 ```c
     uint8_t major;          // SMBIOS major version
     uint8_t minor;          // SMBIOS minor version  
+    uint8_t docrev;         // Only valid for SMBIOS 3.x
     uint32_t table_length;  // DMI table length in bytes
     uint64_t table_address; // Table physical address
     bool is_64bit;          // True for SMBIOS 3.x 
@@ -78,9 +87,9 @@ bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx);
 - Returns Pointer to bios_info_t or NULL on failure.
 - The struct contains:
 ```c
-    char *vendor;        // BIOS vendor string
-    char *version;       // BIOS version string
-    char *release_date;  // BIOS release date
+    char *vendor;         // BIOS vendor string
+    char *version;        // BIOS version string
+    char *release_date;   // BIOS release date
     uint16_t rom_size_kb; // BIOS ROM size in KB
 ```
 ---------------
@@ -96,6 +105,7 @@ system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx);
     char *product_name;  // Product name/model
     char *version;       // System version
     char *serial_number; // System serial number
+    char *uuid;          // System UUID
 ```
 --------------------------------
 
@@ -108,6 +118,8 @@ chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx);
 ```c
     char *asset_tag;     // Chassis asset tag
     char *sku;           // Chassis SKU number
+    uint8_t type;        // Chassis Type e.g 7 means Tower 
+    uint8_t state;       // Chassis state, e.g 0 means unimplemented|undefined state just means the system doesn't have monitoring.
 ```
 ------------------------
 
@@ -129,6 +141,7 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx);
     uint16_t max_speed_mhz;    // Maximum processor speed
     uint8_t processor_type;    // Processor type code
     uint8_t processor_family;  // Processor family code
+    uint16_t processor_family2;  // Extended family for values >= 0xFE
     uint16_t characteristics;  // Processor features bitmap
     uint8_t voltage;           // Voltage information
     uint16_t external_clock_mhz; // External bus speed
@@ -152,11 +165,13 @@ memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count)
     char *manufacturer;  // Memory manufacturer
     char *serial_number; // Memory serial number
     char *part_number;   // Memory part number
-    uint16_t size_mb;    // Size in MB (0 = empty slot)
+    uint32_t size_mb;    // Size in MB (0 = empty slot)
     uint16_t speed_mhz;  // Memory speed in MHz
     uint8_t memory_type; // Memory type code
     uint8_t form_factor; // Form factor code
-    uint8_t data_width;  // Data width in bits
+    uint16_t data_width;  // Data width in bits
+    uint16_t total_width; // Total width in bits
+    bool size_extended;  // If extended or not
 ```
 --------------------------------
 
@@ -193,6 +208,19 @@ bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t majo
 
 -------------
 
+```c
+const char* lazybios_get_memory_type_string(uint8_t type);
+```
+- Checks for the memory type given in hexadecimal and converts it into its type in a string using the defines.
+- Returns memory type in string from, e.g DDR3, DDR4, DDR5
+---------------
+```c
+const char* lazybios_get_memory_form_factor_string(uint8_t form_factor);
+```
+- Checks the memory form factor and converts it into a string using the defines to identify the type.
+- Returns a string of the memory form factor e.g Chip, SIMM etc.
+
+-----------------
 # Integration in Your Project
 ### Method 1: Direct File Inclusion In Your Project
 ```c
