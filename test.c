@@ -68,14 +68,22 @@ void print_processor_info(lazybios_ctx_t* ctx) {
         printf("Family: %s (0x%02X)\n",
                lazybios_get_processor_family_string(proc->processor_family),
                proc->processor_family);
+        if (proc->processor_family == 0xFE) {
+            printf("Extended Family: 0x%04X\n", proc->processor_family2);
+        }
         printf("Type: %u\n", proc->processor_type);
         printf("Cores: %u physical, %u enabled\n",
                proc->core_count, proc->core_enabled);
-        printf("Threads: %u per core (%u total threads)\n",
-               proc->thread_count, proc->core_count * proc->thread_count);
+        printf("Threads: %u total\n", proc->thread_count);
         printf("Max Speed: %u MHz\n", proc->max_speed_mhz);
+        if (proc->current_speed_mhz > 0) {
+            printf("Current Speed: %u MHz\n", proc->current_speed_mhz);
+        }
         printf("External Clock: %u MHz\n", proc->external_clock_mhz);
         printf("Voltage: 0x%02X\n", proc->voltage);
+        if (proc->status > 0) {
+            printf("Status: 0x%02X\n", proc->status);
+        }
         printf("Characteristics: 0x%04X\n", proc->characteristics);
         printf("Serial: %s\n", proc->serial_number);
         printf("Asset Tag: %s\n", proc->asset_tag);
@@ -102,7 +110,6 @@ void print_memory_info(lazybios_ctx_t* ctx) {
             printf("  Serial: %s\n", memories[i].serial_number);
             printf("  Part Number: %s\n", memories[i].part_number);
 
-            // ===== FIXED SIZE DISPLAY =====
             if (memories[i].size_mb == 0 && !memories[i].size_extended) {
                 if (strcmp(memories[i].manufacturer, "Not Specified") != 0 &&
                     strcmp(memories[i].serial_number, "Not Specified") != 0) {
@@ -115,7 +122,6 @@ void print_memory_info(lazybios_ctx_t* ctx) {
             } else {
                 printf("  Size: %u MB\n", memories[i].size_mb);
             }
-            // ===== END FIX =====
 
             printf("  Speed: %u MHz\n", memories[i].speed_mhz);
             printf("  Type: %s (0x%02X)\n",
@@ -124,7 +130,12 @@ void print_memory_info(lazybios_ctx_t* ctx) {
             printf("  Form Factor: %s (0x%02X)\n",
                    lazybios_get_memory_form_factor_string(memories[i].form_factor),
                    memories[i].form_factor);
-            printf("  Data Width: %u bits\n", memories[i].data_width);
+            if (memories[i].total_width > 0) {
+                printf("  Total Width: %u bits\n", memories[i].total_width);
+            }
+            if (memories[i].data_width > 0) {
+                printf("  Data Width: %u bits\n", memories[i].data_width);
+            }
             printf("\n");
         }
 
@@ -132,7 +143,6 @@ void print_memory_info(lazybios_ctx_t* ctx) {
         size_t populated_slots = 0;
 
         for (size_t i = 0; i < mem_count; i++) {
-            // ===== FIXED POPULATED SLOT DETECTION =====
             if (memories[i].size_mb > 0 ||
                 (strcmp(memories[i].manufacturer, "Not Specified") != 0 &&
                  strcmp(memories[i].serial_number, "Not Specified") != 0)) {
@@ -159,7 +169,10 @@ void print_smbios_version_info(lazybios_ctx_t* ctx) {
     if (entry) {
         printf("Table Length: %u bytes\n", entry->table_length);
         printf("Table Address: 0x%lX\n", entry->table_address);
-        printf("Is 64-bit: %s\n", entry->is_64bit ? "Yes" : "No");
+        printf("Is 64-bit: %s\n", entry->is_64bit ? "Yes (SMBIOS 3.x)" : "No (SMBIOS 2.x)");
+        if (entry->is_64bit) {
+            printf("Docrev: %u\n", entry->docrev);
+        }
         printf("\n");
     }
 }
