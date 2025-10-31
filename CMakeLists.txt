@@ -17,7 +17,7 @@ set(LAZYBIOS_VERSION "${LAZYBIOS_VERSION_MAJOR}.${LAZYBIOS_VERSION_MINOR}.${LAZY
 # Create the shared library
 add_library(lazybios SHARED lazybios.c)
 
-# Create the test executable
+# Create the test executable (NOT installed)
 add_executable(lazybios_test test.c)
 target_link_libraries(lazybios_test lazybios)
 
@@ -33,22 +33,18 @@ set_target_properties(lazybios_test PROPERTIES OUTPUT_NAME "lazybios_test")
 
 # ===== INSTALLATION TARGETS =====
 
-# Install the library
+# Install the library to /usr/local/lib (standard for custom builds)
 install(TARGETS lazybios
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
 )
 
-# Install the header file
+# Install the header file to /usr/local/include
 install(FILES lazybios.h
         DESTINATION include
 )
 
-# Install the test executable (optional)
-install(TARGETS lazybios_test
-        RUNTIME DESTINATION bin
-)
+# DO NOT install lazybios_test - it's just for development!
 
 # Create pkg-config file for easier linking
 configure_file(
@@ -83,4 +79,6 @@ message(STATUS "Build targets:")
 message(STATUS "  make              - Build library and test")
 message(STATUS "  make install      - Install to ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "  make uninstall    - Remove installed files")
-message(STATUS "  make test         - Run the test program")
+message(STATUS "")
+message(STATUS "Test the library:")
+message(STATUS "  ./lazybios_test   - Run test program (development only)")
