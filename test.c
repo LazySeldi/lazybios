@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +54,8 @@ void print_chassis_info(lazybios_ctx_t* ctx) {
     if (chassis) {
         printf("Asset Tag: %s\n", chassis->asset_tag);
         printf("SKU: %s\n", chassis->sku);
+        printf("Type: %" PRIu8 "\n", chassis->type);
+        printf("State: %" PRIu8 "\n", chassis->state);
         printf("\n");
     } else {
         printf("Failed to get chassis information\n\n");
