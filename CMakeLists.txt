@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 23)
 
 # Set installation prefixes
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix" FORCE)
+    set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Installation prefix" FORCE)
 endif()
 
 # Library versioning
