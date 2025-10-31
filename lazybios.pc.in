@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_PREFIX@/lib
+includedir=@CMAKE_INSTALL_PREFIX@/include
+
+Name: @PROJECT_NAME@
+Description: Lightweight SMBIOS/DMI parsing library
+Version: @LAZYBIOS_VERSION@
+Libs: -L${libdir} -llazybios
+Cflags: -I${includedir}
