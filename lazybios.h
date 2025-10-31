@@ -11,13 +11,18 @@
 #define SMBIOS2_ENTRY_SIZE 31
 #define SMBIOS3_ENTRY_SIZE 24
 
-// Entry point offsets
-#define ENTRY_MAJOR_OFFSET       6
-#define ENTRY_MINOR_OFFSET       7
-#define ENTRY_TABLE_LENGTH_OFFSET 0x16
-#define ENTRY_TABLE_ADDR_OFFSET  0x18
-#define ENTRY_TABLE_LENGTH_OFFSET_3 0x0C
-#define ENTRY_TABLE_ADDR_OFFSET_3 0x10
+// ===== SMBIOS 2.x Entry Point Offsets =====
+#define ENTRY2_MAJOR_OFFSET       6
+#define ENTRY2_MINOR_OFFSET       7
+#define ENTRY2_TABLE_LENGTH_OFFSET 0x16
+#define ENTRY2_TABLE_ADDR_OFFSET  0x18
+
+// ===== SMBIOS 3.x Entry Point Offsets (FIXED) =====
+#define ENTRY3_MAJOR_OFFSET       7
+#define ENTRY3_MINOR_OFFSET       8
+#define ENTRY3_DOCREV_OFFSET      9
+#define ENTRY3_TABLE_LENGTH_OFFSET 0x0C
+#define ENTRY3_TABLE_ADDR_OFFSET  0x10
 
 // ===== SMBIOS Structure Types =====
 #define SMBIOS_TYPE_BIOS       0
@@ -71,99 +76,104 @@
 #define PROC_SOCKET_OFFSET          0x04
 #define PROC_TYPE_OFFSET            0x05
 #define PROC_FAMILY_OFFSET          0x06
+#define PROC_MANUFACTURER_OFFSET    0x07
+#define PROC_ID_OFFSET              0x08
 #define PROC_VERSION_OFFSET         0x10
-#define PROC_MAX_SPEED_OFFSET       0x14
 #define PROC_VOLTAGE_OFFSET         0x11
 #define PROC_EXTERNAL_CLOCK_OFFSET  0x12
-#define PROC_CHARACTERISTICS_OFFSET 0x26
+#define PROC_MAX_SPEED_OFFSET       0x14
+#define PROC_CURRENT_SPEED_OFFSET   0x16
+#define PROC_STATUS_OFFSET          0x18
+#define PROC_UPGRADE_OFFSET         0x19
+#define PROC_SERIAL_OFFSET_2_5      0x20
+#define PROC_ASSET_TAG_OFFSET_2_5   0x21
+#define PROC_PART_NUMBER_OFFSET_2_5 0x22
 #define PROC_CORE_COUNT_OFFSET      0x23
 #define PROC_CORE_ENABLED_OFFSET    0x24
 #define PROC_THREAD_COUNT_OFFSET    0x25
-#define PROC_SERIAL_OFFSET_2_5      0x20
+#define PROC_CHARACTERISTICS_OFFSET 0x26
+#define PROC_FAMILY2_OFFSET         0x28
+#define PROC_CORE_COUNT2_OFFSET     0x2A
+#define PROC_CORE_ENABLED2_OFFSET   0x2C
+#define PROC_THREAD_COUNT2_OFFSET   0x2E
 
 // ===== Memory Device (Type 17) Field Offsets =====
+#define MEM_DEVICE_ARRAY_HANDLE_OFFSET 0x04
+#define MEM_DEVICE_ERROR_HANDLE_OFFSET 0x06
+#define MEM_DEVICE_TOTAL_WIDTH_OFFSET  0x08
+#define MEM_DEVICE_DATA_WIDTH_OFFSET   0x0A
+#define MEM_DEVICE_SIZE_OFFSET         0x0C
+#define MEM_DEVICE_FORM_FACTOR_OFFSET  0x0E
+#define MEM_DEVICE_SET_OFFSET          0x0F
 #define MEM_DEVICE_LOCATOR_OFFSET      0x10
 #define MEM_DEVICE_BANK_LOCATOR_OFFSET 0x11
+#define MEM_DEVICE_TYPE_OFFSET         0x12
+#define MEM_DEVICE_TYPE_DETAIL_OFFSET  0x13
+#define MEM_DEVICE_SPEED_OFFSET        0x15
 #define MEM_DEVICE_MANUFACTURER_OFFSET 0x17
 #define MEM_DEVICE_SERIAL_OFFSET       0x18
+#define MEM_DEVICE_ASSET_TAG_OFFSET    0x19
 #define MEM_DEVICE_PART_NUMBER_OFFSET  0x1A
-#define MEM_DEVICE_SIZE_OFFSET         0x0C
-#define MEM_DEVICE_SPEED_OFFSET        0x15
-#define MEM_DEVICE_TYPE_OFFSET         0x12
-#define MEM_DEVICE_FORM_FACTOR_OFFSET  0x0E
-#define MEM_DEVICE_WIDTH_OFFSET        0x08
+#define MEM_DEVICE_ATTRIBUTES_OFFSET   0x1B
 #define MEM_DEVICE_EXT_SIZE_OFFSET     0x1C
+#define MEM_DEVICE_CONF_SPEED_OFFSET   0x20
+#define MEM_DEVICE_MIN_VOLTAGE_OFFSET  0x22
+#define MEM_DEVICE_MAX_VOLTAGE_OFFSET  0x24
+#define MEM_DEVICE_CONF_VOLTAGE_OFFSET 0x26
 
-// ===== Memory Type Constants =====
-#define MEMORY_TYPE_UNDEFINED   0x02
-#define MEMORY_TYPE_DRAM        0x07
-#define MEMORY_TYPE_DDR         0x14
-#define MEMORY_TYPE_DDR2        0x15
+// ===== Memory Type Constants (Official SMBIOS Values) =====
+#define MEMORY_TYPE_OTHER       0x01
+#define MEMORY_TYPE_UNKNOWN     0x02
+#define MEMORY_TYPE_DRAM        0x03
+#define MEMORY_TYPE_EDRAM       0x04
+#define MEMORY_TYPE_VRAM        0x05
+#define MEMORY_TYPE_SRAM        0x06
+#define MEMORY_TYPE_RAM         0x07
+#define MEMORY_TYPE_ROM         0x08
+#define MEMORY_TYPE_FLASH       0x09
+#define MEMORY_TYPE_EEPROM      0x0A
+#define MEMORY_TYPE_FEPROM      0x0B
+#define MEMORY_TYPE_EPROM       0x0C
+#define MEMORY_TYPE_CDRAM       0x0D
+#define MEMORY_TYPE_3DRAM       0x0E
+#define MEMORY_TYPE_SDRAM       0x0F
+#define MEMORY_TYPE_SGRAM       0x10
+#define MEMORY_TYPE_RDRAM       0x11
+#define MEMORY_TYPE_DDR         0x12
+#define MEMORY_TYPE_DDR2        0x13
+#define MEMORY_TYPE_DDR2_FB_DIMM 0x14
 #define MEMORY_TYPE_DDR3        0x18
+#define MEMORY_TYPE_FBD2        0x19
 #define MEMORY_TYPE_DDR4        0x1A
-#define MEMORY_TYPE_DDR5        0x22
 #define MEMORY_TYPE_LPDDR       0x1B
 #define MEMORY_TYPE_LPDDR2      0x1C
 #define MEMORY_TYPE_LPDDR3      0x1D
 #define MEMORY_TYPE_LPDDR4      0x1E
-#define MEMORY_TYPE_LPDDR5      0x1F
+#define MEMORY_TYPE_LPDDR_NV    0x1F
+#define MEMORY_TYPE_HBM         0x20
+#define MEMORY_TYPE_HBM2        0x21
+#define MEMORY_TYPE_DDR5        0x22
+#define MEMORY_TYPE_LPDDR5      0x23
+#define MEMORY_TYPE_HBM3        0x24
 
-// ===== Memory Form Factor Constants =====
-#define MEMORY_FORM_FACTOR_DIMM     0x09
-#define MEMORY_FORM_FACTOR_SODIMM   0x0D
-#define MEMORY_FORM_FACTOR_RIMM     0x11
-
-// ===== Comprehensive Processor Family Constants =====
-// Intel Processor Families
-#define INTEL_8086             0x01
-#define INTEL_80286            0x02
-#define INTEL_80386            0x03
-#define INTEL_80486            0x04
-#define INTEL_PENTIUM          0x05
-#define INTEL_PENTIUM_PRO      0x06
-#define INTEL_PENTIUM_II       0x07
-#define INTEL_PENTIUM_III      0x08
-#define INTEL_PENTIUM_4        0x09
-#define INTEL_PENTIUM_M        0x0A
-#define INTEL_CELERON          0x0B
-#define INTEL_CORE             0x0C
-#define INTEL_CORE_2           0x0D
-#define INTEL_CORE_I3          0x0E
-#define INTEL_CORE_I5          0x0F
-#define INTEL_CORE_I7          0x10
-#define INTEL_CORE_I9          0x11
-#define INTEL_ATOM             0x12
-#define INTEL_XEON             0xB3
-#define INTEL_XEON_MP          0xB4
-#define INTEL_XEON_3XXX        0xB5
-#define INTEL_XEON_5XXX        0xB6
-#define INTEL_XEON_7XXX        0xB7
-
-// AMD Processor Families
-#define AMD_K5                 0x18
-#define AMD_K6                 0x19
-#define AMD_ATHLON             0x1A
-#define AMD_ATHLON_64          0x1B
-#define AMD_OPTERON            0x1C
-#define AMD_SEMPRON            0x1D
-#define AMD_TURION             0x1E
-#define AMD_PHENOM             0x1F
-#define AMD_PHENOM_II          0x20
-#define AMD_ATHLON_II          0x21
-#define AMD_FX                 0x22
-#define AMD_RYZEN_3            0x23
-#define AMD_RYZEN_5            0x24
-#define AMD_RYZEN_7            0x25
-#define AMD_RYZEN_9            0x26
-#define AMD_RYZEN_THREADRIPPER 0x27
-#define AMD_EPYC               0x28
-
-// Other Processor Families
-#define ARM_CORTEX             0x30
-#define ARM_APPLE_M1           0x31
-#define ARM_APPLE_M2           0x32
-#define IBM_POWER              0x40
-#define IBM_POWERPC            0x41
+// ===== Memory Form Factor Constants (Official SMBIOS Values) =====
+#define MEMORY_FORM_FACTOR_OTHER     0x01
+#define MEMORY_FORM_FACTOR_UNKNOWN   0x02
+#define MEMORY_FORM_FACTOR_SIMM      0x03
+#define MEMORY_FORM_FACTOR_SIP       0x04
+#define MEMORY_FORM_FACTOR_CHIP      0x05
+#define MEMORY_FORM_FACTOR_DIP       0x06
+#define MEMORY_FORM_FACTOR_ZIP       0x07
+#define MEMORY_FORM_FACTOR_PROP_CARD 0x08
+#define MEMORY_FORM_FACTOR_DIMM      0x09
+#define MEMORY_FORM_FACTOR_TSOP      0x0A
+#define MEMORY_FORM_FACTOR_ROW_CHIPS 0x0B
+#define MEMORY_FORM_FACTOR_RIMM      0x0C
+#define MEMORY_FORM_FACTOR_SODIMM    0x0D
+#define MEMORY_FORM_FACTOR_SRIMM     0x0E
+#define MEMORY_FORM_FACTOR_FB_DIMM   0x0F
+#define MEMORY_FORM_FACTOR_DIE       0x10
+#define MEMORY_FORM_FACTOR_CAMM      0x11
 
 // ===== General Constants =====
 #define SMBIOS_HEADER_SIZE         4
@@ -179,6 +189,7 @@
 typedef struct {
     uint8_t major;
     uint8_t minor;
+    uint8_t docrev;  // Only valid for SMBIOS 3.x
     uint32_t table_length;
     uint64_t table_address;
     bool is_64bit;
@@ -224,7 +235,8 @@ typedef struct {
     uint16_t speed_mhz;
     uint8_t memory_type;
     uint8_t form_factor;
-    uint8_t data_width;
+    uint16_t total_width;
+    uint16_t data_width;
     bool size_extended;
 } memory_device_t;
 
@@ -238,11 +250,14 @@ typedef struct {
     uint16_t core_enabled;
     uint16_t thread_count;
     uint16_t max_speed_mhz;
+    uint16_t current_speed_mhz;
     uint8_t processor_type;
     uint8_t processor_family;
+    uint16_t processor_family2;  // Extended family for values >= 0xFE
     uint16_t characteristics;
     uint8_t voltage;
     uint16_t external_clock_mhz;
+    uint8_t status;
 } processor_info_t;
 
 // ===== Context Structure =====
