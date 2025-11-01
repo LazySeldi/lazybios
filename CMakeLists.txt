@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(lazybios C)
 
-set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD 17)
 
 # Set installation prefixes
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
