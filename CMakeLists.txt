@@ -45,8 +45,6 @@ install(FILES lazybios.h
         DESTINATION include
 )
 
-# DO NOT install lazybios_test - it's just for development!
-
 # Create pkg-config file for easier linking
 configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/lazybios.pc.in"
