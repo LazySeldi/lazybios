@@ -6,3 +6,4 @@ cmake-build-*/
 lazybios_test
 *_test
 .idea/
+.vscode/
