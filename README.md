@@ -15,9 +15,50 @@
 This library was first made as a learning experience for me to learn C and get better at it, there are probably bugs in this program so please point them out so I can fix them or just provide me with the fix if you want. I really don't know how to manage contributions so tell me in issues. Thank you. 
 
 ------------------
+## Installation
+<details>
+<summary>Arch Linux</summary>
 
-## For complete usage instructions, API reference, and integration guide, see:
-- **[USE.md](USE.md)** - Complete usage documentation and API reference!
+You can install lazybios from the AUR.
+
+```c
+yay -S lib-lazybios # Or use your prefeered AUR helper.
+```
+</details>
+
+<details>
+<summary>Other distros? (Community packages welcome!)</summary>
+
+You can install lazybios from the AUR.
+
+```c
+yay -S lib-lazybios # Or use your prefeered AUR helper.
+```
+</details>
+
+<details>
+<summary>Manual Building and installing with CMake.</summary>
+
+```c
+git clone https://github.com/LazySeldi/lazybios.git
+
+cd lazybios
+
+mkdir build
+
+cd build
+
+cmake ..
+
+make
+
+sudo make install # Optional and will install to /usr unless specified
+```
+</details>
+
+---------------------
+## For complete usage instructions and API reference guide, see:
+- **[DOCS.md](DOCS.md)** - Complete usage documentation and API reference!
 
 ## Contributing:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide on how to contribute!
