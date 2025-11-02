@@ -2,35 +2,6 @@
 
 A complete guide on how to build, use, and integrate the lazybios SMBIOS parsing library.
 
-## 🛠️ Building the Library
-
-### Prerequisites
-- CMake 4.0+
-- C23 compatible compiler (GCC/Clang)
-- Linux system with SMBIOS support
-
-### Build Instructions
-```bash
-# Clone the repository
-git clone https://github.com/LazySeldi/lazybios
-cd lazybios
-
-# Configure with CMake
-cmake -B build
-
-# Build the library and test executable
-cmake --build build
-
-# Run the comprehensive test (requires root for SMBIOS access)
-sudo ./build/lazybios_test
-```
-### Build Output
-```
-    build/liblazybios.so - The shared library
-
-    build/lazybios_test - Comprehensive test executable
-```
-
 ## API Reference
 ```c
 int lazybios_init(lazybios_ctx_t* ctx);
@@ -156,7 +127,7 @@ memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count)
 ```
 - Returns array of memory device information (SMBIOS Type 17).
 - Parameters: count - pointer to store number of memory devices.
-- Needs to be provided by caller so the caller can determine how many times to run a loop to print out all of the memory devices!
+- Needs to be provided by caller so the caller can determine how many times to run a loop to print out all the memory devices!
 - Returns Array of memory_device_t or NULL on failure.
 - The struct contains:
 ```c
@@ -218,62 +189,54 @@ const char* lazybios_get_memory_type_string(uint8_t type);
 const char* lazybios_get_memory_form_factor_string(uint8_t form_factor);
 ```
 - Checks the memory form factor and converts it into a string using the defines to identify the type.
-- Returns a string of the memory form factor e.g Chip, SIMM etc.
+- Returns a string of the memory form factor e.g. Chip, SIMM etc.
 
 -----------------
-# Integration in Your Project
-### Method 1: Direct File Inclusion In Your Project
-```c
-#include "lazybios.h"
-
-
-// Your code here...
+# Usage
+### Method 1: System-wide Installation (AUR/Your package manager - If available/ Or with sudo make install)
+```shell
+# Use in your project
+gcc myapp.c -llazybios -o myapp
 ```
 
-### Method 2: Link as Shared Library
-```bash
-
-# Compile your program with the library
-gcc my_program.c -L. -llazybios -o my_program
-
-# Set library path if needed
-export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
-```
-
-### Method 3: CMake Integration
+### Method 2: CMake Integration (find_package)
 ```cmake
-
-# In your CMakeLists.txt
-add_library(lazybios SHARED IMPORTED)
-set_target_properties(lazybios PROPERTIES
-IMPORTED_LOCATION "/path/to/liblazybios.so"
-)
-
-# Link with your executable
-add_executable(my_program my_program.c)
-target_link_libraries(my_program lazybios)
+find_package(lazybios REQUIRED)
+target_link_libraries(myapp lazybios::lazybios)
 ```
-### ⚠️ Important Notes
+
+### Method 3: Custom Installation Locations via CMake
+```shell
+# Install to custom location
+cmake .. -DCMAKE_INSTALL_PREFIX=~/.local # or /usr/local 
+make install
+
+# Use with pkg-config
+export PKG_CONFIG_PATH=~/.local/lib/pkgconfig
+gcc myapp.c $(pkg-config --cflags --libs lazybios) -o myapp
+```
+
+### Method 4: Local Build (no installation)
+```shell
+# Build locally
+cmake -B build -DCMAKE_PREFIX_PATH=/path/to/lazybios # Or just don't specify it at all and use it in your current dir if you want
+cmake --build build
+
+# Link directly
+gcc myapp.c -I/path/to/lazybios -L/path/to/lazybios/build -llazybios -o myapp
+```
+
+-----------------------------
+
+
+# ⚠️ Important Notes
 ```
     Root Privileges: Most functions require root access to read SMBIOS tables
 
-    Memory Management: Always call cleanup() to prevent memory leaks
+    Memory Management: Always call lazybios_ctx_free() to prevent memory leaks
 
     Error Checking: Check return values for NULL before accessing data
 
-    Thread Safety: Not thread-safe - call from a single thread
-
     Platform: Linux only (relies on /sys/firmware/dmi/tables/)
 ```
-
-### Troubleshooting
-Common Issues:
-```
-    Permission denied - Run with sudo
-
-    Library not found - Check LD_LIBRARY_PATH or use direct linking
-
-    No SMBIOS data - Check if your system supports SMBIOS
-
-    Segmentation fault - Ensure init() succeeded before calling other functions
-```
+----------------------
