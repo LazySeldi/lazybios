@@ -29,15 +29,14 @@ yay -S lib-lazybios # Or use your prefeered AUR helper.
 <details>
 <summary>Other distros? (Community packages welcome!)</summary>
 
-You can install lazybios from the AUR.
+Yet to come!😞
 
-```c
-yay -S lib-lazybios # Or use your prefeered AUR helper.
-```
 </details>
 
 <details>
 <summary>Manual Building and installing with CMake.</summary>
+
+Clone and build it yourself!
 
 ```c
 git clone https://github.com/LazySeldi/lazybios.git
