@@ -17,7 +17,13 @@ This library was first made as a learning experience for me to learn C and get b
 ------------------
 
 ## For complete usage instructions, API reference, and integration guide, see:
-- **[USE.md](USE.md)** - Complete usage documentation and API reference
+- **[USE.md](USE.md)** - Complete usage documentation and API reference!
+
+## Contributing:
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide on how to contribute!
+
+## Issues:
+- **[ISSUES.md](ISSUES.md)** - Complete guide for opening issues!
 
 ## 📄 License
 
