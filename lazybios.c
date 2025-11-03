@@ -38,6 +38,10 @@ size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8
         case SMBIOS_TYPE_PROCESSOR:
             return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 6))
                    ? PROC_MIN_LENGTH_2_6 : PROC_MIN_LENGTH_2_0;
+        case SMBIOS_TYPE_CACHES:
+            return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 1))
+                   ? CACHE_MIN_LENGTH_2_2  // SMBIOS 2.1+ length (21 bytes)
+                   : CACHE_MIN_LENGTH_2_0; // SMBIOS 2.0 length (15 bytes)
         case SMBIOS_TYPE_MEMDEVICE:
             return is_64bit ? MEMORY_MIN_LENGTH_3_0 : MEMORY_MIN_LENGTH_2_0;
         default:
@@ -204,6 +208,62 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
             snprintf(unknown_family, sizeof(unknown_family), "Unknown (0x%02X)", family);
             return unknown_family;
         }
+    }
+}
+
+const char* lazybios_get_cache_type_string(uint8_t cache_type) {
+    switch(cache_type) {
+    case 1: return "Other";
+    case 2: return "Unknown";
+    case 3: return "Instruction";
+    case 4: return "Data";
+    case 5: return "Unified";
+    default: {
+        static char unknown[32];
+        snprintf(unknown, sizeof(unknown), "Unknown (0x%02X)", cache_type);
+        return unknown;
+    }
+    }
+}
+
+const char* lazybios_get_cache_ecc_string(uint8_t ecc_type) {
+    switch(ecc_type) {
+    case 1: return "Other";
+    case 2: return "Unknown";
+    case 3: return "None";
+    case 4: return "Parity";
+    case 5: return "Single-bit ECC";
+    case 6: return "Multi-bit ECC";
+    case 7: return "CRC";
+    default: {
+        static char unknown[32];
+        snprintf(unknown, sizeof(unknown), "Unknown (0x%02X)", ecc_type);
+        return unknown;
+    }
+    }
+}
+
+const char* lazybios_get_cache_associativity_string(uint8_t associativity) {
+    switch(associativity) {
+    case 1: return "Other";
+    case 2: return "Unknown";
+    case 3: return "Direct Mapped";
+    case 4: return "2-way";
+    case 5: return "4-way";
+    case 6: return "Fully Associative";
+    case 7: return "8-way";
+    case 8: return "16-way";
+    case 9: return "12-way";
+    case 10: return "24-way";
+    case 11: return "32-way";
+    case 12: return "48-way";
+    case 13: return "64-way";
+    case 14: return "20-way";
+    default: {
+        static char unknown[32];
+        snprintf(unknown, sizeof(unknown), "Unknown (0x%02X)", associativity);
+        return unknown;
+    }
     }
 }
 
@@ -561,6 +621,9 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
             ctx->processor_info.socket_designation = strdup(dmi_string(p, length, p[PROC_SOCKET_OFFSET]));
             ctx->processor_info.version = strdup(dmi_string(p, length, p[PROC_VERSION_OFFSET]));
             ctx->processor_info.max_speed_mhz = *(uint16_t*)(p + PROC_MAX_SPEED_OFFSET);
+            ctx->processor_info.L1_cache_handle = *(uint16_t*)(p + PROC_L1_CACHE_HANDLE_OFFSET);
+            ctx->processor_info.L2_cache_handle = *(uint16_t*)(p + PROC_L2_CACHE_HANDLE_OFFSET);
+            ctx->processor_info.L3_cache_handle = *(uint16_t*)(p + PROC_L3_CACHE_HANDLE_OFFSET);
 
             // Current speed (added)
             if (length > PROC_CURRENT_SPEED_OFFSET + 1) {
@@ -642,6 +705,77 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
         p = dmi_next(p, end);
     }
     return NULL;
+}
+
+// ===== Cache Information Getter =====
+cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count) {
+    if (!ctx) {
+        *count = 0;
+        return NULL;
+    }
+
+    if (ctx->caches_ptr) {
+        *count = ctx->caches_count;
+        return ctx->caches_ptr;
+    }
+
+    if (!ctx->dmi_data) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->caches_count = count_structures_by_type(ctx, SMBIOS_TYPE_CACHES);
+    if (ctx->caches_count == 0) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->caches_ptr = calloc(ctx->caches_count, sizeof(cache_info_t));
+    if (!ctx->caches_ptr) {
+        *count = 0;
+        return NULL;
+    }
+
+    size_t index = 0;
+    const uint8_t *p = ctx->dmi_data;
+    const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
+    size_t min_length = lazybios_get_smbios_structure_min_length(ctx, SMBIOS_TYPE_CACHES);
+
+    while (p + SMBIOS_HEADER_SIZE < end && index < ctx->caches_count) {
+        uint8_t type = p[0];
+        uint8_t length = p[1];
+
+        if (type == SMBIOS_TYPE_END) break;
+
+        if (type == SMBIOS_TYPE_CACHES && length >= min_length) {
+            cache_info_t *current = &ctx->caches_ptr[index];
+
+            current->socket_designation = strdup(dmi_string(p, length, p[CACHE_SOCKET_DESIGNATION]));
+
+            // Extract cache level from configuration (bits 2:0)
+            uint16_t config = *(uint16_t*)(p + CACHE_CONFIGURATION);
+            current->level = config & 0x07;
+
+            // Get cache size (handle both old and new size fields)
+            if (length >= 0x15) {
+                // SMBIOS 2.1+ - use extended size field
+                current->size_kb = *(uint32_t*)(p + CACHE_MAXIMUM_SIZE_2);
+            } else {
+                // SMBIOS 2.0 - use old size field
+                current->size_kb = *(uint16_t*)(p + CACHE_MAXIMUM_SIZE);
+            }
+
+            current->error_correction_type = p[CACHE_ERROR_CORRECTION_TYPE];
+            current->system_cache_type = p[CACHE_SYSTEM_CACHE_TYPE];
+            current->associativity = p[CACHE_ASSOCIATIVITY];
+
+            index++;
+        }
+        p = dmi_next(p, end);
+    }
+
+    *count = ctx->caches_count;
+    return ctx->caches_ptr;
 }
 
 // ===== Memory Devices Getter =====
@@ -773,6 +907,15 @@ void lazybios_cleanup(lazybios_ctx_t* ctx) {
     free(ctx->processor_info.serial_number);
     free(ctx->processor_info.asset_tag);
     free(ctx->processor_info.part_number);
+
+    if (ctx->caches_ptr) {
+        for (size_t i = 0; i < ctx->caches_count; i++) {
+            free(ctx->caches_ptr[i].socket_designation);
+        }
+        free(ctx->caches_ptr);
+        ctx->caches_ptr = NULL;
+    }
+    ctx->caches_count = 0;
 
     if (ctx->memory_devices_ptr) {
         for (size_t i = 0; i < ctx->memory_devices_count; i++) {

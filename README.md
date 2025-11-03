@@ -65,6 +65,9 @@ sudo make install # Optional and will install to /usr unless specified
 ## Issues:
 - **[ISSUES.md](ISSUES.md)** - Complete guide for opening issues!
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+## Thanks 
+Big thanks to @caleb(calebh101) on Discord for being my first ever user and github start!
