@@ -87,6 +87,7 @@ void print_processor_info(lazybios_ctx_t* ctx) {
         if (proc->status > 0) {
             printf("Status: 0x%02X\n", proc->status);
         }
+        printf("L1 Handle: %u \n L2 Handle: %u \n L3 handle: %u \n", proc->L1_cache_handle, proc->L2_cache_handle, proc->L3_cache_handle);
         printf("Characteristics: 0x%04X\n", proc->characteristics);
         printf("Serial: %s\n", proc->serial_number);
         printf("Asset Tag: %s\n", proc->asset_tag);
@@ -94,6 +95,38 @@ void print_processor_info(lazybios_ctx_t* ctx) {
         printf("\n");
     } else {
         printf("Failed to get processor information\n\n");
+    }
+}
+
+// ===== Cache Information Printer =====
+void print_cache_info(lazybios_ctx_t* ctx) {
+    if (!ctx) {
+        printf("No context available\n");
+        return;
+    }
+
+    size_t count;
+    cache_info_t *caches = lazybios_get_caches(ctx, &count);
+
+    if (!caches || count == 0) {
+        printf("No cache information available\n");
+        return;
+    }
+
+    printf("=== Cache Information ===\n");
+    printf("Found %zu cache(s)\n\n", count);
+
+    for (size_t i = 0; i < count; i++) {
+        const cache_info_t *cache = &caches[i];
+
+        printf("Cache %zu:\n", i + 1);
+        printf("  Socket: %s\n", cache->socket_designation);
+        printf("  Level: L%d\n", cache->level + 1);
+        printf("  Size: %d KB\n", cache->size_kb);
+        printf("  Error Correction: %s\n", lazybios_get_cache_ecc_string(cache->error_correction_type));
+        printf("  Type: %s\n", lazybios_get_cache_type_string(cache->system_cache_type));
+        printf("  Associativity: %s\n", lazybios_get_cache_associativity_string(cache->associativity));
+        printf("\n");
     }
 }
 
@@ -204,6 +237,7 @@ int main(void) {
     print_baseboard_info(ctx);
     print_chassis_info(ctx);
     print_processor_info(ctx);
+    print_cache_info(ctx);
     print_memory_info(ctx);
 
     lazybios_ctx_free(ctx);
