@@ -40,8 +40,9 @@ size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8
                    ? PROC_MIN_LENGTH_2_6 : PROC_MIN_LENGTH_2_0;
         case SMBIOS_TYPE_CACHES:
             return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 1))
-                   ? CACHE_MIN_LENGTH_2_2  // SMBIOS 2.1+ length (21 bytes)
-                   : CACHE_MIN_LENGTH_2_0; // SMBIOS 2.0 length (15 bytes)
+                   ? CACHE_MIN_LENGTH_2_1 : CACHE_MIN_LENGTH_2_0;
+        case SMBIOS_TYPE_MEMARRAY:
+            return MEMARRAY_MIN_LENGTH;
         case SMBIOS_TYPE_MEMDEVICE:
             return is_64bit ? MEMORY_MIN_LENGTH_3_0 : MEMORY_MIN_LENGTH_2_0;
         default:
@@ -203,67 +204,77 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
         case 0xD5: return "VIA Eden";
         case 0xD9: return "VIA Nano";
 
-        default: {
-            static char unknown_family[32];
-            snprintf(unknown_family, sizeof(unknown_family), "Unknown (0x%02X)", family);
-            return unknown_family;
-        }
+        default:
+            return "Unknown";
+    }
+}
+
+const char* lazybios_get_processor_type_string(uint8_t type) {
+    switch(type) {
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "Central Processor";
+        case 0x04: return "Math Processor";
+        case 0x05: return "DSP Processor";
+        case 0x06: return "Video Processor";
+        default: return "Unknown";
+    }
+}
+
+const char* lazybios_get_processor_status_string(uint8_t status) {
+    uint8_t cpu_status = status & 0x07;
+    switch(cpu_status) {
+        case 0x00: return "Unknown";
+        case 0x01: return "Enabled";
+        case 0x02: return "Disabled by User";
+        case 0x03: return "Disabled by BIOS";
+        case 0x04: return "Idle";
+        case 0x07: return "Other";
+        default: return "Reserved";
     }
 }
 
 const char* lazybios_get_cache_type_string(uint8_t cache_type) {
     switch(cache_type) {
-    case 1: return "Other";
-    case 2: return "Unknown";
-    case 3: return "Instruction";
-    case 4: return "Data";
-    case 5: return "Unified";
-    default: {
-        static char unknown[32];
-        snprintf(unknown, sizeof(unknown), "Unknown (0x%02X)", cache_type);
-        return unknown;
-    }
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "Instruction";
+        case 0x04: return "Data";
+        case 0x05: return "Unified";
+        default: return "Unknown";
     }
 }
 
 const char* lazybios_get_cache_ecc_string(uint8_t ecc_type) {
     switch(ecc_type) {
-    case 1: return "Other";
-    case 2: return "Unknown";
-    case 3: return "None";
-    case 4: return "Parity";
-    case 5: return "Single-bit ECC";
-    case 6: return "Multi-bit ECC";
-    case 7: return "CRC";
-    default: {
-        static char unknown[32];
-        snprintf(unknown, sizeof(unknown), "Unknown (0x%02X)", ecc_type);
-        return unknown;
-    }
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "None";
+        case 0x04: return "Parity";
+        case 0x05: return "Single-bit ECC";
+        case 0x06: return "Multi-bit ECC";
+        case 0x07: return "CRC";
+        default: return "Unknown";
     }
 }
 
 const char* lazybios_get_cache_associativity_string(uint8_t associativity) {
     switch(associativity) {
-    case 1: return "Other";
-    case 2: return "Unknown";
-    case 3: return "Direct Mapped";
-    case 4: return "2-way";
-    case 5: return "4-way";
-    case 6: return "Fully Associative";
-    case 7: return "8-way";
-    case 8: return "16-way";
-    case 9: return "12-way";
-    case 10: return "24-way";
-    case 11: return "32-way";
-    case 12: return "48-way";
-    case 13: return "64-way";
-    case 14: return "20-way";
-    default: {
-        static char unknown[32];
-        snprintf(unknown, sizeof(unknown), "Unknown (0x%02X)", associativity);
-        return unknown;
-    }
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "Direct Mapped";
+        case 0x04: return "2-way";
+        case 0x05: return "4-way";
+        case 0x06: return "Fully Associative";
+        case 0x07: return "8-way";
+        case 0x08: return "16-way";
+        case 0x09: return "12-way";
+        case 0x0A: return "24-way";
+        case 0x0B: return "32-way";
+        case 0x0C: return "48-way";
+        case 0x0D: return "64-way";
+        case 0x0E: return "20-way";
+        default: return "Unknown";
     }
 }
 
@@ -302,11 +313,7 @@ const char* lazybios_get_memory_type_string(uint8_t type) {
         case MEMORY_TYPE_DDR5: return "DDR5";
         case MEMORY_TYPE_LPDDR5: return "LPDDR5";
         case MEMORY_TYPE_HBM3: return "HBM3";
-        default: {
-            static char unknown_type[32];
-            snprintf(unknown_type, sizeof(unknown_type), "Unknown (0x%02X)", type);
-            return unknown_type;
-        }
+        default: return "Unknown";
     }
 }
 
@@ -329,11 +336,54 @@ const char* lazybios_get_memory_form_factor_string(uint8_t form_factor) {
         case MEMORY_FORM_FACTOR_FB_DIMM: return "FB-DIMM";
         case MEMORY_FORM_FACTOR_DIE: return "Die";
         case MEMORY_FORM_FACTOR_CAMM: return "CAMM";
-        default: {
-            static char unknown_ff[32];
-            snprintf(unknown_ff, sizeof(unknown_ff), "Unknown (0x%02X)", form_factor);
-            return unknown_ff;
-        }
+        default: return "Unknown";
+    }
+}
+
+const char* lazybios_get_memory_array_location_string(uint8_t location) {
+    switch(location) {
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "System board or motherboard";
+        case 0x04: return "ISA add-on card";
+        case 0x05: return "EISA add-on card";
+        case 0x06: return "PCI add-on card";
+        case 0x07: return "MCA add-on card";
+        case 0x08: return "PCMCIA add-on card";
+        case 0x09: return "Proprietary add-on card";
+        case 0x0A: return "NuBus";
+        case 0xA0: return "PC-98/C20 add-on card";
+        case 0xA1: return "PC-98/C24 add-on card";
+        case 0xA2: return "PC-98/E add-on card";
+        case 0xA3: return "PC-98/Local bus add-on card";
+        case 0xA4: return "CXL add-on card";
+        default: return "Unknown";
+    }
+}
+
+const char* lazybios_get_memory_array_use_string(uint8_t use) {
+    switch(use) {
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "System memory";
+        case 0x04: return "Video memory";
+        case 0x05: return "Flash memory";
+        case 0x06: return "Non-volatile RAM";
+        case 0x07: return "Cache memory";
+        default: return "Unknown";
+    }
+}
+
+const char* lazybios_get_memory_array_ecc_string(uint8_t ecc) {
+    switch(ecc) {
+        case 0x01: return "Other";
+        case 0x02: return "Unknown";
+        case 0x03: return "None";
+        case 0x04: return "Parity";
+        case 0x05: return "Single-bit ECC";
+        case 0x06: return "Multi-bit ECC";
+        case 0x07: return "CRC";
+        default: return "Unknown";
     }
 }
 
@@ -524,13 +574,27 @@ system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx) {
 
         if (type == SMBIOS_TYPE_END) break;
         if (type == SMBIOS_TYPE_SYSTEM && length >= min_length) {
-            ctx->system_info.manufacturer = strdup(dmi_string(p, length, p[SYS_MANUFACTURER_OFFSET]));
-            ctx->system_info.product_name = strdup(dmi_string(p, length, p[SYS_PRODUCT_OFFSET]));
-            ctx->system_info.version = strdup(dmi_string(p, length, p[SYS_VERSION_OFFSET]));
-            ctx->system_info.serial_number = strdup(dmi_string(p, length, p[SYS_SERIAL_OFFSET]));
+            const char *mfr = dmi_string(p, length, p[SYS_MANUFACTURER_OFFSET]);
+            const char *prod = dmi_string(p, length, p[SYS_PRODUCT_OFFSET]);
+            const char *ver = dmi_string(p, length, p[SYS_VERSION_OFFSET]);
+            const char *ser = dmi_string(p, length, p[SYS_SERIAL_OFFSET]);
 
-            if (length >= 0x19) {
-                ctx->system_info.uuid = strdup("UUID Available");
+            ctx->system_info.manufacturer = strdup(mfr ? mfr : "Unknown");
+            ctx->system_info.product_name = strdup(prod ? prod : "Unknown");
+            ctx->system_info.version = strdup(ver ? ver : "Unknown");
+            ctx->system_info.serial_number = strdup(ser ? ser : "Unknown");
+
+            if (length >= 0x18) {
+                const uint8_t *uuid = p + SYS_UUID_OFFSET;
+                ctx->system_info.uuid = malloc(37);
+                if (ctx->system_info.uuid) {
+                    snprintf(ctx->system_info.uuid, 37,
+                        "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                        uuid[0], uuid[1], uuid[2], uuid[3],
+                        uuid[4], uuid[5], uuid[6], uuid[7],
+                        uuid[8], uuid[9], uuid[10], uuid[11],
+                        uuid[12], uuid[13], uuid[14], uuid[15]);
+                }
             } else {
                 ctx->system_info.uuid = strdup("Not Available");
             }
@@ -637,14 +701,14 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
             ctx->processor_info.processor_type = p[PROC_TYPE_OFFSET];
             ctx->processor_info.processor_family = p[PROC_FAMILY_OFFSET];
 
-            // Status (added)
+            // Status
             if (length > PROC_STATUS_OFFSET) {
                 ctx->processor_info.status = p[PROC_STATUS_OFFSET];
             } else {
                 ctx->processor_info.status = 0;
             }
 
-            // Core count with extended support
+            // Core count + Extended(If available)
             uint8_t core_count_byte = p[PROC_CORE_COUNT_OFFSET];
             if (core_count_byte == 0xFF && length > PROC_CORE_COUNT2_OFFSET + 1) {
                 ctx->processor_info.core_count = *(uint16_t*)(p + PROC_CORE_COUNT2_OFFSET);
@@ -652,7 +716,7 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
                 ctx->processor_info.core_count = core_count_byte;
             }
 
-            // Core enabled with extended support
+            // Cores enabled + Extended
             uint8_t core_enabled_byte = p[PROC_CORE_ENABLED_OFFSET];
             if (core_enabled_byte == 0xFF && length > PROC_CORE_ENABLED2_OFFSET + 1) {
                 ctx->processor_info.core_enabled = *(uint16_t*)(p + PROC_CORE_ENABLED2_OFFSET);
@@ -740,6 +804,7 @@ cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count) {
     const uint8_t *p = ctx->dmi_data;
     const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
     size_t min_length = lazybios_get_smbios_structure_min_length(ctx, SMBIOS_TYPE_CACHES);
+    bool is_31_plus = lazybios_is_smbios_version_at_least(ctx, 3, 1);
 
     while (p + SMBIOS_HEADER_SIZE < end && index < ctx->caches_count) {
         uint8_t type = p[0];
@@ -750,24 +815,36 @@ cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count) {
         if (type == SMBIOS_TYPE_CACHES && length >= min_length) {
             cache_info_t *current = &ctx->caches_ptr[index];
 
-            current->socket_designation = strdup(dmi_string(p, length, p[CACHE_SOCKET_DESIGNATION]));
+            const char *sock = dmi_string(p, length, p[CACHE_SOCKET_DESIGNATION]);
+            current->socket_designation = strdup(sock ? sock : "Unknown");
 
-            // Extract cache level from configuration (bits 2:0)
             uint16_t config = *(uint16_t*)(p + CACHE_CONFIGURATION);
             current->level = config & 0x07;
 
-            // Get cache size (handle both old and new size fields)
-            if (length >= 0x15) {
-                // SMBIOS 2.1+ - use extended size field
-                current->size_kb = *(uint32_t*)(p + CACHE_MAXIMUM_SIZE_2);
+            uint16_t max_size = *(uint16_t*)(p + CACHE_MAXIMUM_SIZE);
+            uint16_t installed_size = *(uint16_t*)(p + CACHE_INSTALLED_SIZE);
+
+            if (is_31_plus && length >= CACHE_MIN_LENGTH_3_1) {
+                if (max_size == 0xFFFF || (max_size & 0x8000)) {
+                    current->size_kb = *(uint32_t*)(p + CACHE_MAXIMUM_SIZE_2);
+                } else {
+                    uint16_t granularity = (max_size & 0x8000) ? 64 : 1;
+                    current->size_kb = (max_size & 0x7FFF) * granularity;
+                }
             } else {
-                // SMBIOS 2.0 - use old size field
-                current->size_kb = *(uint16_t*)(p + CACHE_MAXIMUM_SIZE);
+                uint16_t granularity = (installed_size & 0x8000) ? 64 : 1;
+                current->size_kb = (installed_size & 0x7FFF) * granularity;
             }
 
-            current->error_correction_type = p[CACHE_ERROR_CORRECTION_TYPE];
-            current->system_cache_type = p[CACHE_SYSTEM_CACHE_TYPE];
-            current->associativity = p[CACHE_ASSOCIATIVITY];
+            if (length > CACHE_ERROR_CORRECTION_TYPE) {
+                current->error_correction_type = p[CACHE_ERROR_CORRECTION_TYPE];
+            }
+            if (length > CACHE_SYSTEM_CACHE_TYPE) {
+                current->system_cache_type = p[CACHE_SYSTEM_CACHE_TYPE];
+            }
+            if (length > CACHE_ASSOCIATIVITY) {
+                current->associativity = p[CACHE_ASSOCIATIVITY];
+            }
 
             index++;
         }
@@ -879,6 +956,74 @@ memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count)
     return ctx->memory_devices_ptr;
 }
 
+physical_memory_array_t* lazybios_get_memory_arrays(lazybios_ctx_t* ctx, size_t* count) {
+    if (!ctx) {
+        *count = 0;
+        return NULL;
+    }
+
+    if (ctx->memory_arrays_ptr) {
+        *count = ctx->memory_arrays_count;
+        return ctx->memory_arrays_ptr;
+    }
+
+    if (!ctx->dmi_data) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->memory_arrays_count = count_structures_by_type(ctx, SMBIOS_TYPE_MEMARRAY);
+    if (ctx->memory_arrays_count == 0) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->memory_arrays_ptr = calloc(ctx->memory_arrays_count, sizeof(physical_memory_array_t));
+    if (!ctx->memory_arrays_ptr) {
+        *count = 0;
+        return NULL;
+    }
+
+    size_t index = 0;
+    const uint8_t *p = ctx->dmi_data;
+    const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
+    size_t min_length = lazybios_get_smbios_structure_min_length(ctx, SMBIOS_TYPE_MEMARRAY);
+
+    while (p + SMBIOS_HEADER_SIZE < end && index < ctx->memory_arrays_count) {
+        uint8_t type = p[0];
+        uint8_t length = p[1];
+
+        if (type == SMBIOS_TYPE_END) break;
+
+        if (type == SMBIOS_TYPE_MEMARRAY && length >= min_length) {
+            physical_memory_array_t *current = &ctx->memory_arrays_ptr[index];
+
+            current->location = p[MEMARRAY_LOCATION_OFFSET];
+            current->use = p[MEMARRAY_USE_OFFSET];
+            current->ecc_type = p[MEMARRAY_ECC_OFFSET];
+
+            uint32_t max_cap = *(uint32_t*)(p + MEMARRAY_MAX_CAPACITY_OFFSET);
+
+            if (max_cap == 0x80000000 && length >= 0x17) {
+                uint64_t ext_cap = *(uint64_t*)(p + MEMARRAY_EXT_MAX_CAPACITY_OFFSET);
+                current->max_capacity_kb = ext_cap;
+                current->extended_capacity = true;
+            } else {
+                current->max_capacity_kb = max_cap;
+                current->extended_capacity = false;
+            }
+
+            current->num_devices = *(uint16_t*)(p + MEMARRAY_NUM_DEVICES_OFFSET);
+
+            index++;
+        }
+        p = dmi_next(p, end);
+    }
+
+    *count = ctx->memory_arrays_count;
+    return ctx->memory_arrays_ptr;
+}
+
 // ===== Cleanup =====
 void lazybios_cleanup(lazybios_ctx_t* ctx) {
     if (!ctx) return;
@@ -916,6 +1061,12 @@ void lazybios_cleanup(lazybios_ctx_t* ctx) {
         ctx->caches_ptr = NULL;
     }
     ctx->caches_count = 0;
+
+    if (ctx->memory_arrays_ptr) {
+        free(ctx->memory_arrays_ptr);
+        ctx->memory_arrays_ptr = NULL;
+    }
+    ctx->memory_arrays_count = 0;
 
     if (ctx->memory_devices_ptr) {
         for (size_t i = 0; i < ctx->memory_devices_count; i++) {

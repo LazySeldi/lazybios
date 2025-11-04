@@ -95,9 +95,11 @@ typedef struct {
     char *product_name;  // e.g., "HP ProDesk 400 G9 SFF"
     char *version;       // e.g., "V1.0"
     char *serial_number; // The system's serial number
-    char *uuid;          // The system's unique UUID
+    char *uuid;          // Properly formatted UUID (e.g., "550e8400-e29b-41d4-a716-446655440000")
 } system_info_t;
 ```
+
+**Note:** UUID is now properly parsed and formatted, not just a placeholder.
 
 ### Baseboard (Motherboard) Information (Type 2)
 
@@ -149,19 +151,19 @@ typedef struct {
     char *part_number;          
     uint16_t core_count;        // Physical core count
     uint16_t core_enabled;      // Enabled cores
-    uint16_t thread_count;      // Threads per core
+    uint16_t thread_count;      // Thread count
     uint16_t max_speed_mhz;     
     uint16_t current_speed_mhz;
-    uint8_t processor_type;     // THE CPU TYPE, needs a decoder will add next time!
-    uint8_t processor_family;    // CPU family, needs the lazybios_get_processor_family_string() decoder
-    uint16_t processor_family2;  // Extended family for values >= 0xFE
-    uint16_t characteristics;    // CPU characteristics, also needs a decoder
-    uint16_t L1_cache_handle;    // THE HANDLE of the Caches not the actual size of the caches.
+    uint8_t processor_type;     // CPU type (use lazybios_get_processor_type_string())
+    uint8_t processor_family;   // CPU family (use lazybios_get_processor_family_string())
+    uint16_t processor_family2; // Extended family for values >= 0xFE
+    uint16_t characteristics;   // CPU characteristics
+    uint16_t L1_cache_handle;   // Handle reference to cache structures
     uint16_t L2_cache_handle;
     uint16_t L3_cache_handle;
-    uint8_t voltage;             // Voltage ( Not all systems expose these )
-    uint16_t external_clock_mhz; // External Clock
-    uint8_t status; // The status of the CPU will also add a decoder next time!
+    uint8_t voltage;            // Voltage (not always available)
+    uint16_t external_clock_mhz;
+    uint8_t status;             // CPU status (use lazybios_get_processor_status_string())
 } processor_info_t;
 ```
 
@@ -169,23 +171,41 @@ typedef struct {
 
 | Function | Description |
 | :--- | :--- |
-| `cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count)` | Returns a dynamically allocated array of `cache_info_t` structures for L1, L2, L3 caches. The total number of caches is stored in the `count` pointer. |
+| `cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count)` | Returns a dynamically allocated array of `cache_info_t` structures for L1, L2, L3 caches. The total number of caches is stored in the `count` pointer. **Now supports SMBIOS 3.1+ extended size fields for accurate cache sizes.** |
 
-**`cache_info_t` Structure (Highlights):**
+**`cache_info_t` Structure:**
 ```c
 typedef struct {
-    char *socket_designation; // e.g., "L1 Cache"
-    uint8_t level;            // CPU caches,0 for L1, 1 for L2, 2 for L3 - Gotta use + 1 to see L1 L2 L3, 
-    uint16_t size_kb;         // Cache size in KB
-    uint8_t error_correction_type; // The error correction type Single-bit ECC, Multi-Bit ECC etc
-    uint8_t system_cache_type; // System cache type e.g. Unified etc
-    uint8_t associativity;     // e.g. 4-way
+    char *socket_designation;  // e.g., "L1 Cache"
+    uint8_t level;             // 0 for L1, 1 for L2, 2 for L3 (add 1 when displaying)
+    uint32_t size_kb;          // Cache size in KB (now 32-bit for large caches)
+    uint8_t error_correction_type; // Use lazybios_get_cache_ecc_string()
+    uint8_t system_cache_type; // Use lazybios_get_cache_type_string()
+    uint8_t associativity;     // Use lazybios_get_cache_associativity_string()
 } cache_info_t;
 ```
 
-### Memory Devices (Type 17)
+**Important:** Cache sizes are now properly parsed for both SMBIOS 2.x and 3.x versions, with support for extended size fields introduced in SMBIOS 3.1.
 
-This one is a bit different, as a system can have multiple memory sticks.
+### Physical Memory Array (Type 16)
+
+| Function | Description |
+| :--- | :--- |
+| `physical_memory_array_t* lazybios_get_memory_arrays(lazybios_ctx_t* ctx, size_t* count)` | Returns information about the physical memory array (motherboard memory controller). The total number of arrays is stored in the `count` pointer. |
+
+**`physical_memory_array_t` Structure:**
+```c
+typedef struct {
+    uint8_t location;          // Use lazybios_get_memory_array_location_string()
+    uint8_t use;               // Use lazybios_get_memory_array_use_string()
+    uint8_t ecc_type;          // Use lazybios_get_memory_array_ecc_string()
+    uint64_t max_capacity_kb;  // Maximum capacity in KB
+    uint16_t num_devices;      // Number of memory device slots
+    bool extended_capacity;    // True if using extended capacity field
+} physical_memory_array_t;
+```
+
+### Memory Devices (Type 17)
 
 | Function | Description |
 | :--- | :--- |
@@ -205,26 +225,44 @@ typedef struct {
 } memory_device_t;
 ```
 
-## Helper Functions (The Translators)
+## Helper Functions
 
-These functions are super useful for turning the raw numeric codes from the SMBIOS tables into human-readable strings.
+These functions convert raw numeric codes from SMBIOS tables into human-readable strings. **All helper functions are now thread-safe.**
 
-| Function                                                                      | Description                                                                                                     |
-|:------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------|
-| `const char* lazybios_get_processor_family_string(uint8_t family)`            | Converts the `processor_family` code (from `processor_info_t`) into a string like "Intel Core i7" or "AMD Zen". |
-| `const char* lazybios_get_memory_type_string(uint8_t type)`                   | Converts the `memory_type` code (from `memory_device_t`) into a string like "DDR4" or "LPDDR5".                 |
-| `const char* lazybios_get_memory_form_factor_string(uint8_t form_factor)`     | Converts the `form_factor` code (from `memory_device_t`) into a string like "DIMM" or "SODIMM".                 |
-| `void lazybios_smbios_ver(const lazybios_ctx_t* ctx)`                         | A simple utility to print the SMBIOS version to `stdout`.                                                       |
-| `const char* lazybios_get_cache_type_string(uint8_t cache_type)`              | Converts the 'cache_type' code (from 'cache_info_t') into a string like "Unified", "Data" etc.                  |
-| `const char* lazybios_get_cache_ecc_string(uint8_t ecc_type)`                 | Converts the 'ecc_type' code (from 'cache_info_t') into a string like "Multi-bit ECC", "Single-bit ECC" etc.    |
-| `const char* lazybios_get_cache_associativity_string(uint8_t associativity)`  | Converts the 'associativity' code (from 'cache_info_t') into a string like "4-way", "Fully Associative" etc.    |
+### Processor Helpers
+| Function                                                           | Description                                                      |
+|:-------------------------------------------------------------------|:-----------------------------------------------------------------|
+| `const char* lazybios_get_processor_family_string(uint8_t family)` | Converts processor family code to string (e.g., "Intel Core i7") |
+| `const char* lazybios_get_processor_type_string(uint8_t type)`     | Converts processor type code to string (e.g., "Central Processor") |
+| `const char* lazybios_get_processor_status_string(uint8_t status)` | Converts processor status to string (e.g., "Enabled", "Idle")   |
+
+### Cache Helpers
+| Function                                                              | Description                                                   |
+|:----------------------------------------------------------------------|:--------------------------------------------------------------|
+| `const char* lazybios_get_cache_type_string(uint8_t cache_type)`      | Converts cache type to string (e.g., "Unified", "Data")       |
+| `const char* lazybios_get_cache_ecc_string(uint8_t ecc_type)`         | Converts ECC type to string (e.g., "Single-bit ECC")          |
+| `const char* lazybios_get_cache_associativity_string(uint8_t assoc)`  | Converts associativity to string (e.g., "8-way", "16-way")    |
+
+### Memory Helpers
+| Function                                                                 | Description                                                |
+|:-------------------------------------------------------------------------|:-----------------------------------------------------------|
+| `const char* lazybios_get_memory_type_string(uint8_t type)`              | Converts memory type to string (e.g., "DDR4", "DDR5")      |
+| `const char* lazybios_get_memory_form_factor_string(uint8_t ff)`         | Converts form factor to string (e.g., "DIMM", "SODIMM")    |
+| `const char* lazybios_get_memory_array_location_string(uint8_t loc)`     | Converts array location to string (e.g., "System board")   |
+| `const char* lazybios_get_memory_array_use_string(uint8_t use)`          | Converts array use to string (e.g., "System memory")       |
+| `const char* lazybios_get_memory_array_ecc_string(uint8_t ecc)`          | Converts array ECC type to string (e.g., "Multi-bit ECC")  |
+
+### Utility Functions
+| Function                                                  | Description                                      |
+|:----------------------------------------------------------|:-------------------------------------------------|
+| `void lazybios_smbios_ver(const lazybios_ctx_t* ctx)`     | Prints the SMBIOS version to stdout              |
 ## Building and Linking
 
 You'll need to link against the `lazybios` library. Assuming you've built and installed it using CMake, here are a few common ways to integrate it into your project.
 
 ### Method 1: System-wide Installation (Simple GCC)
 
-If you've installed the library to a standard system path (e.g., `/usr/local/lib`), you can link directly:
+If you've installed the library to a standard system path (e.g., `/usr/lib`), you can link directly:
 
 ```shell
 gcc my_app.c -llazybios -o my_app
@@ -254,4 +292,5 @@ find_package(lazybios REQUIRED)
 target_link_libraries(my_app PRIVATE lazybios::lazybios)
 ```
 
-That's the gist of it! If you run into any issues or have suggestions, feel free to reach out. Happy coding!
+To really learn how these functions are used, check test.c it literally tests every functionality.\
+That's it! If you run into any issues or have suggestions, feel free to reach out. Happy coding!
