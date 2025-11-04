@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,15 +69,12 @@ void print_processor_info(lazybios_ctx_t* ctx) {
     if (proc) {
         printf("Socket: %s\n", proc->socket_designation);
         printf("Version: %s\n", proc->version);
-        printf("Family: %s (0x%02X)\n",
-               lazybios_get_processor_family_string(proc->processor_family),
-               proc->processor_family);
+        printf("Family: %s \n", lazybios_get_processor_family_string(proc->processor_family));
         if (proc->processor_family == 0xFE) {
             printf("Extended Family: 0x%04X\n", proc->processor_family2);
         }
-        printf("Type: %u\n", proc->processor_type);
-        printf("Cores: %u physical, %u enabled\n",
-               proc->core_count, proc->core_enabled);
+        printf("Type: %s\n", lazybios_get_processor_type_string(proc->processor_type));
+        printf("Cores: %u physical, %u enabled\n", proc->core_count, proc->core_enabled);
         printf("Threads: %u total\n", proc->thread_count);
         printf("Max Speed: %u MHz\n", proc->max_speed_mhz);
         if (proc->current_speed_mhz > 0) {
@@ -85,7 +83,7 @@ void print_processor_info(lazybios_ctx_t* ctx) {
         printf("External Clock: %u MHz\n", proc->external_clock_mhz);
         printf("Voltage: 0x%02X\n", proc->voltage);
         if (proc->status > 0) {
-            printf("Status: 0x%02X\n", proc->status);
+            printf("Status: %s\n", lazybios_get_processor_status_string(proc->status));
         }
         printf("L1 Handle: %u \n L2 Handle: %u \n L3 handle: %u \n", proc->L1_cache_handle, proc->L2_cache_handle, proc->L3_cache_handle);
         printf("Characteristics: 0x%04X\n", proc->characteristics);
@@ -130,6 +128,23 @@ void print_cache_info(lazybios_ctx_t* ctx) {
     }
 }
 
+void print_memory_array_info(lazybios_ctx_t* ctx) {
+    printf("=== MEMORY ARRAY INFO ===\n");
+    size_t mem_arr_count;
+    physical_memory_array_t *memory_arrays = lazybios_get_memory_arrays(ctx, &mem_arr_count);
+
+    if (memory_arrays && mem_arr_count > 0) {
+        printf("Found %zu memory array device(s)\n", mem_arr_count);
+    }
+    for (size_t i = 0; i < mem_arr_count; i++) {
+        printf("Location: %s\n", lazybios_get_memory_array_location_string(memory_arrays->location));
+        printf("Use: %s\n", lazybios_get_memory_array_use_string(memory_arrays->use));
+        printf("ECC Type: %s\n", lazybios_get_memory_array_ecc_string(memory_arrays->ecc_type));
+        printf("MAX Capacity: %lu KB\n", memory_arrays->max_capacity_kb);
+        printf("Number of Devices: %d\n\n", memory_arrays->num_devices);
+    }
+}
+
 void print_memory_info(lazybios_ctx_t* ctx) {
     printf("=== MEMORY DEVICES ===\n");
     size_t mem_count;
@@ -160,12 +175,8 @@ void print_memory_info(lazybios_ctx_t* ctx) {
             }
 
             printf("  Speed: %u MHz\n", memories[i].speed_mhz);
-            printf("  Type: %s (0x%02X)\n",
-                   lazybios_get_memory_type_string(memories[i].memory_type),
-                   memories[i].memory_type);
-            printf("  Form Factor: %s (0x%02X)\n",
-                   lazybios_get_memory_form_factor_string(memories[i].form_factor),
-                   memories[i].form_factor);
+            printf("  Type: %s \n", lazybios_get_memory_type_string(memories[i].memory_type));
+            printf("  Form Factor: %s\n", lazybios_get_memory_form_factor_string(memories[i].form_factor));
             if (memories[i].total_width > 0) {
                 printf("  Total Width: %u bits\n", memories[i].total_width);
             }
@@ -238,6 +249,7 @@ int main(void) {
     print_chassis_info(ctx);
     print_processor_info(ctx);
     print_cache_info(ctx);
+    print_memory_array_info(ctx);
     print_memory_info(ctx);
 
     lazybios_ctx_free(ctx);
