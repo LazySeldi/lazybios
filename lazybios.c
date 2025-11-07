@@ -29,22 +29,33 @@ size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8
     switch(type) {
         case SMBIOS_TYPE_BIOS:
             return is_64bit ? BIOS_MIN_LENGTH_3_0 : BIOS_MIN_LENGTH_2_0;
+
         case SMBIOS_TYPE_SYSTEM:
             return is_64bit ? SYSTEM_MIN_LENGTH_3_0 : SYSTEM_MIN_LENGTH_2_0;
+
         case SMBIOS_TYPE_BASEBOARD:
             return BASEBOARD_MIN_LENGTH;
+
         case SMBIOS_TYPE_CHASSIS:
             return is_64bit ? CHASSIS_MIN_LENGTH_3_0 : CHASSIS_MIN_LENGTH_2_0;
+
         case SMBIOS_TYPE_PROCESSOR:
             return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 6))
                    ? PROC_MIN_LENGTH_2_6 : PROC_MIN_LENGTH_2_0;
+
         case SMBIOS_TYPE_CACHES:
             return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 1))
                    ? CACHE_MIN_LENGTH_2_1 : CACHE_MIN_LENGTH_2_0;
+
+        case SMBIOS_TYPE_PORT_CONNECTOR:
+            return PORT_CONNECTOR_MIN_LENGTH;
+
         case SMBIOS_TYPE_MEMARRAY:
             return MEMARRAY_MIN_LENGTH;
+
         case SMBIOS_TYPE_MEMDEVICE:
             return is_64bit ? MEMORY_MIN_LENGTH_3_0 : MEMORY_MIN_LENGTH_2_0;
+
         default:
             return 4;
     }
@@ -59,334 +70,423 @@ bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t majo
 // ===== String Mapping Functions =====
 const char* lazybios_get_processor_family_string(uint8_t family) {
     switch(family) {
-        // Basic/Other
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
+        case PROC_FAMILY_OTHER:                    return "Other";
+        case PROC_FAMILY_UNKNOWN:                  return "Unknown";
 
-        // Intel x86 Legacy
-        case 0x03: return "Intel 8086";
-        case 0x04: return "Intel 80286";
-        case 0x05: return "Intel 80386";
-        case 0x06: return "Intel 80486";
-        case 0x0B: return "Intel Pentium";
-        case 0x0C: return "Pentium Pro";
-        case 0x0D: return "Pentium II";
-        case 0x0E: return "Pentium MMX";
-        case 0x0F: return "Intel Celeron";
-        case 0x10: return "Pentium II Xeon";
-        case 0x11: return "Pentium III";
+        case PROC_FAMILY_INTEL_8086:               return "Intel 8086";
+        case PROC_FAMILY_INTEL_80286:              return "Intel 80286";
+        case PROC_FAMILY_INTEL_80386:              return "Intel 80386";
+        case PROC_FAMILY_INTEL_80486:              return "Intel 80486";
+        case PROC_FAMILY_INTEL_PENTIUM:            return "Intel Pentium";
+        case PROC_FAMILY_INTEL_PENTIUM_PRO:        return "Pentium Pro";
+        case PROC_FAMILY_INTEL_PENTIUM_II:         return "Pentium II";
+        case PROC_FAMILY_INTEL_PENTIUM_MMX:        return "Pentium MMX";
+        case PROC_FAMILY_INTEL_CELERON:            return "Intel Celeron";
+        case PROC_FAMILY_PENTIUM_II_XEON:          return "Pentium II Xeon";
+        case PROC_FAMILY_PENTIUM_III:              return "Pentium III";
 
-        // Intel Modern
-        case 0x14: return "Intel Celeron M";
-        case 0x15: return "Intel Pentium 4 HT";
-        case 0x16: return "Intel Processor";
-        case 0x28: return "Intel Core Duo";
-        case 0x29: return "Intel Core Duo Mobile";
-        case 0x2A: return "Intel Core Solo Mobile";
-        case 0x2B: return "Intel Atom";
-        case 0x2C: return "Intel Core M";
-        case 0x2D: return "Intel Core m3";
-        case 0x2E: return "Intel Core m5";
-        case 0x2F: return "Intel Core m7";
+        case PROC_FAMILY_INTEL_CELERON_M:          return "Intel Celeron M";
+        case PROC_FAMILY_INTEL_PENTIUM_4_HT:       return "Intel Pentium 4 HT";
+        case PROC_FAMILY_INTEL_PROCESSOR:          return "Intel Processor";
+        case PROC_FAMILY_INTEL_CORE_DUO:           return "Intel Core Duo";
+        case PROC_FAMILY_INTEL_CORE_DUO_MOBILE:    return "Intel Core Duo Mobile";
+        case PROC_FAMILY_INTEL_CORE_SOLO_MOBILE:   return "Intel Core Solo Mobile";
+        case PROC_FAMILY_INTEL_ATOM:               return "Intel Atom";
+        case PROC_FAMILY_INTEL_CORE_M:             return "Intel Core M";
+        case PROC_FAMILY_INTEL_CORE_M3:            return "Intel Core m3";
+        case PROC_FAMILY_INTEL_CORE_M5:            return "Intel Core m5";
+        case PROC_FAMILY_INTEL_CORE_M7:            return "Intel Core m7";
 
-        // Intel Xeon
-        case 0xA1: return "Quad-Core Intel Xeon 3200";
-        case 0xA2: return "Dual-Core Intel Xeon 3000";
-        case 0xA3: return "Quad-Core Intel Xeon 5300";
-        case 0xA4: return "Dual-Core Intel Xeon 5100";
-        case 0xA5: return "Dual-Core Intel Xeon 5000";
-        case 0xA6: return "Dual-Core Intel Xeon LV";
-        case 0xA7: return "Dual-Core Intel Xeon ULV";
-        case 0xA8: return "Dual-Core Intel Xeon 7100";
-        case 0xA9: return "Quad-Core Intel Xeon 5400";
-        case 0xAA: return "Quad-Core Intel Xeon";
-        case 0xAB: return "Dual-Core Intel Xeon 5200";
-        case 0xAC: return "Dual-Core Intel Xeon 7200";
-        case 0xAD: return "Quad-Core Intel Xeon 7300";
-        case 0xAE: return "Quad-Core Intel Xeon 7400";
-        case 0xAF: return "Multi-Core Intel Xeon 7400";
-        case 0xB0: return "Pentium III Xeon";
-        case 0xB1: return "Pentium III SpeedStep";
-        case 0xB2: return "Pentium 4";
-        case 0xB3: return "Intel Xeon";
-        case 0xB5: return "Intel Xeon MP";
-        case 0xB9: return "Intel Pentium M";
-        case 0xBA: return "Intel Celeron D";
-        case 0xBB: return "Intel Pentium D";
-        case 0xBC: return "Intel Pentium Extreme Edition";
-        case 0xBD: return "Intel Core Solo";
-        case 0xBF: return "Intel Core 2 Duo";
-        case 0xC0: return "Intel Core 2 Solo";
-        case 0xC1: return "Intel Core 2 Extreme";
-        case 0xC2: return "Intel Core 2 Quad";
-        case 0xC3: return "Intel Core 2 Extreme Mobile";
-        case 0xC4: return "Intel Core 2 Duo Mobile";
-        case 0xC5: return "Intel Core 2 Solo Mobile";
-        case 0xC6: return "Intel Core i7";
-        case 0xC7: return "Dual-Core Intel Celeron";
-        case 0xCD: return "Intel Core i5";
-        case 0xCE: return "Intel Core i3";
-        case 0xCF: return "Intel Core i9";
-        case 0xD0: return "Intel Xeon D";
-        case 0xD6: return "Multi-Core Intel Xeon";
-        case 0xD7: return "Dual-Core Intel Xeon 3xxx";
-        case 0xD8: return "Quad-Core Intel Xeon 3xxx";
-        case 0xDA: return "Dual-Core Intel Xeon 5xxx";
-        case 0xDB: return "Quad-Core Intel Xeon 5xxx";
+        case PROC_FAMILY_XEON_3200:                return "Quad-Core Intel Xeon 3200";
+        case PROC_FAMILY_XEON_3000:                return "Dual-Core Intel Xeon 3000";
+        case PROC_FAMILY_XEON_5300:                return "Quad-Core Intel Xeon 5300";
+        case PROC_FAMILY_XEON_5100:                return "Dual-Core Intel Xeon 5100";
+        case PROC_FAMILY_XEON_5000:                return "Dual-Core Intel Xeon 5000";
+        case PROC_FAMILY_XEON_LV:                  return "Dual-Core Intel Xeon LV";
+        case PROC_FAMILY_XEON_ULV:                 return "Dual-Core Intel Xeon ULV";
+        case PROC_FAMILY_XEON_7100:                return "Dual-Core Intel Xeon 7100";
+        case PROC_FAMILY_XEON_5400:                return "Quad-Core Intel Xeon 5400";
+        case PROC_FAMILY_XEON_GENERIC:             return "Quad-Core Intel Xeon";
+        case PROC_FAMILY_XEON_5200:                return "Dual-Core Intel Xeon 5200";
+        case PROC_FAMILY_XEON_7200:                return "Dual-Core Intel Xeon 7200";
+        case PROC_FAMILY_XEON_7300:                return "Quad-Core Intel Xeon 7300";
+        case PROC_FAMILY_XEON_7400:                return "Quad-Core Intel Xeon 7400";
+        case PROC_FAMILY_XEON_MULTI_7400:          return "Multi-Core Intel Xeon 7400";
+        case PROC_FAMILY_PENTIUM_III_XEON:         return "Pentium III Xeon";
+        case PROC_FAMILY_PENTIUM_III_SPEEDSTEP:    return "Pentium III SpeedStep";
+        case PROC_FAMILY_PENTIUM_4:                return "Pentium 4";
+        case PROC_FAMILY_INTEL_XEON:               return "Intel Xeon";
+        case PROC_FAMILY_INTEL_XEON_MP:            return "Intel Xeon MP";
+        case PROC_FAMILY_INTEL_PENTIUM_M:          return "Intel Pentium M";
+        case PROC_FAMILY_INTEL_CELERON_D:          return "Intel Celeron D";
+        case PROC_FAMILY_INTEL_PENTIUM_D:          return "Intel Pentium D";
+        case PROC_FAMILY_INTEL_PENTIUM_EXTREME:    return "Intel Pentium Extreme Edition";
+        case PROC_FAMILY_INTEL_CORE_SOLO:          return "Intel Core Solo";
+        case PROC_FAMILY_INTEL_CORE_2_DUO:         return "Intel Core 2 Duo";
+        case PROC_FAMILY_INTEL_CORE_2_SOLO:        return "Intel Core 2 Solo";
+        case PROC_FAMILY_INTEL_CORE_2_EXTREME:     return "Intel Core 2 Extreme";
+        case PROC_FAMILY_INTEL_CORE_2_QUAD:        return "Intel Core 2 Quad";
+        case PROC_FAMILY_CORE_2_EXTREME_MOBILE:    return "Intel Core 2 Extreme Mobile";
+        case PROC_FAMILY_CORE_2_DUO_MOBILE:        return "Intel Core 2 Duo Mobile";
+        case PROC_FAMILY_CORE_2_SOLO_MOBILE:       return "Intel Core 2 Solo Mobile";
+        case PROC_FAMILY_INTEL_CORE_I7:            return "Intel Core i7";
+        case PROC_FAMILY_INTEL_DUAL_CELERON:       return "Dual-Core Intel Celeron";
+        case PROC_FAMILY_INTEL_CORE_I5:            return "Intel Core i5";
+        case PROC_FAMILY_INTEL_CORE_I3:            return "Intel Core i3";
+        case PROC_FAMILY_INTEL_CORE_I9:            return "Intel Core i9";
+        case PROC_FAMILY_INTEL_XEON_D:             return "Intel Xeon D";
+        case PROC_FAMILY_INTEL_XEON_MULTI:         return "Multi-Core Intel Xeon";
+        case PROC_FAMILY_XEON_DC_3XXX:             return "Dual-Core Intel Xeon 3xxx";
+        case PROC_FAMILY_XEON_QC_3XXX:             return "Quad-Core Intel Xeon 3xxx";
+        case PROC_FAMILY_XEON_DC_5XXX:             return "Dual-Core Intel Xeon 5xxx";
+        case PROC_FAMILY_XEON_QC_5XXX:             return "Quad-Core Intel Xeon 5xxx";
 
-        // AMD
-        case 0x18: return "AMD Duron";
-        case 0x19: return "AMD K5";
-        case 0x1A: return "AMD K6";
-        case 0x1B: return "AMD K6-2";
-        case 0x1C: return "AMD K6-3";
-        case 0x1D: return "AMD Athlon";
-        case 0x1F: return "AMD K6-2+";
-        case 0x38: return "AMD Turion II Ultra Dual-Core Mobile M";
-        case 0x39: return "AMD Turion II Dual-Core Mobile M";
-        case 0x3A: return "AMD Athlon II Dual-Core M";
-        case 0x3B: return "AMD Opteron 6100";
-        case 0x3C: return "AMD Opteron 4100";
-        case 0x3D: return "AMD Opteron 6200";
-        case 0x3E: return "AMD Opteron 4200";
-        case 0x3F: return "AMD FX";
-        case 0x46: return "AMD C-Series";
-        case 0x47: return "AMD E-Series";
-        case 0x48: return "AMD A-Series";
-        case 0x49: return "AMD G-Series";
-        case 0x4A: return "AMD Z-Series";
-        case 0x4B: return "AMD R-Series";
-        case 0x4C: return "AMD Opteron 4300";
-        case 0x4D: return "AMD Opteron 6300";
-        case 0x4E: return "AMD Opteron 3300";
-        case 0x4F: return "AMD FirePro";
-        case 0x66: return "AMD Athlon X4 Quad-Core";
-        case 0x67: return "AMD Opteron X1000";
-        case 0x68: return "AMD Opteron X2000 APU";
-        case 0x69: return "AMD Opteron A-Series";
-        case 0x6A: return "AMD Opteron X3000 APU";
-        case 0x6B: return "AMD Zen";
-        case 0x83: return "AMD Athlon 64";
-        case 0x84: return "AMD Opteron";
-        case 0x85: return "AMD Sempron";
-        case 0x86: return "AMD Turion 64 Mobile";
-        case 0x87: return "Dual-Core AMD Opteron";
-        case 0x88: return "AMD Athlon 64 X2 Dual-Core";
-        case 0x89: return "AMD Turion 64 X2 Mobile";
-        case 0x8A: return "Quad-Core AMD Opteron";
-        case 0x8B: return "Third-Gen AMD Opteron";
-        case 0x8C: return "AMD Phenom FX Quad-Core";
-        case 0x8D: return "AMD Phenom X4 Quad-Core";
-        case 0x8E: return "AMD Phenom X2 Dual-Core";
-        case 0x8F: return "AMD Athlon X2 Dual-Core";
-        case 0xB6: return "AMD Athlon XP";
-        case 0xB7: return "AMD Athlon MP";
+        case PROC_FAMILY_AMD_DURON:                return "AMD Duron";
+        case PROC_FAMILY_AMD_K5:                   return "AMD K5";
+        case PROC_FAMILY_AMD_K6:                   return "AMD K6";
+        case PROC_FAMILY_AMD_K6_2:                 return "AMD K6-2";
+        case PROC_FAMILY_AMD_K6_3:                 return "AMD K6-3";
+        case PROC_FAMILY_AMD_ATHLON:               return "AMD Athlon";
+        case PROC_FAMILY_AMD_K6_2_PLUS:            return "AMD K6-2+";
+        case PROC_FAMILY_AMD_TURION_II_ULTRA:      return "AMD Turion II Ultra Dual-Core Mobile M";
+        case PROC_FAMILY_AMD_TURION_II:            return "AMD Turion II Dual-Core Mobile M";
+        case PROC_FAMILY_AMD_ATHLON_II:            return "AMD Athlon II Dual-Core M";
+        case PROC_FAMILY_AMD_OPTERON_6100:         return "AMD Opteron 6100";
+        case PROC_FAMILY_AMD_OPTERON_4100:         return "AMD Opteron 4100";
+        case PROC_FAMILY_AMD_OPTERON_6200:         return "AMD Opteron 6200";
+        case PROC_FAMILY_AMD_OPTERON_4200:         return "AMD Opteron 4200";
+        case PROC_FAMILY_AMD_FX:                   return "AMD FX";
+        case PROC_FAMILY_AMD_C_SERIES:             return "AMD C-Series";
+        case PROC_FAMILY_AMD_E_SERIES:             return "AMD E-Series";
+        case PROC_FAMILY_AMD_A_SERIES:             return "AMD A-Series";
+        case PROC_FAMILY_AMD_G_SERIES:             return "AMD G-Series";
+        case PROC_FAMILY_AMD_Z_SERIES:             return "AMD Z-Series";
+        case PROC_FAMILY_AMD_R_SERIES:             return "AMD R-Series";
+        case PROC_FAMILY_AMD_OPTERON_4300:         return "AMD Opteron 4300";
+        case PROC_FAMILY_AMD_OPTERON_6300:         return "AMD Opteron 6300";
+        case PROC_FAMILY_AMD_OPTERON_3300:         return "AMD Opteron 3300";
+        case PROC_FAMILY_AMD_FIREPRO:              return "AMD FirePro";
+        case PROC_FAMILY_AMD_ATHLON_X4:            return "AMD Athlon X4 Quad-Core";
+        case PROC_FAMILY_AMD_OPTERON_X1000:        return "AMD Opteron X1000";
+        case PROC_FAMILY_AMD_OPTERON_X2000:        return "AMD Opteron X2000 APU";
+        case PROC_FAMILY_AMD_OPTERON_A_SERIES:     return "AMD Opteron A-Series";
+        case PROC_FAMILY_AMD_OPTERON_X3000:        return "AMD Opteron X3000 APU";
+        case PROC_FAMILY_AMD_ZEN:                  return "AMD Zen";
+        case PROC_FAMILY_AMD_ATHLON_64:            return "AMD Athlon 64";
+        case PROC_FAMILY_AMD_OPTERON:              return "AMD Opteron";
+        case PROC_FAMILY_AMD_SEMPRON:              return "AMD Sempron";
+        case PROC_FAMILY_AMD_TURION_64_MOBILE:     return "AMD Turion 64 Mobile";
+        case PROC_FAMILY_AMD_DUAL_OPTERON:         return "Dual-Core AMD Opteron";
+        case PROC_FAMILY_AMD_ATHLON_64_X2:         return "AMD Athlon 64 X2 Dual-Core";
+        case PROC_FAMILY_AMD_TURION_64_X2:         return "AMD Turion 64 X2 Mobile";
+        case PROC_FAMILY_AMD_QUAD_OPTERON:         return "Quad-Core AMD Opteron";
+        case PROC_FAMILY_AMD_3RD_OPTERON:          return "Third-Gen AMD Opteron";
+        case PROC_FAMILY_AMD_PHENOM_FX:            return "AMD Phenom FX Quad-Core";
+        case PROC_FAMILY_AMD_PHENOM_X4:            return "AMD Phenom X4 Quad-Core";
+        case PROC_FAMILY_AMD_PHENOM_X2:            return "AMD Phenom X2 Dual-Core";
+        case PROC_FAMILY_AMD_ATHLON_X2:            return "AMD Athlon X2 Dual-Core";
+        case PROC_FAMILY_AMD_ATHLON_XP:            return "AMD Athlon XP";
+        case PROC_FAMILY_AMD_ATHLON_MP:            return "AMD Athlon MP";
 
-        // ARM/Apple
-        case 0x12: return "M1 Family";
-        case 0x13: return "M2 Family";
+        case PROC_FAMILY_APPLE_M1:                 return "M1 Family";
+        case PROC_FAMILY_APPLE_M2:                 return "M2 Family";
 
-        // SPARC
-        case 0x50: return "SPARC";
-        case 0x51: return "SuperSPARC";
-        case 0x52: return "microSPARC II";
-        case 0x53: return "microSPARC IIep";
-        case 0x54: return "UltraSPARC";
-        case 0x55: return "UltraSPARC II";
-        case 0x56: return "UltraSPARC Iii";
-        case 0x57: return "UltraSPARC III";
-        case 0x58: return "UltraSPARC IIIi";
+        case PROC_FAMILY_SPARC:                    return "SPARC";
+        case PROC_FAMILY_SUPERSPARC:               return "SuperSPARC";
+        case PROC_FAMILY_MICROSPARC_II:            return "microSPARC II";
+        case PROC_FAMILY_MICROSPARC_IIEP:          return "microSPARC IIep";
+        case PROC_FAMILY_ULTRASPARC:               return "UltraSPARC";
+        case PROC_FAMILY_ULTRASPARC_II:            return "UltraSPARC II";
+        case PROC_FAMILY_ULTRASPARC_III:           return "UltraSPARC Iii";
+        case PROC_FAMILY_ULTRASPARC_IIIX:          return "UltraSPARC III";
+        case PROC_FAMILY_ULTRASPARC_IIIi:          return "UltraSPARC IIIi";
 
-        // VIA (x86-compatible, runs Linux)
-        case 0xD2: return "VIA C7-M";
-        case 0xD3: return "VIA C7-D";
-        case 0xD4: return "VIA C7";
-        case 0xD5: return "VIA Eden";
-        case 0xD9: return "VIA Nano";
+        case PROC_FAMILY_VIA_C7_M:                 return "VIA C7-M";
+        case PROC_FAMILY_VIA_C7_D:                 return "VIA C7-D";
+        case PROC_FAMILY_VIA_C7:                   return "VIA C7";
+        case PROC_FAMILY_VIA_EDEN:                 return "VIA Eden";
+        case PROC_FAMILY_VIA_NANO:                 return "VIA Nano";
 
         default:
             return "Unknown";
     }
 }
 
+// Processor type
 const char* lazybios_get_processor_type_string(uint8_t type) {
     switch(type) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "Central Processor";
-        case 0x04: return "Math Processor";
-        case 0x05: return "DSP Processor";
-        case 0x06: return "Video Processor";
+        case PROC_TYPE_OTHER:            return "Other";
+        case PROC_TYPE_UNKNOWN:          return "Unknown";
+        case PROC_TYPE_CENTRAL_PROCESSOR:return "Central Processor";
+        case PROC_TYPE_MATH_PROCESSOR:   return "Math Processor";
+        case PROC_TYPE_DSP_PROCESSOR:    return "DSP Processor";
+        case PROC_TYPE_VIDEO_PROCESSOR:  return "Video Processor";
         default: return "Unknown";
     }
 }
 
+// Processor status (lower 3 bits)
 const char* lazybios_get_processor_status_string(uint8_t status) {
-    uint8_t cpu_status = status & 0x07;
+    uint8_t cpu_status = status & PROC_STATUS_MASK;
     switch(cpu_status) {
-        case 0x00: return "Unknown";
-        case 0x01: return "Enabled";
-        case 0x02: return "Disabled by User";
-        case 0x03: return "Disabled by BIOS";
-        case 0x04: return "Idle";
-        case 0x07: return "Other";
+        case PROC_STATUS_UNKNOWN:            return "Unknown";
+        case PROC_STATUS_ENABLED:            return "Enabled";
+        case PROC_STATUS_DISABLED_BY_USER:   return "Disabled by User";
+        case PROC_STATUS_DISABLED_BY_BIOS:   return "Disabled by BIOS";
+        case PROC_STATUS_IDLE:               return "Idle";
+        case PROC_STATUS_OTHER:              return "Other";
         default: return "Reserved";
     }
 }
 
+// Cache type
 const char* lazybios_get_cache_type_string(uint8_t cache_type) {
     switch(cache_type) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "Instruction";
-        case 0x04: return "Data";
-        case 0x05: return "Unified";
+        case CACHE_TYPE_OTHER:       return "Other";
+        case CACHE_TYPE_UNKNOWN:     return "Unknown";
+        case CACHE_TYPE_INSTRUCTION: return "Instruction";
+        case CACHE_TYPE_DATA:        return "Data";
+        case CACHE_TYPE_UNIFIED:     return "Unified";
         default: return "Unknown";
     }
 }
 
+// Cache ECC
 const char* lazybios_get_cache_ecc_string(uint8_t ecc_type) {
     switch(ecc_type) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "None";
-        case 0x04: return "Parity";
-        case 0x05: return "Single-bit ECC";
-        case 0x06: return "Multi-bit ECC";
-        case 0x07: return "CRC";
+        case CACHE_ECC_OTHER:       return "Other";
+        case CACHE_ECC_UNKNOWN:     return "Unknown";
+        case CACHE_ECC_NONE:        return "None";
+        case CACHE_ECC_PARITY:      return "Parity";
+        case CACHE_ECC_SINGLE_BIT:  return "Single-bit ECC";
+        case CACHE_ECC_MULTI_BIT:   return "Multi-bit ECC";
+        case CACHE_ECC_CRC:         return "CRC";
         default: return "Unknown";
     }
 }
 
+// Cache associativity
 const char* lazybios_get_cache_associativity_string(uint8_t associativity) {
     switch(associativity) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "Direct Mapped";
-        case 0x04: return "2-way";
-        case 0x05: return "4-way";
-        case 0x06: return "Fully Associative";
-        case 0x07: return "8-way";
-        case 0x08: return "16-way";
-        case 0x09: return "12-way";
-        case 0x0A: return "24-way";
-        case 0x0B: return "32-way";
-        case 0x0C: return "48-way";
-        case 0x0D: return "64-way";
-        case 0x0E: return "20-way";
+        case CACHE_ASSOC_OTHER:            return "Other";
+        case CACHE_ASSOC_UNKNOWN:          return "Unknown";
+        case CACHE_ASSOC_DIRECT_MAPPED:    return "Direct Mapped";
+        case CACHE_ASSOC_2_WAY:            return "2-way";
+        case CACHE_ASSOC_4_WAY:            return "4-way";
+        case CACHE_ASSOC_FULLY_ASSOC:      return "Fully Associative";
+        case CACHE_ASSOC_8_WAY:            return "8-way";
+        case CACHE_ASSOC_16_WAY:           return "16-way";
+        case CACHE_ASSOC_12_WAY:           return "12-way";
+        case CACHE_ASSOC_24_WAY:           return "24-way";
+        case CACHE_ASSOC_32_WAY:           return "32-way";
+        case CACHE_ASSOC_48_WAY:           return "48-way";
+        case CACHE_ASSOC_64_WAY:           return "64-way";
+        case CACHE_ASSOC_20_WAY:           return "20-way";
         default: return "Unknown";
+    }
+}
+
+const char* lazybios_get_port_connector_types_string(uint8_t connector_type) {
+    switch(connector_type) {
+        case CONNECTOR_TYPE_NONE:                    return "None";
+        case CONNECTOR_TYPE_CENTRONICS:              return "Centronics";
+        case CONNECTOR_TYPE_MINI_CENTRONICS:         return "Mini Centronics";
+        case CONNECTOR_TYPE_PROPRIETARY:             return "Proprietary";
+        case CONNECTOR_TYPE_DB25_MALE:               return "DB 25 Male";
+        case CONNECTOR_TYPE_DB25_FEMALE:             return "DB 25 Female";
+        case CONNECTOR_TYPE_DB15_MALE:               return "DB 15 Male";
+        case CONNECTOR_TYPE_DB15_FEMALE:             return "DB 15 Female";
+        case CONNECTOR_TYPE_DB9_MALE:                return "DB 9 Male";
+        case CONNECTOR_TYPE_DB9_FEMALE:              return "DB 9 Female";
+        case CONNECTOR_TYPE_RJ11:                    return "RJ 11";
+        case CONNECTOR_TYPE_RJ45:                    return "RJ 45";
+        case CONNECTOR_TYPE_50PIN_MINISCSI:          return "50 Pin Mini SCSI";
+        case CONNECTOR_TYPE_MINIDIN:                 return "Mini DIN";
+        case CONNECTOR_TYPE_MICRODIN:                return "Micro DIN";
+        case CONNECTOR_TYPE_PS2:                     return "PS2";
+        case CONNECTOR_TYPE_INFRARED:                return "Infrared";
+        case CONNECTOR_TYPE_HP_HIL:                  return "HP HIL";
+        case CONNECTOR_TYPE_USB:                     return "USB";
+        case CONNECTOR_TYPE_SSA_SCSI:                return "SSA SCSI";
+        case CONNECTOR_TYPE_CIRCULAR_DIN8_MALE:      return "Circular DIN-8 Male";
+        case CONNECTOR_TYPE_CIRCULAR_DIN8_FEMALE:    return "Circular DIN-8 Female";
+        case CONNECTOR_TYPE_ONBOARD_IDE:             return "On Board IDE";
+        case CONNECTOR_TYPE_ONBOARD_FLOPPY:          return "On Board Floppy";
+        case CONNECTOR_TYPE_9PIN_DUAL_INLINE:        return "9-pin Dual Inline (pin 10 cut)";
+        case CONNECTOR_TYPE_25PIN_DUAL_INLINE:       return "25-pin Dual Inline (pin 26 cut)";
+        case CONNECTOR_TYPE_50PIN_DUAL_INLINE:       return "50-pin Dual Inline";
+        case CONNECTOR_TYPE_68PIN_DUAL_INLINE:       return "68-pin Dual Inline";
+        case CONNECTOR_TYPE_ONBOARD_SOUND_CDROM:     return "On Board Sound Input from CD-ROM";
+        case CONNECTOR_TYPE_MINICENTRONICS_14:       return "Mini-Centronics Type-14";
+        case CONNECTOR_TYPE_MINICENTRONICS_26:       return "Mini-Centronics Type-26";
+        case CONNECTOR_TYPE_MINI_JACK:               return "Mini-jack (headphones)";
+        case CONNECTOR_TYPE_BNC:                     return "BNC";
+        case CONNECTOR_TYPE_1394:                    return "1394";
+        case CONNECTOR_TYPE_SAS_SATA:                return "SAS/SATA Plug Receptacle";
+        case CONNECTOR_TYPE_USB_C:                   return "USB Type-C Receptacle";
+        case CONNECTOR_TYPE_PC98:                    return "PC-98";
+        case CONNECTOR_TYPE_PC98_HIRESO:             return "PC-98Hireso";
+        case CONNECTOR_TYPE_PC_H98:                  return "PC-H98";
+        case CONNECTOR_TYPE_PC98_NOTE:               return "PC-98Note";
+        case CONNECTOR_TYPE_PC98_FULL:               return "PC-98Full";
+        case CONNECTOR_TYPE_OTHER:                   return "Other";
+        default:                                     return "Unknown";
+    }
+}
+
+const char* lazybios_get_port_types_string(uint8_t port_type) {
+    switch(port_type) {
+        case PORT_TYPE_SPEC_NONE:                   return "None";
+        case PORT_TYPE_SPEC_PARALLEL_XT_AT:         return "Parallel Port XT/AT Compatible";
+        case PORT_TYPE_SPEC_PARALLEL_PS2:           return "Parallel Port PS/2";
+        case PORT_TYPE_SPEC_PARALLEL_ECP:           return "Parallel Port ECP";
+        case PORT_TYPE_SPEC_PARALLEL_EPP:           return "Parallel Port EPP";
+        case PORT_TYPE_SPEC_PARALLEL_ECP_EPP:       return "Parallel Port ECP/EPP";
+        case PORT_TYPE_SPEC_SERIAL_XT_AT:           return "Serial Port XT/AT Compatible";
+        case PORT_TYPE_SPEC_SERIAL_16450:           return "Serial Port 16450 Compatible";
+        case PORT_TYPE_SPEC_SERIAL_16550:           return "Serial Port 16550 Compatible";
+        case PORT_TYPE_SPEC_SERIAL_16550A:          return "Serial Port 16550A Compatible";
+        case PORT_TYPE_SPEC_SCSI:                   return "SCSI Port";
+        case PORT_TYPE_SPEC_MIDI:                   return "MIDI Port";
+        case PORT_TYPE_SPEC_JOYSTICK:               return "Joy Stick Port";
+        case PORT_TYPE_SPEC_KEYBOARD:               return "Keyboard Port";
+        case PORT_TYPE_SPEC_MOUSE:                  return "Mouse Port";
+        case PORT_TYPE_SPEC_SSA_SCSI:               return "SSA SCSI";
+        case PORT_TYPE_SPEC_USB:                    return "USB";
+        case PORT_TYPE_SPEC_FIREWIRE:               return "FireWire (IEEE P1394)";
+        case PORT_TYPE_SPEC_PCMCIA_I2:              return "PCMCIA Type I2";
+        case PORT_TYPE_SPEC_PCMCIA_II:              return "PCMCIA Type II";
+        case PORT_TYPE_SPEC_PCMCIA_III:             return "PCMCIA Type III";
+        case PORT_TYPE_SPEC_CARDBUS:                return "Card Bus";
+        case PORT_TYPE_SPEC_ACCESS_BUS:             return "Access Bus Port";
+        case PORT_TYPE_SPEC_SCSI_II:                return "SCSI II";
+        case PORT_TYPE_SPEC_SCSI_WIDE:              return "SCSI Wide";
+        case PORT_TYPE_SPEC_PC98:                   return "PC-98";
+        case PORT_TYPE_SPEC_PC98_HIRESO:            return "PC-98-Hireso";
+        case PORT_TYPE_SPEC_PC_H98:                 return "PC-H98";
+        case PORT_TYPE_SPEC_VIDEO:                  return "Video Port";
+        case PORT_TYPE_SPEC_AUDIO:                  return "Audio Port";
+        case PORT_TYPE_SPEC_MODEM:                  return "Modem Port";
+        case PORT_TYPE_SPEC_NETWORK:                return "Network Port";
+        case PORT_TYPE_SPEC_SATA:                   return "SATA";
+        case PORT_TYPE_SPEC_SAS:                    return "SAS";
+        case PORT_TYPE_SPEC_MFDP:                   return "MFDP (Multi-Function Display Port)";
+        case PORT_TYPE_SPEC_THUNDERBOLT:            return "Thunderbolt";
+        case PORT_TYPE_SPEC_8251_COMPATIBLE:        return "8251 Compatible";
+        case PORT_TYPE_SPEC_8251_FIFO_COMPATIBLE:   return "8251 FIFO Compatible";
+        case PORT_TYPE_SPEC_OTHER:                  return "Other";
+        default:                                    return "Unknown";
     }
 }
 
 const char* lazybios_get_memory_type_string(uint8_t type) {
     switch(type) {
-        case MEMORY_TYPE_OTHER: return "Other";
-        case MEMORY_TYPE_UNKNOWN: return "Unknown";
-        case MEMORY_TYPE_DRAM: return "DRAM";
-        case MEMORY_TYPE_EDRAM: return "EDRAM";
-        case MEMORY_TYPE_VRAM: return "VRAM";
-        case MEMORY_TYPE_SRAM: return "SRAM";
-        case MEMORY_TYPE_RAM: return "RAM";
-        case MEMORY_TYPE_ROM: return "ROM";
-        case MEMORY_TYPE_FLASH: return "FLASH";
-        case MEMORY_TYPE_EEPROM: return "EEPROM";
-        case MEMORY_TYPE_FEPROM: return "FEPROM";
-        case MEMORY_TYPE_EPROM: return "EPROM";
-        case MEMORY_TYPE_CDRAM: return "CDRAM";
-        case MEMORY_TYPE_3DRAM: return "3DRAM";
-        case MEMORY_TYPE_SDRAM: return "SDRAM";
-        case MEMORY_TYPE_SGRAM: return "SGRAM";
-        case MEMORY_TYPE_RDRAM: return "RDRAM";
-        case MEMORY_TYPE_DDR: return "DDR";
-        case MEMORY_TYPE_DDR2: return "DDR2";
-        case MEMORY_TYPE_DDR2_FB_DIMM: return "DDR2 FB-DIMM";
-        case MEMORY_TYPE_DDR3: return "DDR3";
-        case MEMORY_TYPE_FBD2: return "FBD2";
-        case MEMORY_TYPE_DDR4: return "DDR4";
-        case MEMORY_TYPE_LPDDR: return "LPDDR";
-        case MEMORY_TYPE_LPDDR2: return "LPDDR2";
-        case MEMORY_TYPE_LPDDR3: return "LPDDR3";
-        case MEMORY_TYPE_LPDDR4: return "LPDDR4";
-        case MEMORY_TYPE_LPDDR_NV: return "Logical non-volatile device";
-        case MEMORY_TYPE_HBM: return "HBM";
-        case MEMORY_TYPE_HBM2: return "HBM2";
-        case MEMORY_TYPE_DDR5: return "DDR5";
-        case MEMORY_TYPE_LPDDR5: return "LPDDR5";
-        case MEMORY_TYPE_HBM3: return "HBM3";
-        default: return "Unknown";
+        case MEMORY_TYPE_OTHER:         return "Other";
+        case MEMORY_TYPE_UNKNOWN:       return "Unknown";
+        case MEMORY_TYPE_DRAM:          return "DRAM";
+        case MEMORY_TYPE_EDRAM:         return "EDRAM";
+        case MEMORY_TYPE_VRAM:          return "VRAM";
+        case MEMORY_TYPE_SRAM:          return "SRAM";
+        case MEMORY_TYPE_RAM:           return "RAM";
+        case MEMORY_TYPE_ROM:           return "ROM";
+        case MEMORY_TYPE_FLASH:         return "FLASH";
+        case MEMORY_TYPE_EEPROM:        return "EEPROM";
+        case MEMORY_TYPE_FEPROM:        return "FEPROM";
+        case MEMORY_TYPE_EPROM:         return "EPROM";
+        case MEMORY_TYPE_CDRAM:         return "CDRAM";
+        case MEMORY_TYPE_3DRAM:         return "3DRAM";
+        case MEMORY_TYPE_SDRAM:         return "SDRAM";
+        case MEMORY_TYPE_SGRAM:         return "SGRAM";
+        case MEMORY_TYPE_RDRAM:         return "RDRAM";
+        case MEMORY_TYPE_DDR:           return "DDR";
+        case MEMORY_TYPE_DDR2:          return "DDR2";
+        case MEMORY_TYPE_DDR2_FB_DIMM:  return "DDR2 FB-DIMM";
+        case MEMORY_TYPE_DDR3:          return "DDR3";
+        case MEMORY_TYPE_FBD2:          return "FBD2";
+        case MEMORY_TYPE_DDR4:          return "DDR4";
+        case MEMORY_TYPE_LPDDR:         return "LPDDR";
+        case MEMORY_TYPE_LPDDR2:        return "LPDDR2";
+        case MEMORY_TYPE_LPDDR3:        return "LPDDR3";
+        case MEMORY_TYPE_LPDDR4:        return "LPDDR4";
+        case MEMORY_TYPE_LPDDR_NV:      return "Logical non-volatile device";
+        case MEMORY_TYPE_HBM:           return "HBM";
+        case MEMORY_TYPE_HBM2:          return "HBM2";
+        case MEMORY_TYPE_DDR5:          return "DDR5";
+        case MEMORY_TYPE_LPDDR5:        return "LPDDR5";
+        case MEMORY_TYPE_HBM3:          return "HBM3";
+        default:                        return "Unknown";
     }
 }
 
 const char* lazybios_get_memory_form_factor_string(uint8_t form_factor) {
     switch(form_factor) {
-        case MEMORY_FORM_FACTOR_OTHER: return "Other";
-        case MEMORY_FORM_FACTOR_UNKNOWN: return "Unknown";
-        case MEMORY_FORM_FACTOR_SIMM: return "SIMM";
-        case MEMORY_FORM_FACTOR_SIP: return "SIP";
-        case MEMORY_FORM_FACTOR_CHIP: return "Chip";
-        case MEMORY_FORM_FACTOR_DIP: return "DIP";
-        case MEMORY_FORM_FACTOR_ZIP: return "ZIP";
-        case MEMORY_FORM_FACTOR_PROP_CARD: return "Proprietary Card";
-        case MEMORY_FORM_FACTOR_DIMM: return "DIMM";
-        case MEMORY_FORM_FACTOR_TSOP: return "TSOP";
-        case MEMORY_FORM_FACTOR_ROW_CHIPS: return "Row of chips";
-        case MEMORY_FORM_FACTOR_RIMM: return "RIMM";
-        case MEMORY_FORM_FACTOR_SODIMM: return "SODIMM";
-        case MEMORY_FORM_FACTOR_SRIMM: return "SRIMM";
-        case MEMORY_FORM_FACTOR_FB_DIMM: return "FB-DIMM";
-        case MEMORY_FORM_FACTOR_DIE: return "Die";
-        case MEMORY_FORM_FACTOR_CAMM: return "CAMM";
-        default: return "Unknown";
+        case MEMORY_FORM_FACTOR_OTHER:      return "Other";
+        case MEMORY_FORM_FACTOR_UNKNOWN:    return "Unknown";
+        case MEMORY_FORM_FACTOR_SIMM:       return "SIMM";
+        case MEMORY_FORM_FACTOR_SIP:        return "SIP";
+        case MEMORY_FORM_FACTOR_CHIP:       return "Chip";
+        case MEMORY_FORM_FACTOR_DIP:        return "DIP";
+        case MEMORY_FORM_FACTOR_ZIP:        return "ZIP";
+        case MEMORY_FORM_FACTOR_PROP_CARD:  return "Proprietary Card";
+        case MEMORY_FORM_FACTOR_DIMM:       return "DIMM";
+        case MEMORY_FORM_FACTOR_TSOP:       return "TSOP";
+        case MEMORY_FORM_FACTOR_ROW_CHIPS:  return "Row of chips";
+        case MEMORY_FORM_FACTOR_RIMM:       return "RIMM";
+        case MEMORY_FORM_FACTOR_SODIMM:     return "SODIMM";
+        case MEMORY_FORM_FACTOR_SRIMM:      return "SRIMM";
+        case MEMORY_FORM_FACTOR_FB_DIMM:    return "FB-DIMM";
+        case MEMORY_FORM_FACTOR_DIE:        return "Die";
+        case MEMORY_FORM_FACTOR_CAMM:       return "CAMM";
+        default:                            return "Unknown";
     }
 }
 
 const char* lazybios_get_memory_array_location_string(uint8_t location) {
     switch(location) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "System board or motherboard";
-        case 0x04: return "ISA add-on card";
-        case 0x05: return "EISA add-on card";
-        case 0x06: return "PCI add-on card";
-        case 0x07: return "MCA add-on card";
-        case 0x08: return "PCMCIA add-on card";
-        case 0x09: return "Proprietary add-on card";
-        case 0x0A: return "NuBus";
-        case 0xA0: return "PC-98/C20 add-on card";
-        case 0xA1: return "PC-98/C24 add-on card";
-        case 0xA2: return "PC-98/E add-on card";
-        case 0xA3: return "PC-98/Local bus add-on card";
-        case 0xA4: return "CXL add-on card";
-        default: return "Unknown";
+        case MEM_LOC_OTHER:               return "Other";
+        case MEM_LOC_UNKNOWN:             return "Unknown";
+        case MEM_LOC_SYSTEM_BOARD:        return "System board or motherboard";
+        case MEM_LOC_ISA_ADDON:           return "ISA add-on card";
+        case MEM_LOC_EISA_ADDON:          return "EISA add-on card";
+        case MEM_LOC_PCI_ADDON:           return "PCI add-on card";
+        case MEM_LOC_MCA_ADDON:           return "MCA add-on card";
+        case MEM_LOC_PCMCIA_ADDON:        return "PCMCIA add-on card";
+        case MEM_LOC_PROPRIETARY_ADDON:   return "Proprietary add-on card";
+        case MEM_LOC_NUBUS:               return "NuBus";
+        case MEM_LOC_PC98_C20:            return "PC-98/C20 add-on card";
+        case MEM_LOC_PC98_C24:            return "PC-98/C24 add-on card";
+        case MEM_LOC_PC98_E:              return "PC-98/E add-on card";
+        case MEM_LOC_PC98_LOCAL:          return "PC-98/Local bus add-on card";
+        case MEM_LOC_CXL_ADDON:           return "CXL add-on card";
+        default:                          return "Unknown";
     }
 }
 
 const char* lazybios_get_memory_array_use_string(uint8_t use) {
     switch(use) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "System memory";
-        case 0x04: return "Video memory";
-        case 0x05: return "Flash memory";
-        case 0x06: return "Non-volatile RAM";
-        case 0x07: return "Cache memory";
-        default: return "Unknown";
+        case MEM_USE_OTHER:          return "Other";
+        case MEM_USE_UNKNOWN:        return "Unknown";
+        case MEM_USE_SYSTEM_MEMORY:  return "System memory";
+        case MEM_USE_VIDEO_MEMORY:   return "Video memory";
+        case MEM_USE_FLASH_MEMORY:   return "Flash memory";
+        case MEM_USE_NVRAM:          return "Non-volatile RAM";
+        case MEM_USE_CACHE_MEMORY:   return "Cache memory";
+        default:                     return "Unknown";
     }
 }
 
 const char* lazybios_get_memory_array_ecc_string(uint8_t ecc) {
     switch(ecc) {
-        case 0x01: return "Other";
-        case 0x02: return "Unknown";
-        case 0x03: return "None";
-        case 0x04: return "Parity";
-        case 0x05: return "Single-bit ECC";
-        case 0x06: return "Multi-bit ECC";
-        case 0x07: return "CRC";
-        default: return "Unknown";
+        case MEM_ECC_OTHER:       return "Other";
+        case MEM_ECC_UNKNOWN:     return "Unknown";
+        case MEM_ECC_NONE:        return "None";
+        case MEM_ECC_PARITY:      return "Parity";
+        case MEM_ECC_SINGLE_BIT:  return "Single-bit ECC";
+        case MEM_ECC_MULTI_BIT:   return "Multi-bit ECC";
+        case MEM_ECC_CRC:         return "CRC";
+        default:                  return "Unknown";
     }
 }
-
 // ===== Core Parsing Functions =====
 static int parse_smbios2_entry(lazybios_ctx_t* ctx, const uint8_t *buf) {
     if (memcmp(buf, SMBIOS2_ANCHOR, 4) != 0) return -1;
@@ -855,6 +955,65 @@ cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count) {
     return ctx->caches_ptr;
 }
 
+// ===== Port Connector Getter =====
+port_connector_info_t* lazybios_get_port_connectors(lazybios_ctx_t* ctx, size_t* count) {
+    if (!ctx) {
+        *count = 0;
+        return NULL;
+    }
+
+    if (ctx->port_connector_ptr) {
+        *count = ctx->port_connector_count;
+        return ctx->port_connector_ptr;
+    }
+
+    if (!ctx->dmi_data) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->port_connector_count = count_structures_by_type(ctx, SMBIOS_TYPE_PORT_CONNECTOR);
+    if (ctx->port_connector_count == 0) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->port_connector_ptr = calloc(ctx->port_connector_count, sizeof(port_connector_info_t));
+    if (!ctx->port_connector_ptr) {
+        *count = 0;
+        return NULL;
+    }
+
+    size_t index = 0;
+    const uint8_t *p = ctx->dmi_data;
+    const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
+    size_t min_length = lazybios_get_smbios_structure_min_length(ctx, SMBIOS_TYPE_PORT_CONNECTOR);
+
+    while (p + SMBIOS_HEADER_SIZE < end && index < ctx->port_connector_count) {
+        uint8_t type = p[0];
+        uint8_t length = p[1];
+
+        if (type == SMBIOS_TYPE_END) break;
+
+        if (type == SMBIOS_TYPE_PORT_CONNECTOR && length >= min_length) {
+            port_connector_info_t *current = &ctx->port_connector_ptr[index];
+
+            current->port_type = p[PORT_OFFSET_PORT_TYPE];
+            current->handle = *(uint16_t*)(p + PORT_OFFSET_HANDLE);
+            current->external_connector_type = p[PORT_OFFSET_EXTERNAL_CONNECTOR_TYPE];
+            current->internal_connector_type = p[PORT_OFFSET_INTERNAL_CONNECTOR_TYPE];
+            current->external_ref_designator = strdup(dmi_string(p, length, p[PORT_OFFSET_EXTERNAL_REF_DESIGNATOR]));
+            current->internal_ref_designator = strdup(dmi_string(p, length, p[PORT_OFFSET_INTERNAL_REF_DESIGNATOR]));
+
+            index++;
+        }
+        p = dmi_next(p, end);
+    }
+
+    *count = ctx->port_connector_count;
+    return ctx->port_connector_ptr;
+}
+
 // ===== Memory Devices Getter =====
 memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count) {
     if (!ctx) {
@@ -1059,6 +1218,16 @@ void lazybios_cleanup(lazybios_ctx_t* ctx) {
         }
         free(ctx->caches_ptr);
         ctx->caches_ptr = NULL;
+    }
+    ctx->caches_count = 0;
+
+    if (ctx->port_connector_ptr) {
+        for (size_t i = 0; i < ctx->port_connector_count; i++) {
+            free(ctx->port_connector_ptr[i].external_ref_designator);
+            free(ctx->port_connector_ptr[i].internal_ref_designator);
+        }
+        free(ctx->port_connector_ptr);
+        ctx->port_connector_ptr = NULL;
     }
     ctx->caches_count = 0;
 

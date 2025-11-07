@@ -18,12 +18,12 @@ Before you dive in, here are a few quick notes:
 
 The entire library revolves around the `lazybios_ctx_t` structure, which holds all the parsed data and internal state.
 
-| Function | Description |
-| :--- | :--- |
-| `lazybios_ctx_t* lazybios_ctx_new(void)` | Creates and allocates a new `lazybios_ctx_t` structure. This is your starting point. |
+| Function                                      | Description |
+|:----------------------------------------------| :--- |
+| `lazybios_ctx_t* lazybios_ctx_new(void)`      | Creates and allocates a new `lazybios_ctx_t` structure. This is your starting point. |
 | `void lazybios_ctx_free(lazybios_ctx_t* ctx)` | Frees all memory associated with the context, including all the strings and data structures populated by the library. **Use this!** |
-| `int lazybios_init(lazybios_ctx_t* ctx)` | Initializes the library. It reads the SMBIOS entry point and the main DMI table, and populates the context with the raw data. Returns `0` on success, `-1` on failure. |
-| `void lazybios_cleanup(lazybios_ctx_t* ctx)` | Frees internal memory used for raw data. This is called automatically by `lazybios_ctx_free()`, so you usually don't need to call it directly. |
+| `int lazybios_init(lazybios_ctx_t* ctx)`      | Initializes the library. It reads the SMBIOS entry point and the main DMI table, and populates the context with the raw data. Returns `0` on success, `-1` on failure. |
+| `void lazybios_cleanup(lazybios_ctx_t* ctx)`  | Frees internal memory used for raw data. This is called automatically by `lazybios_ctx_free()`, so you usually don't need to call it directly. |
 
 ### 2. Example Usage Flow
 
@@ -68,9 +68,9 @@ These functions are how you get the actual hardware information. They all take t
 
 ### BIOS Information (Type 0)
 
-| Function | Description |
-| :--- | :--- |
-| `bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx)` | Gets the BIOS vendor, version, release date, and ROM size. |
+| Function                                                     | Description |
+|:-------------------------------------------------------------| :--- |
+| `bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx)`   | Gets the BIOS vendor, version, release date, and ROM size. |
 
 **`bios_info_t` Structure:**
 ```c
@@ -84,9 +84,9 @@ typedef struct {
 
 ### System Information (Type 1)
 
-| Function | Description |
-| :--- | :--- |
-| `system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx)` | Gets the overall system details. |
+| Function                                                        | Description |
+|:----------------------------------------------------------------| :--- |
+| `system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx)`  | Gets the overall system details. |
 
 **`system_info_t` Structure:**
 ```c
@@ -98,8 +98,6 @@ typedef struct {
     char *uuid;          // Properly formatted UUID (e.g., "550e8400-e29b-41d4-a716-446655440000")
 } system_info_t;
 ```
-
-**Note:** UUID is now properly parsed and formatted, not just a placeholder.
 
 ### Baseboard (Motherboard) Information (Type 2)
 
@@ -120,9 +118,9 @@ typedef struct {
 
 ### Chassis (Enclosure) Information (Type 3)
 
-| Function | Description |
-| :--- | :--- |
-| `chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx)` | Gets the physical enclosure details. |
+| Function                                                           | Description |
+|:-------------------------------------------------------------------| :--- |
+| `chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx)`   | Gets the physical enclosure details. |
 
 **`chassis_info_t` Structure:**
 ```c
@@ -137,9 +135,9 @@ typedef struct {
 
 ### Processor Information (Type 4)
 
-| Function | Description |
-| :--- | :--- |
-| `processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx)` | Gets the primary CPU's details. |
+| Function                                                               | Description |
+|:-----------------------------------------------------------------------| :--- |
+| `processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx)`   | Gets the primary CPU's details. |
 
 **`processor_info_t` Structure (Highlights):**
 ```c
@@ -169,9 +167,9 @@ typedef struct {
 
 ### Cache Information (Type 7)
 
-| Function | Description |
-| :--- | :--- |
-| `cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count)` | Returns a dynamically allocated array of `cache_info_t` structures for L1, L2, L3 caches. The total number of caches is stored in the `count` pointer. **Now supports SMBIOS 3.1+ extended size fields for accurate cache sizes.** |
+| Function                                                                  | Description                                                                                                                                           |
+|:--------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count)`   | Returns a dynamically allocated array of `cache_info_t` structures for L1, L2, L3 caches. The total number of caches is stored in the `count` pointer.|
 
 **`cache_info_t` Structure:**
 ```c
@@ -185,7 +183,24 @@ typedef struct {
 } cache_info_t;
 ```
 
-**Important:** Cache sizes are now properly parsed for both SMBIOS 2.x and 3.x versions, with support for extended size fields introduced in SMBIOS 3.1.
+### Port Information (Type 8)
+
+| Function                                                                                    | Description                                                                                                                                                                                                        |
+|:--------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `port_connector_info_t* lazybios_get_port_connectors(lazybios_ctx_t* ctx, size_t* count);`  | Returns a dynamically allocated array of `port_connector_info_t` structure. The total number of ports is stored in the `count` pointer. |
+
+
+**`port_connector_info_t` Structure:**
+```c
+typedef struct {
+    uint16_t handle; // The handle
+    char *internal_ref_designator; // The Internal Reference Designator
+    uint8_t  internal_connector_type; // Internal Connector Type, Use const char* lazybios_get_port_connector_types_string()
+    char *external_ref_designator; // The External Reference Designator
+    uint8_t  external_connector_type; // The External Connector Type, Use const char* lazybios_get_port_connector_types_string()
+    uint8_t  port_type; // Port Type, Use const char* lazybios_get_port_types_string()
+} port_connector_info_t;
+```
 
 ### Physical Memory Array (Type 16)
 
@@ -242,6 +257,12 @@ These functions convert raw numeric codes from SMBIOS tables into human-readable
 | `const char* lazybios_get_cache_type_string(uint8_t cache_type)`      | Converts cache type to string (e.g., "Unified", "Data")       |
 | `const char* lazybios_get_cache_ecc_string(uint8_t ecc_type)`         | Converts ECC type to string (e.g., "Single-bit ECC")          |
 | `const char* lazybios_get_cache_associativity_string(uint8_t assoc)`  | Converts associativity to string (e.g., "8-way", "16-way")    |
+
+### Port Connector Helpers
+| Function                                                                              | Description                                                  |
+|:--------------------------------------------------------------------------------------|:-------------------------------------------------------------|
+| `const char* lazybios_get_port_connector_types_string(uint8_t connector_type)`        | Converts Port Connector type to string (e.g., "PS2", "USB")  |
+| `const char* lazybios_get_port_types_string(uint8_t port_type)`                       | Converts Port type to string (e.g., "USB", "Mouse Port")     |
 
 ### Memory Helpers
 | Function                                                                 | Description                                                |
