@@ -128,6 +128,25 @@ void print_cache_info(lazybios_ctx_t* ctx) {
     }
 }
 
+void print_port_connector_info(lazybios_ctx_t* ctx) {
+    printf("=== PORT CONNECTOR INFO ===\n");
+    size_t port_count;
+    port_connector_info_t *port_connectors = lazybios_get_port_connectors(ctx, &port_count);
+
+    if (port_connectors && port_count > 0) {
+        printf("Found %zu port connector(s)\n", port_count);
+    }
+
+    for (int i = 0; i < port_count; i++) {
+        printf("Handle: %hu \n", port_connectors[i].handle);
+        printf("Internal Reference Designator: %s\n", port_connectors[i].internal_ref_designator);
+        printf("Internal Connector Type: %s\n", lazybios_get_port_connector_types_string(port_connectors[i].internal_connector_type));
+        printf("External Reference Designator: %s\n", port_connectors[i].external_ref_designator);
+        printf("External Connector Type: %s\n", lazybios_get_port_connector_types_string(port_connectors[i].external_connector_type));
+        printf("Port Type: %s\n\n", lazybios_get_port_types_string(port_connectors[i].port_type));
+    }
+}
+
 void print_memory_array_info(lazybios_ctx_t* ctx) {
     printf("=== MEMORY ARRAY INFO ===\n");
     size_t mem_arr_count;
@@ -249,6 +268,7 @@ int main(void) {
     print_chassis_info(ctx);
     print_processor_info(ctx);
     print_cache_info(ctx);
+    print_port_connector_info(ctx);
     print_memory_array_info(ctx);
     print_memory_info(ctx);
 
