@@ -1,5 +1,6 @@
 # lazybios 
 
+### NO ITS NOT DEAD IT WILL FOREVER BE UPDATED!
 ### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
 
 ## Features
