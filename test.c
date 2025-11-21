@@ -81,12 +81,13 @@ void print_processor_info(lazybios_ctx_t* ctx) {
             printf("Current Speed: %u MHz\n", proc->current_speed_mhz);
         }
         printf("External Clock: %u MHz\n", proc->external_clock_mhz);
+        printf("Socket Type: %s\n", lazybios_get_socket_type_string(proc->proc_upgrade));
         printf("Voltage: 0x%02X\n", proc->voltage);
         if (proc->status > 0) {
             printf("Status: %s\n", lazybios_get_processor_status_string(proc->status));
         }
         printf("L1 Handle: %u \n L2 Handle: %u \n L3 handle: %u \n", proc->L1_cache_handle, proc->L2_cache_handle, proc->L3_cache_handle);
-        printf("Characteristics: 0x%04X\n", proc->characteristics);
+        printf("Characteristics: %s\n", lazybios_get_proc_characteristics_string(proc->characteristics));
         printf("Serial: %s\n", proc->serial_number);
         printf("Asset Tag: %s\n", proc->asset_tag);
         printf("Part Number: %s\n", proc->part_number);
@@ -244,7 +245,7 @@ void print_smbios_version_info(lazybios_ctx_t* ctx) {
 }
 
 int main(void) {
-    printf("lazybios - Comprehensive System Information\n");
+    printf("lazybios - System Information\n");
     printf("=============================================\n\n");
 
     lazybios_ctx_t* ctx = lazybios_ctx_new();
@@ -255,7 +256,7 @@ int main(void) {
 
     if (lazybios_init(ctx) != 0) {
         fprintf(stderr, "Failed to initialize lazybios library\n");
-        lazybios_ctx_free(ctx);
+        lazybios_cleanup(ctx);
         return 1;
     }
 
@@ -272,7 +273,7 @@ int main(void) {
     print_memory_array_info(ctx);
     print_memory_info(ctx);
 
-    lazybios_ctx_free(ctx);
+    lazybios_cleanup(ctx);
     printf("Library cleanup completed!\n");
     printf("All tests passed successfully!\n");
 

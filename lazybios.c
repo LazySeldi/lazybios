@@ -14,12 +14,6 @@ lazybios_ctx_t* lazybios_ctx_new(void) {
     return ctx;
 }
 
-void lazybios_ctx_free(lazybios_ctx_t* ctx) {
-    if (!ctx) return;
-    lazybios_cleanup(ctx);
-    free(ctx);
-}
-
 // ===== Version-Aware Helpers =====
 size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8_t type) {
     if (!ctx) return 4;
@@ -54,7 +48,7 @@ size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8
             return MEMARRAY_MIN_LENGTH;
 
         case SMBIOS_TYPE_MEMDEVICE:
-            return is_64bit ? MEMORY_MIN_LENGTH_3_0 : MEMORY_MIN_LENGTH_2_0;
+            return MEMORY_MIN_LENGTH;
 
         default:
             return 4;
@@ -207,9 +201,123 @@ const char* lazybios_get_processor_family_string(uint8_t family) {
         case PROC_FAMILY_VIA_EDEN:                 return "VIA Eden";
         case PROC_FAMILY_VIA_NANO:                 return "VIA Nano";
 
-        default:
-            return "Unknown";
+        default:                                   return "Unknown";
     }
+}
+
+// Processor Type
+const char* lazybios_get_socket_type_string(uint8_t type) {
+    switch(type) {
+        case SOCKET_TYPE_OTHER:          return "Other";
+        case SOCKET_TYPE_UNKNOWN:        return "Unknown";
+        case SOCKET_TYPE_DAUGHTER_BOARD: return "Daughter Board";
+        case SOCKET_TYPE_ZIF_SOCKET:     return "ZIF Socket";
+        case SOCKET_TYPE_PIGGY_BACK:     return "Replaceable Piggy Back";
+        case SOCKET_TYPE_NONE:           return "None";
+        case SOCKET_TYPE_LIF_SOCKET:     return "LIF Socket";
+        case SOCKET_TYPE_SLOT_1:         return "Slot 1";
+        case SOCKET_TYPE_SLOT_2:         return "Slot 2";
+        case SOCKET_TYPE_370_PIN:        return "370-pin socket";
+        case SOCKET_TYPE_SLOT_A:         return "Slot A";
+        case SOCKET_TYPE_SLOT_M:         return "Slot M";
+        case SOCKET_TYPE_423:            return "423";
+        case SOCKET_TYPE_SOCKET_A:       return "A (462)";
+        case SOCKET_TYPE_478:            return "478";
+        case SOCKET_TYPE_754:            return "754";
+        case SOCKET_TYPE_940:            return "940";
+        case SOCKET_TYPE_939:            return "939";
+        case SOCKET_TYPE_MPGA604:        return "mPGA604";
+        case SOCKET_TYPE_LGA771:         return "LGA771";
+        case SOCKET_TYPE_LGA775:         return "LGA775";
+        case SOCKET_TYPE_S1:             return "S1";
+        case SOCKET_TYPE_AM2:            return "AM2";
+        case SOCKET_TYPE_F_1207:         return "F (1207)";
+        case SOCKET_TYPE_LGA1366:        return "LGA1366";
+        case SOCKET_TYPE_G34:            return "G34";
+        case SOCKET_TYPE_AM3:            return "AM3";
+        case SOCKET_TYPE_C32:            return "C32";
+        case SOCKET_TYPE_LGA1156:        return "LGA1156";
+        case SOCKET_TYPE_LGA1567:        return "LGA1567";
+        case SOCKET_TYPE_PGA988A:        return "PGA988A";
+        case SOCKET_TYPE_BGA1288:        return "BGA1288";
+        case SOCKET_TYPE_RPGA988B:       return "rPGA988B";
+        case SOCKET_TYPE_BGA1023:        return "BGA1023";
+        case SOCKET_TYPE_BGA1224:        return "BGA1224";
+        case SOCKET_TYPE_LGA1155:        return "LGA1155";
+        case SOCKET_TYPE_LGA1356:        return "LGA1356";
+        case SOCKET_TYPE_LGA2011:        return "LGA2011";
+        case SOCKET_TYPE_FS1:            return "FS1";
+        case SOCKET_TYPE_FS2:            return "FS2";
+        case SOCKET_TYPE_FM1:            return "FM1";
+        case SOCKET_TYPE_FM2:            return "FM2";
+        case SOCKET_TYPE_LGA2011_3:      return "LGA2011-3";
+        case SOCKET_TYPE_LGA1356_3:      return "LGA1356-3";
+        case SOCKET_TYPE_LGA1150:        return "LGA1150";
+        case SOCKET_TYPE_BGA1168:        return "BGA1168";
+        case SOCKET_TYPE_BGA1234:        return "BGA1234";
+        case SOCKET_TYPE_BGA1364:        return "BGA1364";
+        case SOCKET_TYPE_AM4:            return "AM4";
+        case SOCKET_TYPE_LGA1151:        return "LGA1151";
+        case SOCKET_TYPE_BGA1356:        return "BGA1356";
+        case SOCKET_TYPE_BGA1440:        return "BGA1440";
+        case SOCKET_TYPE_BGA1515:        return "BGA1515";
+        case SOCKET_TYPE_LGA3647_1:      return "LGA3647-1";
+        case SOCKET_TYPE_SP3:            return "SP3";
+        case SOCKET_TYPE_SP3R2:          return "SP3r2";
+        case SOCKET_TYPE_LGA2066:        return "LGA2066";
+        case SOCKET_TYPE_BGA1392:        return "BGA1392";
+        case SOCKET_TYPE_BGA1510:        return "BGA1510";
+        case SOCKET_TYPE_BGA1528:        return "BGA1528";
+        case SOCKET_TYPE_LGA4189:        return "LGA4189";
+        case SOCKET_TYPE_LGA1200:        return "LGA1200";
+        case SOCKET_TYPE_LGA4677:        return "LGA4677";
+        case SOCKET_TYPE_LGA1700:        return "LGA1700";
+        case SOCKET_TYPE_BGA1744:        return "BGA1744";
+        case SOCKET_TYPE_BGA1781:        return "BGA1781";
+        case SOCKET_TYPE_BGA1211:        return "BGA1211";
+        case SOCKET_TYPE_BGA2422:        return "BGA2422";
+        case SOCKET_TYPE_LGA1211:        return "LGA1211";
+        case SOCKET_TYPE_LGA2422:        return "LGA2422";
+        case SOCKET_TYPE_LGA5773:        return "LGA5773";
+        case SOCKET_TYPE_BGA5773:        return "BGA5773";
+        case SOCKET_TYPE_AM5:            return "AM5";
+        case SOCKET_TYPE_SP5:            return "SP5";
+        case SOCKET_TYPE_SP6:            return "SP6";
+        case SOCKET_TYPE_BGA883:         return "BGA883";
+        case SOCKET_TYPE_BGA1190:        return "BGA1190";
+        case SOCKET_TYPE_BGA4129:        return "BGA4129";
+        case SOCKET_TYPE_LGA4710:        return "LGA4710";
+        case SOCKET_TYPE_LGA7529:        return "LGA7529";
+        case SOCKET_TYPE_BGA1964:        return "BGA1964";
+        case SOCKET_TYPE_BGA1792:        return "BGA1792";
+        case SOCKET_TYPE_BGA2049:        return "BGA2049";
+        case SOCKET_TYPE_BGA2551:        return "BGA2551";
+        case SOCKET_TYPE_LGA1851:        return "LGA1851";
+        case SOCKET_TYPE_BGA2114:        return "BGA2114";
+        case SOCKET_TYPE_BGA2833:        return "BGA2833";
+        case SOCKET_TYPE_USE_STRING:     return "Use string at 0x32";
+        default:                         return "Unknown";
+    }
+}
+
+const char* lazybios_get_proc_characteristics_string(uint16_t characteristics) {
+    static char buf[256];
+    buf[0] = '\0';
+
+    if (characteristics & 0x0002) strcat(buf, "Not 64-bit Support, ");
+    if (characteristics & 0x0004) strcat(buf, "64-bit Capable, ");
+    if (characteristics & 0x0008) strcat(buf, "Multi-Core, ");
+    if (characteristics & 0x0010) strcat(buf, "Hardware Thread, ");
+    if (characteristics & 0x0020) strcat(buf, "Execute Protection, ");
+    if (characteristics & 0x0040) strcat(buf, "Virtualization, ");
+    if (characteristics & 0x0080) strcat(buf, "Power Control, ");
+
+    if (buf[0] == '\0')
+        return "None";
+
+    buf[strlen(buf) - 2] = '\0';
+
+    return buf;
 }
 
 // Processor type
@@ -235,7 +343,7 @@ const char* lazybios_get_processor_status_string(uint8_t status) {
         case PROC_STATUS_DISABLED_BY_BIOS:   return "Disabled by BIOS";
         case PROC_STATUS_IDLE:               return "Idle";
         case PROC_STATUS_OTHER:              return "Other";
-        default: return "Reserved";
+        default:                             return "Reserved";
     }
 }
 
@@ -247,7 +355,7 @@ const char* lazybios_get_cache_type_string(uint8_t cache_type) {
         case CACHE_TYPE_INSTRUCTION: return "Instruction";
         case CACHE_TYPE_DATA:        return "Data";
         case CACHE_TYPE_UNIFIED:     return "Unified";
-        default: return "Unknown";
+        default:                     return "Unknown";
     }
 }
 
@@ -261,7 +369,7 @@ const char* lazybios_get_cache_ecc_string(uint8_t ecc_type) {
         case CACHE_ECC_SINGLE_BIT:  return "Single-bit ECC";
         case CACHE_ECC_MULTI_BIT:   return "Multi-bit ECC";
         case CACHE_ECC_CRC:         return "CRC";
-        default: return "Unknown";
+        default:                    return "Unknown";
     }
 }
 
@@ -282,7 +390,7 @@ const char* lazybios_get_cache_associativity_string(uint8_t associativity) {
         case CACHE_ASSOC_48_WAY:           return "48-way";
         case CACHE_ASSOC_64_WAY:           return "64-way";
         case CACHE_ASSOC_20_WAY:           return "20-way";
-        default: return "Unknown";
+        default:                           return "Unknown";
     }
 }
 
@@ -488,30 +596,27 @@ const char* lazybios_get_memory_array_ecc_string(uint8_t ecc) {
     }
 }
 // ===== Core Parsing Functions =====
-static int parse_smbios2_entry(lazybios_ctx_t* ctx, const uint8_t *buf) {
-    if (memcmp(buf, SMBIOS2_ANCHOR, 4) != 0) return -1;
+static int parse_smbios_entry(lazybios_ctx_t* ctx, const uint8_t* buf) {
+    if (memcmp(buf, SMBIOS3_ANCHOR, 5) == 0) {
 
-    ctx->entry_info.major = buf[ENTRY2_MAJOR_OFFSET];
-    ctx->entry_info.minor = buf[ENTRY2_MINOR_OFFSET];
-    ctx->entry_info.docrev = 0;  // Not available in SMBIOS 2.x
-    ctx->entry_info.table_length = *(uint16_t*)(buf + ENTRY2_TABLE_LENGTH_OFFSET);
-    ctx->entry_info.table_address = *(uint32_t*)(buf + ENTRY2_TABLE_ADDR_OFFSET);
-    ctx->entry_info.is_64bit = false;
+        ctx->entry_info.major = buf[ENTRY3_MAJOR_OFFSET];
+        ctx->entry_info.minor = buf[ENTRY3_MINOR_OFFSET];
+        ctx->entry_info.docrev = buf[ENTRY3_DOCREV_OFFSET];
+        ctx->entry_info.table_length = *(uint32_t*)(buf + ENTRY3_TABLE_LENGTH_OFFSET);
+        ctx->entry_info.table_address = *(uint64_t*)(buf + ENTRY3_TABLE_ADDR_OFFSET);
+        ctx->entry_info.is_64bit = true;
+    } else if (memcmp(buf, SMBIOS2_ANCHOR, 4) == 0) {
 
-    return 0;
-}
-
-static int parse_smbios3_entry(lazybios_ctx_t* ctx, const uint8_t *buf) {
-    if (memcmp(buf, SMBIOS3_ANCHOR, 5) != 0) return -1;
-
-    // FIXED: Use correct offsets for SMBIOS 3.x
-    ctx->entry_info.major = buf[ENTRY3_MAJOR_OFFSET];
-    ctx->entry_info.minor = buf[ENTRY3_MINOR_OFFSET];
-    ctx->entry_info.docrev = buf[ENTRY3_DOCREV_OFFSET];
-    ctx->entry_info.table_length = *(uint32_t*)(buf + ENTRY3_TABLE_LENGTH_OFFSET);
-    ctx->entry_info.table_address = *(uint64_t*)(buf + ENTRY3_TABLE_ADDR_OFFSET);
-    ctx->entry_info.is_64bit = true;
-
+        ctx->entry_info.major = buf[ENTRY2_MAJOR_OFFSET];
+        ctx->entry_info.minor = buf[ENTRY2_MINOR_OFFSET];
+        ctx->entry_info.docrev = 0;  // Not available in SMBIOS 2.x
+        ctx->entry_info.table_length = *(uint16_t*)(buf + ENTRY2_TABLE_LENGTH_OFFSET);
+        ctx->entry_info.table_address = *(uint32_t*)(buf + ENTRY2_TABLE_ADDR_OFFSET);
+        ctx->entry_info.is_64bit = false;
+    } else {
+        fprintf(stderr, "Couldn't find SMBIOS version!\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -588,14 +693,8 @@ int lazybios_init(lazybios_ctx_t* ctx) {
         return -1;
     }
 
-    // Try SMBIOS 3.x first, then "fall back" to 2.x
-    if (parse_smbios3_entry(ctx, entry_buf) == 0) {
-        // Successfully parsed as SMBIOS 3.x
-    } else if (parse_smbios2_entry(ctx, entry_buf) == 0) {
-        // Successfully parsed as SMBIOS 2.x
-    } else {
-        fprintf(stderr, "lazybios: unknown SMBIOS anchor\n");
-        fclose(dmi);
+    if (parse_smbios_entry(ctx, entry_buf) != 0) {
+        fprintf(stderr, "lazybios: no valid SMBIOS anchor\n");
         return -1;
     }
 
@@ -625,7 +724,6 @@ int lazybios_init(lazybios_ctx_t* ctx) {
     }
 
     fclose(dmi);
-    printf("lazybios: loaded %zu bytes of DMI data\n", ctx->dmi_len);
     return 0;
 }
 
@@ -788,6 +886,7 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
             ctx->processor_info.L1_cache_handle = *(uint16_t*)(p + PROC_L1_CACHE_HANDLE_OFFSET);
             ctx->processor_info.L2_cache_handle = *(uint16_t*)(p + PROC_L2_CACHE_HANDLE_OFFSET);
             ctx->processor_info.L3_cache_handle = *(uint16_t*)(p + PROC_L3_CACHE_HANDLE_OFFSET);
+            ctx->processor_info.proc_upgrade = *(uint16_t*)(p + PROC_UPGRADE_OFFSET);
 
             // Current speed (added)
             if (length > PROC_CURRENT_SPEED_OFFSET + 1) {
@@ -1255,6 +1354,8 @@ void lazybios_cleanup(lazybios_ctx_t* ctx) {
         ctx->dmi_data = NULL;
     }
     ctx->dmi_len = 0;
+
+    free(ctx);
 }
 
 // ===== Public API Functions =====

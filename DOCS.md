@@ -245,11 +245,13 @@ typedef struct {
 These functions convert raw numeric codes from SMBIOS tables into human-readable strings. **All helper functions are now thread-safe.**
 
 ### Processor Helpers
-| Function                                                           | Description                                                      |
-|:-------------------------------------------------------------------|:-----------------------------------------------------------------|
-| `const char* lazybios_get_processor_family_string(uint8_t family)` | Converts processor family code to string (e.g., "Intel Core i7") |
-| `const char* lazybios_get_processor_type_string(uint8_t type)`     | Converts processor type code to string (e.g., "Central Processor") |
-| `const char* lazybios_get_processor_status_string(uint8_t status)` | Converts processor status to string (e.g., "Enabled", "Idle")   |
+| Function                                                                         | Description                                                                         |
+|:---------------------------------------------------------------------------------|:------------------------------------------------------------------------------------|
+| `const char* lazybios_get_processor_family_string(uint8_t family)`               | Converts processor family code to string (e.g., "Intel Core i7")                    |
+| `const char* lazybios_get_processor_type_string(uint8_t type)`                   | Converts processor type code to string (e.g., "Central Processor")                  |
+| `const char* lazybios_get_processor_status_string(uint8_t status)`               | Converts processor status to string (e.g., "Enabled", "Idle")                       |
+| `const char* lazybios_get_proc_characteristics_string(uint16_t characteristics)` | Converts processor characteristics to string (e.g., "64-bit Support", "Multi-Core") |
+| `const char* lazybios_get_socket_type_string(uint8_t type)`                      | Converts processor socket type to string (e.g., "LGA1366", "BGA4129")                  |
 
 ### Cache Helpers
 | Function                                                              | Description                                                   |
