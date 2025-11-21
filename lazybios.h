@@ -132,8 +132,7 @@
 #define MEMARRAY_EXT_MAX_CAPACITY_OFFSET 0x0F
 
 // ===== SMBIOS Type 17: Memory Device =====
-#define MEMORY_MIN_LENGTH_2_0         0x15
-#define MEMORY_MIN_LENGTH_3_0         0x2C
+#define MEMORY_MIN_LENGTH               0x01
 #define MEM_DEVICE_ARRAY_HANDLE_OFFSET  0x04
 #define MEM_DEVICE_ERROR_HANDLE_OFFSET  0x06
 #define MEM_DEVICE_TOTAL_WIDTH_OFFSET   0x08
@@ -305,6 +304,97 @@
 #define PROC_FAMILY_VIA_NANO                0xD9
 
 
+// Processor Socket Types
+#define SOCKET_TYPE_OTHER                0x01
+#define SOCKET_TYPE_UNKNOWN              0x02
+#define SOCKET_TYPE_DAUGHTER_BOARD       0x03
+#define SOCKET_TYPE_ZIF_SOCKET           0x04
+#define SOCKET_TYPE_PIGGY_BACK           0x05
+#define SOCKET_TYPE_NONE                 0x06
+#define SOCKET_TYPE_LIF_SOCKET           0x07
+#define SOCKET_TYPE_SLOT_1               0x08
+#define SOCKET_TYPE_SLOT_2               0x09
+#define SOCKET_TYPE_370_PIN              0x0A
+#define SOCKET_TYPE_SLOT_A               0x0B
+#define SOCKET_TYPE_SLOT_M               0x0C
+#define SOCKET_TYPE_423                  0x0D
+#define SOCKET_TYPE_SOCKET_A             0x0E
+#define SOCKET_TYPE_478                  0x0F
+#define SOCKET_TYPE_754                  0x10
+#define SOCKET_TYPE_940                  0x11
+#define SOCKET_TYPE_939                  0x12
+#define SOCKET_TYPE_MPGA604              0x13
+#define SOCKET_TYPE_LGA771               0x14
+#define SOCKET_TYPE_LGA775               0x15
+#define SOCKET_TYPE_S1                   0x16
+#define SOCKET_TYPE_AM2                  0x17
+#define SOCKET_TYPE_F_1207               0x18
+#define SOCKET_TYPE_LGA1366              0x19
+#define SOCKET_TYPE_G34                  0x1A
+#define SOCKET_TYPE_AM3                  0x1B
+#define SOCKET_TYPE_C32                  0x1C
+#define SOCKET_TYPE_LGA1156              0x1D
+#define SOCKET_TYPE_LGA1567              0x1E
+#define SOCKET_TYPE_PGA988A              0x1F
+#define SOCKET_TYPE_BGA1288              0x20
+#define SOCKET_TYPE_RPGA988B             0x21
+#define SOCKET_TYPE_BGA1023              0x22
+#define SOCKET_TYPE_BGA1224              0x23
+#define SOCKET_TYPE_LGA1155              0x24
+#define SOCKET_TYPE_LGA1356              0x25
+#define SOCKET_TYPE_LGA2011              0x26
+#define SOCKET_TYPE_FS1                  0x27
+#define SOCKET_TYPE_FS2                  0x28
+#define SOCKET_TYPE_FM1                  0x29
+#define SOCKET_TYPE_FM2                  0x2A
+#define SOCKET_TYPE_LGA2011_3            0x2B
+#define SOCKET_TYPE_LGA1356_3            0x2C
+#define SOCKET_TYPE_LGA1150              0x2D
+#define SOCKET_TYPE_BGA1168              0x2E
+#define SOCKET_TYPE_BGA1234              0x2F
+#define SOCKET_TYPE_BGA1364              0x30
+#define SOCKET_TYPE_AM4                  0x31
+#define SOCKET_TYPE_LGA1151              0x32
+#define SOCKET_TYPE_BGA1356              0x33
+#define SOCKET_TYPE_BGA1440              0x34
+#define SOCKET_TYPE_BGA1515              0x35
+#define SOCKET_TYPE_LGA3647_1            0x36
+#define SOCKET_TYPE_SP3                  0x37
+#define SOCKET_TYPE_SP3R2                0x38
+#define SOCKET_TYPE_LGA2066              0x39
+#define SOCKET_TYPE_BGA1392              0x3A
+#define SOCKET_TYPE_BGA1510              0x3B
+#define SOCKET_TYPE_BGA1528              0x3C
+#define SOCKET_TYPE_LGA4189              0x3D
+#define SOCKET_TYPE_LGA1200              0x3E
+#define SOCKET_TYPE_LGA4677              0x3F
+#define SOCKET_TYPE_LGA1700              0x40
+#define SOCKET_TYPE_BGA1744              0x41
+#define SOCKET_TYPE_BGA1781              0x42
+#define SOCKET_TYPE_BGA1211              0x43
+#define SOCKET_TYPE_BGA2422              0x44
+#define SOCKET_TYPE_LGA1211              0x45
+#define SOCKET_TYPE_LGA2422              0x46
+#define SOCKET_TYPE_LGA5773              0x47
+#define SOCKET_TYPE_BGA5773              0x48
+#define SOCKET_TYPE_AM5                  0x49
+#define SOCKET_TYPE_SP5                  0x4A
+#define SOCKET_TYPE_SP6                  0x4B
+#define SOCKET_TYPE_BGA883               0x4C
+#define SOCKET_TYPE_BGA1190              0x4D
+#define SOCKET_TYPE_BGA4129              0x4E
+#define SOCKET_TYPE_LGA4710              0x4F
+#define SOCKET_TYPE_LGA7529              0x50
+#define SOCKET_TYPE_BGA1964              0x51
+#define SOCKET_TYPE_BGA1792              0x52
+#define SOCKET_TYPE_BGA2049              0x53
+#define SOCKET_TYPE_BGA2551              0x54
+#define SOCKET_TYPE_LGA1851              0x55
+#define SOCKET_TYPE_BGA2114              0x56
+#define SOCKET_TYPE_BGA2833              0x57
+#define SOCKET_TYPE_USE_STRING           0xFF
+
+
 // Processor Type codes
 #define PROC_TYPE_OTHER                     0x01
 #define PROC_TYPE_UNKNOWN                   0x02
@@ -400,7 +490,7 @@
 #define CONNECTOR_TYPE_OTHER                     0xFF
 
 // Port types
-#define PORT_TYPE_SPEC_NONE                    0x00
+#define PORT_TYPE_SPEC_NONE                   0x00
 #define PORT_TYPE_SPEC_PARALLEL_XT_AT         0x01
 #define PORT_TYPE_SPEC_PARALLEL_PS2           0x02
 #define PORT_TYPE_SPEC_PARALLEL_ECP           0x03
@@ -410,35 +500,35 @@
 #define PORT_TYPE_SPEC_SERIAL_16450           0x07
 #define PORT_TYPE_SPEC_SERIAL_16550           0x08
 #define PORT_TYPE_SPEC_SERIAL_16550A          0x09
-#define PORT_TYPE_SPEC_SCSI                    0x0A
-#define PORT_TYPE_SPEC_MIDI                    0x0B
-#define PORT_TYPE_SPEC_JOYSTICK                0x0C
-#define PORT_TYPE_SPEC_KEYBOARD                0x0D
-#define PORT_TYPE_SPEC_MOUSE                 0x0E
-#define PORT_TYPE_SPEC_SSA_SCSI              0x0F
+#define PORT_TYPE_SPEC_SCSI                   0x0A
+#define PORT_TYPE_SPEC_MIDI                   0x0B
+#define PORT_TYPE_SPEC_JOYSTICK               0x0C
+#define PORT_TYPE_SPEC_KEYBOARD               0x0D
+#define PORT_TYPE_SPEC_MOUSE                  0x0E
+#define PORT_TYPE_SPEC_SSA_SCSI               0x0F
 #define PORT_TYPE_SPEC_USB                    0x10
 #define PORT_TYPE_SPEC_FIREWIRE               0x11
 #define PORT_TYPE_SPEC_PCMCIA_I2              0x12
-#define PORT_TYPE_SPEC_PCMCIA_II             0x13
-#define PORT_TYPE_SPEC_PCMCIA_III            0x14
+#define PORT_TYPE_SPEC_PCMCIA_II              0x13
+#define PORT_TYPE_SPEC_PCMCIA_III             0x14
 #define PORT_TYPE_SPEC_CARDBUS                0x15
 #define PORT_TYPE_SPEC_ACCESS_BUS             0x16
 #define PORT_TYPE_SPEC_SCSI_II                0x17
 #define PORT_TYPE_SPEC_SCSI_WIDE              0x18
-#define PORT_TYPE_SPEC_PC98                    0x19
+#define PORT_TYPE_SPEC_PC98                   0x19
 #define PORT_TYPE_SPEC_PC98_HIRESO            0x1A
-#define PORT_TYPE_SPEC_PC_H98                  0x1B
-#define PORT_TYPE_SPEC_VIDEO                   0x1C
-#define PORT_TYPE_SPEC_AUDIO                   0x1D
-#define PORT_TYPE_SPEC_MODEM                   0x1E
-#define PORT_TYPE_SPEC_NETWORK                 0x1F
-#define PORT_TYPE_SPEC_SATA                    0x20
-#define PORT_TYPE_SPEC_SAS                     0x21
-#define PORT_TYPE_SPEC_MFDP                    0x22
-#define PORT_TYPE_SPEC_THUNDERBOLT             0x23
-#define PORT_TYPE_SPEC_8251_COMPATIBLE         0xA0
-#define PORT_TYPE_SPEC_8251_FIFO_COMPATIBLE    0xA1
-#define PORT_TYPE_SPEC_OTHER                   0xFF
+#define PORT_TYPE_SPEC_PC_H98                 0x1B
+#define PORT_TYPE_SPEC_VIDEO                  0x1C
+#define PORT_TYPE_SPEC_AUDIO                  0x1D
+#define PORT_TYPE_SPEC_MODEM                  0x1E
+#define PORT_TYPE_SPEC_NETWORK                0x1F
+#define PORT_TYPE_SPEC_SATA                   0x20
+#define PORT_TYPE_SPEC_SAS                    0x21
+#define PORT_TYPE_SPEC_MFDP                   0x22
+#define PORT_TYPE_SPEC_THUNDERBOLT            0x23
+#define PORT_TYPE_SPEC_8251_COMPATIBLE        0xA0
+#define PORT_TYPE_SPEC_8251_FIFO_COMPATIBLE   0xA1
+#define PORT_TYPE_SPEC_OTHER                  0xFF
 
 // Memory Array helpers
 #define MEMORY_SIZE_UNKNOWN    0xFFFF
@@ -595,6 +685,7 @@ typedef struct {
     uint16_t L1_cache_handle;    // THE HANDLE of the Caches not the actual size of the caches.
     uint16_t L2_cache_handle;
     uint16_t L3_cache_handle;
+    uint8_t proc_upgrade;
     uint8_t voltage;
     uint16_t external_clock_mhz;
     uint8_t status;            // Use the const char* lazybios_get_processor_status_string(uint8_t status)
@@ -694,15 +785,21 @@ bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t majo
 const char* lazybios_get_processor_family_string(uint8_t family);
 const char* lazybios_get_processor_type_string(uint8_t type);
 const char* lazybios_get_processor_status_string(uint8_t status);
+const char* lazybios_get_proc_characteristics_string(uint16_t characteristics);
+const char* lazybios_get_socket_type_string(uint8_t type);
+
 const char* lazybios_get_cache_type_string(uint8_t cache_type);
 const char* lazybios_get_cache_ecc_string(uint8_t ecc_type);
 const char* lazybios_get_cache_associativity_string(uint8_t associativity);
+
 const char* lazybios_get_port_connector_types_string(uint8_t connector_type);
 const char* lazybios_get_port_types_string(uint8_t port_type);
+
 const char* lazybios_get_memory_type_string(uint8_t type);
 const char* lazybios_get_memory_form_factor_string(uint8_t form_factor);
 const char* lazybios_get_memory_array_location_string(uint8_t location);
 const char* lazybios_get_memory_array_use_string(uint8_t use);
 const char* lazybios_get_memory_array_ecc_string(uint8_t ecc);
+
 
 #endif

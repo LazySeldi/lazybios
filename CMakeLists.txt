@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(lazybios C)
 
-set(CMAKE_C_STANDARD 17)
+SET ( CMAKE_CXX_FLAGS "-fsanitize=memory" )
+
+set(CMAKE_C_STANDARD 99)
 
 # Set installation prefixes
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
