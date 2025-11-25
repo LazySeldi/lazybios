@@ -97,6 +97,58 @@ void print_processor_info(lazybios_ctx_t* ctx) {
     }
 }
 
+void print_onboard_device_info(lazybios_ctx_t* ctx) {
+    if (!ctx) {
+        printf("No context available\n");
+        return;
+    }
+
+    size_t count;
+    onboard_devices_t *onbdev = lazybios_get_onboard_devices(ctx, &count);
+
+    if (!onbdev || count == 0) {
+        printf("No Onboard device information available\n");
+        return;
+    }
+
+    printf("=== Onboard Information ===\n");
+    printf("Found %zu devices\n\n", count);
+
+    for (size_t i = 0; i < count; i++) {
+        printf("Device %zu: \n", i + 1);
+        printf("  Enabled: %d \n", onbdev[i].enabled);
+        printf("  Description String: %s\n", onbdev[i].description_string);
+        printf("  Type: %s\n", lazybios_get_onboard_devices_type_string(onbdev[i].type));
+        printf("\n");
+    }
+}
+
+
+void print_OEM_strings(lazybios_ctx_t* ctx) {
+    if (!ctx) {
+        printf("No context available\n");
+        return;
+    }
+    size_t count;
+    OEMStrings_t *Strings = lazybios_get_OEMString_info(ctx, &count);
+
+    if (!Strings) {
+        printf("No String information available\n");
+        return;
+    }
+
+    printf("=== OEM Strings Information ===\n");
+    printf("Found %zu string(s)\n", count);
+
+    for (size_t i = 0; i < count; i++) {
+        const OEMStrings_t *string = &Strings[i];
+
+        printf("String %zu: ", i + 1);
+        printf("%s\n", string->strings[i]);
+    }
+    printf("\n");
+}
+
 // ===== Cache Information Printer =====
 void print_cache_info(lazybios_ctx_t* ctx) {
     if (!ctx) {
@@ -270,6 +322,8 @@ int main(void) {
     print_processor_info(ctx);
     print_cache_info(ctx);
     print_port_connector_info(ctx);
+    print_onboard_device_info(ctx);
+    print_OEM_strings(ctx);
     print_memory_array_info(ctx);
     print_memory_info(ctx);
 

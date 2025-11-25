@@ -202,11 +202,38 @@ typedef struct {
 } port_connector_info_t;
 ```
 
+### Onboard Device Information (Type 10)
+| Function | Description                                                                                                                                                          |
+| :--- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `onboard_devices_t* lazybios_get_onboard_devices(lazybios_ctx_t* ctx, size_t* count)` | Returns information about the onboard devices in the motherboard for example your Audio Controller etc. The total number of arrays is stored in the `count` pointer. |
+
+**`onboard_devices_t` Structure:**
+```c
+typedef struct {
+    char *description_string;
+    uint8_t type; // Use const char* lazybios_get_onboard_devices_type_string()
+    bool enabled; // 1 or 0 || True or False
+} onboard_devices_t;
+```
+
+### OEM Strings Information (Type 11)
+| Function                                                                                       | Description                                                                                                              |
+|:-----------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
+| `OEMStrings_t* OEMStrings_t* lazybios_get_OEMString_info(lazybios_ctx_t* ctx, size_t* count)`  | Returns information about OEM strings specified by the OEM. The total number of arrays is stored in the `count` pointer. |
+
+**`OEMStrings_t` Structure:**
+```c
+typedef struct {
+    uint8_t string_count; // The ammount of strings ( We rarely use this in the parsing )
+    char *strings[]; // The actual strings, we need an array of pointers because it mirrors exactly what the SMBIOS specs give us. Yes a flat blobl would save a few bytes but we would need to keep track of every substring's start offset and length manually.
+} OEMStrings_t;
+```
+
 ### Physical Memory Array (Type 16)
 
-| Function | Description |
-| :--- | :--- |
-| `physical_memory_array_t* lazybios_get_memory_arrays(lazybios_ctx_t* ctx, size_t* count)` | Returns information about the physical memory array (motherboard memory controller). The total number of arrays is stored in the `count` pointer. |
+| Function                                                                                   | Description |
+|:-------------------------------------------------------------------------------------------| :--- |
+| `physical_memory_array_t* lazybios_get_memory_arrays(lazybios_ctx_t* ctx, size_t* count)`  | Returns information about the physical memory array (motherboard memory controller). The total number of arrays is stored in the `count` pointer. |
 
 **`physical_memory_array_t` Structure:**
 ```c
@@ -265,6 +292,11 @@ These functions convert raw numeric codes from SMBIOS tables into human-readable
 |:--------------------------------------------------------------------------------------|:-------------------------------------------------------------|
 | `const char* lazybios_get_port_connector_types_string(uint8_t connector_type)`        | Converts Port Connector type to string (e.g., "PS2", "USB")  |
 | `const char* lazybios_get_port_types_string(uint8_t port_type)`                       | Converts Port type to string (e.g., "USB", "Mouse Port")     |
+
+### On Board Devices Helpers
+| Function                                                                 | Description                                                          |
+|:-------------------------------------------------------------------------|:---------------------------------------------------------------------|
+| `const char* lazybios_get_onboard_devices_type_string(uint8_t type)`     | Converts On Board Devices type to string (e.g., "Ethernet", "Sound") |
 
 ### Memory Helpers
 | Function                                                                 | Description                                                |
