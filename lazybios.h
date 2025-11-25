@@ -23,16 +23,18 @@
 #define ENTRY3_TABLE_ADDR_OFFSET   0x10
 
 // ===== SMBIOS Structure Types =====
-#define SMBIOS_TYPE_BIOS            0
-#define SMBIOS_TYPE_SYSTEM          1
-#define SMBIOS_TYPE_BASEBOARD       2
-#define SMBIOS_TYPE_CHASSIS         3
-#define SMBIOS_TYPE_PROCESSOR       4
-#define SMBIOS_TYPE_CACHES          7
-#define SMBIOS_TYPE_PORT_CONNECTOR  8
-#define SMBIOS_TYPE_MEMARRAY        16
-#define SMBIOS_TYPE_MEMDEVICE       17
-#define SMBIOS_TYPE_END             127
+#define SMBIOS_TYPE_BIOS             0
+#define SMBIOS_TYPE_SYSTEM           1
+#define SMBIOS_TYPE_BASEBOARD        2
+#define SMBIOS_TYPE_CHASSIS          3
+#define SMBIOS_TYPE_PROCESSOR        4
+#define SMBIOS_TYPE_CACHES           7
+#define SMBIOS_TYPE_PORT_CONNECTOR   8
+#define SMBIOS_TYPE_ONBOARD_DEVICES  10
+#define SMBIOS_TYPE_OEM_STRINGS      11
+#define SMBIOS_TYPE_MEMARRAY         16
+#define SMBIOS_TYPE_MEMDEVICE        17
+#define SMBIOS_TYPE_END              127
 
 // ===== SMBIOS Type 0: BIOS Information =====
 #define BIOS_MIN_LENGTH_2_0      0x12
@@ -113,7 +115,7 @@
 #define CACHE_MAXIMUM_SIZE_2        0x13
 #define CACHE_INSTALLED_SIZE_2      0x17
 
-// Minimum lengths by SMBIOS version: (formatted area only)
+// ===== SMBIOS Type 8: Port Connectors info =====
 #define PORT_CONNECTOR_MIN_LENGTH                 0x09 // Same in ALL SMBIOS versions
 #define PORT_OFFSET_HANDLE                        0x02
 #define PORT_OFFSET_INTERNAL_REF_DESIGNATOR       0x04
@@ -121,6 +123,16 @@
 #define PORT_OFFSET_EXTERNAL_REF_DESIGNATOR       0x06
 #define PORT_OFFSET_EXTERNAL_CONNECTOR_TYPE       0x07
 #define PORT_OFFSET_PORT_TYPE                     0x08
+
+// ===== SMBIOS Type 10: Onboard Devices =====
+#define ONBOARD_DEVICES_MIN_LENGTH       0x04
+#define ONBOARD_DEV_TYPE_OFFSET(n)       (4 + 2 * ((n) - 1))
+#define ONBOARD_DEV_STR_OFFSET(n)        (4 + 2 * ((n) - 1) + 1)
+#define ONBOARD_DEV_COUNT(length)        (((length) - 4) / 2)
+
+// ===== SMBIOS Type 11: OEM Strings =====
+#define OEM_STRINGS_MIN_LENGTH   0x05
+#define OEM_STRINGS_COUNT_OFFSET 0x04
 
 // ===== SMBIOS Type 16: Physical Memory Array =====
 #define MEMARRAY_MIN_LENGTH              0x0F
@@ -530,6 +542,18 @@
 #define PORT_TYPE_SPEC_8251_FIFO_COMPATIBLE   0xA1
 #define PORT_TYPE_SPEC_OTHER                  0xFF
 
+// On Board Devices Helpers
+#define ONBOARD_DEVICE_OTHER            0x01
+#define ONBOARD_DEVICE_UNKNOWN          0x02
+#define ONBOARD_DEVICE_VIDEO            0x03
+#define ONBOARD_DEVICE_SCSI_CTRL        0x04
+#define ONBOARD_DEVICE_ETHERNET         0x05
+#define ONBOARD_DEVICE_TOKEN_RING       0x06
+#define ONBOARD_DEVICE_SOUND            0x07
+#define ONBOARD_DEVICE_PATA_CTRL        0x08
+#define ONBOARD_DEVICE_SATA_CTRL        0x09
+#define ONBOARD_DEVICE_SAS_CTRL         0x0A
+
 // Memory Array helpers
 #define MEMORY_SIZE_UNKNOWN    0xFFFF
 #define MEMORY_SIZE_EXTENDED   0x7FFF
@@ -681,15 +705,26 @@ typedef struct {
     uint8_t processor_type;      // Use const char* lazybios_get_processor_type_string(uint8_t type)
     uint8_t processor_family;    // CPU family, needs the lazybios_get_processor_family_string() decoder
     uint16_t processor_family2;  // Extended family for values >= 0xFE
-    uint16_t characteristics;
+    uint16_t characteristics;    // Use const char* lazybios_get_proc_characteristics_string(uint16_t characteristics)
     uint16_t L1_cache_handle;    // THE HANDLE of the Caches not the actual size of the caches.
     uint16_t L2_cache_handle;
     uint16_t L3_cache_handle;
-    uint8_t proc_upgrade;
+    uint8_t proc_upgrade;  // Use const char* lazybios_get_socket_type_string(uint8_t type);
     uint8_t voltage;
     uint16_t external_clock_mhz;
     uint8_t status;            // Use the const char* lazybios_get_processor_status_string(uint8_t status)
 } processor_info_t;
+
+typedef struct {
+    char *description_string;
+    uint8_t type;
+    bool enabled;
+} onboard_devices_t;
+
+typedef struct {
+    uint8_t string_count;
+    char *strings[];
+} OEMStrings_t;
 
 typedef struct {
     char *locator;
@@ -750,6 +785,12 @@ typedef struct lazybios_ctx {
     port_connector_info_t *port_connector_ptr;
     size_t port_connector_count;
 
+    onboard_devices_t *onboard_devices_ptr;
+    size_t onboard_devices_count;
+
+    OEMStrings_t *OEMStrings_ptr;
+    size_t OEMStrings_count;
+
     physical_memory_array_t *memory_arrays_ptr;
     size_t memory_arrays_count;
 
@@ -773,8 +814,11 @@ system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx);
 baseboard_info_t* lazybios_get_baseboard_info(lazybios_ctx_t* ctx);
 chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx);
 processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx);
-cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count);
+
 port_connector_info_t* lazybios_get_port_connectors(lazybios_ctx_t* ctx, size_t* count);
+cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count);
+onboard_devices_t* lazybios_get_onboard_devices(lazybios_ctx_t* ctx, size_t* count);
+OEMStrings_t* lazybios_get_OEMString_info(lazybios_ctx_t* ctx, size_t* count);
 physical_memory_array_t* lazybios_get_memory_arrays(lazybios_ctx_t* ctx, size_t* count);
 memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count);
 
@@ -792,6 +836,8 @@ const char* lazybios_get_cache_type_string(uint8_t cache_type);
 const char* lazybios_get_cache_ecc_string(uint8_t ecc_type);
 const char* lazybios_get_cache_associativity_string(uint8_t associativity);
 
+const char* lazybios_get_onboard_devices_type_string(uint8_t type);
+
 const char* lazybios_get_port_connector_types_string(uint8_t connector_type);
 const char* lazybios_get_port_types_string(uint8_t port_type);
 
@@ -800,6 +846,5 @@ const char* lazybios_get_memory_form_factor_string(uint8_t form_factor);
 const char* lazybios_get_memory_array_location_string(uint8_t location);
 const char* lazybios_get_memory_array_use_string(uint8_t use);
 const char* lazybios_get_memory_array_ecc_string(uint8_t ecc);
-
 
 #endif

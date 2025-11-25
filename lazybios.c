@@ -41,6 +41,12 @@ size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8
             return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 1))
                    ? CACHE_MIN_LENGTH_2_1 : CACHE_MIN_LENGTH_2_0;
 
+        case SMBIOS_TYPE_ONBOARD_DEVICES:
+            return ONBOARD_DEVICES_MIN_LENGTH;
+
+        case SMBIOS_TYPE_OEM_STRINGS:
+            return OEM_STRINGS_MIN_LENGTH;
+
         case SMBIOS_TYPE_PORT_CONNECTOR:
             return PORT_CONNECTOR_MIN_LENGTH;
 
@@ -595,6 +601,23 @@ const char* lazybios_get_memory_array_ecc_string(uint8_t ecc) {
         default:                  return "Unknown";
     }
 }
+
+const char* lazybios_get_onboard_devices_type_string(uint8_t type) {
+    switch (type) {
+        case ONBOARD_DEVICE_OTHER:          return "Other";
+        case ONBOARD_DEVICE_UNKNOWN:        return "Unknown";
+        case ONBOARD_DEVICE_VIDEO:          return "Video";
+        case ONBOARD_DEVICE_SCSI_CTRL:      return "SCSI Controller";
+        case ONBOARD_DEVICE_ETHERNET:       return "Ethernet";
+        case ONBOARD_DEVICE_TOKEN_RING:     return "Token Ring";
+        case ONBOARD_DEVICE_SOUND:          return "Sound";
+        case ONBOARD_DEVICE_PATA_CTRL:      return "PATA Controller";
+        case ONBOARD_DEVICE_SATA_CTRL:      return "SATA Controller";
+        case ONBOARD_DEVICE_SAS_CTRL:       return "SAS Controller";
+        default:                            return "Unknown";
+    }
+}
+
 // ===== Core Parsing Functions =====
 static int parse_smbios_entry(lazybios_ctx_t* ctx, const uint8_t* buf) {
     if (memcmp(buf, SMBIOS3_ANCHOR, 5) == 0) {
@@ -970,7 +993,7 @@ processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx) {
     return NULL;
 }
 
-// ===== Cache Information Getter =====
+// ===== Array Info Getters =====
 cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count) {
     if (!ctx) {
         *count = 0;
@@ -1111,6 +1134,141 @@ port_connector_info_t* lazybios_get_port_connectors(lazybios_ctx_t* ctx, size_t*
 
     *count = ctx->port_connector_count;
     return ctx->port_connector_ptr;
+}
+
+onboard_devices_t* lazybios_get_onboard_devices(lazybios_ctx_t* ctx, size_t* count) {
+    if (!ctx) {
+        *count = 0;
+        return NULL;
+    }
+
+    if (ctx->onboard_devices_ptr) {
+        *count = ctx->onboard_devices_count;
+        return ctx->onboard_devices_ptr;
+    }
+
+    if (!ctx->dmi_data) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->onboard_devices_count = count_structures_by_type(ctx, SMBIOS_TYPE_ONBOARD_DEVICES);
+    if (ctx->onboard_devices_count == 0) {
+        *count = 0;
+        return NULL;
+    }
+
+    ctx->onboard_devices_ptr = calloc(ctx->onboard_devices_count, sizeof(onboard_devices_t));
+    if (!ctx->onboard_devices_ptr) {
+        *count = 0;
+        return NULL;
+    }
+
+    size_t index = 0;
+    const uint8_t *p = ctx->dmi_data;
+    const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
+    size_t min_length = lazybios_get_smbios_structure_min_length(ctx, SMBIOS_TYPE_ONBOARD_DEVICES);
+
+    while (p + SMBIOS_HEADER_SIZE < end && index < ctx->onboard_devices_count) {
+        uint8_t type = p[0];
+        uint8_t length = p[1];
+
+        if (type == SMBIOS_TYPE_END) break;
+
+        if (type == SMBIOS_TYPE_ONBOARD_DEVICES && length >= min_length) {
+            size_t dev_count = ONBOARD_DEV_COUNT(length);
+
+            for (size_t i = 0; i < dev_count && index < ctx->onboard_devices_count; i++) {
+                uint8_t raw = p[ONBOARD_DEV_TYPE_OFFSET(i + 1)];
+                uint8_t str_index = p[ONBOARD_DEV_STR_OFFSET(i + 1)];
+
+                bool enabled = raw & 0x80;
+                uint8_t dev_type = raw & 0x7F;
+
+                ctx->onboard_devices_ptr[index].enabled = enabled;
+                ctx->onboard_devices_ptr[index].type = dev_type;
+                ctx->onboard_devices_ptr[index].description_string = strdup(dmi_string(p, length, str_index));
+
+                index++;
+            }
+        }
+        p = dmi_next(p, end);
+    }
+
+    // Update actual count in case we found fewer devices than structures
+    ctx->onboard_devices_count = index;
+    *count = ctx->onboard_devices_count;
+    return ctx->onboard_devices_ptr;
+}
+
+OEMStrings_t* lazybios_get_OEMString_info(lazybios_ctx_t* ctx, size_t* count)
+{
+    if (!ctx) {
+        *count = 0;
+        return NULL;
+    }
+
+    if (ctx->OEMStrings_ptr) {
+        *count = ctx->OEMStrings_count;
+        return ctx->OEMStrings_ptr;
+    }
+
+    if (!ctx->dmi_data) {
+        *count = 0;
+        return NULL;
+    }
+
+    const uint8_t *p      = ctx->dmi_data;
+    const uint8_t *end    = ctx->dmi_data + ctx->dmi_len;
+    size_t min_len        = lazybios_get_smbios_structure_min_length(ctx, SMBIOS_TYPE_OEM_STRINGS);
+    uint8_t str_cnt       = 0;
+    while (p + SMBIOS_HEADER_SIZE < end) {
+        if (p[0] == SMBIOS_TYPE_END) break;
+        if (p[0] == SMBIOS_TYPE_OEM_STRINGS && p[1] >= min_len) {
+            str_cnt = p[OEM_STRINGS_COUNT_OFFSET];
+            break;
+        }
+        p = dmi_next(p, end);
+    }
+    if (str_cnt == 0) { // not found
+        *count = 0;
+        return NULL;
+    }
+
+    // allocate one struct + room for str_cnt pointers
+    ctx->OEMStrings_count = 1;
+    ctx->OEMStrings_ptr = calloc(1, sizeof(OEMStrings_t) + str_cnt * sizeof(char *));
+    if (!ctx->OEMStrings_ptr) {
+        *count = 0;
+        return NULL;
+    }
+
+    // we re-walk to the structure and then fill it
+    p = ctx->dmi_data;
+    while (p + SMBIOS_HEADER_SIZE < end) {
+        if (p[0] == SMBIOS_TYPE_END) break;
+        if (p[0] == SMBIOS_TYPE_OEM_STRINGS && p[1] >= min_len) {
+            OEMStrings_t *cur = ctx->OEMStrings_ptr;
+            cur->string_count = str_cnt;
+
+            size_t stroff = OEM_STRINGS_COUNT_OFFSET + 1;
+            for (int i = 0; i < cur->string_count; ++i) {
+                const char *src = (const char *)(p + stroff);
+                cur->strings[i] = strdup(src);
+                if (!cur->strings[i]) {
+                    *count = 0;
+                    lazybios_cleanup(ctx);
+                    return NULL;
+                }
+                stroff += strlen(src) + 1;
+            }
+            break;
+        }
+        p = dmi_next(p, end);
+    }
+
+    *count = ctx->OEMStrings_count;
+    return ctx->OEMStrings_ptr;
 }
 
 // ===== Memory Devices Getter =====
@@ -1329,6 +1487,25 @@ void lazybios_cleanup(lazybios_ctx_t* ctx) {
         ctx->port_connector_ptr = NULL;
     }
     ctx->caches_count = 0;
+
+    if (ctx->onboard_devices_ptr) {
+        for (size_t i = 0; i < ctx->onboard_devices_count; i++) {
+            free(ctx->onboard_devices_ptr[i].description_string);
+        }
+        free(ctx->onboard_devices_ptr);
+        ctx->onboard_devices_ptr = NULL;
+    }
+    ctx->onboard_devices_count = 0;
+
+    if (ctx->OEMStrings_ptr) {
+        OEMStrings_t *os = ctx->OEMStrings_ptr; // Did this just to not do ctx->OEMStrings_ptr->strings[i]), every compiler optimizes this anyways so no big deal;
+        for (size_t i = 0; i < os->string_count; ++i)
+            free(os->strings[i]);
+        free(os);
+        ctx->OEMStrings_ptr   = NULL;
+        ctx->OEMStrings_count = 0;
+    }
+    ctx->OEMStrings_count = 0;
 
     if (ctx->memory_arrays_ptr) {
         free(ctx->memory_arrays_ptr);
