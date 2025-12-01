@@ -21,7 +21,6 @@ build() {
 
     cmake .. \
       -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH" \
-      -DCMAKE_INSTALL_LIBDIR="$LIBDIR"
 
     make -j"$(nproc)"
     cd ..
@@ -52,7 +51,10 @@ install() {
 
 uninstall() {
     echo "[*] Uninstalling..."
-    cd build
+    cd build || {
+        echo "Build First!"
+        return 1
+    }
     sudo make uninstall
     cd ..
     echo "[+] Uninstall done"

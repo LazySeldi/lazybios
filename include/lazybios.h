@@ -799,52 +799,58 @@ typedef struct lazybios_ctx {
 } lazybios_ctx_t;
 
 // ===== Public API =====
-lazybios_ctx_t* lazybios_ctx_new(void);
+lazybios_ctx_t* lazybiosCTXNew(void);
 void lazybios_ctx_free(lazybios_ctx_t* ctx);
 
-int lazybios_init(lazybios_ctx_t* ctx);
-void lazybios_cleanup(lazybios_ctx_t* ctx);
+int lazybiosInit(lazybios_ctx_t* ctx);
+void lazybiosCleanup(lazybios_ctx_t* ctx);
+
+// Core parsing functions
+const char* DMIString(const uint8_t *formatted, int length, int string_index);
+const uint8_t* DMINext(const uint8_t *ptr, const uint8_t *end);
+size_t lazybiosCountStructsByType(const lazybios_ctx_t* ctx, uint8_t target_type);
+int lazybiosParseEntry(lazybios_ctx_t* ctx, const uint8_t* buf);
 
 // Basic functions
-void lazybios_smbios_ver(const lazybios_ctx_t* ctx);
-const smbios_entry_info_t* lazybios_get_entry_info(const lazybios_ctx_t* ctx);
+void lazybiosPrintVer(const lazybios_ctx_t* ctx);
+const smbios_entry_info_t* lazybiosGetEntryInfo(const lazybios_ctx_t* ctx);
 
-bios_info_t* lazybios_get_bios_info(lazybios_ctx_t* ctx);
-system_info_t* lazybios_get_system_info(lazybios_ctx_t* ctx);
-baseboard_info_t* lazybios_get_baseboard_info(lazybios_ctx_t* ctx);
-chassis_info_t* lazybios_get_chassis_info(lazybios_ctx_t* ctx);
-processor_info_t* lazybios_get_processor_info(lazybios_ctx_t* ctx);
+bios_info_t* lazybiosGetBIOSInfo(lazybios_ctx_t* ctx);
+system_info_t* lazybiosGetSystemInfo(lazybios_ctx_t* ctx);
+baseboard_info_t* lazybiosGetBaseboardInfo(lazybios_ctx_t* ctx);
+chassis_info_t* lazybiosGetChassisInfo(lazybios_ctx_t* ctx);
+processor_info_t* lazybiosGetProcInfo(lazybios_ctx_t* ctx);
 
-port_connector_info_t* lazybios_get_port_connectors(lazybios_ctx_t* ctx, size_t* count);
-cache_info_t* lazybios_get_caches(lazybios_ctx_t* ctx, size_t* count);
-onboard_devices_t* lazybios_get_onboard_devices(lazybios_ctx_t* ctx, size_t* count);
-OEMStrings_t* lazybios_get_OEMString_info(lazybios_ctx_t* ctx, size_t* count);
-physical_memory_array_t* lazybios_get_memory_arrays(lazybios_ctx_t* ctx, size_t* count);
-memory_device_t* lazybios_get_memory_devices(lazybios_ctx_t* ctx, size_t* count);
+port_connector_info_t* lazybiosGetPortConnectorInfo(lazybios_ctx_t* ctx, size_t* count);
+cache_info_t* lazybiosGetCacheInfo(lazybios_ctx_t* ctx, size_t* count);
+onboard_devices_t* lazybiosGetOnboardDeviceInfo(lazybios_ctx_t* ctx, size_t* count);
+OEMStrings_t* lazybiosGetOEMStringInfo(lazybios_ctx_t* ctx, size_t* count);
+physical_memory_array_t* lazybiosGetPhysicalMemArrayInfo(lazybios_ctx_t* ctx, size_t* count);
+memory_device_t* lazybiosGetMemDeviceInfo(lazybios_ctx_t* ctx, size_t* count);
 
-size_t lazybios_get_smbios_structure_min_length(const lazybios_ctx_t* ctx, uint8_t type);
-bool lazybios_is_smbios_version_at_least(const lazybios_ctx_t* ctx, uint8_t major, uint8_t minor);
+size_t lazybiosGetStructMinLength(const lazybios_ctx_t* ctx, uint8_t type);
+bool lazybiosSMBIOSVerCompare(const lazybios_ctx_t* ctx, uint8_t major, uint8_t minor);
 
 // API Helpers
-const char* lazybios_get_processor_family_string(uint8_t family);
-const char* lazybios_get_processor_type_string(uint8_t type);
-const char* lazybios_get_processor_status_string(uint8_t status);
-const char* lazybios_get_proc_characteristics_string(uint16_t characteristics);
-const char* lazybios_get_socket_type_string(uint8_t type);
+const char* lazybiosProcFamilyStr(uint8_t family);
+const char* lazybiosProcTypeStr(uint8_t type);
+const char* lazybiosProcStatusStr(uint8_t status);
+const char* lazybiosProcCharacteristicsStr(uint16_t characteristics);
+const char* lazybiosProcSocketTypeStr(uint8_t type);
 
-const char* lazybios_get_cache_type_string(uint8_t cache_type);
-const char* lazybios_get_cache_ecc_string(uint8_t ecc_type);
-const char* lazybios_get_cache_associativity_string(uint8_t associativity);
+const char* lazybiosCacheTypeStr(uint8_t cache_type);
+const char* lazybiosCacheECCTypeStr(uint8_t ecc_type);
+const char* lazybiosCacheAssociativityStr(uint8_t associativity);
 
-const char* lazybios_get_onboard_devices_type_string(uint8_t type);
+const char* lazybiosOnboardDeviceTypeStr(uint8_t type);
 
-const char* lazybios_get_port_connector_types_string(uint8_t connector_type);
-const char* lazybios_get_port_types_string(uint8_t port_type);
+const char* lazybiosPortConnectorTypeStr(uint8_t connector_type);
+const char* lazybiosPortTypeStr(uint8_t port_type);
 
-const char* lazybios_get_memory_type_string(uint8_t type);
-const char* lazybios_get_memory_form_factor_string(uint8_t form_factor);
-const char* lazybios_get_memory_array_location_string(uint8_t location);
-const char* lazybios_get_memory_array_use_string(uint8_t use);
-const char* lazybios_get_memory_array_ecc_string(uint8_t ecc);
+const char* lazybiosMemTypeStr(uint8_t type);
+const char* lazybiosMemFormFactorStr(uint8_t form_factor);
+const char* lazybiosPhysicalMemArrayLocationStr(uint8_t location);
+const char* lazybiosPhysicalMemArrayUseStr(uint8_t use);
+const char* lazybiosPhysicalMemArrayECCStr(uint8_t ecc);
 
 #endif
