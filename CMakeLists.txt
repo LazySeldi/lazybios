@@ -1,126 +1,173 @@
-cmake_minimum_required(VERSION 3.10)
-project(lazybios C)
+# CMakeLists.txt for lazybios
+cmake_minimum_required(VERSION 3.15)
 
+# Project definition
+project(lazybios
+        VERSION 2.0.0
+        DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
+        LANGUAGES C
+        HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
+)
+
+# Set C standard
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Install dirs
-include(GNUInstallDirs)
-
-# Set installation prefix
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Installation prefix" FORCE)
+# Default build type
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-# Versioning
-set(LAZYBIOS_VERSION_MAJOR 1)
-set(LAZYBIOS_VERSION_MINOR 4)
-set(LAZYBIOS_VERSION_PATCH 0)
-set(LAZYBIOS_VERSION "${LAZYBIOS_VERSION_MAJOR}.${LAZYBIOS_VERSION_MINOR}.${LAZYBIOS_VERSION_PATCH}")
+# Include GNU standard directories
+include(GNUInstallDirs)
 
-# Targets
+# Library sources
+set(LAZYBIOS_SOURCES
+        src/lazybios.c
+        src/decoders.c
+        src/system.c
+        src/processor.c
+        src/memory.c
+        src/ports.c
+        src/sysinfo.c
+        src/bios.c
+)
 
-# Shared library
-add_library(lazybios SHARED lazybios.c)
+# Create the shared library target
+add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
 
-# Test executable (NOT installable)
-add_executable(lazybios_test test.c)
-target_link_libraries(lazybios_test lazybios)
+# Logging Options
+option(LAZYBIOS_QUIET "Disable all lazybios logging" OFF)
+option(LAZYBIOS_DEBUG "Enable lazybios debug logging" OFF)
 
-# Library properties
+# Set compile definitions based on options
+if(LAZYBIOS_QUIET)
+    target_compile_definitions(lazybios PRIVATE LAZYBIOS_QUIET)
+    message(STATUS "lazybios: Quiet mode enabled (no logging)")
+endif()
+
+if(LAZYBIOS_DEBUG)
+    target_compile_definitions(lazybios PRIVATE LAZYBIOS_DEBUG)
+    message(STATUS "lazybios: Debug mode enabled")
+endif()
+
+# Show status
+if(NOT LAZYBIOS_QUIET AND NOT LAZYBIOS_DEBUG)
+    message(STATUS "lazybios: Normal logging enabled")
+endif()
+
+# Target Properties and Include Directories
+target_include_directories(lazybios PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+
 set_target_properties(lazybios PROPERTIES
-    OUTPUT_NAME "lazybios"
-    SOVERSION ${LAZYBIOS_VERSION_MAJOR}
-    VERSION   ${LAZYBIOS_VERSION}
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
 )
 
-set_target_properties(lazybios_test PROPERTIES
-    OUTPUT_NAME "lazybios_test"
+# Include directories
+target_include_directories(lazybios PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Install rules
+# Compiler options
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(lazybios PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
-install(TARGETS lazybios
-    EXPORT lazybiosTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+# Create test executable
+add_executable(lazybios_test test/test.c)
+target_link_libraries(lazybios_test PRIVATE lazybios)
 
-install(FILES lazybios.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+# Enable testing
+enable_testing()
+add_test(NAME lazybios_basic_test COMMAND lazybios_test)
 
-# pkg-config
+# Generate pkg-config file
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/lazybios.pc.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc"
-    @ONLY
+        cmake-files/lazybios.pc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc
+        @ONLY
 )
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+# Installation
+install(TARGETS lazybios
+        EXPORT lazybiosTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(DIRECTORY include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h"
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
 # CMake package config
-
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/lazybiosConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/lazybios"
+        cmake-files/lazybiosConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios
 )
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake"
-    VERSION ${LAZYBIOS_VERSION}
-    COMPATIBILITY SameMajorVersion
+        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+)
+
+install(EXPORT lazybiosTargets
+        FILE lazybiosTargets.cmake
+        NAMESPACE lazybios::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios
 )
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/lazybios"
-)
-
-# Export targets
-
-install(EXPORT lazybiosTargets
-    FILE lazybiosTargets.cmake
-    NAMESPACE lazybios::
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/lazybios"
+        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios
 )
 
 # Uninstall target
-
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-    @ONLY
+        cmake-files/cmake_uninstall.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+        @ONLY
 )
 
 add_custom_target(uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+        COMMENT "Uninstalling lazybios..."
 )
 
-# Status messages
+# Summary with pkg-config path info
+message(STATUS "
+lazybios ${PROJECT_VERSION} configured successfully!
 
-message(STATUS "lazybios ${LAZYBIOS_VERSION} configured")
-message(STATUS "Installation prefix: ${CMAKE_INSTALL_PREFIX}")
-message(STATUS "Library dir: ${CMAKE_INSTALL_LIBDIR}")
-message(STATUS "Binary dir: ${CMAKE_INSTALL_BINDIR}")
-message(STATUS "Include dir: ${CMAKE_INSTALL_INCLUDEDIR}")
-message(STATUS "")
-message(STATUS "Build targets:")
-message(STATUS "  make              - Build library and test")
-message(STATUS "  make install      - Install to ${CMAKE_INSTALL_PREFIX}")
-message(STATUS "  make uninstall    - Remove installed files")
-message(STATUS "")
-message(STATUS "Test the library:")
-message(STATUS "  ./lazybios_test   - Run test program (development only)")
-message(STATUS "")
-message(STATUS "After installation:")
-message(STATUS "  pkg-config --cflags lazybios  - Get compiler flags")
-message(STATUS "  pkg-config --libs lazybios    - Get linker flags")
+Installation:
+  make install      - Install to ${CMAKE_INSTALL_PREFIX}
+  make uninstall    - Remove installed files
 
+Build targets:
+  make              - Build library and test executable
+  make test         - Run tests
+
+Usage in other projects:
+  find_package(lazybios REQUIRED)
+  target_link_libraries(your_target PRIVATE lazybios::lazybios)
+
+Or with pkg-config:
+  pkg-config --cflags --libs lazybios
+
+The pkg-config file will be installed to: ${CMAKE_INSTALL_PREFIX}/pkgconfig/lazybios.pc
+")

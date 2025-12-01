@@ -1,0 +1,40 @@
+# Only run if install manifest exists
+if(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+    message(WARNING "Cannot find install manifest: @CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+    return()
+endif()
+
+# Read and process manifest
+file(READ "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt" installed_files)
+string(STRIP "${installed_files}" installed_files)
+if(NOT installed_files)
+    message(STATUS "No files to uninstall")
+    return()
+endif()
+
+string(REPLACE "\n" ";" file_list "${installed_files}")
+list(REMOVE_DUPLICATES file_list)
+
+foreach(file IN LISTS file_list)
+    string(STRIP "${file}" file)
+    if(NOT file)
+        continue()
+    endif()
+
+    if(EXISTS "$ENV{DESTDIR}${file}" OR IS_SYMLINK "$ENV{DESTDIR}${file}")
+        message(STATUS "Uninstalling: $ENV{DESTDIR}${file}")
+        execute_process(
+            COMMAND "@CMAKE_COMMAND@" -E remove "$ENV{DESTDIR}${file}"
+            RESULT_VARIABLE result
+            OUTPUT_QUIET
+            ERROR_QUIET
+        )
+        if(NOT result EQUAL 0)
+            message(WARNING "Failed to remove: $ENV{DESTDIR}${file}")
+        endif()
+    else()
+        message(STATUS "File does not exist: $ENV{DESTDIR}${file}")
+    endif()
+endforeach()
+
+message(STATUS "Uninstall completed")
