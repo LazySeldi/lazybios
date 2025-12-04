@@ -18,7 +18,7 @@
 
 ### 2. No arbitrary version limits: this library does not stop at a specific SMBIOS version. It implements whatever the latest version of the DMTF specification provides.
 
-### 3. When implementing new structures, this project follows the latest [DMTF SMBIOS 3.9.0 specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
+### 3. When implementing new structures, this project follows the latest [DMTF SMBIOS Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
 
 
 ---
