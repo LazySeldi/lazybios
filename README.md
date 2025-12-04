@@ -1,6 +1,6 @@
 # lazybios 
 
-### NO ITS NOT DEAD IT WILL FOREVER BE UPDATED!
+### NO ITS NOT DEAD
 ### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
 
 ---
@@ -11,10 +11,22 @@
 - **Zero Dependencies** - Pure C standard library
 - **Memory Safe** - Proper allocation and cleanup
 
-------------------------
+---
+
+## About this project:
+### 1. This library started as a personal learning project to improve my C skills. There may be bugs, and contributions are welcome!
+
+### 2. No arbitrary version limits: this library does not stop at a specific SMBIOS version. It implements whatever the latest version of the DMTF specification provides.
+
+### 3. When implementing new structures, this project follows the latest [DMTF SMBIOS 3.9.0 specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
+
+
+---
+
+## In here are all of the currently supported SMBIOS types:
 
 <details>
-  <summary><h2 style="display:inline;">Implemented Types:</h2></summary>
+  <summary><h3 style="display:inline;">Implemented Types:</h3></summary>
 <h3>Type 0: BIOS Information</h3>
 <h3>Type 1: System Information</h3>
 <h3>Type 2: Baseboard (Motherboard) Information</h3>
@@ -29,21 +41,19 @@
 </details>
 
 ---
-## About this project:
-This library was first made as a learning experience for me to learn C and get better at it, there are probably bugs in this program so please point them out so I can fix them or just provide me with the fix if you want. Lets make this library better together! 
-
----
 ## Installation
+[![aur.archlinux.org.io](https://img.shields.io/aur/version/lib-lazybios.svg)](https://aur.archlinux.org/packages/lib-lazybios)
 <details>
 <summary>Arch Linux</summary>
 
 You can install lazybios from the AUR.
 
-```c
-yay -S lib-lazybios # Or use your prefeered AUR helper.
+```shell
+yay -S lib-lazybios # Or use your preferred AUR helper.
 ```
 </details>
 
+---
 <details>
 <summary>Other distros? (Community packages welcome!)</summary>
 
@@ -53,8 +63,6 @@ Yet to come!😞
 
 <details>
 <summary>Manual Building and installing with CMake.</summary>
-
-Clone and build it yourself!
 
 ```c
 git clone https://github.com/LazySeldi/lazybios.git
