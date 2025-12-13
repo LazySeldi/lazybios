@@ -37,16 +37,6 @@
 #define SMBIOS_TYPE_MEMORY_DEVICE           17
 #define SMBIOS_TYPE_END                     127
 
-// Macro to safely free memory and set pointer to NULL
-#define lazybiosFREE(ptr) \
-    do { \
-        if (*(ptr) != NULL) { \
-            free(*(ptr)); \
-            *(ptr) = NULL; \
-        } \
-    } while (0)
-
-
 // Helper macro to check SMBIOS version with needed version
 #define ISVERPLUS(ctx, req_major, req_minor) \
 (((ctx)->entry_info.major > (req_major)) || \
