@@ -1,58 +1,72 @@
 //
 // lazybios.c - Core library functions
 //
-#include "../include/lazybios.h"
+#include "lazybios.h"
+#include <unistd.h> // For lazybiosFREE and other helpers
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdarg.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+    #define LB_OS_WINDOWS 1
+
+#elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__gnu_linux__)
+    #define LB_OS_LINUX 1
+
+#elif defined(__APPLE__) && defined(__MACH__)
+    #define LB_OS_MACOS 1
+
+#else
+    #define LB_OS_UNKNOWN 1
+#endif
 
 // Logging system for lazybios
 
-// Quiet mode - disable ALL logging
+// Internal helper function
+static inline void lazybios_log_internal(const char *prefix, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    fprintf(stderr, "%s", prefix);    // print the prefix
+    vfprintf(stderr, fmt, args);      // print user message
+    fprintf(stderr, "\n");            // newline
+    va_end(args);
+}
+
+// Quiet mode - no logging
 #ifdef LAZYBIOS_QUIET
 # define lb_log(...)      ((void)0)
 # define lb_dbg(...)      ((void)0)
 
-// Debug mode - enable verbose debugging
+// Debug mode - enable verbose logging
 #elif defined(LAZYBIOS_DEBUG)
-# define lb_log(fmt, ...) fprintf(stderr, "[lazybios] " fmt "\n"
-, ##__VA_ARGS__)
-# define lb_dbg(fmt, ...) fprintf(stderr, "[lazybios-dbg] " fmt "\n", ##__VA_ARGS__)
+# define lb_log(...)      lazybios_log_internal("[lazybios] ", __VA_ARGS__)
+# define lb_dbg(...)      lazybios_log_internal("[lazybios-dbg] ", __VA_ARGS__)
 
 // Normal mode - standard logging only
 #else
-# define lb_log(fmt, ...) fprintf(stderr, "[lazybios] " fmt "\n", ##__VA_ARGS__)
+# define lb_log(...)      lazybios_log_internal("[lazybios] ", __VA_ARGS__)
 # define lb_dbg(...)      ((void)0)
 #endif
 
+// So here I choose an inline function and macros because my only other options were either to switch to C23 and use __VA_ARGS__ normally because C11 doesn't support that, or I could Enable GNU extension and be dependent on it.
+// I could also require a dummy argument to "fix" it altogether but that's probably not safe
 
-// ===== Context Management =====
-lazybios_ctx_t* lazybiosCTXNew(void) {
-    lazybios_ctx_t* ctx = calloc(1, sizeof(lazybios_ctx_t));
-    if (!ctx) {
-        lb_log("Failed to allocate context");
-        return NULL;
-    }
-    return ctx;
-}
+// ===== File-based Initialization for Testing/Dumps =====
+int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path) {
+    if (!ctx) return -1;
 
-// ===== Library Initialization =====
-int lazybiosInit(lazybios_ctx_t* ctx) {
-    if (!ctx) {
-        lb_log("Null context provided");
-        return -1;
-    }
-
-    FILE *entry = fopen(SMBIOS_ENTRY, "rb");
+    FILE *entry = fopen(entry_path, "rb");
     if (!entry) {
-        lb_log("failed to open %s: %s", SMBIOS_ENTRY, strerror(errno));
+        lb_log("failed to open %s: %s", entry_path, strerror(errno));
         return -1;
     }
 
-    FILE *dmi = fopen(DMI_TABLE, "rb");
+    FILE *dmi = fopen(dmi_path, "rb");
     if (!dmi) {
-        lb_log("Failed to open %s: %s", DMI_TABLE, strerror(errno));
+        lb_log("Failed to open %s: %s", dmi_path, strerror(errno));
         fclose(entry);
         return -1;
     }
@@ -62,270 +76,386 @@ int lazybiosInit(lazybios_ctx_t* ctx) {
     fclose(entry);
 
     if (n < 20) {
-        lb_log("Invalid entry point size (%zu bytes)", n);
+        lb_log("Invalid SMBIOS entry point (%zu bytes)", n);
         fclose(dmi);
         return -1;
     }
 
     if (lazybiosParseEntry(ctx, entry_buf) != 0) {
-        lb_log("No valid SMBIOS anchor\n");
-        return -1;
-    }
-
-    fseek(dmi, 0, SEEK_END);
-    ctx->dmi_len = ftell(dmi);
-    rewind(dmi);
-
-    if (ctx->dmi_len == 0) {
-        lb_log("Empty DMI table");
-        lb_dbg("DMI length: %zu", ctx->dmi_len);
         fclose(dmi);
         return -1;
     }
 
+    if (fseek(dmi, 0, SEEK_END) != 0) {
+        lb_log("Failed to seek in DMI table");
+        fclose(dmi);
+        return -1;
+    }
+
+    long len = ftell(dmi);
+    if (len <= 0) {
+        lb_log("Invalid or empty DMI table");
+        lb_dbg("ftell returned %ld", len);
+        fclose(dmi);
+        return -1;
+    }
+
+    ctx->dmi_len = (size_t)len;
+    rewind(dmi);
+
     ctx->dmi_data = malloc(ctx->dmi_len);
     if (!ctx->dmi_data) {
         lb_log("Failed to allocate %zu bytes for DMI buffer", ctx->dmi_len);
-        lb_dbg("malloc(%zu) returned NULL (errno=%d: (%s)", ctx->dmi_len, errno, strerror(errno));
         fclose(dmi);
         return -1;
     }
 
     size_t got = fread(ctx->dmi_data, 1, ctx->dmi_len, dmi);
+    fclose(dmi);
+
     if (got != ctx->dmi_len) {
-        lb_log("Failed to read DMI table");
-        lb_dbg("short read: got %zu / %zu bytes, errno=%d (%s)", got, ctx->dmi_len, errno, strerror(errno));
+        lb_log("Short read in DMI table");
         free(ctx->dmi_data);
-        ctx->dmi_data = NULL;
-        fclose(dmi);
+        ctx->dmi_data = LAZYBIOS_NULL;
         return -1;
     }
-
-    fclose(dmi);
     return 0;
 }
 
-// ===== Version-Aware Helpers =====
-size_t lazybiosGetStructMinLength(const lazybios_ctx_t* ctx, uint8_t type) {
-    if (!ctx) {
-        lb_log("Context not loaded!");
+// ===== Context Management =====
+lazybiosCTX_t* lazybiosCTXNew(void) {
+    lazybiosCTX_t *ctx = calloc(1, sizeof(*ctx));
+    if (!ctx) return LAZYBIOS_NULL;
+
+    #if LB_OS_LINUX
+        ctx->backend = LAZYBIOS_BACKEND_LINUX;
+    #elif LB_OS_WINDOWS
+        ctx->backend = LAZYBIOS_BACKEND_WINDOWS;
+    #elif LB_OS_MACOS
+        ctx->backend = LAZYBIOS_BACKEND_MACOS;
+    #else
+        ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
+    #endif
+
+    return ctx;
+}
+// ===== Library Initialization =====
+int lazybiosSysfs(lazybiosCTX_t* ctx) {
+    if (!ctx) return -1;
+
+    #if LB_OS_LINUX
+        FILE *entry = fopen(SMBIOS_ENTRY, "rb");
+        if (!entry) {
+            lb_log("failed to open %s: %s", SMBIOS_ENTRY, strerror(errno));
+            return -1;
+        }
+
+        FILE *dmi = fopen(DMI_TABLE, "rb");
+        if (!dmi) {
+            lb_log("Failed to open %s: %s", DMI_TABLE, strerror(errno));
+            fclose(entry);
+            return -1;
+        }
+
+        uint8_t entry_buf[64];
+        size_t n = fread(entry_buf, 1, sizeof(entry_buf), entry);
+        fclose(entry);
+
+        if (n < 20) {
+            lb_log("Invalid SMBIOS entry point (%zu bytes)", n);
+            fclose(dmi);
+            return -1;
+        }
+
+        if (lazybiosParseEntry(ctx, entry_buf) != 0) {
+            fclose(dmi);
+            return -1;
+        }
+
+        if (fseek(dmi, 0, SEEK_END) != 0) {
+            lb_log("Failed to seek in DMI table");
+            fclose(dmi);
+            return -1;
+        }
+
+        long len = ftell(dmi);
+        if (len <= 0) {
+            lb_log("Invalid or empty DMI table");
+            lb_dbg("ftell returned %ld", len);
+            fclose(dmi);
+            return -1;
+        }
+
+        ctx->dmi_len = (size_t)len;
+        rewind(dmi);
+        ctx->dmi_data = malloc(ctx->dmi_len);
+        if (!ctx->dmi_data) {
+            lb_log("Failed to allocate %zu bytes for DMI buffer", ctx->dmi_len);
+            fclose(dmi);
+            return -1;
+        }
+
+        size_t got = fread(ctx->dmi_data, 1, ctx->dmi_len, dmi);
+        fclose(dmi);
+        if (got != ctx->dmi_len) {
+            lb_log("Short read in DMI table");
+            free(ctx->dmi_data);
+            ctx->dmi_data = LAZYBIOS_NULL;
+            return -1;
+        }
+        return 0;
+    #else
         return -1;
-    }
+    #endif
+}
 
-    bool is_64bit = ctx->entry_info.is_64bit;
+int lazybiosDevMem(lazybiosCTX_t* ctx) {
+    if (!ctx) return -1;
 
-    switch(type) {
-        case SMBIOS_TYPE_BIOS:
-            return is_64bit ? BIOS_MIN_LENGTH_3_0 : BIOS_MIN_LENGTH_2_0;
+    #if LB_OS_LINUX
+        lb_log("/dev/mem backend not implemented yet");
+        return -1;
+    #else
+        return -1;
+    #endif
+}
 
-        case SMBIOS_TYPE_SYSTEM:
-            return is_64bit ? SYSTEM_MIN_LENGTH_3_0 : SYSTEM_MIN_LENGTH_2_0;
+int lazybiosWindows(lazybiosCTX_t *ctx) {
+    if (!ctx) return -1;
 
-        case SMBIOS_TYPE_BASEBOARD:
-            return BASEBOARD_MIN_LENGTH;
+    // Most of the Windows backend wasn't made by me I got help from AI for this since I don't know anything about the WindowsAPI
+    #if LB_OS_WINDOWS
+        // RSMB provider ID (little endian for "RSMB")
+        const DWORD sig = 0x52534D42;
 
-        case SMBIOS_TYPE_CHASSIS:
-            return is_64bit ? CHASSIS_MIN_LENGTH_3_0 : CHASSIS_MIN_LENGTH_2_0;
+        // Query required size
+        DWORD size = GetSystemFirmwareTable(sig, 0, LAZYBIOS_NULL, 0);
+        if (size == 0) {
+            lb_log("GetSystemFirmwareTable failed (size=0)");
+            return -1;
+        }
 
-        case SMBIOS_TYPE_PROCESSOR:
-            return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 6))
-                   ? PROC_MIN_LENGTH_2_6 : PROC_MIN_LENGTH_2_0;
+        uint8_t *buf = malloc(size);
+        if (!buf) return -1;
 
-        case SMBIOS_TYPE_CACHES:
-            return (ctx->entry_info.major > 2 || (ctx->entry_info.major == 2 && ctx->entry_info.minor >= 1))
-                   ? CACHE_MIN_LENGTH_2_1 : CACHE_MIN_LENGTH_2_0;
+        // Fetch the table
+        DWORD got = GetSystemFirmwareTable(sig, 0, buf, size);
+        if (got != size) {
+            lb_log("SMBIOS read mismatch (%lu != %lu)", (unsigned long)got, (unsigned long)size);
+            free(buf);
+            return -1;
+        }
 
-        case SMBIOS_TYPE_ONBOARD_DEVICES:
-            return ONBOARD_DEVICES_MIN_LENGTH;
+        // Cast to RawSMBIOSData header used by Windows API
+        typedef struct {
+            BYTE Used20CallingMethod;
+            BYTE SMBIOSMajorVersion;
+            BYTE SMBIOSMinorVersion;
+            BYTE DmiRevision;
+            DWORD Length;              // Length of TableData
+            BYTE SMBIOSTableData[1];   // Start of DMI structures
+        } RawSMBIOSData;
 
-        case SMBIOS_TYPE_OEM_STRINGS:
-            return OEM_STRINGS_MIN_LENGTH;
+        RawSMBIOSData *raw = (RawSMBIOSData *) buf;
 
-        case SMBIOS_TYPE_PORT_CONNECTOR:
-            return PORT_CONNECTOR_MIN_LENGTH;
+        // Sanity check: table length must fit inside returned buffer
+        if (raw->Length == 0 || raw->Length > size) {
+            lb_log("Invalid RawSMBIOSData.Length = %u", raw->Length);
+            free(buf);
+            return -1;
+        }
 
-        case SMBIOS_TYPE_MEMARRAY:
-            return MEMARRAY_MIN_LENGTH;
+        // Fill ctx->entry_info manually
+        ctx->entry_info.major     = raw->SMBIOSMajorVersion;
+        ctx->entry_info.minor     = raw->SMBIOSMinorVersion;
+        ctx->entry_info.docrev    = raw->DmiRevision;
+        ctx->entry_info.table_length  = raw->Length;
+        ctx->entry_info.table_address = 0;     // Windows gives no physical address
+        ctx->entry_info.is_64bit  = (raw->SMBIOSMajorVersion >= 3);
 
-        case SMBIOS_TYPE_MEMDEVICE:
-            return MEMORY_MIN_LENGTH;
+        // Provide ONLY the DMI table payload
+        size_t dmi_len = raw->Length;
 
+        uint8_t *table = malloc(dmi_len);
+        if (!table) {
+            free(buf);
+            return -1;
+        }
+
+        memcpy(table, raw->SMBIOSTableData, dmi_len);
+
+        // Free the original RSMB buffer — we only keep the DMI payload
+        free(buf);
+        free(size);
+
+        ctx->dmi_data = table;
+        ctx->dmi_len  = dmi_len;
+
+        return 0;
+
+    #else
+        return -1;
+    #endif
+}
+
+int lazybiosMacOS(lazybiosCTX_t* ctx) {
+    if (!ctx) return -1;
+    #ifdef LB_OS_MACOS
+        lb_log("MacOS backend not implemented yet");
+        return -1;
+    #else
+        return -1;
+    #endif
+}
+
+int lazybiosInit(lazybiosCTX_t *ctx) {
+    if (!ctx) return -1;
+
+
+    switch (ctx->backend) {
+        case LAZYBIOS_BACKEND_LINUX: { // Brackets since you can't declare variables inside a case without brackets, you can only do that in C23
+            FILE *f = fopen(DMI_TABLE, "r");
+            if (!f) {
+                return lazybiosDevMem(ctx);
+            }
+            fclose(f);
+            return lazybiosSysfs(ctx);
+        }
+
+        case LAZYBIOS_BACKEND_WINDOWS:
+            return lazybiosWindows(ctx);
+
+        case LAZYBIOS_BACKEND_MACOS:
+            return lazybiosMacOS(ctx);
+
+        case LAZYBIOS_BACKEND_UNKNOWN:
+            lb_log("Unknown backend %d", ctx->backend);
+            return -1;
         default:
-            return 4;
+            lb_log("Nothing Found!");
+            return -1;
     }
 }
 
-// Entry Point Version Parser
-int lazybiosParseEntry(lazybios_ctx_t* ctx, const uint8_t* buf) {
-    if (!ctx) {
-        lb_log("Context not loaded!");
+// ===== Core DMI Parsing Helpers =====
+
+// Finds the next structure in the DMI table
+const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
+    if (p + 4 > end) return end; // header too small
+
+    uint8_t len = p[1];
+    if (p + len > end) return end; // formatted section exceeds buffer
+
+    const uint8_t* next = p + len;
+
+    // Skip string section safely
+    while (next + 1 < end) {
+        if (next[0] == 0 && next[1] == 0)
+            break; // double null found
+        next++;
     }
-    if (memcmp(buf, SMBIOS3_ANCHOR, 5) == 0) {
-        ctx->entry_info.major = buf[ENTRY3_MAJOR_OFFSET];
-        ctx->entry_info.minor = buf[ENTRY3_MINOR_OFFSET];
-        ctx->entry_info.docrev = buf[ENTRY3_DOCREV_OFFSET];
-        ctx->entry_info.table_length = *(uint32_t*)(buf + ENTRY3_TABLE_LENGTH_OFFSET);
-        ctx->entry_info.table_address = *(uint64_t*)(buf + ENTRY3_TABLE_ADDR_OFFSET);
+
+    // Skip double-null terminator
+    if (next + 2 <= end)
+        next += 2;
+    else
+        next = end;
+
+    return next;
+}
+
+
+// Retrieves a string from the DMI table
+char* DMIString(const uint8_t *p, uint8_t length, uint8_t index, const uint8_t *end) {
+    if (index == 0)
+        return LAZYBIOS_NULL;
+
+    // Point to the start of the unformatted string area
+    const uint8_t* str = p + length;
+
+    // Iterate until the selected string
+    for (uint8_t i = 1; i < index; i++) {
+        while (str < end && *str != 0)
+            str++;
+        if (str >= end) return LAZYBIOS_NULL; // out of bounds
+        str++; // skip null terminator
+    }
+
+    // Now str points to the target string
+    const uint8_t* s = str;
+
+    // Find null terminator safely
+    while (s < end && *s != 0)
+        s++;
+
+    if (s >= end)
+        return LAZYBIOS_NULL; // unterminated -> BIOS corruption
+
+    // Length is safe
+    size_t len = (size_t)(s - str);
+
+    char *copy = malloc(len + 1);
+    if (!copy) return LAZYBIOS_NULL;
+
+    memcpy(copy, str, len);
+    copy[len] = '\0';
+    return copy;
+}
+
+// Parses the SMBIOS Entry Point structure
+int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf) {
+    if (memcmp(entry_buf, SMBIOS3_ANCHOR, 5) == 0) {
+        // SMBIOS 3.x Entry Point
+        ctx->entry_info.major = entry_buf[SMBIOS3_MAJOR_OFFSET];
+        ctx->entry_info.minor = entry_buf[SMBIOS3_MINOR_OFFSET];
+        ctx->entry_info.docrev = entry_buf[SMBIOS3_DOCREV_OFFSET];
+        ctx->entry_info.table_length = *(uint32_t*)(entry_buf + SMBIOS3_TABLE_LENGTH);
+        ctx->entry_info.table_address = *(uint64_t*)(entry_buf + SMBIOS3_TABLE_ADDRESS);
+        ctx->entry_info.n_structures = LAZYBIOS_NOT_FOUND_U16; // Not available in SMBIOS 3.x
         ctx->entry_info.is_64bit = true;
-    } else if (memcmp(buf, SMBIOS2_ANCHOR, 4) == 0) {
-        ctx->entry_info.major = buf[ENTRY2_MAJOR_OFFSET];
-        ctx->entry_info.minor = buf[ENTRY2_MINOR_OFFSET];
-        ctx->entry_info.docrev = 0;  // Not available in SMBIOS 2.x
-        ctx->entry_info.table_length = *(uint16_t*)(buf + ENTRY2_TABLE_LENGTH_OFFSET);
-        ctx->entry_info.table_address = *(uint32_t*)(buf + ENTRY2_TABLE_ADDR_OFFSET);
+    } else if (memcmp(entry_buf, SMBIOS2_ANCHOR, 4) == 0) {
+        // SMBIOS 2.x Entry Point
+        ctx->entry_info.major = entry_buf[SMBIOS2_MAJOR_OFFSET];
+        ctx->entry_info.minor = entry_buf[SMBIOS2_MINOR_OFFSET];
+        ctx->entry_info.docrev = LAZYBIOS_NOT_FOUND_U8; // Not available in SMBIOS 2.x
+        ctx->entry_info.table_length = *(uint16_t*)(entry_buf + SMBIOS2_TABLE_LENGTH);
+        ctx->entry_info.table_address = *(uint32_t*)(entry_buf + SMBIOS2_TABLE_ADDRESS);
+        ctx->entry_info.n_structures = *(uint16_t*)(entry_buf + SMBIOS2_N_STRUCTURES); // Number of structures
         ctx->entry_info.is_64bit = false;
     } else {
-        lb_log("Couldn't find SMBIOS version!");
-        lb_dbg("anchor bytes: %02X %02X %02X %02X %02X  (SMBIOS-2 only uses first 4)", buf[0], buf[1], buf[2], buf[3], buf[4]);
+        lb_log("SMBIOS anchor not found");
+        lb_dbg("anchor bytes: %02X %02X %02X %02X %02X  (SMBIOS-2 only uses first 4)", entry_buf[0], entry_buf[1], entry_buf[2], entry_buf[3], entry_buf[4]);
         return -1;
     }
+
     return 0;
 }
 
-// Find all Strings in given "string_index"
-const char* DMIString(const uint8_t *formatted, int length, int string_index) {
-    if (string_index == 0) return "Not Specified";
-
-    const char *str = (const char *)(formatted + length);
-
-    for (int i = 1; i < string_index; i++) {
-        // Skip to the end of current string
-        while (*str) str++;
-        str++; // Skip the null terminator
-
-        // Check if we've run out of strings
-        if (!*str) return "Not Specified";
-    }
-    return str;
-}
-
-// Next structure
-const uint8_t* DMINext(const uint8_t *ptr, const uint8_t *end) {
-    const uint8_t *p = ptr + ptr[1];
-    while (p + 1 < end && (p[0] || p[1])) p++;
-    return p + 2;
-}
-
-// Generic Structure Parser
-size_t lazybiosCountStructsByType(const lazybios_ctx_t* ctx, uint8_t target_type) {
+// Counts the number of structures of a given type
+size_t lazybiosCountStructsByType(const lazybiosCTX_t* ctx, uint8_t target_type, size_t min_length) {
     if (!ctx || !ctx->dmi_data) return 0;
 
     size_t count = 0;
     const uint8_t *p = ctx->dmi_data;
     const uint8_t *end = ctx->dmi_data + ctx->dmi_len;
-    size_t min_length = lazybiosGetStructMinLength(ctx, target_type);
 
-    while (p + SMBIOS_HEADER_SIZE < end) {
+    while (p + 4 < end) { // SMBIOS_HEADER_SIZE
         uint8_t type = p[0];
         if (type == SMBIOS_TYPE_END) break;
 
-        if (type == target_type && p[1] >= min_length) {
+        if (type == target_type && p[1] >= min_length)
             count++;
-        }
+
         p = DMINext(p, end);
     }
+
     return count;
 }
 
-// Cleanup
-void lazybiosCleanup(lazybios_ctx_t* ctx) {
-    if (!ctx) return;
-
-    free(ctx->bios_info.vendor);
-    free(ctx->bios_info.version);
-    free(ctx->bios_info.release_date);
-
-    free(ctx->system_info.manufacturer);
-    free(ctx->system_info.product_name);
-    free(ctx->system_info.version);
-    free(ctx->system_info.serial_number);
-    free(ctx->system_info.uuid);
-
-    free(ctx->baseboard_info.manufacturer);
-    free(ctx->baseboard_info.product);
-    free(ctx->baseboard_info.version);
-    free(ctx->baseboard_info.serial_number);
-    free(ctx->baseboard_info.asset_tag);
-
-    free(ctx->chassis_info.asset_tag);
-    free(ctx->chassis_info.sku);
-
-    free(ctx->processor_info.socket_designation);
-    free(ctx->processor_info.version);
-    free(ctx->processor_info.serial_number);
-    free(ctx->processor_info.asset_tag);
-    free(ctx->processor_info.part_number);
-
-    if (ctx->caches_ptr) {
-        for (size_t i = 0; i < ctx->caches_count; i++) {
-            free(ctx->caches_ptr[i].socket_designation);
-        }
-        free(ctx->caches_ptr);
-        ctx->caches_ptr = NULL;
-    }
-    ctx->caches_count = 0;
-
-    if (ctx->port_connector_ptr) {
-        for (size_t i = 0; i < ctx->port_connector_count; i++) {
-            free(ctx->port_connector_ptr[i].external_ref_designator);
-            free(ctx->port_connector_ptr[i].internal_ref_designator);
-        }
-        free(ctx->port_connector_ptr);
-        ctx->port_connector_ptr = NULL;
-    }
-    ctx->caches_count = 0;
-
-    if (ctx->onboard_devices_ptr) {
-        for (size_t i = 0; i < ctx->onboard_devices_count; i++) {
-            free(ctx->onboard_devices_ptr[i].description_string);
-        }
-        free(ctx->onboard_devices_ptr);
-        ctx->onboard_devices_ptr = NULL;
-    }
-    ctx->onboard_devices_count = 0;
-
-    if (ctx->OEMStrings_ptr) {
-        OEMStrings_t *os = ctx->OEMStrings_ptr; // Did this just to not do ctx->OEMStrings_ptr->strings[i]), every compiler optimizes this anyways so no big deal;
-        for (size_t i = 0; i < os->string_count; ++i)
-            free(os->strings[i]);
-        free(os);
-        ctx->OEMStrings_ptr   = NULL;
-        ctx->OEMStrings_count = 0;
-    }
-    ctx->OEMStrings_count = 0;
-
-    if (ctx->memory_arrays_ptr) {
-        free(ctx->memory_arrays_ptr);
-        ctx->memory_arrays_ptr = NULL;
-    }
-    ctx->memory_arrays_count = 0;
-
-    if (ctx->memory_devices_ptr) {
-        for (size_t i = 0; i < ctx->memory_devices_count; i++) {
-            free(ctx->memory_devices_ptr[i].locator);
-            free(ctx->memory_devices_ptr[i].bank_locator);
-            free(ctx->memory_devices_ptr[i].manufacturer);
-            free(ctx->memory_devices_ptr[i].serial_number);
-            free(ctx->memory_devices_ptr[i].part_number);
-        }
-        free(ctx->memory_devices_ptr);
-        ctx->memory_devices_ptr = NULL;
-    }
-    ctx->memory_devices_count = 0;
-
-    if (ctx->dmi_data) {
-        free(ctx->dmi_data);
-        ctx->dmi_data = NULL;
-    }
-    ctx->dmi_len = 0;
-
-    free(ctx);
-}
-
 // Small Helper
-void lazybiosPrintVer(const lazybios_ctx_t* ctx) {
+void lazybiosPrintVer(const lazybiosCTX_t* ctx) {
     if (!ctx) return;
-    if (ctx->entry_info.is_64bit) {
+    if (ISVERPLUS(ctx, 3, 0)) {
         printf("SMBIOS version %d.%d.%d\n",
                ctx->entry_info.major,
                ctx->entry_info.minor,
@@ -335,4 +465,27 @@ void lazybiosPrintVer(const lazybios_ctx_t* ctx) {
                ctx->entry_info.major,
                ctx->entry_info.minor);
     }
+}
+
+int lazybiosCleanup(lazybiosCTX_t* ctx) {
+    if (!ctx) return -1;
+
+    lazybiosFreeType0(ctx->Type0);
+    ctx->Type0 = NULL;
+
+    free(ctx->dmi_data);
+    free(ctx);
+    return 0;
+}
+
+
+void lazybiosFreeType0(lazybiosType0_t* Type0) {
+    if (!Type0) return;
+
+    free(Type0->vendor);
+    free(Type0->version);
+    free(Type0->release_date);
+    free(Type0->firmware_char_ext_bytes);
+
+    free(Type0);
 }

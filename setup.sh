@@ -7,6 +7,21 @@ show_help() {
     exit 1
 }
 
+clean() {
+  echo "[*] Cleaning..."
+  
+  cd build || { 
+    echo "Build First!"
+    return 1
+  }
+
+  rm -rf ./*
+
+  cd ..
+
+  echo "[+] Clean done"
+}
+
 build() {
     echo "[*] Building..."
     mkdir -p build 
@@ -63,6 +78,10 @@ uninstall() {
 case "$1" in
     build)
         build
+        ;;
+    
+    clean)
+        clean
         ;;
     run)
         run

@@ -1,16 +1,15 @@
-# CMakeLists.txt for lazybios
 cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 2.0.0
+        VERSION 3.0.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
 )
 
 # Set C standard
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Default build type
@@ -24,13 +23,7 @@ include(GNUInstallDirs)
 # Library sources
 set(LAZYBIOS_SOURCES
         src/lazybios.c
-        src/decoders.c
-        src/system.c
-        src/processor.c
-        src/memory.c
-        src/ports.c
-        src/sysinfo.c
-        src/bios.c
+        src/structures/type0.c
 )
 
 # Create the shared library target
@@ -82,10 +75,6 @@ endif()
 # Create test executable
 add_executable(lazybios_test test/test.c)
 target_link_libraries(lazybios_test PRIVATE lazybios)
-
-# Enable testing
-enable_testing()
-add_test(NAME lazybios_basic_test COMMAND lazybios_test)
 
 # Generate pkg-config file
 configure_file(
