@@ -1,7 +1,6 @@
 # lazybios 
 
 ### NO ITS NOT DEAD
-### Right now I'm currently reworking the whole core of lazybios, since at its core it is very fragile since I made some dumb decisions when making this. I don't know how long this is going to take but its for the greater good.
 ### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
 
 ---
