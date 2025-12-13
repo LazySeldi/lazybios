@@ -1,6 +1,5 @@
 # lazybios 
 
-### NO ITS NOT DEAD
 ### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
 
 ---
@@ -28,16 +27,6 @@
 <details>
   <summary><h3 style="display:inline;">Implemented Types:</h3></summary>
 <h3>Type 0: BIOS Information</h3>
-<h3>Type 1: System Information</h3>
-<h3>Type 2: Baseboard (Motherboard) Information</h3>
-<h3>Type 3: Chassis (Enclosure) Information</h3>
-<h3>Type 4: Processor Information</h3>
-<h3>Type 7: Cache Information</h3>
-<h3>Type 8: Port Connector Information</h3>
-<h3>Type 10: Onboard Device Information</h3>
-<h3>Type 11: OEM Strings Information</h3>
-<h3>Type 16: Physical Memory Array</h3>
-<h3>Type 17: Memory Devices</h3>
 </details>
 
 ---
@@ -60,6 +49,8 @@ yay -S lib-lazybios # Or use your preferred AUR helper.
 Yet to come!😞
 
 </details>
+
+---
 
 <details>
 <summary>Manual Building and installing with CMake.</summary>
