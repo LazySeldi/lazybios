@@ -31,7 +31,7 @@
 
 ---
 ## Installation
-[![aur.archlinux.org.io](https://img.shields.io/aur/version/lib-lazybios.svg)](https://aur.archlinux.org/packages/lib-lazybios)
+[![aur.archlinux.org.io](https://img.shields.io/aur/version/lib-lazybios)](https://aur.archlinux.org/packages/lib-lazybios)
 <details>
 <summary>Arch Linux</summary>
 
