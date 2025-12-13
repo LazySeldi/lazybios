@@ -99,7 +99,7 @@ typedef struct {
 
 typedef enum {
     LAZYBIOS_BACKEND_LINUX, // Only Sysfs Currently but /dev/mem coming soon
-    LAZYBIOS_BACKEND_WINDOWS,
+    LAZYBIOS_BACKEND_WINDOWS, // Implemented through Windows API
     LAZYBIOS_BACKEND_MACOS, // Not Implemented Yet
     LAZYBIOS_BACKEND_UNKNOWN,
 } lazybiosBackend_t;
