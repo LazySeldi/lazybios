@@ -122,7 +122,7 @@ This structure holds the parsed data for SMBIOS Type 0. All string fields are dy
 
 | Function                                                                           | Description                                                                                                          |
 |:-----------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------|
-| `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                            | Locates and parses the Type 0 structure. The result is stored in `ctx->bios_info`.                                   |
+| `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                            | Locates and parses the Type 0 structure. The result is stored in `ctx->Type0`.                                   |
 | `const char* lazybiosFirmwareCharacteristicsStr(uint64_t characteristics)`         | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features. |
 | `const char* lazybiosFirmwareCharacteristicsExtByteStr(uint8_t char_ext_byte_1)` | Decodes the first byte of the extended characteristics into a string list.                                           |
 | `const char* lazybiosFirmwareCharacteristicsExtByte2Str(uint8_t char_ext_byte_2)`  | Decodes the second byte of the extended characteristics into a string list.                                          |
