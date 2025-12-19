@@ -14,7 +14,7 @@ The primary features of the `lazybios` library include:
 *   Multi-OS Backends: Currently supports data retrieval on Linux (via `/sys/firmware/dmi/tables/` sysfs files) and Windows (via the `GetSystemFirmwareTable` API).
 *   File-Based Testing: Includes a dedicated function, `lazybiosFile`, for parsing DMI table dumps from specified files, which is ideal for testing and analysis on non-native environments.
 *   Structured Data: Parses raw DMI structures into well-defined C structures, starting with the Type 0 (BIOS Information) structure.
-*   Extensible Design: The core parsing logic is modular, allowing for easy addition of new SMBIOS structure types (e.g., Type , Type 2, etc.).
+*   Extensible Design: The core parsing logic is modular, allowing for easy addition of new SMBIOS structure types (e.g., Type 1, Type 2, etc.).
 
 ## Build and Installation
 
@@ -22,8 +22,9 @@ The project uses CMake for its build system. The following steps outline how to 
 
 ### Prerequisites
 
-*   CMake (version 15 or higher)
+*   CMake (version 3.15 or higher)
 *   A C compiler (e.g., GCC or Clang)
+*   A Supported System: Windows through WindowsAPI , Linux through sysfs only( /dev/mem will be implemented in the future ).
 
 ### CMake Integration
 
@@ -83,8 +84,12 @@ typedef struct lazybios_ctx {
     lazybiosBackend_t backend;      // OS backend used for data retrieval
     uint8_t *dmi_data;              // Pointer to the raw DMI table data (must be freed by cleanup)
     size_t dmi_len;                 // Length of the raw DMI table
+    uint8_t *entry_data;            // Pointer to the raw entry data (must be freed by cleanup)
+    size_t entry_len;               // Length of the raw entry data
     smbios_entry_info_t entry_info; // Information from the SMBIOS Entry Point
+    
     lazybiosType0_t *Type0;         // Type 0 (BIOS Information) structure
+    lazybiosType1_t *Type1;         // Type 1 (System Informaton) structure
 } lazybiosCTX_t;
 ```
 
@@ -114,22 +119,45 @@ This structure holds the parsed data for SMBIOS Type 0. All string fields are dy
 | `bios_starting_segment` | `uint16_t`  | Starting segment of the BIOS.             | 2.0+           |
 | `rom_size` | `uint8_t`   | Size of the BIOS ROM, in 64KB blocks.     | 2.0+           |
 | `characteristics` | `uint64_t`  | Bit field detailing BIOS characteristics. | 2.0+           |
-| `firmware_char_ext_bytes` | `uint8_t *` | Extended characteristics bytes (2.1+).    | 2.1+           |
+| `firmware_char_ext_bytes` | `uint8_t *` | Extended characteristics byte.            | 2.1+           |
 | `platform_major_release` | `uint8_t`   | Platform Firmware Major Release.          | 2.4+           |
 | `extended_rom_size` | `uint16_t`  | Extended ROM Size field.                  | 3.1+           |
 
 ### `lazybiosType0_t` Functions
 
-| Function                                                                           | Description                                                                                                          |
-|:-----------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------|
-| `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                            | Locates and parses the Type 0 structure. The result is stored in `ctx->bios_info`.                                   |
-| `const char* lazybiosFirmwareCharacteristicsStr(uint64_t characteristics)`         | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features. |
-| `const char* lazybiosFirmwareCharacteristicsExtByteStr(uint8_t char_ext_byte_1)` | Decodes the first byte of the extended characteristics into a string list.                                           |
-| `const char* lazybiosFirmwareCharacteristicsExtByte2Str(uint8_t char_ext_byte_2)`  | Decodes the second byte of the extended characteristics into a string list.                                          |
-| `uint16_t lazybiosFirmwareExtendedROMSizeU16(uint16_t raw, char unit[5])`         | Decodes the extended ROM size field (SMBIOS 3.1+), returning the size and setting the unit string (`MiB`/`GiB`).     |
-| `void lazybiosFreeType0(lazybiosType0_t* Type0)`                                   | Frees the only the Type 0 Structure.                                                                                 |
+| Function                                                                           | Description                                                                                                              |
+|:-----------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                            | Locates and parses the Type 0 structure. The result is stored in `ctx->Type0`.                                           |
+| `const char* lazybiosFirmwareCharacteristicsStr(uint64_t characteristics)`         | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features.     |
+| `const char* lazybiosFirmwareCharacteristicsExtByteStr(uint8_t char_ext_byte_1)` | Decodes the first byte of the extended characteristics into a string list.                                               | 
+| `const char* lazybiosFirmwareCharacteristicsExtByte2Str(uint8_t char_ext_byte_2)`  | Decodes the second byte of the extended characteristics into a string list.                                              |
+| `uint16_t lazybiosFirmwareExtendedROMSizeU16(uint16_t raw, char unit[5])`         | Decodes the extended ROM size field (SMBIOS 3.1+), returning the size and setting the unit string (`MiB`/`GiB`).         |
+| `void lazybiosFreeType0(lazybiosType0_t* Type0)`                                   | Frees the only the Type 0 Structure.                                                                                     |
 ---
+### `lazybiosType1_t` (System Information)
 
+This structure holds the parsed data for SMBIOS Type 1. All string fields are dynamically allocated and must be freed via `lazybiosCleanup`.
+
+| Field           | Type          | Description                              | SMBIOS Version |
+|:----------------|:--------------|:-----------------------------------------|:---------------|
+| `manufacturer`  | `char *`      | System Manufacturer Name.                | 2.0+           |
+| `version`       | `char *`      | System Version.                          | 2.0+           |
+| `product_name`  | `char *`      | Product Name.                            | 2.0+           |
+| `serial_number` | `char *`      | System Serial Number.                    | 2.0+           |
+| `uuid`          | `uint8_t[16]` | System UUID array of 16.                 | 2.1+           |
+| `wake_up_type`  | `uint8_t`     | Bit field detailing system wake up type. | 2.1+           |
+| `sku_number`    | `char *`      | System SKU Number.                       | 2.4+           |
+| `family`        | `char *`      | System Family.                           | 2.4+           |
+
+### `lazybiosType1_t` Functions
+
+| Function                                                  | Description                                                                                                         |
+|:----------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx)`   | Locates and parses the Type 1 structure. The result is stored in `ctx->Type1`.                                      |
+| `const char* lazybiosWakeupTypeStr(uint8_t wake_up_type)` | Decodes the 8-bit `wake_up_type` field into a human-readable, string of system wake up type (e.g. "Power Switch").  |
+| `void lazybiosFreeType1(lazybiosType1_t* Type1)`          | Frees the only the Type 1 Structure.                                                                                |
+
+---
 ## Logging and Debugging
 
 The library includes a simple, compile-time configurable logging system.
