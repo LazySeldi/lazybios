@@ -413,6 +413,12 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
     lazybiosFreeType1(ctx->Type1);
     ctx->Type1 = LAZYBIOS_NULL;
 
+    lazybiosFreeType2(ctx->Type2);
+    ctx->Type2 = LAZYBIOS_NULL;
+
+    lazybiosFreeType3(ctx->Type3);
+    ctx->Type3 = LAZYBIOS_NULL;
+
     lb_free(ctx->dmi_data);
     lb_free(ctx->entry_data);
     lb_free(ctx);

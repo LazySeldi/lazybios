@@ -90,6 +90,8 @@ typedef struct lazybios_ctx {
     
     lazybiosType0_t *Type0;         // Type 0 (BIOS Information) structure
     lazybiosType1_t *Type1;         // Type 1 (System Informaton) structure
+    lazybiosType2_t *Type2;         // Type 2 ()
+    lazybiosType3_t *Type3;
 } lazybiosCTX_t;
 ```
 
@@ -109,7 +111,7 @@ Details extracted from the SMBIOS Entry Point structure, which determines the SM
 ---
 ### `lazybiosType0_t` (BIOS Information)
 
-This structure holds the parsed data for SMBIOS Type 0. All string fields are dynamically allocated and must be freed via `lazybiosCleanup`.
+This structure holds the parsed data for SMBIOS Type 0.
 
 | Field | Type        | Description                               | SMBIOS Version |
 | :--- |:------------|:------------------------------------------|:---------------|
@@ -125,18 +127,18 @@ This structure holds the parsed data for SMBIOS Type 0. All string fields are dy
 
 ### `lazybiosType0_t` Functions
 
-| Function                                                                           | Description                                                                                                              |
-|:-----------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
-| `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                            | Locates and parses the Type 0 structure. The result is stored in `ctx->Type0`.                                           |
-| `const char* lazybiosFirmwareCharacteristicsStr(uint64_t characteristics)`         | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features.     |
-| `const char* lazybiosFirmwareCharacteristicsExtByteStr(uint8_t char_ext_byte_1)` | Decodes the first byte of the extended characteristics into a string list.                                               | 
-| `const char* lazybiosFirmwareCharacteristicsExtByte2Str(uint8_t char_ext_byte_2)`  | Decodes the second byte of the extended characteristics into a string list.                                              |
-| `uint16_t lazybiosFirmwareExtendedROMSizeU16(uint16_t raw, char unit[5])`         | Decodes the extended ROM size field (SMBIOS 3.1+), returning the size and setting the unit string (`MiB`/`GiB`).         |
-| `void lazybiosFreeType0(lazybiosType0_t* Type0)`                                   | Frees the only the Type 0 Structure.                                                                                     |
+| Function                                                                       | Description                                                                                                              |
+|:-------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                        | Locates and parses the Type 0 structure. The result is stored in `ctx->Type0`.                                           |
+| `const char* lazybiosType0CharacteristicsStr(uint64_t characteristics)`        | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features.     |
+| `const char* lazybiosType0CharacteristicsExtByteStr(uint8_t char_ext_byte_1)`  | Decodes the first byte of the extended characteristics into a string list.                                               | 
+| `const char* lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2)` | Decodes the second byte of the extended characteristics into a string list.                                              |
+| `uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5])`         | Decodes the extended ROM size field (SMBIOS 3.1+), returning the size and setting the unit string (`MiB`/`GiB`).         |
+| `void lazybiosFreeType0(lazybiosType0_t* Type0)`                               | Frees the only the Type 0 Structure.                                                                                     |
 ---
 ### `lazybiosType1_t` (System Information)
 
-This structure holds the parsed data for SMBIOS Type 1. All string fields are dynamically allocated and must be freed via `lazybiosCleanup`.
+This structure holds the parsed data for SMBIOS Type 1.
 
 | Field           | Type          | Description                              | SMBIOS Version |
 |:----------------|:--------------|:-----------------------------------------|:---------------|
@@ -151,11 +153,77 @@ This structure holds the parsed data for SMBIOS Type 1. All string fields are dy
 
 ### `lazybiosType1_t` Functions
 
-| Function                                                  | Description                                                                                                         |
-|:----------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------|
-| `lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx)`   | Locates and parses the Type 1 structure. The result is stored in `ctx->Type1`.                                      |
-| `const char* lazybiosWakeupTypeStr(uint8_t wake_up_type)` | Decodes the 8-bit `wake_up_type` field into a human-readable, string of system wake up type (e.g. "Power Switch").  |
-| `void lazybiosFreeType1(lazybiosType1_t* Type1)`          | Frees the only the Type 1 Structure.                                                                                |
+| Function                                                 | Description                                                                                                         |
+|:---------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx)`  | Locates and parses the Type 1 structure. The result is stored in `ctx->Type1`.                                      |
+| `const char* lazybiosType1TypeStr(uint8_t wake_up_type)` | Decodes the 8-bit `wake_up_type` field into a human-readable, string of system wake up type (e.g. "Power Switch").  |
+| `void lazybiosFreeType1(lazybiosType1_t* Type1)`         | Frees the only the Type 1 Structure.                                                                                |
+
+---
+### `lazybiosType2_t` (System Information)
+
+This structure holds the parsed data for SMBIOS Type 2. The SMBIOS version requirements for this field are all 2.0+ I think, I'm not use but I will keep on looking.
+
+| Field                                | Type         | Description                                          | SMBIOS Version |
+|:-------------------------------------|:-------------|:-----------------------------------------------------|:---------------|
+| `manufacturer`                       | `char *`     | Baseboard Manufacturer Name.                         | 2.0+           |
+| `version`                            | `char *`     | Baseboard Version.                                   | 2.0+           |
+| `product`                            | `char *`     | Product Name.                                        | 2.0+           |
+| `serial_number`                      | `char *`     | Baseboard Serial Number.                             | 2.0+           |
+| `asset_tag`                          | `char *`     | Baseboard Asset Tag.                                 | 2.0+           |
+| `feature_flags`                      | `uint8_t`    | Bit field detailing baseboard feature flags.         | 2.0+           |
+| `location_in_chassis`                | `char *`     | Location in chassis.                                 | 2.0+           |
+| `chassis_handle`                     | `uint16_t`   | Chassis handle.                                      | 2.0+           |
+| `board_type`                         | `uint8_t`    | Enum field detailing baseboard type.                 | 2.0+           |
+| `number_of_contained_object_handles` | `uint8_t`    | Number of contained object handles.                  | 2.0+           |
+| `contained_object_handles`           | `uint16_t *` | contained object handles.                            | 2.0+           |
+
+### `lazybiosType2_t` Functions
+
+| Function                                                          | Description                                                                                                          |
+|:------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx)`           | Locates and parses the Type 2 structure. The result is stored in `ctx->Type2`.                                       |
+| `const char* lazybiosType2FeatureflagsStr(uint8_t feature_flags)` | Decodes the 8-bit `feature_flags` field into a human-readable, string of baseboard feature flags (e.g. "Removable"). |
+| `const char* lazybiosType2BoardTypeStr(uint8_t board_type)`       | Decodes the 8-bit `board_type` field into a human-readable, string of baseboard types (e.g. "Server Blade").         |
+| `void lazybiosFreeType2(lazybiosType2_t* Type2)`                  | Frees the only the Type 2 Structure.                                                                                 |
+
+---
+
+### `lazybiosType3_t` (System Information)
+
+This structure holds the parsed data for SMBIOS Type 3.
+
+| Field                             | Type        | Description                                                                                                       | SMBIOS Version |
+|:----------------------------------|:------------|:------------------------------------------------------------------------------------------------------------------|:---------------|
+| `manufacturer`                    | `char *`    | Chassis Manufacturer Name.                                                                                        | 2.0+           |
+| `type`                            | `uint8_t`   | Chassis Type.                                                                                                     | 2.0+           |
+| `version`                         | `char *`    | Chassis Version.                                                                                                  | 2.0+           |
+| `serial_number`                   | `char *`    | Chassis Serial Number.                                                                                            | 2.0+           |
+| `asset_tag`                       | `char *`    | Chassis Asset Tag.                                                                                                | 2.0+           |
+| `boot_up_state`                   | `uint8_t`   | Enum field detailing chassis boot up state.                                                                       | 2.1+           |
+| `power_supply_state`              | `uint8_t`   | Enum field detailing chassis power supply state.                                                                  | 2.1+           |
+| `thermal_state`                   | `uint8_t`   | Enum field detailing chassis thermal state.                                                                       | 2.1+           |
+| `security_status`                 | `uint8_t`   | Enum field detailing chassis security status.                                                                     | 2.1+           |
+| `oem_defined`                     | `uint32_t`  | Chassis OEM defined data.                                                                                         | 2.3+           |
+| `height`                          | `uint8_t`   | Chassis, height of the enclosure.                                                                                 | 2.3+           |
+| `number_of_power_cords`           | `uint8_t`   | Number of power cords.                                                                                            | 2.3+           |
+| `contained_element_count`         | `uint8_t`   | Number of the contained element's count(n).                                                                       | 2.3+           |
+| `contained_element_record_length` | `uint8_t`   | Number of the contained element's record length(m).                                                               | 2.3+           |
+| `contained_elements`              | `uint8_t *` | Pointer of contained elements(size = n * m BYTEs).                                                                | 2.3+           |
+| `sku_number`                      | `char *`    | Chassis SKU number.                                                                                               | 2.7+           |
+| `rack_type`                       | `uint8_t`   | The type of the rack.                                                                                             | 3.9+           |
+| `rack_height`                     | `uint8_t`   | The height of the rack(see test.c implementation for the decoder(a better decoder is coming next version(3.3.0)). | 3.9+           |
+
+### `lazybiosType3_t` Functions
+
+| Function                                                                                | Description                                                                                                                                                                           |
+|:----------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType3_t* lazybiosGetType3(lazybiosCTX_t* ctx)`                                 | Locates and parses the Type 3 structure. The result is stored in `ctx->Type3`.                                                                                                        |
+| `const char* lazybiosType3TypeStr(uint8_t type)`                                        | Decodes the 8-bit `type` field into a human-readable, string of chassis types (e.g. "Desktop").                                                                                       |
+| `const char* lazybiosType3StateStr(uint8_t state)`                                      | Decodes the 8-bit `thermal_state, power_supply_state, boot_up_state` fields into a human-readable, string of baseboard types (e.g. "Warning").                                        |
+| `const char* lazybiosType3SecurityStatusStr(uint8_t security_status)`                   | Decodes the 8-bit `security_status` fields into a human-readable, string of baseboard types (e.g. "External interface locked out").                                                   |
+| `const char* lazybiosType3ContainedElementTypeStr(uint8_t contained_elements)`          | Decodes the 8-bit `contained_elements` fields into a human-readable, string of baseboard types (e.g. "None") Currently its very bad, next version(3.3.0) will implement it correctly. |
+| `void lazybiosFreeType3(lazybiosType3_t* Type3)`                                        | Frees the only the Type 3 Structure.                                                                                                                                                  |
 
 ---
 ## Logging and Debugging
@@ -180,14 +248,14 @@ cmake .. -DLAZYBIOS_DEBUG=ON
 
 ## SMBIOS Type Constants
 
-The following constants are defined in `lazybios.h` for identifying common SMBIOS structures(For now only SMBIOS_TYPE_BIOS is implemented in the rework, stay tuned for the rest of them):
+The following constants are defined in `lazybios.h` for identifying SMBIOS structures:
 
-| Constant | Type ID | Description |
-| :--- |:--------| :--- |
-| `SMBIOS_TYPE_BIOS` | 0       | BIOS Information |
-| `SMBIOS_TYPE_SYSTEM` | 1       | System Information |
-| `SMBIOS_TYPE_BASEBOARD` | 2       | Baseboard Information |
-| `SMBIOS_TYPE_CHASSIS` | 3       | System Enclosure |
-| `SMBIOS_TYPE_PROCESSOR` | 4       | Processor Information |
-| `SMBIOS_TYPE_MEMORY_DEVICE` | 17      | Memory Device |
-| `SMBIOS_TYPE_END` | 127     | End-of-Table Marker |
+| Constant                      | Type ID | Description           |
+|:------------------------------|:--------|:----------------------|
+| `SMBIOS_TYPE_BIOS`            | 0       | BIOS Information      |
+| `SMBIOS_TYPE_SYSTEM`          | 1       | System Information    |
+| `SMBIOS_TYPE_BASEBOARD`       | 2       | Baseboard Information |
+| `SMBIOS_TYPE_CHASSIS`         | 3       | System Enclosure      |
+| `SMBIOS_TYPE_PROCESSOR`       | 4       | Processor Information |
+| `SMBIOS_TYPE_MEMORY_DEVICE`   | 17      | Memory Device         |
+| `SMBIOS_TYPE_END`             | 127     | End-of-Table Marker   |

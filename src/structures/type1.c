@@ -29,7 +29,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "lazybios.h"
 
 lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx) {
@@ -46,16 +45,16 @@ lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx) {
             lazybiosType1_t *Type1 = lb_calloc(1, sizeof(*Type1));
             if (!Type1) return LAZYBIOS_NULL;
 
-            Type1->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
+            if (len > MANUFACTURER) Type1->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
             if (!Type1->manufacturer) Type1->manufacturer = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type1->product_name = DMIString(p, len, p[PRODUCT_NAME], end);
+            if (len > PRODUCT_NAME) Type1->product_name = DMIString(p, len, p[PRODUCT_NAME], end);
             if (!Type1->product_name) Type1->product_name = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type1->version = DMIString(p, len, p[VERSION], end);
+            if (len > VERSION) Type1->version = DMIString(p, len, p[VERSION], end);
             if (!Type1->version) Type1->version = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type1->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
+            if (len > SERIAL_NUMBER) Type1->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
             if (!Type1->serial_number) Type1->serial_number = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
             if (ISVERPLUS(ctx, 2, 1)) {
@@ -93,7 +92,7 @@ lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx) {
 // Decoders
 
 // Wake Up Type
-const char* lazybiosWakeupTypeStr(uint8_t wake_up_type) {
+const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
     switch (wake_up_type) {
         case WAKEUP_TYPE_RESERVED:          return "Reserved";
         case WAKEUP_TYPE_OTHER:             return "Other";
