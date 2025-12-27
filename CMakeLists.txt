@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 3.1.0
+        VERSION 3.2.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -25,6 +25,8 @@ set(LAZYBIOS_SOURCES
         src/lazybios.c
         src/structures/type0.c
         src/structures/type1.c
+        src/structures/type2.c
+        src/structures/type3.c
 )
 
 # Create the shared library target

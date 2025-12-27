@@ -19,8 +19,8 @@
 
 
 #include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "lazybios.h"
 
 lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
@@ -37,16 +37,20 @@ lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
             lazybiosType0_t* Type0 = lb_calloc(1, sizeof(*Type0));
             if (!Type0) return LAZYBIOS_NULL;
 
-            Type0->vendor = DMIString(p, len, p[VENDOR], end);
+            if (len > VENDOR) Type0->vendor = DMIString(p, len, p[VENDOR], end);
             if (!Type0->vendor) Type0->vendor = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type0->version = DMIString(p, len, p[FIRMWARE_VERSION], end);
+            if (len > FIRMWARE_VERSION) Type0->version = DMIString(p, len, p[FIRMWARE_VERSION], end);
             if (!Type0->version) Type0->version = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type0->release_date = DMIString(p, len, p[FIRMWARE_RELEASE_DATE], end);
+            if (len > FIRMWARE_RELEASE_DATE) Type0->release_date = DMIString(p, len, p[FIRMWARE_RELEASE_DATE], end);
             if (!Type0->release_date) Type0->release_date = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >= BIOS_STARTING_SEGMENT + sizeof(uint16_t)) { lb_memcpy(&Type0->bios_starting_segment,p + BIOS_STARTING_SEGMENT, sizeof(uint16_t)); } else { Type0->bios_starting_segment = LAZYBIOS_NOT_FOUND_U16; }
+            if (len >= BIOS_STARTING_SEGMENT + sizeof(uint16_t)) {
+                lb_memcpy(&Type0->bios_starting_segment,p + BIOS_STARTING_SEGMENT, sizeof(uint16_t));
+            } else {
+                Type0->bios_starting_segment = LAZYBIOS_NOT_FOUND_U16;
+            }
 
             if (len > FIRMWARE_ROM_SIZE && p[FIRMWARE_ROM_SIZE] == 0xFF) {
                 if (ISVERPLUS(ctx, 3, 1) && len >= EXTENDED_FIRMWARE_ROM_SIZE + sizeof(uint16_t)) {
@@ -101,7 +105,7 @@ lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
 // Decoders
 
 // Firmware Characteristics
-const char* lazybiosFirmwareCharacteristicsStr(uint64_t characteristics) {
+const char* lazybiosType0CharacteristicsStr(uint64_t characteristics) {
     _Thread_local static char buf[1024];
     size_t len = 0;
     buf[0] = '\0';
@@ -141,14 +145,13 @@ const char* lazybiosFirmwareCharacteristicsStr(uint64_t characteristics) {
     // Bits 32–63 are reserved, so we will skip them
 
     if (len == 0) return "None";
-
     if (len >= 2) buf[len - 2] = '\0';
 
     return buf;
 }
 
 // Firmware Characteristics Extension Byte 1
-const char* lazybiosFirmwareCharacteristicsExtByte1Str(uint8_t char_ext_byte_1) {
+const char* lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1) {
     _Thread_local static char buf[256];
     size_t len = 0;
     buf[0] = '\0';
@@ -169,7 +172,7 @@ const char* lazybiosFirmwareCharacteristicsExtByte1Str(uint8_t char_ext_byte_1) 
 }
 
 // Firmware Characteristics Extension Byte 2
-const char* lazybiosFirmwareCharacteristicsExtByte2Str(uint8_t char_ext_byte_2) {
+const char* lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2) {
     _Thread_local static char buf[512];
     size_t len = 0;
     buf[0] = '\0';
@@ -189,7 +192,7 @@ const char* lazybiosFirmwareCharacteristicsExtByte2Str(uint8_t char_ext_byte_2) 
 }
 
 // Firmware Extended ROM Size
-uint16_t lazybiosFirmwareExtendedROMSizeU16(uint16_t raw, char unit[5]) {
+uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
     uint16_t unit_bits = (raw >> 14) & 0x03;
     uint16_t size_bits = raw & 0x3FFF;
 
