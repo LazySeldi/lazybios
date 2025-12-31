@@ -183,6 +183,46 @@ typedef struct {
     uint8_t rack_height; // offset is 0x17 + n * m
 } lazybiosType3_t;
 
+typedef struct {
+    //--- (SMBIOS 2.0+) ---
+    char *socket_designation;
+    uint8_t processor_type;
+    uint8_t processor_family;
+    char *processor_manufacturer;
+    uint64_t processor_id;
+    char *processor_version;
+    uint8_t voltage;
+    uint16_t external_clock;
+    uint16_t max_speed;
+    uint16_t current_speed; // This is the speed at boot btw.
+    uint8_t status;
+    uint8_t processor_upgrade;
+
+    // --- (SMBIOS 2.1+)---
+    uint16_t l1_cache_handle; // These 3 are the cache handles not the actual cache information btw
+    uint16_t l2_cache_handle;
+    uint16_t l3_cache_handle;
+
+    // --- (SMBIOS 2.3+) ---
+    char *serial_number;
+    char *asset_tag;
+    char *part_number;
+
+    // --- (SMBIOS 2.5+) ---
+    uint8_t core_count; // if unknown(0) we set it to 0xFF, if its already 0xFF it means the core count is greater than 256, as the DMTF docs say.
+    uint8_t core_enabled;// same for this field.
+    uint8_t thread_count; // same for this too.
+    uint16_t processor_characteristics;
+    uint16_t processor_family_2;
+
+    // --- (SMBIOS 3.0+) ---
+    uint16_t core_count_2; // core_count is 0xFF we use this.
+    uint16_t core_enabled_2; // same for this field.
+    uint16_t thread_count_2; // same for this too.
+
+} lazybiosType4_t;
+
+
 typedef enum { // I'm looking to implement more OSes but right now and for a long time I'm mostly going to focus on Linux.
     LAZYBIOS_BACKEND_LINUX, // Only Sysfs Currently but /dev/mem coming some day
     LAZYBIOS_BACKEND_WINDOWS, // Using Windows API
@@ -202,6 +242,7 @@ typedef struct {
     lazybiosType1_t *Type1;
     lazybiosType2_t *Type2;
     lazybiosType3_t *Type3;
+    lazybiosType4_t *Type4;
 } lazybiosCTX_t;
 
 // ===== Public API =====
@@ -265,6 +306,15 @@ void lazybiosFreeType3(lazybiosType3_t* Type3);
 
 // End of Type 3
 
+
+// Type 4 + Helpers
+
+lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx);
+
+
+void lazybiosFreeType4(lazybiosType4_t* Type4);
+
+// End of Type 4
 
 #ifdef __cplusplus
 }
