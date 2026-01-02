@@ -27,9 +27,9 @@ set(LAZYBIOS_SOURCES
         src/structures/type1.c
         src/structures/type2.c
         src/structures/type3.c
+        #        src/structures/type4.c
 )
 
-# Create the shared library target
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
 
 # Logging Options
@@ -51,12 +51,6 @@ endif()
 if(NOT LAZYBIOS_QUIET AND NOT LAZYBIOS_DEBUG)
     message(STATUS "lazybios: Normal logging enabled")
 endif()
-
-# Target Properties and Include Directories
-target_include_directories(lazybios PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
 
 set_target_properties(lazybios PROPERTIES
         VERSION ${PROJECT_VERSION}
