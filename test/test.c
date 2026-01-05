@@ -367,27 +367,27 @@ int print_smbios_version_info(lazybiosCTX_t* ctx) {
 static inline void print_usage(const char *progname) {
     lb_printf("Usage: %s [options]\n", progname);
     lb_printf("Options:\n");
-    lb_printf("  -help                      Show this help message\n");
-    lb_printf("  -dump <dir_to_dump>        Dumps both the raw entry info and raw DMI table into 2 files into <dir_to_dump> directory, If OS is Windows it only dumps DMI.bin\n If <dir_to_dump> isn't specified it will default to the current directory\n");
-    lb_printf("  -sources <entry> <dmi>     Usees the parser on the 2 specified files <entry> and <dmi>\n");
+    lb_printf("  --help                      Show this help message\n");
+    lb_printf("  --dump <dir_to_dump>        Dumps both the raw entry info and raw DMI table into 2 files into <dir_to_dump> directory, If OS is Windows it only dumps DMI.bin\n If <dir_to_dump> isn't specified it will default to the current directory\n");
+    lb_printf("  --sources <entry> <dmi>     Usees the parser on the 2 specified files <entry> and <dmi>\n");
+    lb_printf("  --single-source <binary>    Uses the parser on the single specified file <binary>, which should hold the entry point and dmi data merged together\n");
 }
 
 int main(int argc, const char *argv[]) {
     lb_printf("lazybios Version: %s\n", LAZYBIOS_VER);
     lb_printf("=============================================\n\n");
 
-    // Create context
     lazybiosCTX_t* ctx = lazybiosCTXNew();
     if (!ctx) {
         lb_fprintf(stderr, "Failed to allocate lazybios context\n");
         return 1;
     }
 
-    if (argc == 2 && lb_strcmp(argv[1], "-help") == 0) {
+    if (argc == 2 && lb_strcmp(argv[1], "--help") == 0) {
         print_usage(argv[0]);
         lazybiosCleanup(ctx);
         return 0;
-    } else if (argc == 2 && lb_strcmp(argv[1], "-dump") == 0) {
+    } else if (argc == 2 && lb_strcmp(argv[1], "--dump") == 0) {
         lazybiosInit(ctx);
         if (ctx->backend == LAZYBIOS_BACKEND_LINUX) {
             lb_FILE* entry = lb_fopen("smbios_entry_point", "wb");
@@ -427,9 +427,15 @@ int main(int argc, const char *argv[]) {
             lazybiosCleanup(ctx);
             return 0;
         }
-    } else if (argc == 4 && lb_strcmp(argv[1], "-sources") == 0) {
+    } else if (argc == 4 && lb_strcmp(argv[1], "--sources") == 0) {
         if (lazybiosFile(ctx, argv[2], argv[3]) != 0) {
             lb_fprintf(stderr, "Failed to initialize lazybios from file\n");
+            lazybiosCleanup(ctx);
+            return -1;
+        }
+    } else if (argc == 3 && lb_strcmp(argv[1], "--single-source") == 0) {
+        if (lazybiosSingleFile(ctx, argv[2]) != 0) {
+            lb_fprintf(stderr, "Failed to initialize lazybios from single file\n");
             lazybiosCleanup(ctx);
             return -1;
         }
@@ -448,10 +454,8 @@ int main(int argc, const char *argv[]) {
 
     lb_printf("Library initialized successfully!\n\n");
 
-    // Print SMBIOS version info
     print_smbios_version_info(ctx);
 
-    // Lazy init / cache Type0
     if (!ctx->Type0) {
         ctx->Type0 = lazybiosGetType0(ctx);
     }
@@ -472,7 +476,6 @@ int main(int argc, const char *argv[]) {
     }
     printType3(ctx);
 
-    // Cleanup
     if (lazybiosCleanup(ctx) == 0) {
         lb_printf("Library cleanup completed!\n");
     } else {
@@ -483,3 +486,4 @@ int main(int argc, const char *argv[]) {
     lb_printf("All tests passed successfully!\n");
     return 0;
 }
+
