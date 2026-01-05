@@ -53,6 +53,114 @@ static inline void lazybios_log_internal(const char *prefix, const char *fmt, ..
 // So here I choose an inline function and macros because my only other options were either to switch to C23 and use __VA_ARGS__ normally because C11 doesn't support that, or I could Enable GNU extension and be dependent on it.
 // I could also require a dummy argument to "fix" it altogether but that's probably not safe
 
+int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
+    if (!ctx) return -1;
+
+    lb_FILE* binf = lb_fopen(bin_path, "rb");
+    if (!binf) {
+        lb_log("failed to open %s: %s", bin_path, lb_strerror(errno));
+        return -1;
+    }
+
+    uint8_t header[5];
+    size_t n = lb_fread(header, 1, 5, binf);
+    if (n != 5) {
+        lb_log("Failed to read SMBIOS header");
+        lb_fclose(binf);
+        return -1;
+    }
+
+    size_t entry_size = 0;
+    if (header[3] == '3') {
+        entry_size = 24; // for SMBIOS 3.x.x the length is 24 bytes
+    } else if (header[3] == '_') {
+        entry_size = 31; // for SMBIOS 2.x the length is 31 bytes
+    } else {
+        entry_size = SIZE_MAX; // our fallback
+    }
+
+    if (entry_size == SIZE_MAX) {
+        lb_log("Couldn't read SMBIOS anchor!");
+        lb_dbg("Header: %02X %02X %02X %02X %02X", header[0], header[1], header[2], header[3], header[4]);
+        lb_fclose(binf);
+        return -1;
+    }
+
+    if (entry_size < 20) {
+        lb_log("Invalid SMBIOS entry size %zu", entry_size);
+        lb_fclose(binf);
+        return -1;
+    }
+
+    // --- Step 2: read full entry point ---
+    uint8_t entry_buf[31]; // max possible size is SMBIOS 2.x
+    lb_memcpy(entry_buf, header, 5); // first 5 bytes already read
+    size_t remaining = entry_size - 5;
+    if (remaining > 0) {
+        size_t got = lb_fread(entry_buf + 5, 1, remaining, binf);
+        if (got != remaining) {
+            lb_log("Failed to read full SMBIOS entry point");
+            lb_fclose(binf);
+            return -1;
+        }
+    }
+
+    // --- Step 3: allocate entry_data ---
+    ctx->entry_len = entry_size;
+    ctx->entry_data = lb_malloc(ctx->entry_len);
+    if (!ctx->entry_data) {
+        lb_log("Failed to allocate memory for entry_data");
+        lb_fclose(binf);
+        return -1;
+    }
+    lb_memcpy(ctx->entry_data, entry_buf, ctx->entry_len);
+
+    if (lazybiosParseEntry(ctx, entry_buf) != 0) {
+        lb_fclose(binf);
+        return -1;
+    }
+
+    // --- Step 4: read the rest of the file as DMI table ---
+    if (lb_fseek(binf, 0, SEEK_END) != 0) {
+        lb_log("Failed to seek end of file");
+        lb_fclose(binf);
+        return -1;
+    }
+    long file_len = lb_ftell(binf);
+    if (file_len <= 0 || file_len < (long)ctx->entry_len) {
+        lb_log("Invalid file length %ld", file_len);
+        lb_fclose(binf);
+        return -1;
+    }
+
+    ctx->dmi_len = (size_t)(file_len - ctx->entry_len);
+    lb_rewind(binf);
+    if (lb_fseek(binf, ctx->entry_len, SEEK_SET) != 0) {
+        lb_log("Failed to seek to DMI data start");
+        lb_fclose(binf);
+        return -1;
+    }
+
+    ctx->dmi_data = lb_malloc(ctx->dmi_len);
+    if (!ctx->dmi_data) {
+        lb_log("Failed to allocate DMI buffer (%zu bytes)", ctx->dmi_len);
+        lb_fclose(binf);
+        return -1;
+    }
+
+    size_t got = lb_fread(ctx->dmi_data, 1, ctx->dmi_len, binf);
+    lb_fclose(binf);
+
+    if (got != ctx->dmi_len) {
+        lb_log("Short read of DMI data (%zu of %zu bytes)", got, ctx->dmi_len);
+        lb_free(ctx->dmi_data);
+        ctx->dmi_data = LAZYBIOS_NULL;
+        return -1;
+    }
+
+    return 0;
+}
+
 int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path) {
     if (!ctx) return -1;
 
