@@ -2,6 +2,10 @@
 // Type 1 ( System Information )
 //
 
+#include <string.h>
+#include <stdlib.h>
+#include "lazybios.h"
+
 // Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fields
 #define MANUFACTURER        0x04
@@ -26,10 +30,6 @@
 #define WAKEUP_TYPE_PCI_PME          	0x07
 #define WAKEUP_TYPE_AC_POWER_RESTORED 	0x08
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#include <string.h>
-#include <stdlib.h>
-#include "lazybios.h"
 
 lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx) {
     if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;
