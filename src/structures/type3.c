@@ -2,6 +2,11 @@
 // Type 3 ( System Enclosure or Chassis )
 //
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "lazybios.h"
+
 // Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fields
 #define MANUFACTURER                      0x04
@@ -78,11 +83,6 @@
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT    0x04
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED       0x05
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "lazybios.h"
 
 lazybiosType3_t* lazybiosGetType3(lazybiosCTX_t* ctx) {
       if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;

@@ -2,6 +2,11 @@
 // Type 2 ( Baseboard (or Module) Information )
 //
 
+#include "lazybios.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 // Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fields
 #define MANUFACTURER                        0x04
@@ -33,11 +38,6 @@
 #define BOARD_TYPE_PROCESSOR_IO_MODULE          0x0C
 #define BOARD_TYPE_INTERCONNECT_BOARD           0x0D
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#include "lazybios.h"
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx) {
     if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;

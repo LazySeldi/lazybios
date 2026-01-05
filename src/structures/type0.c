@@ -2,6 +2,11 @@
 // Type 0 ( Platform Firmware Information )
 //
 
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "lazybios.h"
+
 // Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
 #define VENDOR                                      0x04
 #define FIRMWARE_VERSION                            0x05
@@ -16,12 +21,6 @@
 #define EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE  0x17
 #define EXTENDED_FIRMWARE_ROM_SIZE                  0x18
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "lazybios.h"
 
 lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
     if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;
