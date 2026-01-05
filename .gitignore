@@ -29,3 +29,4 @@ lazybios_test
 *.gcda
 *.gcno
 *.gcov
+compile_commands.json
