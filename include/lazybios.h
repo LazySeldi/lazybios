@@ -213,13 +213,12 @@ typedef struct {
     uint8_t core_enabled;// same for this field.
     uint8_t thread_count; // same for this too.
     uint16_t processor_characteristics;
-    uint16_t processor_family_2;
+    uint16_t processor_family_2; // used only if processor_family is 0xFE
 
     // --- (SMBIOS 3.0+) ---
     uint16_t core_count_2; // core_count is 0xFF we use this.
     uint16_t core_enabled_2; // same for this field.
     uint16_t thread_count_2; // same for this too.
-
 } lazybiosType4_t;
 
 
@@ -251,6 +250,7 @@ lazybiosCTX_t* lazybiosCTXNew(void);
 int lazybiosInit(lazybiosCTX_t* ctx);
 // int lazybiosSysfs(lazybiosCTX_t* ctx); - I used to have this but now its deprecated since we can use lazybiosFile directly instead
 int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path);
+int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
 int lazybiosCleanup(lazybiosCTX_t* ctx);
 
 // Core parsing functions
