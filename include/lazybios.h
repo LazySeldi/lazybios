@@ -36,6 +36,7 @@ extern "C" {
 #define lb_rewind   rewind
 #define lb_strdup   strdup
 #define lb_strerror strerror
+#define lb_atoi     atoi
 
 // lazybios version
 #define LAZYBIOS_VER "3.2.0"
