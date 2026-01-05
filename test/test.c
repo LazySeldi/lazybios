@@ -368,6 +368,7 @@ static inline void print_usage(const char *progname) {
     lb_printf("Usage: %s [options]\n", progname);
     lb_printf("Options:\n");
     lb_printf("  --help                      Show this help message\n");
+    lb_printf("  --type <number>             prints the SMBIOS type <number>, so --type 0 means Firmware Information etc.");
     lb_printf("  --dump <dir_to_dump>        Dumps both the raw entry info and raw DMI table into 2 files into <dir_to_dump> directory, If OS is Windows it only dumps DMI.bin\n If <dir_to_dump> isn't specified it will default to the current directory\n");
     lb_printf("  --sources <entry> <dmi>     Usees the parser on the 2 specified files <entry> and <dmi>\n");
     lb_printf("  --single-source <binary>    Uses the parser on the single specified file <binary>, which should hold the entry point and dmi data merged together\n");
@@ -383,11 +384,71 @@ int main(int argc, const char *argv[]) {
         return 1;
     }
 
-    if (argc == 2 && lb_strcmp(argv[1], "--help") == 0) {
-        print_usage(argv[0]);
-        lazybiosCleanup(ctx);
-        return 0;
-    } else if (argc == 2 && lb_strcmp(argv[1], "--dump") == 0) {
+    int print_all = 1;
+    int type_to_print = -1;
+    const char *dump_dir = NULL;
+    const char *entry_file = NULL;
+    const char *dmi_file = NULL;
+    const char *single_file = NULL;
+
+    for (int i = 1; i < argc; i++) {
+        if (lb_strcmp(argv[i], "--help") == 0) {
+            print_usage(argv[0]);
+            lazybiosCleanup(ctx);
+            return 0;
+        }
+        else if (lb_strcmp(argv[i], "--type") == 0) {
+            if (i + 1 < argc) {
+                type_to_print = lb_atoi(argv[i + 1]);
+                print_all = 0;
+                i++;
+            } else {
+                lb_fprintf(stderr, "Error: --type requires a type number\n");
+                print_usage(argv[0]);
+                lazybiosCleanup(ctx);
+                return -1;
+            }
+        }
+        else if (lb_strcmp(argv[i], "--dump") == 0) {
+            if (i + 1 < argc && argv[i + 1][0] != '-') {
+                dump_dir = argv[i + 1];
+                i++;
+            } else {
+                dump_dir = ".";  // Here we default to the current directory
+            }
+        }
+        else if (lb_strcmp(argv[i], "--sources") == 0) {
+            if (i + 2 < argc) {
+                entry_file = argv[i + 1];
+                dmi_file = argv[i + 2];
+                i += 2;
+            } else {
+                lb_fprintf(stderr, "Error: --sources requires two file arguments\n");
+                print_usage(argv[0]);
+                lazybiosCleanup(ctx);
+                return -1;
+            }
+        }
+        else if (lb_strcmp(argv[i], "--single-source") == 0) {
+            if (i + 1 < argc) {
+                single_file = argv[i + 1];
+                i++;  // Skip the file name
+            } else {
+                lb_fprintf(stderr, "Error: --single-source requires a file argument\n");
+                print_usage(argv[0]);
+                lazybiosCleanup(ctx);
+                return -1;
+            }
+        }
+        else {
+            lb_fprintf(stderr, "Error: Unknown argument '%s'\n", argv[i]);
+            print_usage(argv[0]);
+            lazybiosCleanup(ctx);
+            return -1;
+        }
+    }
+
+    if (dump_dir) {
         lazybiosInit(ctx);
         if (ctx->backend == LAZYBIOS_BACKEND_LINUX) {
             lb_FILE* entry = lb_fopen("smbios_entry_point", "wb");
@@ -407,7 +468,7 @@ int main(int argc, const char *argv[]) {
             lb_fwrite(ctx->entry_data, 1, ctx->entry_len, entry);
             lb_fclose(entry);
             lb_fclose(dmi);
-            lb_printf("smbios_entry_point and DMI dumped sucessfully, look at your current directory to locate them!\n");
+            lb_printf("smbios_entry_point and DMI dumped successfully in current directory\n");
             lazybiosCleanup(ctx);
             return 0;
 
@@ -423,28 +484,28 @@ int main(int argc, const char *argv[]) {
 
             lb_fwrite(ctx->dmi_data, 1, ctx->dmi_len, dmi);
             lb_fclose(dmi);
-            lb_printf("DMI.bin created/filled sucessfully, check your current directory to locate them!\n");
+            lb_printf("DMI.bin created/filled successfully in current directory\n");
             lazybiosCleanup(ctx);
             return 0;
         }
-    } else if (argc == 4 && lb_strcmp(argv[1], "--sources") == 0) {
-        if (lazybiosFile(ctx, argv[2], argv[3]) != 0) {
-            lb_fprintf(stderr, "Failed to initialize lazybios from file\n");
+    }
+
+    // We initialize from custom files ONLY if specified
+    if (entry_file && dmi_file) {
+        if (lazybiosFile(ctx, entry_file, dmi_file) != 0) {
+            lb_fprintf(stderr, "Failed to initialize lazybios from files\n");
             lazybiosCleanup(ctx);
             return -1;
         }
-    } else if (argc == 3 && lb_strcmp(argv[1], "--single-source") == 0) {
-        if (lazybiosSingleFile(ctx, argv[2]) != 0) {
+    }
+    else if (single_file) {
+        if (lazybiosSingleFile(ctx, single_file) != 0) {
             lb_fprintf(stderr, "Failed to initialize lazybios from single file\n");
             lazybiosCleanup(ctx);
             return -1;
         }
-    } else if (argc != 1) {
-        lb_fprintf(stderr, "Invalid arguments\n");
-        print_usage(argv[0]);
-        lazybiosCleanup(ctx);
-        return -1;
-    } else {
+    }
+    else {
         if (lazybiosInit(ctx) != 0) {
             lb_fprintf(stderr, "Failed to initialize lazybios library\n");
             lazybiosCleanup(ctx);
@@ -456,25 +517,63 @@ int main(int argc, const char *argv[]) {
 
     print_smbios_version_info(ctx);
 
-    if (!ctx->Type0) {
-        ctx->Type0 = lazybiosGetType0(ctx);
-    }
-    printType0(ctx);
+    if (print_all) {
+        if (!ctx->Type0) {
+            ctx->Type0 = lazybiosGetType0(ctx);
+        }
+        printType0(ctx);
 
-    if (!ctx->Type1) {
-        ctx->Type1 = lazybiosGetType1(ctx);
-    }
-    printType1(ctx);
+        if (!ctx->Type1) {
+            ctx->Type1 = lazybiosGetType1(ctx);
+        }
+        printType1(ctx);
 
-    if (!ctx->Type2) {
-        ctx->Type2 = lazybiosGetType2(ctx);
-    }
-    printType2(ctx);
+        if (!ctx->Type2) {
+            ctx->Type2 = lazybiosGetType2(ctx);
+        }
+        printType2(ctx);
 
-    if (!ctx->Type3) {
-        ctx->Type3 = lazybiosGetType3(ctx);
+        if (!ctx->Type3) {
+            ctx->Type3 = lazybiosGetType3(ctx);
+        }
+        printType3(ctx);
     }
-    printType3(ctx);
+    else {
+        switch (type_to_print) {
+            case 0:
+                if (!ctx->Type0) {
+                    ctx->Type0 = lazybiosGetType0(ctx);
+                }
+                printType0(ctx);
+                break;
+
+            case 1:
+                if (!ctx->Type1) {
+                    ctx->Type1 = lazybiosGetType1(ctx);
+                }
+                printType1(ctx);
+                break;
+
+            case 2:
+                if (!ctx->Type2) {
+                    ctx->Type2 = lazybiosGetType2(ctx);
+                }
+                printType2(ctx);
+                break;
+
+            case 3:
+                if (!ctx->Type3) {
+                    ctx->Type3 = lazybiosGetType3(ctx);
+                }
+                printType3(ctx);
+                break;
+
+            default:
+                lb_fprintf(stderr, "Error: Type %d is not implemented or invalid\n", type_to_print);
+                lazybiosCleanup(ctx);
+                return -1;
+        }
+    }
 
     if (lazybiosCleanup(ctx) == 0) {
         lb_printf("Library cleanup completed!\n");
@@ -483,7 +582,6 @@ int main(int argc, const char *argv[]) {
         return -1;
     }
 
-    lb_printf("All tests passed successfully!\n");
+    lb_printf("Operation completed successfully!\n");
     return 0;
 }
-
