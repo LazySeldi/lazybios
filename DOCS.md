@@ -245,17 +245,3 @@ cmake .. -DLAZYBIOS_QUIET=ON
 # Enable verbose debug logging
 cmake .. -DLAZYBIOS_DEBUG=ON
 ```
-
-## SMBIOS Type Constants
-
-The following constants are defined in `lazybios.h` for identifying SMBIOS structures:
-
-| Constant                      | Type ID | Description           |
-|:------------------------------|:--------|:----------------------|
-| `SMBIOS_TYPE_BIOS`            | 0       | BIOS Information      |
-| `SMBIOS_TYPE_SYSTEM`          | 1       | System Information    |
-| `SMBIOS_TYPE_BASEBOARD`       | 2       | Baseboard Information |
-| `SMBIOS_TYPE_CHASSIS`         | 3       | System Enclosure      |
-| `SMBIOS_TYPE_PROCESSOR`       | 4       | Processor Information |
-| `SMBIOS_TYPE_MEMORY_DEVICE`   | 17      | Memory Device         |
-| `SMBIOS_TYPE_END`             | 127     | End-of-Table Marker   |
