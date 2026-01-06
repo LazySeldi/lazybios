@@ -61,7 +61,7 @@ extern "C" {
 #define SMBIOS_TYPE_SYSTEM                  1
 #define SMBIOS_TYPE_BASEBOARD               2
 #define SMBIOS_TYPE_CHASSIS                 3
-#define SMBIOS_TYPE_PROCESSOR               41
+#define SMBIOS_TYPE_PROCESSOR               4
 #define SMBIOS_TYPE_CACHES                  7
 #define SMBIOS_TYPE_PORT_CONNECTOR          8
 #define SMBIOS_TYPE_ONBOARD_DEVICES         10
