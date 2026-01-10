@@ -76,7 +76,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
     } else if (header[3] == '_') {
         entry_size = 31; // for SMBIOS 2.x the length is 31 bytes
     } else {
-        entry_size = SIZE_MAX; // our falack
+        entry_size = SIZE_MAX; // our fallback
     }
 
     if (entry_size == SIZE_MAX) {
