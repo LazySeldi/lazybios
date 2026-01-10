@@ -226,6 +226,57 @@ This structure holds the parsed data for SMBIOS Type 3.
 | `void lazybiosFreeType3(lazybiosType3_t* Type3)`                                        | Frees the only the Type 3 Structure.                                                                                                                                                  |
 
 ---
+
+### `lazybiosType4_t` (Processor Information)
+
+This structure holds the parsed data for SMBIOS Type 4.
+
+| Field                         | Type        | Description                                                                                                    | SMBIOS Version |
+|:------------------------------|:------------|:---------------------------------------------------------------------------------------------------------------|:---------------|
+| `socket_designation`          | `char *`    | Processor socket designation.                                                                                  | 2.0+           |
+| `processor_type`              | `uint8_t`   | Processor type (Central Processor, Math Processor, etc.).                                                      | 2.0+           |
+| `processor_family`            | `uint8_t`   | Processor family (Intel 486, Pentium, Xeon, etc.).                                                             | 2.0+           |
+| `processor_manufacturer`      | `char *`    | Processor manufacturer name.                                                                                   | 2.0+           |
+| `processor_id`                | `uint64_t`  | Processor ID (CPU signature) as 64-bit value.                                                                  | 2.0+           |
+| `processor_version`           | `char *`    | Processor version string.                                                                                      | 2.0+           |
+| `voltage`                     | `uint8_t`   | Processor voltage configuration.                                                                               | 2.0+           |
+| `external_clock`              | `uint16_t`  | External clock frequency in MHz.                                                                               | 2.0+           |
+| `max_speed`                   | `uint16_t`  | Maximum processor speed in MHz.                                                                                | 2.0+           |
+| `current_speed`               | `uint16_t`  | Current processor speed in MHz (speed at boot).                                                                | 2.0+           |
+| `status`                      | `uint8_t`   | Processor status (Populated, Enabled, etc.).                                                                   | 2.0+           |
+| `processor_upgrade`           | `uint8_t`   | Processor upgrade type (Socket type or upgrade capability).                                                    | 2.0+           |
+| `l1_cache_handle`             | `uint16_t`  | Handle to L1 cache information structure.                                                                      | 2.1+           |
+| `l2_cache_handle`             | `uint16_t`  | Handle to L2 cache information structure.                                                                      | 2.1+           |
+| `l3_cache_handle`             | `uint16_t`  | Handle to L3 cache information structure.                                                                      | 2.1+           |
+| `serial_number`               | `char *`    | Processor serial number.                                                                                       | 2.3+           |
+| `asset_tag`                   | `char *`    | Processor asset tag.                                                                                           | 2.3+           |
+| `part_number`                 | `char *`    | Processor part number.                                                                                         | 2.3+           |
+| `core_count`                  | `uint8_t`   | Number of cores per socket (8-bit). 0xFF indicates core count ≥256 (use `core_count_2`).                       | 2.5+           |
+| `core_enabled`                | `uint8_t`   | Number of enabled cores per socket (8-bit). 0xFF indicates enabled cores ≥256 (use `core_enabled_2`).          | 2.5+           |
+| `thread_count`                | `uint8_t`   | Number of threads per socket (8-bit). 0xFF indicates thread count ≥256 (use `thread_count_2`).                 | 2.5+           |
+| `processor_characteristics`   | `uint16_t`  | Processor characteristics (64-bit capable, etc.).                                                              | 2.5+           |
+| `processor_family_2`          | `uint16_t`  | Extended processor family (used when `processor_family` = 0xFE).                                               | 2.6+           |
+| `core_count_2`                | `uint16_t`  | Extended core count (16-bit, supports >255 cores). Use when `core_count` = 0xFF.                               | 3.0+           |
+| `core_enabled_2`              | `uint16_t`  | Extended enabled core count (16-bit, supports >255 cores). Use when `core_enabled` = 0xFF.                     | 3.0+           |
+| `thread_count_2`              | `uint16_t`  | Extended thread count (16-bit, supports >255 threads). Use when `thread_count` = 0xFF.                         | 3.0+           |
+| `thread_enabled`              | `uint16_t`  | Number of enabled threads per socket (16-bit).                                                                 | 3.6+           |
+| `socket_type`                 | `char *`    | Socket type string (e.g., "Socket LGA771").                                                                    | 3.8+           |
+
+**Note on count fields:** When 8-bit count fields (`core_count`, `core_enabled`, `thread_count`) contain 0xFF, check the corresponding 16-bit fields (`_2`) for actual count if ≥256.
+
+### `lazybiosType4_t` Functions
+
+| Function                                                                        | Description                                                                                                                              |
+|:--------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
+| `lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx)`                         | Locates and parses the Type 4 structure. The result is stored in `ctx->Type4`.                                                           |
+| `const char* lazybiosType4ProcessorFamilyStr(uint16_t family)`                  | Decodes the processor family field (8-bit or 16-bit) into human-readable string (e.g., "Intel Xeon").                                    |
+| `const char* lazybiosType4TypeStr(uint8_t type)`                                | Decodes the processor type field into human-readable string (e.g., "Central Processor").                                                 |
+| `const char* lazybiosType4StatusStr(uint8_t status)`                            | Decodes the processor status field into human-readable string (e.g., "Socket Populated, CPU Enabled").                                   |
+| `const char* lazybiosType4UpgradeStr(uint8_t upgrade)`                          | Decodes the processor upgrade field into human-readable string (e.g., "Socket LGA771").                                                  |
+| `const char* lazybiosType4CharacteristicsStr(uint16_t characteristics)`         | Decodes the processor characteristics field into human-readable string (e.g., "64-bit Capable").                                         |
+| `void lazybiosFreeType4(lazybiosType4_t* Type4)`                                | Frees the Type 4 structure and all allocated strings.                                                                                    |
+
+---
 ## Logging and Debugging
 
 The library includes a simple, compile-time configurable logging system.
@@ -233,8 +284,8 @@ The library includes a simple, compile-time configurable logging system.
 | Macro/Option | Description |
 | :--- | :--- |
 | `LAZYBIOS_QUIET` | If defined during compilation, all logging is disabled. This is the quietest mode. |
-| `LAZYBIOS_DEBUG` | If defined, enables verbose debug logging (`lb_dbg`) in addition to standard error logging (`lb_log`). |
-| (Neither defined) | Normal Mode. Only standard error logging (`lb_log`) is enabled, which reports critical status messages and errors. |
+| `LAZYBIOS_DEBUG` | If defined, enables verbose debug logging (`dbg`) in addition to standard error logging (`log`). |
+| (Neither defined) | Normal Mode. Only standard error logging (`log`) is enabled, which reports critical status messages and errors. |
 
 These options can be controlled via CMake options:
 
