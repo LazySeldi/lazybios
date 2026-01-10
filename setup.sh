@@ -108,7 +108,7 @@ source_test() {
             DMI="$dir/DMI"
             if [ -f "$smbios_entry_point" ] && [ -f "$DMI" ]; then
                 echo "[*] Testing folder $dir..."
-                build/lazybios_test -sources "$smbios_entry_point" "$DMI"
+                build/lazybios_test --sources "$smbios_entry_point" "$DMI"
             fi
         fi
     done
@@ -128,7 +128,7 @@ source_test_valgrind() {
             DMI="$dir/DMI"
             if [ -f "$smbios_entry_point" ] && [ -f "$DMI" ]; then
                 echo "[*] Testing folder $dir..."
-                VALGRIND_OUT=$(valgrind --leak-check=full --error-exitcode=1 build/lazybios_test -sources "$smbios_entry_point" "$DMI" 2>&1 || true)
+                VALGRIND_OUT=$(valgrind --leak-check=full --error-exitcode=1 build/lazybios_test --sources "$smbios_entry_point" "$DMI" 2>&1 || true)
                 
                 if echo "$VALGRIND_OUT" | grep -q "ERROR SUMMARY: 0 errors"; then
                     echo "$dir TESTED: NO ERRORS"
