@@ -10,36 +10,13 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h>
 
-// I was thinking of making lazybios libc independent in the future, so right now I'm just going to replace libc function names with my own to make future me's life easier
-// Who knows when that time will come, but let's just prepare!
-#define lb_malloc   malloc
-#define lb_calloc   calloc
-#define lb_free     free
-#define lb_printf   printf
-#define lb_fprintf  fprintf
-#define lb_snprintf snprintf
-#define lb_memcpy   memcpy
-#define lb_memcmp   memcmp
-#define lb_strcpy   strcpy
-#define lb_va_list  va_list
-#define lb_va_start va_start
-#define lb_va_end   va_end
-#define lb_strcmp   strcmp
-#define lb_vfprintf vfprintf
-#define lb_FILE     FILE
-#define lb_fopen    fopen
-#define lb_fclose   fclose
-#define lb_fread    fread
-#define lb_fwrite   fwrite
-#define lb_fseek    fseek
-#define lb_ftell    ftell
-#define lb_rewind   rewind
-#define lb_strdup   strdup
-#define lb_strerror strerror
-#define lb_atoi     atoi
+// I thought about it and decided that libc independence is not worth it, it will probably be almost impossible to implement a cross-platform libc-independent version without maintenance hell
+// It's not even worth it.
+// I lost the plot here The reason I wanted lazybios was because I wanted precise hardware information in my system monitoring tool in the first place.
+
 
 // lazybios version
-#define LAZYBIOS_VER "3.2.0"
+#define LAZYBIOS_VER "3.3.0"
 
 // SMBIOS offsets
 #define SMBIOS3_ANCHOR              "_SM3_"
@@ -72,7 +49,6 @@ extern "C" {
 
 // Helper macros
 #define ISVERPLUS(ctx, req_major, req_minor) (((ctx)->entry_info.major > (req_major)) || ((ctx)->entry_info.major == (req_major) && (ctx)->entry_info.minor >= (req_minor))) // Returns 1 if the version is equal or newer and 0 if its older
-#define GET_STRING(offset) ((len > (offset)) ? DMIString(p, len, p[(offset)], end) : LAZYBIOS_NULL)
 
 // Values for not found
 #define LAZYBIOS_NOT_FOUND_U8     0xFF
@@ -220,8 +196,13 @@ typedef struct {
     uint16_t core_count_2; // core_count is 0xFF we use this.
     uint16_t core_enabled_2; // same for this field.
     uint16_t thread_count_2; // same for this too.
-} lazybiosType4_t;
 
+    // --- (SMBIOS 3.6+) ---
+    uint16_t thread_enabled;
+
+    // --- (SMBIOS 3.8+) ---
+    char *socket_type;
+} lazybiosType4_t;
 
 typedef enum { // I'm looking to implement more OSes but right now and for a long time I'm mostly going to focus on Linux.
     LAZYBIOS_BACKEND_LINUX, // Only Sysfs Currently but /dev/mem coming some day
@@ -311,8 +292,11 @@ void lazybiosFreeType3(lazybiosType3_t* Type3);
 // Type 4 + Helpers
 
 lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx);
-
-
+const char* lazybiosType4ProcessorFamilyStr(uint16_t family);
+const char* lazybiosType4SocketTypeStr(uint8_t type);
+const char* lazybiosType4CharacteristicsStr(uint16_t characteristics);
+const char* lazybiosType4TypeStr(uint8_t type);
+const char* lazybiosType4StatusStr(uint8_t status);
 void lazybiosFreeType4(lazybiosType4_t* Type4);
 
 // End of Type 4
