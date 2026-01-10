@@ -50,44 +50,44 @@ lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx) {
         uint8_t len = p[1];
 
         if (type == SMBIOS_TYPE_BASEBOARD) {
-            lazybiosType2_t *Type2 = lb_calloc(1, sizeof(*Type2));
+            lazybiosType2_t *Type2 = calloc(1, sizeof(*Type2));
             if (!Type2) return LAZYBIOS_NULL;
 
-            if (len > MANUFACTURER) Type2->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-            if (!Type2->manufacturer) Type2->manufacturer = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len >=MANUFACTURER) Type2->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
+            if (!Type2->manufacturer) Type2->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len > PRODUCT) Type2->product = DMIString(p, len, p[PRODUCT], end);
-            if (!Type2->product) Type2->product = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len >=PRODUCT) Type2->product = DMIString(p, len, p[PRODUCT], end);
+            if (!Type2->product) Type2->product = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len > VERSION) Type2->version = DMIString(p, len, p[VERSION], end);
-            if (!Type2->version) Type2->version = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len >=VERSION) Type2->version = DMIString(p, len, p[VERSION], end);
+            if (!Type2->version) Type2->version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len > SERIAL_NUMBER) Type2->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-            if (!Type2->serial_number) Type2->serial_number = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len >=SERIAL_NUMBER) Type2->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
+            if (!Type2->serial_number) Type2->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len > ASSET_TAG) Type2->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
-            if (!Type2->asset_tag) Type2->asset_tag = lb_strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len >=ASSET_TAG) Type2->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
+            if (!Type2->asset_tag) Type2->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type2->feature_flags = (len > FEATURE_FLAGS) ? p[FEATURE_FLAGS] : LAZYBIOS_NOT_FOUND_U8;
+            Type2->feature_flags = (len >=FEATURE_FLAGS) ? p[FEATURE_FLAGS] : LAZYBIOS_NOT_FOUND_U8;
 
-            Type2->location_in_chassis = (len > LOCATION_IN_CHASSIS) ? DMIString(p, len, p[LOCATION_IN_CHASSIS], end) : lb_strdup(LAZYBIOS_NOT_FOUND_STR);
+            Type2->location_in_chassis = (len >=LOCATION_IN_CHASSIS) ? DMIString(p, len, p[LOCATION_IN_CHASSIS], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len > CHASSIS_HANDLE + sizeof(uint16_t)) {
-                lb_memcpy(&Type2->chassis_handle, p + CHASSIS_HANDLE, sizeof(uint16_t));
+            if (len >=CHASSIS_HANDLE + sizeof(uint16_t)) {
+                memcpy(&Type2->chassis_handle, p + CHASSIS_HANDLE, sizeof(uint16_t));
             } else {
                 Type2->chassis_handle = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            Type2->board_type = (len > BOARD_TYPE) ? p[BOARD_TYPE] : LAZYBIOS_NOT_FOUND_U8;
+            Type2->board_type = (len >=BOARD_TYPE) ? p[BOARD_TYPE] : LAZYBIOS_NOT_FOUND_U8;
 
-            Type2->number_of_contained_object_handles = (len > NUMBER_OF_CONTAINED_OBJECT_HANDLES) ? p[NUMBER_OF_CONTAINED_OBJECT_HANDLES] : LAZYBIOS_NOT_FOUND_U8;
+            Type2->number_of_contained_object_handles = (len >=NUMBER_OF_CONTAINED_OBJECT_HANDLES) ? p[NUMBER_OF_CONTAINED_OBJECT_HANDLES] : LAZYBIOS_NOT_FOUND_U8;
 
             if (Type2->number_of_contained_object_handles > 0) {
                 const size_t array_bytes = Type2->number_of_contained_object_handles * sizeof(uint16_t);
 
                 if (len >= CONTAINED_OBJECT_HANDLES + array_bytes) {
-                    Type2->contained_object_handles = lb_malloc(array_bytes);
-                    if (Type2->contained_object_handles) lb_memcpy(&Type2->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
+                    Type2->contained_object_handles = malloc(array_bytes);
+                    if (Type2->contained_object_handles) memcpy(Type2->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
                 } else {
                     Type2->number_of_contained_object_handles = 0;
                     Type2->contained_object_handles = LAZYBIOS_NULL;
@@ -110,11 +110,11 @@ const char* lazybiosType2FeatureflagsStr(uint8_t feature_flags) {
     size_t len = 0;
     buf[0] = '\0'; // Start with empty string
 
-    if (feature_flags & (1 << 0)) len += lb_snprintf(buf + len, sizeof(buf) - len, "Hosting board, ");
-    if (feature_flags & (1 << 1)) len += lb_snprintf(buf + len, sizeof(buf) - len, "Requires daughter board, ");
-    if (feature_flags & (1 << 2)) len += lb_snprintf(buf + len, sizeof(buf) - len, "Removable, ");
-    if (feature_flags & (1 << 3)) len += lb_snprintf(buf + len, sizeof(buf) - len, "Replaceable, ");
-    if (feature_flags & (1 << 4)) len += lb_snprintf(buf + len, sizeof(buf) - len, "Hot swappable, ");
+    if (feature_flags & (1 << 0)) len += snprintf(buf + len, sizeof(buf) - len, "Hosting board, ");
+    if (feature_flags & (1 << 1)) len += snprintf(buf + len, sizeof(buf) - len, "Requires daughter board, ");
+    if (feature_flags & (1 << 2)) len += snprintf(buf + len, sizeof(buf) - len, "Removable, ");
+    if (feature_flags & (1 << 3)) len += snprintf(buf + len, sizeof(buf) - len, "Replaceable, ");
+    if (feature_flags & (1 << 4)) len += snprintf(buf + len, sizeof(buf) - len, "Hot swappable, ");
 
     // Bits 7:5 are reserved (should be 0)
     // We could check: if ((feature_flags & 0xE0) != 0) - reserved bits set
@@ -152,12 +152,12 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 void lazybiosFreeType2(lazybiosType2_t* Type2) {
     if (!Type2) return;
 
-    lb_free(Type2->manufacturer);
-    lb_free(Type2->product);
-    lb_free(Type2->version);
-    lb_free(Type2->serial_number);
-    lb_free(Type2->asset_tag);
-    lb_free(Type2->location_in_chassis);
-    lb_free(Type2->contained_object_handles);
-    lb_free(Type2);
+    free(Type2->manufacturer);
+    free(Type2->product);
+    free(Type2->version);
+    free(Type2->serial_number);
+    free(Type2->asset_tag);
+    free(Type2->location_in_chassis);
+    free(Type2->contained_object_handles);
+    free(Type2);
 }
