@@ -92,7 +92,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
         return -1;
     }
 
-    // --- Step 2: read full entry point ---
+    
     uint8_t entry_buf[31]; // max possible size is SMBIOS 2.x
     memcpy(entry_buf, header, 5); // first 5 bytes already read
     size_t remaining = entry_size - 5;
@@ -105,7 +105,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
         }
     }
 
-    // --- Step 3: allocate entry_data ---
+    
     ctx->entry_len = entry_size;
     ctx->entry_data = malloc(ctx->entry_len);
     if (!ctx->entry_data) {
@@ -120,7 +120,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
         return -1;
     }
 
-    // --- Step 4: read the rest of the file as DMI table ---
+    
     if (fseek(binf, 0, SEEK_END) != 0) {
         lb_log("Failed to seek end of file");
         fclose(binf);
