@@ -2,6 +2,8 @@
 
 ### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
 
+### NO ITS NOT DEAD, I'm kinda busy and lazy, development will continue forever.
+
 ---
 ## Features
 
