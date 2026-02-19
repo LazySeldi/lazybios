@@ -302,12 +302,7 @@ void printType3(lazybiosCTX_t* ctx) {
             }
 
             if (ISVERPLUS(ctx, 2, 7)) {
-                // SKU Number
-                if (ctx->Type3->sku_number == LAZYBIOS_NOT_FOUND_STR) {
-                    printf("SKU Number: Not Present\n");
-                } else {
-                    printf("SKU Number: %s\n", ctx->Type3->sku_number);
-                }
+                printf("SKU Number: %s\n", ctx->Type3->sku_number);
             } else {
                 printf("SKU Number: [SMBIOS 2.7 required]\n");
             }
@@ -319,7 +314,6 @@ void printType3(lazybiosCTX_t* ctx) {
                     printf("Rack Type: 0x%02X\n", ctx->Type3->rack_type);
                 }
 
-                // Rack Height (extended)
                 if (ctx->Type3->rack_height == LAZYBIOS_NOT_FOUND_U8) {
                     printf("Rack Height (extended): Not Present\n");
                 } else {
@@ -632,16 +626,30 @@ int main(int argc, const char *argv[]) {
 
     if (dump_dir) {
         lazybiosInit(ctx);
+
+        char path_entry[1024];
+        char path_dmi[1024];
+
+        #if defined(_WIN32) || defined(_WIN64)
+                snprintf(path_dmi, sizeof(path_dmi), "%s\\DMI.bin", dump_dir);
+                snprintf(path_entry, sizeof(path_entry), "%s\\smbios_entry_point", dump_dir);
+        #else
+                snprintf(path_dmi, sizeof(path_dmi), "%s/DMI", dump_dir);
+                snprintf(path_entry, sizeof(path_entry), "%s/smbios_entry_point", dump_dir);
+        #endif
+
+        FILE* entry = NULL;
+        FILE* dmi   = NULL;
         if (ctx->backend == LAZYBIOS_BACKEND_LINUX) {
-            FILE* entry = fopen("smbios_entry_point", "wb");
+            entry = fopen(path_entry, "wb");
             if (!entry) {
-                printf("Failed to open 'smbios_entry_point': %s\n", strerror(errno));
+                printf("Failed to open '%s': %s\n", path_entry, strerror(errno));
                 return -1;
             }
 
-            FILE* dmi = fopen("DMI", "wb");
+            dmi = fopen(path_dmi, "wb");
             if (!dmi) {
-                printf("Failed to open 'DMI': %s\n", strerror(errno));
+                printf("Failed to open '%s': %s\n", path_dmi, strerror(errno));
                 fclose(entry);
                 return -1;
             }
@@ -650,26 +658,24 @@ int main(int argc, const char *argv[]) {
             fwrite(ctx->entry_data, 1, ctx->entry_len, entry);
             fclose(entry);
             fclose(dmi);
-            printf("smbios_entry_point and DMI dumped successfully in current directory\n");
-            lazybiosCleanup(ctx);
-            return 0;
+            printf("%s and %s dumped successfully\n", path_entry, path_dmi);
 
-        } else if (ctx->backend == LAZYBIOS_BACKEND_WINDOWS) {
-            FILE* dmi = fopen("DMI.bin", "wb");
-            printf("Windows only gives DMI data and not the actual entry point data, so only DMI.bin is being dumped.\n");
+        } else { // This is for Windows
+            dmi = fopen(path_dmi, "wb");
+            printf("Dumping only DMI data to '%s'\n", path_dmi);
 
-            if (dmi == LAZYBIOS_NULL) {
-                printf("Couldn't create/modify the files for dumping: %s\n", strerror(errno));
-                fclose(dmi);
+            if (!dmi) {
+                printf("Couldn't create/modify the file: %s\n", strerror(errno));
                 return -1;
             }
 
             fwrite(ctx->dmi_data, 1, ctx->dmi_len, dmi);
             fclose(dmi);
-            printf("DMI.bin created/filled successfully in current directory\n");
-            lazybiosCleanup(ctx);
-            return 0;
+            printf("%s created/filled successfully\n", path_dmi);
         }
+
+        lazybiosCleanup(ctx);
+        return 0;
     }
 
     // We initialize from custom files ONLY if specified
