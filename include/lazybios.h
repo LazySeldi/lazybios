@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -297,6 +296,7 @@ const char* lazybiosType4SocketTypeStr(uint8_t type);
 const char* lazybiosType4CharacteristicsStr(uint16_t characteristics);
 const char* lazybiosType4TypeStr(uint8_t type);
 const char* lazybiosType4StatusStr(uint8_t status);
+const char* lazybiosType4VoltageStr(uint8_t voltage);
 void lazybiosFreeType4(lazybiosType4_t* Type4);
 
 // End of Type 4

@@ -971,6 +971,39 @@ const char* lazybiosType4StatusStr(uint8_t status) {
     return buf;
 }
 
+// Processor Voltage
+const char* lazybiosType4VoltageStr(uint8_t voltage) {
+    _Thread_local static char buf[128];
+    size_t len = 0;
+    buf[0] = '\0';
+
+    if (!(voltage & 0x80)) {
+        if (voltage & 0x7F) {
+            len += snprintf(buf + len, sizeof(buf) - len, "%u.%uV", (voltage & 0x7F) / 10, (voltage & 0x7F) % 10);
+        } else {
+            len += snprintf(buf + len, sizeof(buf) - len, "Unknown");
+        }
+    } else {
+        uint8_t caps = voltage & 0x0F;
+        int count = 0;
+
+        if (caps & 0x01) { len += snprintf(buf + len, sizeof(buf) - len, "5V"); count++; }
+        if (caps & 0x02) {
+            if (count > 0) len += snprintf(buf + len, sizeof(buf) - len, ", ");
+            len += snprintf(buf + len, sizeof(buf) - len, "3.3V"); count++;
+        }
+        if (caps & 0x04) {
+            if (count > 0) len += snprintf(buf + len, sizeof(buf) - len, ", ");
+            len += snprintf(buf + len, sizeof(buf) - len, "2.9V"); count++;
+        }
+
+        if (count > 1) len += snprintf(buf + len, sizeof(buf) - len, " (Configurable)");
+        if (count == 0) len += snprintf(buf + len, sizeof(buf) - len, "Not Supported");
+    }
+
+    return buf;
+}
+
 // End of Decoders
 
 // Free Function
