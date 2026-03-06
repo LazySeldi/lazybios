@@ -19,24 +19,30 @@ void printType0(lazybiosCTX_t* ctx) {
         if (ctx->Type0->bios_starting_segment == LAZYBIOS_NOT_FOUND_U16) {
             printf("BIOS Starting Segment: Not Present\n");
         } else {
-            printf("BIOS Starting Segment: 0x%04X\n", ctx->Type0->bios_starting_segment);
+            printf("BIOS Starting Segment: 0x%04hX\n", ctx->Type0->bios_starting_segment);
         }
         
         if (ctx->Type0->characteristics == LAZYBIOS_NOT_FOUND_U64) {
             printf("Firmware Characteristics: Not Present\n");
         } else {
-            printf("Firmware Characteristics: %s\n", lazybiosType0CharacteristicsStr(ctx->Type0->characteristics));
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType0CharacteristicsStr(ctx->Type0->characteristics, buf, sizeof(buf));
+            printf("Firmware Characteristics: %s\n", buf);
         }
         
         if (ISVERPLUS(ctx, 2, 4)) {
             if (ctx->Type0->firmware_char_ext_bytes_count >= 1) {
-                printf("Firmware Characteristics Extension Bytes 1: %s\n", lazybiosType0CharacteristicsExtByte1Str(ctx->Type0->firmware_char_ext_bytes[0]));
+                char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                lazybiosType0CharacteristicsExtByte1Str(ctx->Type0->firmware_char_ext_bytes[0], buf, sizeof(buf));
+                printf("Firmware Characteristics Extension Bytes 1: %s\n", buf);
             } else {
                 printf("Firmware Characteristics Extension Bytes 1: Not Present\n");
             }
 
             if (ctx->Type0->firmware_char_ext_bytes_count >= 2) {
-                printf("Firmware Characteristics Extension Bytes 2: %s\n", lazybiosType0CharacteristicsExtByte2Str(ctx->Type0->firmware_char_ext_bytes[1]));
+                char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                lazybiosType0CharacteristicsExtByte2Str(ctx->Type0->firmware_char_ext_bytes[1], buf, sizeof(buf));
+                printf("Firmware Characteristics Extension Bytes 2: %s\n", buf);
             } else {
                 printf("Firmware Characteristics Extension Bytes 2: Not Present\n");
             }
@@ -44,25 +50,25 @@ void printType0(lazybiosCTX_t* ctx) {
             if (ctx->Type0->platform_major_release == LAZYBIOS_NOT_FOUND_U8) {
                 printf("Platform Major Release: Not Present\n");
             } else {
-                printf("Platform Major Release: %hu\n", ctx->Type0->platform_major_release);
+                printf("Platform Major Release: %hhu\n", ctx->Type0->platform_major_release);
             }
             
             if (ctx->Type0->platform_minor_release == LAZYBIOS_NOT_FOUND_U8) {
                 printf("Platform Minor Release: Not Present\n");
             } else {
-                printf("Platform Minor Release: %hu\n", ctx->Type0->platform_minor_release);
+                printf("Platform Minor Release: %hhu\n", ctx->Type0->platform_minor_release);
             }
             
             if (ctx->Type0->ec_major_release == LAZYBIOS_NOT_FOUND_U8) {
                 printf("EC Major Release: Not Present\n");
             } else {
-                printf("EC Major Release: %hu\n", ctx->Type0->ec_major_release);
+                printf("EC Major Release: %hhu\n", ctx->Type0->ec_major_release);
             }
             
             if (ctx->Type0->ec_minor_release == LAZYBIOS_NOT_FOUND_U8) {
                 printf("EC Minor Release: Not Present\n");
             } else {
-                printf("EC Minor Release: %hu\n", ctx->Type0->ec_minor_release);
+                printf("EC Minor Release: %hhu\n", ctx->Type0->ec_minor_release);
             }
         } else {
             printf("Firmware Characteristics Extension Bytes 1: [SMBIOS 2.4 required]\n");
@@ -113,9 +119,10 @@ void printType1(lazybiosCTX_t* ctx) {
             }
 
             if (uuid_found) {
-                printf("UUID: %02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x\n",
-                         ctx->Type1->uuid[0], ctx->Type1->uuid[1], ctx->Type1->uuid[2], ctx->Type1->uuid[3],
-                         ctx->Type1->uuid[4], ctx->Type1->uuid[5], ctx->Type1->uuid[6], ctx->Type1->uuid[7],
+                printf("UUID: %02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X\n",
+                         ctx->Type1->uuid[3], ctx->Type1->uuid[2], ctx->Type1->uuid[1], ctx->Type1->uuid[0],
+                         ctx->Type1->uuid[5], ctx->Type1->uuid[4],
+                         ctx->Type1->uuid[7], ctx->Type1->uuid[6],
                          ctx->Type1->uuid[8], ctx->Type1->uuid[9], ctx->Type1->uuid[10], ctx->Type1->uuid[11],
                          ctx->Type1->uuid[12], ctx->Type1->uuid[13], ctx->Type1->uuid[14], ctx->Type1->uuid[15]);
             } else {
@@ -161,7 +168,9 @@ void printType2(lazybiosCTX_t* ctx) {
             if (ctx->Type2->feature_flags == LAZYBIOS_NOT_FOUND_U8) {
                 printf("Feature flags: Not Present\n");
             } else {
-                printf("Feature flags: %s\n", lazybiosType2FeatureflagsStr(ctx->Type2->feature_flags));
+                char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                lazybiosType2FeatureflagsStr(ctx->Type2->feature_flags, buf, sizeof(buf));
+                printf("Feature flags: %s\n", buf);
             }
 
             printf("Location in Chassis: %s\n", ctx->Type2->location_in_chassis);
@@ -169,7 +178,7 @@ void printType2(lazybiosCTX_t* ctx) {
             if (ctx->Type2->chassis_handle == LAZYBIOS_NOT_FOUND_U16) {
                 printf("Chassis Handle: Not Present\n");
             } else {
-                printf("Chassis Handle: 0x%lX\n", ctx->Type2->chassis_handle);
+                printf("Chassis Handle: 0x%04hX\n", ctx->Type2->chassis_handle);
             }
 
             if (ctx->Type2->board_type == LAZYBIOS_NOT_FOUND_U8) {
@@ -183,7 +192,7 @@ void printType2(lazybiosCTX_t* ctx) {
                 // No contained object handles or field not present here
             } else {
                 for (int i = 0; i < ctx->Type2->number_of_contained_object_handles; i++) {
-                    printf("  Contained Object Handle %d: 0x%04X\n",
+                    printf("  Contained Object Handle %d: 0x%04hX\n",
                              i, ctx->Type2->contained_object_handles[i]);
                 }
             }
@@ -209,7 +218,9 @@ void printType3(lazybiosCTX_t* ctx) {
         if (ctx->Type3->type == LAZYBIOS_NOT_FOUND_U8) {
             printf("Type: Not Present\n");
         } else {
-            printf("Type: %s\n", lazybiosType3TypeStr(ctx->Type3->type));
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType3TypeStr(ctx->Type3->type, buf, sizeof(buf));
+            printf("Type: %s\n", buf);
         }
         printf("Version: %s\n", ctx->Type3->version);
         printf("Serial Number: %s\n", ctx->Type3->serial_number);
@@ -258,13 +269,13 @@ void printType3(lazybiosCTX_t* ctx) {
             } else if (ctx->Type3->height == 0x00) {
                 printf("Height: Unspecified\n");
             } else {
-                printf("Height: %uU\n", ctx->Type3->height);
+                printf("Height: %hhuU\n", ctx->Type3->height);
             }
 
             if (ctx->Type3->number_of_power_cords == LAZYBIOS_NOT_FOUND_U8) {
                 printf("Number of Power Cords: Not Present\n");
             } else {
-                printf("Number of Power Cords: %u\n", ctx->Type3->number_of_power_cords);
+                printf("Number of Power Cords: %hhu\n", ctx->Type3->number_of_power_cords);
             }
 
             if (ctx->Type3->contained_element_count == LAZYBIOS_NOT_FOUND_U8) {
@@ -272,7 +283,7 @@ void printType3(lazybiosCTX_t* ctx) {
             } else if (ctx->Type3->contained_element_count == 0) {
                 printf("Contained Elements: None\n");
             } else {
-                printf("Contained Elements (%u):\n", ctx->Type3->contained_element_count);
+                printf("Contained Elements (%hhu):\n", ctx->Type3->contained_element_count);
 
                 for (uint8_t i = 0; i < ctx->Type3->contained_element_count; i++) {
                     uint8_t *record = ctx->Type3->contained_elements +
@@ -282,21 +293,19 @@ void printType3(lazybiosCTX_t* ctx) {
                     uint8_t min_count = record[1];
                     uint8_t max_count = record[2];
 
-                    const char *type_str = lazybiosType3ContainedElementTypeStr(type_byte);
+                    char type_str[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType3ContainedElementTypeStr(type_byte, type_str, sizeof(type_str));
 
-                    printf("  Element %u: Type = %s, Min = %u, Max = %u\n",
+                    printf("  Element %hhu: Type = %s, Min = %hhu, Max = %hhu\n",
                               i + 1, type_str, min_count, max_count);
 
-                    // Optional: print extra bytes if present
                     for (uint8_t j = 3; j < ctx->Type3->contained_element_record_length; j++) {
-                        printf("    Extra byte %u: 0x%02X\n", j, record[j]);
+                        printf("    Extra byte %u: 0x%02hhX\n", j, record[j]);
                     }
                 }
             } // This field is kinda tricky since it has its own sub fields, I may "fix" and add a propper decoder for this in the future!
 
-            // Contained Element Record Length
             if (ctx->Type3->contained_element_record_length == LAZYBIOS_NOT_FOUND_U8) {
-                // Already covered by "Contained Elements: Not Present"
             } else if (ctx->Type3->contained_element_record_length > 0) {
                 printf("Contained Element Record Length: %u bytes\n", ctx->Type3->contained_element_record_length);
             }
@@ -311,13 +320,13 @@ void printType3(lazybiosCTX_t* ctx) {
                 if (ctx->Type3->rack_type == LAZYBIOS_NOT_FOUND_U8) {
                     printf("Rack Type: Not Present\n");
                 } else {
-                    printf("Rack Type: 0x%02X\n", ctx->Type3->rack_type);
+                    printf("Rack Type: 0x%02hhX\n", ctx->Type3->rack_type);
                 }
 
                 if (ctx->Type3->rack_height == LAZYBIOS_NOT_FOUND_U8) {
                     printf("Rack Height (extended): Not Present\n");
                 } else {
-                    printf("Rack Height (extended): %uU\n", ctx->Type3->rack_height);
+                    printf("Rack Height (extended): %hhuU\n", ctx->Type3->rack_height);
                 }
             } else {
                 printf("Rack Type: [SMBIOS 3.9 required]\n");
@@ -363,7 +372,7 @@ void printType4(lazybiosCTX_t* ctx) {
         if (ctx->Type4->processor_id == LAZYBIOS_NOT_FOUND_U64) {
             printf("Processor ID: Not Present\n");
         } else {
-            printf("Processor ID: 0x%016llX\n", ctx->Type4->processor_id);
+            printf("Processor ID: 0x%016llX\n", (unsigned long long)ctx->Type4->processor_id);
         }
         
         printf("Processor Version: %s\n", ctx->Type4->processor_version);
@@ -371,7 +380,9 @@ void printType4(lazybiosCTX_t* ctx) {
         if (ctx->Type4->voltage == LAZYBIOS_NOT_FOUND_U8) {
             printf("Voltage: Not Present\n");
         } else {
-            printf("Voltage: 0x%02X\n", ctx->Type4->voltage);
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType4VoltageStr(ctx->Type4->voltage, buf, sizeof(buf));
+            printf("Voltage: %s\n", buf);
         }
         
         if (ctx->Type4->external_clock == LAZYBIOS_NOT_FOUND_U16) {
@@ -395,7 +406,9 @@ void printType4(lazybiosCTX_t* ctx) {
         if (ctx->Type4->status == LAZYBIOS_NOT_FOUND_U8) {
             printf("Status: Not Present\n");
         } else {
-            printf("Status: %s\n", lazybiosType4StatusStr(ctx->Type4->status));
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType4StatusStr(ctx->Type4->status, buf, sizeof(buf));
+            printf("Status: %s\n", buf);
         }
         
         if (ctx->Type4->processor_upgrade == LAZYBIOS_NOT_FOUND_U8) {
@@ -408,19 +421,19 @@ void printType4(lazybiosCTX_t* ctx) {
             if (ctx->Type4->l1_cache_handle == LAZYBIOS_NOT_FOUND_U16) {
                 printf("L1 Cache Handle: Not Present\n");
             } else {
-                printf("L1 Cache Handle: 0x%04X\n", ctx->Type4->l1_cache_handle);
+                printf("L1 Cache Handle: 0x%04hX\n", ctx->Type4->l1_cache_handle);
             }
             
             if (ctx->Type4->l2_cache_handle == LAZYBIOS_NOT_FOUND_U16) {
                 printf("L2 Cache Handle: Not Present\n");
             } else {
-                printf("L2 Cache Handle: 0x%04X\n", ctx->Type4->l2_cache_handle);
+                printf("L2 Cache Handle: 0x%04hX\n", ctx->Type4->l2_cache_handle);
             }
             
             if (ctx->Type4->l3_cache_handle == LAZYBIOS_NOT_FOUND_U16) {
                 printf("L3 Cache Handle: Not Present\n");
             } else {
-                printf("L3 Cache Handle: 0x%04X\n", ctx->Type4->l3_cache_handle);
+                printf("L3 Cache Handle: 0x%04hX\n", ctx->Type4->l3_cache_handle);
             }
         } else {
             printf("L1 Cache Handle: [SMBIOS 2.1 required]\n");
@@ -482,7 +495,9 @@ void printType4(lazybiosCTX_t* ctx) {
             if (ctx->Type4->processor_characteristics == LAZYBIOS_NOT_FOUND_U16) {
                 printf("Processor Characteristics: Not Present\n");
             } else {
-                printf("Processor Characteristics: %s\n", lazybiosType4CharacteristicsStr(ctx->Type4->processor_characteristics));
+                char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                lazybiosType4CharacteristicsStr(ctx->Type4->processor_characteristics, buf, sizeof(buf));
+                printf("Processor Characteristics: %s\n", buf);
             }
             
             if (ctx->Type4->processor_family_2 == LAZYBIOS_NOT_FOUND_U16) {
@@ -590,7 +605,7 @@ int main(int argc, const char *argv[]) {
                 dump_dir = argv[i + 1];
                 i++;
             } else {
-                dump_dir = ".";  // Here we default to the current directory
+                dump_dir = ".";  // in here we default to the current directory
             }
         }
         else if (strcmp(argv[i], "--sources") == 0) {
@@ -608,7 +623,7 @@ int main(int argc, const char *argv[]) {
         else if (strcmp(argv[i], "--single-source") == 0) {
             if (i + 1 < argc) {
                 single_file = argv[i + 1];
-                i++;  // Skip the file name
+                i++;
             } else {
                 fprintf(stderr, "Error: --single-source requires a file argument\n");
                 print_usage(argv[0]);
