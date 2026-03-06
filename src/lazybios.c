@@ -30,7 +30,7 @@ static inline void lazybios_log_internal(const char *prefix, const char *fmt, ..
     va_start(args, fmt);
     fprintf(stderr, "%s", prefix);    // print the prefix
     vfprintf(stderr, fmt, args);      // print user message
-    fprintf(stderr, "\n");            // the newline
+    fprintf(stderr, "\n");
     va_end(args);
 }
 
@@ -50,7 +50,7 @@ static inline void lazybios_log_internal(const char *prefix, const char *fmt, ..
 # define lb_dbg(...)      ((void)0)
 #endif
 
-// So here I choose an inline function and macros because my only other options were either to switch to C23 and use __VA_ARGS__ normally because C11 doesn't support that, or I could Enable GNU extension and be dependent on it.
+// So here I choose an inline function and macros because my only other options were either to switch to C23 and use __VA_ARGS__ normally because C99 doesn't support that, or I could Enable GNU extension and be dependent on it.
 // I could also require a dummy argument to "fix" it altogether but that's probably not safe
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
@@ -180,21 +180,20 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
     uint8_t entry_buf[64];
     size_t n = fread(entry_buf, 1, sizeof(entry_buf), entry);
     ctx->entry_len = n;
-    ctx->entry_data = malloc(ctx->entry_len);
-    if (!ctx->entry_data) {
-        lb_log("Failed to allocate memory for entry_data");
-        fclose(entry);
-        return -1;
-    }
-
-    memcpy(ctx->entry_data, entry_buf, ctx->entry_len);
-    fclose(entry);
 
     if (n < 20) {
         lb_log("Invalid SMBIOS entry point (%zu bytes)", n);
         fclose(dmi);
         return -1;
     }
+    ctx->entry_data = malloc(ctx->entry_len);
+    if (!ctx->entry_data) {
+        lb_log("Failed to allocate memory for entry_data");
+        fclose(entry);
+        return -1;
+    }
+    memcpy(ctx->entry_data, entry_buf, ctx->entry_len);
+    fclose(entry);
 
     if (lazybiosParseEntry(ctx, entry_buf) != 0) {
         fclose(dmi);
