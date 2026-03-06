@@ -9,13 +9,11 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h>
 
-// I thought about it and decided that libc independence is not worth it, it will probably be almost impossible to implement a cross-platform libc-independent version without maintenance hell
-// It's not even worth it.
-// I lost the plot here The reason I wanted lazybios was because I wanted precise hardware information in my system monitoring tool in the first place.
-
-
 // lazybios version
 #define LAZYBIOS_VER "3.3.0"
+
+// Just a little recommended buffer size for the 3 argument decoder functions
+#define LAZYBIOS_DECODER_BUF_SIZE 256
 
 // SMBIOS offsets
 #define SMBIOS3_ANCHOR              "_SM3_"
@@ -248,9 +246,9 @@ const smbios_entry_info_t* lazybiosGetEntryInfo(const lazybiosCTX_t* ctx);
 // Type 0 + Helpers
 
 lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx);
-const char* lazybiosType0CharacteristicsStr(uint64_t characteristics);
-const char* lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1);
-const char* lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2);
+void lazybiosType0CharacteristicsStr(uint64_t characteristics, char *buf, size_t buf_len);
+void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char *buf, size_t buf_len);
+void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char *buf, size_t buf_len);
 uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]);
 void lazybiosFreeType0(lazybiosType0_t* Type0);
 
@@ -269,7 +267,7 @@ void lazybiosFreeType1(lazybiosType1_t* Type1);
 // Type 2 + Helpers
 
 lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx);
-const char* lazybiosType2FeatureflagsStr(uint8_t feature_flags);
+void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char *buf, size_t buf_len);
 const char* lazybiosType2BoardTypeStr(uint8_t board_type);
 void lazybiosFreeType2(lazybiosType2_t* Type2);
 
@@ -279,10 +277,10 @@ void lazybiosFreeType2(lazybiosType2_t* Type2);
 // Type 3 + Helpers
 
 lazybiosType3_t* lazybiosGetType3(lazybiosCTX_t* ctx);
-const char* lazybiosType3TypeStr(uint8_t type);
+void lazybiosType3TypeStr(uint8_t type, char *buf, size_t buf_len);
 const char* lazybiosType3StateStr(uint8_t state);
 const char* lazybiosType3SecurityStatusStr(uint8_t security_status);
-const char* lazybiosType3ContainedElementTypeStr(uint8_t contained_elements);
+void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char *buf, size_t buf_len);
 void lazybiosFreeType3(lazybiosType3_t* Type3);
 
 // End of Type 3
@@ -293,10 +291,10 @@ void lazybiosFreeType3(lazybiosType3_t* Type3);
 lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx);
 const char* lazybiosType4ProcessorFamilyStr(uint16_t family);
 const char* lazybiosType4SocketTypeStr(uint8_t type);
-const char* lazybiosType4CharacteristicsStr(uint16_t characteristics);
+void lazybiosType4CharacteristicsStr(uint16_t characteristics, char *buf, size_t buf_len);
 const char* lazybiosType4TypeStr(uint8_t type);
-const char* lazybiosType4StatusStr(uint8_t status);
-const char* lazybiosType4VoltageStr(uint8_t voltage);
+void lazybiosType4StatusStr(uint8_t status, char *buf, size_t buf_len);
+void lazybiosType4VoltageStr(uint8_t voltage, char *buf, size_t buf_len);
 void lazybiosFreeType4(lazybiosType4_t* Type4);
 
 // End of Type 4
