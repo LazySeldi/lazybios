@@ -105,25 +105,22 @@ lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx) {
 // Decoders
 
 // Feature Flags
-const char* lazybiosType2FeatureflagsStr(uint8_t feature_flags) {
-    _Thread_local static char buf[256];
+void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char *buf, size_t buf_len) {
     size_t len = 0;
-    buf[0] = '\0'; // Start with empty string
+    buf[0] = '\0';
 
-    if (feature_flags & (1 << 0)) len += snprintf(buf + len, sizeof(buf) - len, "Hosting board, ");
-    if (feature_flags & (1 << 1)) len += snprintf(buf + len, sizeof(buf) - len, "Requires daughter board, ");
-    if (feature_flags & (1 << 2)) len += snprintf(buf + len, sizeof(buf) - len, "Removable, ");
-    if (feature_flags & (1 << 3)) len += snprintf(buf + len, sizeof(buf) - len, "Replaceable, ");
-    if (feature_flags & (1 << 4)) len += snprintf(buf + len, sizeof(buf) - len, "Hot swappable, ");
-
-    // Bits 7:5 are reserved (should be 0)
-    // We could check: if ((feature_flags & 0xE0) != 0) - reserved bits set
-
-    if (len == 0) return "None";
-    if (len >= 2) buf[len - 2] = '\0';
+    if (feature_flags & (1 << 0)) len += snprintf(buf + len, buf_len - len, "Hosting board, ");
+    if (feature_flags & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Requires daughter board, ");
+    if (feature_flags & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Removable, ");
+    if (feature_flags & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Replaceable, ");
+    if (feature_flags & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Hot swappable, ");
 
 
-    return buf;
+    if (len == 0) {
+        snprintf(buf, buf_len, "None");
+    } else if (len >= 2) {
+        buf[len - 2] = '\0';
+    }
 }
 
 // Board Type
