@@ -131,9 +131,9 @@ source_test_valgrind() {
                 VALGRIND_OUT=$(valgrind --leak-check=full --error-exitcode=1 build/lazybios_test --sources "$smbios_entry_point" "$DMI" 2>&1 || true)
                 
                 if echo "$VALGRIND_OUT" | grep -q "ERROR SUMMARY: 0 errors"; then
-                    echo "$dir TESTED: NO ERRORS"
+                    echo "$dir TESTED: NO LEAKS"
                 else
-                    echo "$dir TESTED: ERRORS DETECTED"
+                    echo "$dir TESTED: LEAKS DETECTED"
                     echo "$VALGRIND_OUT"
                 fi
             fi
