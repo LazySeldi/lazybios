@@ -130,9 +130,9 @@ This structure holds the parsed data for SMBIOS Type 0.
 | Function                                                                       | Description                                                                                                              |
 |:-------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------|
 | `lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx)`                        | Locates and parses the Type 0 structure. The result is stored in `ctx->Type0`.                                           |
-| `const char* lazybiosType0CharacteristicsStr(uint64_t characteristics)`        | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features.     |
-| `const char* lazybiosType0CharacteristicsExtByteStr(uint8_t char_ext_byte_1)`  | Decodes the first byte of the extended characteristics into a string list.                                               | 
-| `const char* lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2)` | Decodes the second byte of the extended characteristics into a string list.                                              |
+| `void lazybiosType0CharacteristicsStr(uint64_t characteristics, char *buf, size_t buf_len)`        | Decodes the 64-bit `characteristics` field into a human-readable, comma-separated string list of supported features.     |
+| `void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char *buf, size_t buf_len)`  | Decodes the first byte of the extended characteristics into a string list.                                               | 
+| `void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char *buf, size_t buf_len)` | Decodes the second byte of the extended characteristics into a string list.                                              |
 | `uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5])`         | Decodes the extended ROM size field (SMBIOS 3.1+), returning the size and setting the unit string (`MiB`/`GiB`).         |
 | `void lazybiosFreeType0(lazybiosType0_t* Type0)`                               | Frees the only the Type 0 Structure.                                                                                     |
 ---
@@ -183,7 +183,7 @@ This structure holds the parsed data for SMBIOS Type 2. The SMBIOS version requi
 | Function                                                          | Description                                                                                                          |
 |:------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------|
 | `lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx)`           | Locates and parses the Type 2 structure. The result is stored in `ctx->Type2`.                                       |
-| `const char* lazybiosType2FeatureflagsStr(uint8_t feature_flags)` | Decodes the 8-bit `feature_flags` field into a human-readable, string of baseboard feature flags (e.g. "Removable"). |
+| `void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char *buf, size_t buf_len)` | Decodes the 8-bit `feature_flags` field into a human-readable, string of baseboard feature flags (e.g. "Removable"). |
 | `const char* lazybiosType2BoardTypeStr(uint8_t board_type)`       | Decodes the 8-bit `board_type` field into a human-readable, string of baseboard types (e.g. "Server Blade").         |
 | `void lazybiosFreeType2(lazybiosType2_t* Type2)`                  | Frees the only the Type 2 Structure.                                                                                 |
 
@@ -219,10 +219,10 @@ This structure holds the parsed data for SMBIOS Type 3.
 | Function                                                                                | Description                                                                                                                                                                           |
 |:----------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `lazybiosType3_t* lazybiosGetType3(lazybiosCTX_t* ctx)`                                 | Locates and parses the Type 3 structure. The result is stored in `ctx->Type3`.                                                                                                        |
-| `const char* lazybiosType3TypeStr(uint8_t type)`                                        | Decodes the 8-bit `type` field into a human-readable, string of chassis types (e.g. "Desktop").                                                                                       |
+| `void lazybiosType3TypeStr(uint8_t type, char *buf, size_t buf_len)`                                        | Decodes the 8-bit `type` field into a human-readable, string of chassis types (e.g. "Desktop").                                                                                       |
 | `const char* lazybiosType3StateStr(uint8_t state)`                                      | Decodes the 8-bit `thermal_state, power_supply_state, boot_up_state` fields into a human-readable, string of baseboard types (e.g. "Warning").                                        |
 | `const char* lazybiosType3SecurityStatusStr(uint8_t security_status)`                   | Decodes the 8-bit `security_status` fields into a human-readable, string of baseboard types (e.g. "External interface locked out").                                                   |
-| `const char* lazybiosType3ContainedElementTypeStr(uint8_t contained_elements)`          | Decodes the 8-bit `contained_elements` fields into a human-readable, string of baseboard types (e.g. "None") Currently its very bad, next version(3.3.0) will implement it correctly. |
+| `void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char *buf, size_t buf_len)`          | Decodes the 8-bit `contained_elements` fields into a human-readable, string of baseboard types (e.g. "None") Currently its very bad, next version(3.3.0) will implement it correctly. |
 | `void lazybiosFreeType3(lazybiosType3_t* Type3)`                                        | Frees the only the Type 3 Structure.                                                                                                                                                  |
 
 ---
@@ -271,9 +271,9 @@ This structure holds the parsed data for SMBIOS Type 4.
 | `lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx)`                         | Locates and parses the Type 4 structure. The result is stored in `ctx->Type4`.                                                           |
 | `const char* lazybiosType4ProcessorFamilyStr(uint16_t family)`                  | Decodes the processor family field (8-bit or 16-bit) into human-readable string (e.g., "Intel Xeon").                                    |
 | `const char* lazybiosType4TypeStr(uint8_t type)`                                | Decodes the processor type field into human-readable string (e.g., "Central Processor").                                                 |
-| `const char* lazybiosType4StatusStr(uint8_t status)`                            | Decodes the processor status field into human-readable string (e.g., "Socket Populated, CPU Enabled").                                   |
+| `void lazybiosType4StatusStr(uint8_t status, char *buf, size_t buf_len)`                            | Decodes the processor status field into human-readable string (e.g., "Socket Populated, CPU Enabled").                                   |
 | `const char* lazybiosType4UpgradeStr(uint8_t upgrade)`                          | Decodes the processor upgrade field into human-readable string (e.g., "Socket LGA771").                                                  |
-| `const char* lazybiosType4CharacteristicsStr(uint16_t characteristics)`         | Decodes the processor characteristics field into human-readable string (e.g., "64-bit Capable").                                         |
+| `void lazybiosType4CharacteristicsStr(uint16_t characteristics, char *buf, size_t buf_len)`         | Decodes the processor characteristics field into human-readable string (e.g., "64-bit Capable").                                         |
 | `void lazybiosFreeType4(lazybiosType4_t* Type4)`                                | Frees the Type 4 structure and all allocated strings.                                                                                    |
 
 ---
