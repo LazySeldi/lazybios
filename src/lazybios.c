@@ -453,8 +453,8 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf) {
         ctx->entry_info.major = entry_buf[SMBIOS3_MAJOR_OFFSET];
         ctx->entry_info.minor = entry_buf[SMBIOS3_MINOR_OFFSET];
         ctx->entry_info.docrev = entry_buf[SMBIOS3_DOCREV_OFFSET];
-        ctx->entry_info.table_length = *(uint32_t*)(entry_buf + SMBIOS3_TABLE_LENGTH);
-        ctx->entry_info.table_address = *(uint64_t*)(entry_buf + SMBIOS3_TABLE_ADDRESS);
+        memcpy(&ctx->entry_info.table_length, entry_buf + SMBIOS3_TABLE_LENGTH, sizeof(uint32_t));
+        memcpy(&ctx->entry_info.table_address, entry_buf + SMBIOS3_TABLE_ADDRESS, sizeof(uint64_t));
         ctx->entry_info.n_structures = LAZYBIOS_NOT_FOUND_U16; // Not available in SMBIOS 3.x
         ctx->entry_info.is_64bit = true;
     } else if (memcmp(entry_buf, SMBIOS2_DMI_ANCHOR,5 ) == 0 || memcmp(entry_buf, SMBIOS2_ANCHOR, 4) == 0) {
@@ -462,9 +462,9 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf) {
         ctx->entry_info.major = entry_buf[SMBIOS2_MAJOR_OFFSET];
         ctx->entry_info.minor = entry_buf[SMBIOS2_MINOR_OFFSET];
         ctx->entry_info.docrev = LAZYBIOS_NOT_FOUND_U8; // Not available in SMBIOS 2.x
-        ctx->entry_info.table_length = *(uint16_t*)(entry_buf + SMBIOS2_TABLE_LENGTH);
-        ctx->entry_info.table_address = *(uint32_t*)(entry_buf + SMBIOS2_TABLE_ADDRESS);
-        ctx->entry_info.n_structures = *(uint16_t*)(entry_buf + SMBIOS2_N_STRUCTURES); // Number of structures
+        memcpy(&ctx->entry_info.table_length, entry_buf + SMBIOS2_TABLE_LENGTH, sizeof(uint16_t));
+        memcpy(&ctx->entry_info.table_address, entry_buf + SMBIOS2_TABLE_ADDRESS, sizeof(uint32_t));
+        memcpy(&ctx->entry_info.n_structures, entry_buf + SMBIOS2_N_STRUCTURES, sizeof(uint16_t));
         ctx->entry_info.is_64bit = false;
     } else {
         lb_log("SMBIOS anchor not found");
