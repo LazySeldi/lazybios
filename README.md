@@ -39,6 +39,7 @@
 <h3>Type 1: System Information</h3>
 <h3>Type 2: Baseboard Information</h3>
 <h3>Type 3: Chassis Information</h3>
+<h3>Type 4: Processor Information</h3>
 </details>
 
 ---
