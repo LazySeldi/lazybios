@@ -6,7 +6,7 @@
 #include <string.h>
 #include "lazybios.h"
 
-void printType0(lazybiosCTX_t* ctx) {
+static void printType0(lazybiosCTX_t* ctx) {
     printf("=== BIOS INFORMATION ===\n");
 
     if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx);
@@ -97,7 +97,7 @@ void printType0(lazybiosCTX_t* ctx) {
     }
 }
 
-void printType1(lazybiosCTX_t* ctx) {
+static void printType1(lazybiosCTX_t* ctx) {
     printf("=== SYSTEM INFORMATION ===\n");
 
     if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx);
@@ -152,7 +152,7 @@ void printType1(lazybiosCTX_t* ctx) {
     }
 }
 
-void printType2(lazybiosCTX_t* ctx) {
+static void printType2(lazybiosCTX_t* ctx) {
     printf("=== BASEBOARD INFORMATION ===\n");
 
     if (!ctx->Type2) ctx->Type2 = lazybiosGetType2(ctx);
@@ -208,7 +208,7 @@ void printType2(lazybiosCTX_t* ctx) {
     }
 }
 
-void printType3(lazybiosCTX_t* ctx) {
+static void printType3(lazybiosCTX_t* ctx) {
     printf("=== CHASSIS INFORMATION ===\n");
 
     if (!ctx->Type3) ctx->Type3 = lazybiosGetType3(ctx);
@@ -347,7 +347,7 @@ void printType3(lazybiosCTX_t* ctx) {
     }
 }
 
-void printType4(lazybiosCTX_t* ctx) {
+static void printType4(lazybiosCTX_t* ctx) {
     printf("=== PROCESSOR INFORMATION ===\n");
 
     if (!ctx->Type4) ctx->Type4 = lazybiosGetType4(ctx);
