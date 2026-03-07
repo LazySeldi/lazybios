@@ -372,7 +372,15 @@ static void printType4(lazybiosCTX_t* ctx) {
         if (ctx->Type4->processor_id == LAZYBIOS_NOT_FOUND_U64) {
             printf("Processor ID: Not Present\n");
         } else {
-            printf("Processor ID: 0x%016llX\n", (unsigned long long)ctx->Type4->processor_id);
+            printf("Processor ID: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+              (unsigned int)(ctx->Type4->processor_id & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 8) & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 16) & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 24) & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 32) & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 40) & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 48) & 0xFF),
+              (unsigned int)((ctx->Type4->processor_id >> 56) & 0xFF));
         }
         
         printf("Processor Version: %s\n", ctx->Type4->processor_version);
