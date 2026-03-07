@@ -24,34 +24,30 @@
 
 // Logging system for lazybios
 
-// Internal helper function
+#ifdef __GNUC__
+__attribute__((format(printf, 2, 3)))
+#endif
 static inline void lazybios_log_internal(const char *prefix, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    fprintf(stderr, "%s", prefix);    // print the prefix
-    vfprintf(stderr, fmt, args);      // print user message
+    fprintf(stderr, "%s", prefix);
+    vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     va_end(args);
 }
 
-// Quiet mode - no logging
 #ifdef LAZYBIOS_QUIET
-# define lb_log(...)      ((void)0)
-# define lb_dbg(...)      ((void)0)
+# define lb_log(...)   ((void)0)
+# define lb_dbg(...)   ((void)0)
 
-// Debug mode - enable verbose logging
 #elif defined(LAZYBIOS_DEBUG)
-# define lb_log(...)      lazybios_log_internal("[lazybios] ", __VA_ARGS__)
-# define lb_dbg(...)      lazybios_log_internal("[lazybios-dbg] ", __VA_ARGS__)
+# define lb_log(...)   lazybios_log_internal("[lazybios] ", __VA_ARGS__)
+# define lb_dbg(...)   lazybios_log_internal("[lazybios-dbg] ", __VA_ARGS__)
 
-// Normal mode - standard logging only
 #else
-# define lb_log(...)      lazybios_log_internal("[lazybios] ", __VA_ARGS__)
-# define lb_dbg(...)      ((void)0)
+# define lb_log(...)   lazybios_log_internal("[lazybios] ", __VA_ARGS__)
+# define lb_dbg(...)   ((void)0)
 #endif
-
-// So here I choose an inline function and macros because my only other options were either to switch to C23 and use __VA_ARGS__ normally because C99 doesn't support that, or I could Enable GNU extension and be dependent on it.
-// I could also require a dummy argument to "fix" it altogether but that's probably not safe
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
     if (!ctx) return -1;
@@ -254,7 +250,7 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
     return ctx;
 }
 
-int lazybiosDevMem(lazybiosCTX_t* ctx) {
+static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
     if (!ctx) return -1;
 
     #if OS_LINUX
@@ -265,7 +261,7 @@ int lazybiosDevMem(lazybiosCTX_t* ctx) {
     #endif
 }
 
-int lazybiosWindows(lazybiosCTX_t *ctx) {
+static inline int lazybiosWindows(lazybiosCTX_t *ctx) {
     if (!ctx) return -1;
 
     // Most of the Windows backend wasn't made by me I got help from AI for this since I don't know anything about the WindowsAPI
@@ -343,7 +339,7 @@ int lazybiosWindows(lazybiosCTX_t *ctx) {
     #endif
 }
 
-int lazybiosMacOS(lazybiosCTX_t* ctx) {
+static inline int lazybiosMacOS(lazybiosCTX_t* ctx) {
     if (!ctx) return -1;
     #ifdef OS_MACOS
         lb_log("MacOS backend not implemented yet");
