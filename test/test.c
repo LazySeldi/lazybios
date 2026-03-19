@@ -25,7 +25,7 @@ static void printType0(lazybiosCTX_t* ctx) {
         if (ctx->Type0->characteristics == LAZYBIOS_NOT_FOUND_U64) {
             printf("Firmware Characteristics: Not Present\n");
         } else {
-            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            char buf[(LAZYBIOS_DECODER_BUF_SIZE * 2)]; // Needs a bigger size 
             lazybiosType0CharacteristicsStr(ctx->Type0->characteristics, buf, sizeof(buf));
             printf("Firmware Characteristics: %s\n", buf);
         }
