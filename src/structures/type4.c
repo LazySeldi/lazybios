@@ -386,184 +386,190 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx) {
-    if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;
+lazybiosType4_t* lazybiosGetType4(lazybiosType4_t *Type4, size_t *type4_count, lazybiosDMI_t *DMIData) {
+    if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
-    const uint8_t* p = ctx->dmi_data;
-    const uint8_t* end = ctx->dmi_data + ctx->dmi_len;
+    const uint8_t* p = DMIData->dmi_data;
+    const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-    while (p + SMBIOS_HEADER_SIZE <= end) {
+    size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PROCESSOR);
+    size_t index = 0;
+    Type4 = calloc(count, sizeof(lazybiosType4_t));
+    if (!Type4 && count > 0) return LAZYBIOS_NULL;
+
+    while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
         uint8_t type = p[0];
         uint8_t len = p[1];
 
         if (type == SMBIOS_TYPE_PROCESSOR) {
-            lazybiosType4_t *Type4 = calloc(1, sizeof(*Type4));
+            lazybiosType4_t *current = &Type4[index];
             if (!Type4) return LAZYBIOS_NULL;
 
-            if (len >=SOCKET_DESIGNATION) Type4->socket_designation = DMIString(p, len, p[SOCKET_DESIGNATION], end);
-            if (!Type4->socket_designation) Type4->socket_designation = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > SOCKET_DESIGNATION) current->socket_designation = DMIString(p, len, p[SOCKET_DESIGNATION], end);
+            if (!current->socket_designation) current->socket_designation = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type4->processor_type = (len >=PROCESSOR_TYPE) ? p[PROCESSOR_TYPE] : LAZYBIOS_NOT_FOUND_U8;
-            Type4->processor_family = (len >=PROCESSOR_FAMILY) ? p[PROCESSOR_FAMILY] : LAZYBIOS_NOT_FOUND_U8;
+            current->processor_type = (len > PROCESSOR_TYPE) ? p[PROCESSOR_TYPE] : LAZYBIOS_NOT_FOUND_U8;
+            current->processor_family = (len > PROCESSOR_FAMILY) ? p[PROCESSOR_FAMILY] : LAZYBIOS_NOT_FOUND_U8;
 
-            if (len >=PROCESSOR_MANUFACTURER) Type4->processor_manufacturer = DMIString(p, len, p[PROCESSOR_MANUFACTURER], end);
-            if (!Type4->processor_manufacturer) Type4->processor_manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > PROCESSOR_MANUFACTURER) current->processor_manufacturer = DMIString(p, len, p[PROCESSOR_MANUFACTURER], end);
+            if (!current->processor_manufacturer) current->processor_manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
 
             if (len >=PROCESSOR_ID + sizeof(uint64_t)) {
-                memcpy(&Type4->processor_id, p + PROCESSOR_ID, sizeof(uint64_t));
+                memcpy(&current->processor_id, p + PROCESSOR_ID, sizeof(uint64_t));
             } else {
-                Type4->processor_id = LAZYBIOS_NOT_FOUND_U64;
+                current->processor_id = LAZYBIOS_NOT_FOUND_U64;
             }
 
-            if (len >=PROCESSOR_VERSION) Type4->processor_version = DMIString(p, len, p[PROCESSOR_VERSION], end);
-            if (!Type4->processor_version) Type4->processor_version = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > PROCESSOR_VERSION) current->processor_version = DMIString(p, len, p[PROCESSOR_VERSION], end);
+            if (!current->processor_version) current->processor_version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type4->voltage = (len >=VOLTAGE) ? p[VOLTAGE] : LAZYBIOS_NOT_FOUND_U8;
+            current->voltage = (len > VOLTAGE) ? p[VOLTAGE] : LAZYBIOS_NOT_FOUND_U8;
 
             if (len >=EXTERNAL_CLOCK + sizeof(uint16_t)) {
-                memcpy(&Type4->external_clock, p + EXTERNAL_CLOCK, sizeof(uint16_t));
+                memcpy(&current->external_clock, p + EXTERNAL_CLOCK, sizeof(uint16_t));
             } else {
-                Type4->external_clock = LAZYBIOS_NOT_FOUND_U16;
+                current->external_clock = LAZYBIOS_NOT_FOUND_U16;
             }
 
             if (len >=MAX_SPEED + sizeof(uint16_t)) {
-                memcpy(&Type4->max_speed, p + MAX_SPEED, sizeof(uint16_t));
+                memcpy(&current->max_speed, p + MAX_SPEED, sizeof(uint16_t));
             } else {
-                Type4->max_speed = LAZYBIOS_NOT_FOUND_U16;
+                current->max_speed = LAZYBIOS_NOT_FOUND_U16;
             }
 
             if (len >=CURRENT_SPEED + sizeof(uint16_t)) {
-                memcpy(&Type4->current_speed, p + CURRENT_SPEED, sizeof(uint16_t));
+                memcpy(&current->current_speed, p + CURRENT_SPEED, sizeof(uint16_t));
             } else {
-                Type4->current_speed = LAZYBIOS_NOT_FOUND_U16;
+                current->current_speed = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            Type4->status = (len >=STATUS) ? p[STATUS] : LAZYBIOS_NOT_FOUND_U8;
-            Type4->processor_upgrade = (len >=PROCESSOR_UPGRADE) ? p[PROCESSOR_UPGRADE] : LAZYBIOS_NOT_FOUND_U8;
+            current->status = (len > STATUS) ? p[STATUS] : LAZYBIOS_NOT_FOUND_U8;
+            current->processor_upgrade = (len > PROCESSOR_UPGRADE) ? p[PROCESSOR_UPGRADE] : LAZYBIOS_NOT_FOUND_U8;
 
-            if (ISVERPLUS(ctx, 2, 1)) {
+            if (ISVERPLUS(DMIData, 2, 1)) {
                 if (len >=L1_CACHE_HANDLE + sizeof(uint16_t)) {
-                    memcpy(&Type4->l1_cache_handle, p + L1_CACHE_HANDLE, sizeof(uint16_t));
+                    memcpy(&current->l1_cache_handle, p + L1_CACHE_HANDLE, sizeof(uint16_t));
                 } else {
-                    Type4->l1_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+                    current->l1_cache_handle = LAZYBIOS_NOT_FOUND_U16;
                 }
 
                 if (len >=L2_CACHE_HANDLE + sizeof(uint16_t)) {
-                    memcpy(&Type4->l2_cache_handle, p + L2_CACHE_HANDLE, sizeof(uint16_t));
+                    memcpy(&current->l2_cache_handle, p + L2_CACHE_HANDLE, sizeof(uint16_t));
                 } else {
-                    Type4->l2_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+                    current->l2_cache_handle = LAZYBIOS_NOT_FOUND_U16;
                 }
 
                 if (len >=L3_CACHE_HANDLE + sizeof(uint16_t)) {
-                    memcpy(&Type4->l3_cache_handle, p + L3_CACHE_HANDLE, sizeof(uint16_t));
+                    memcpy(&current->l3_cache_handle, p + L3_CACHE_HANDLE, sizeof(uint16_t));
                 } else {
-                    Type4->l3_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+                    current->l3_cache_handle = LAZYBIOS_NOT_FOUND_U16;
                 }
             } else {
-                Type4->l1_cache_handle = LAZYBIOS_NOT_FOUND_U16;
-                Type4->l2_cache_handle = LAZYBIOS_NOT_FOUND_U16;
-                Type4->l3_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+                current->l1_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+                current->l2_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+                current->l3_cache_handle = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            if (ISVERPLUS(ctx, 2, 3)) {
-                if (len >=SERIAL_NUMBER) Type4->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-                if (!Type4->serial_number) Type4->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (ISVERPLUS(DMIData, 2, 3)) {
+                if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
+                if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                if (len >=ASSET_TAG) Type4->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
-                if (!Type4->asset_tag) Type4->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+                if (len > ASSET_TAG) current->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
+                if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                if (len >=PART_NUMBER) Type4->part_number = DMIString(p, len, p[PART_NUMBER], end);
-                if (!Type4->part_number) Type4->part_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+                if (len > PART_NUMBER) current->part_number = DMIString(p, len, p[PART_NUMBER], end);
+                if (!current->part_number) current->part_number = strdup(LAZYBIOS_NOT_FOUND_STR);
             } else {
-                Type4->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-                Type4->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
-                Type4->part_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+                current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+                current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+                current->part_number = strdup(LAZYBIOS_NOT_FOUND_STR);
             }
 
-            if (ISVERPLUS(ctx, 2, 5)) {
-                if (len >=CORE_COUNT) {
-                    Type4->core_count = p[CORE_COUNT];
+            if (ISVERPLUS(DMIData, 2, 5)) {
+                if (len > CORE_COUNT) {
+                    current->core_count = p[CORE_COUNT];
                 } else {
-                    Type4->core_count = LAZYBIOS_NOT_FOUND_U8;
+                    current->core_count = LAZYBIOS_NOT_FOUND_U8;
                 }
 
-                if (len >=CORE_ENABLED) {
-                    Type4->core_enabled = p[CORE_ENABLED];
+                if (len > CORE_ENABLED) {
+                    current->core_enabled = p[CORE_ENABLED];
                 } else {
-                    Type4->core_enabled = LAZYBIOS_NOT_FOUND_U8;
+                    current->core_enabled = LAZYBIOS_NOT_FOUND_U8;
                 }
 
-                if (len >=THREAD_COUNT) {
-                    Type4->thread_count = p[THREAD_COUNT];
+                if (len > THREAD_COUNT) {
+                    current->thread_count = p[THREAD_COUNT];
                 } else {
-                    Type4->thread_count = LAZYBIOS_NOT_FOUND_U8;
+                    current->thread_count = LAZYBIOS_NOT_FOUND_U8;
                 }
 
                 if (len >=PROCESSOR_CHARACTERISTICS + sizeof(uint16_t)) {
-                    memcpy(&Type4->processor_characteristics, p + PROCESSOR_CHARACTERISTICS, sizeof(uint16_t));
+                    memcpy(&current->processor_characteristics, p + PROCESSOR_CHARACTERISTICS, sizeof(uint16_t));
                 } else {
-                    Type4->processor_characteristics = LAZYBIOS_NOT_FOUND_U16;
+                    current->processor_characteristics = LAZYBIOS_NOT_FOUND_U16;
                 }
 
                 if (len >=PROCESSOR_FAMILY_2 + sizeof(uint16_t)) {
-                    memcpy(&Type4->processor_family_2, p + PROCESSOR_FAMILY_2, sizeof(uint16_t));
+                    memcpy(&current->processor_family_2, p + PROCESSOR_FAMILY_2, sizeof(uint16_t));
                 } else {
-                    Type4->processor_family_2 = LAZYBIOS_NOT_FOUND_U16;
+                    current->processor_family_2 = LAZYBIOS_NOT_FOUND_U16;
                 }
             } else {
-                Type4->core_count = LAZYBIOS_NOT_FOUND_U8;
-                Type4->core_enabled = LAZYBIOS_NOT_FOUND_U8;
-                Type4->thread_count = LAZYBIOS_NOT_FOUND_U8;
-                Type4->processor_characteristics = LAZYBIOS_NOT_FOUND_U16;
-                Type4->processor_family_2 = LAZYBIOS_NOT_FOUND_U16;
+                current->core_count = LAZYBIOS_NOT_FOUND_U8;
+                current->core_enabled = LAZYBIOS_NOT_FOUND_U8;
+                current->thread_count = LAZYBIOS_NOT_FOUND_U8;
+                current->processor_characteristics = LAZYBIOS_NOT_FOUND_U16;
+                current->processor_family_2 = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            if (ISVERPLUS(ctx, 3, 0)) {
+            if (ISVERPLUS(DMIData, 3, 0)) {
                 if (len >=CORE_COUNT_2 + sizeof(uint16_t)) {
-                    memcpy(&Type4->core_count_2, p + CORE_COUNT_2, sizeof(uint16_t));
+                    memcpy(&current->core_count_2, p + CORE_COUNT_2, sizeof(uint16_t));
                 } else {
-                    Type4->core_count_2 = LAZYBIOS_NOT_FOUND_U16;
+                    current->core_count_2 = LAZYBIOS_NOT_FOUND_U16;
                 }
 
                 if (len >=CORE_ENABLED_2 + sizeof(uint16_t)) {
-                    memcpy(&Type4->core_enabled_2, p + CORE_ENABLED_2, sizeof(uint16_t));
+                    memcpy(&current->core_enabled_2, p + CORE_ENABLED_2, sizeof(uint16_t));
                 } else {
-                    Type4->core_enabled_2 = LAZYBIOS_NOT_FOUND_U16;
+                    current->core_enabled_2 = LAZYBIOS_NOT_FOUND_U16;
                 }
 
                 if (len >=THREAD_COUNT_2 + sizeof(uint16_t)) {
-                    memcpy(&Type4->thread_count_2, p + THREAD_COUNT_2, sizeof(uint16_t));
+                    memcpy(&current->thread_count_2, p + THREAD_COUNT_2, sizeof(uint16_t));
                 } else {
-                    Type4->thread_count_2 = LAZYBIOS_NOT_FOUND_U16;
+                    current->thread_count_2 = LAZYBIOS_NOT_FOUND_U16;
                 }
             } else {
-                Type4->core_count_2 = LAZYBIOS_NOT_FOUND_U16;
-                Type4->core_enabled_2 = LAZYBIOS_NOT_FOUND_U16;
-                Type4->thread_count_2 = LAZYBIOS_NOT_FOUND_U16;
+                current->core_count_2 = LAZYBIOS_NOT_FOUND_U16;
+                current->core_enabled_2 = LAZYBIOS_NOT_FOUND_U16;
+                current->thread_count_2 = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            if (ISVERPLUS(ctx, 3, 6)) {
+            if (ISVERPLUS(DMIData, 3, 6)) {
                 if (len >=THREAD_ENABLED + sizeof(uint16_t)) {
-                    memcpy(&Type4->thread_enabled, p + THREAD_ENABLED, sizeof(uint16_t));
+                    memcpy(&current->thread_enabled, p + THREAD_ENABLED, sizeof(uint16_t));
                 } else {
-                    Type4->thread_enabled = LAZYBIOS_NOT_FOUND_U16;
+                    current->thread_enabled = LAZYBIOS_NOT_FOUND_U16;
                 }
             } else {
-                Type4->thread_enabled = LAZYBIOS_NOT_FOUND_U16;
+                current->thread_enabled = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            if (ISVERPLUS(ctx, 3, 8)) {
-                if (len >=SOCKET_TYPE) Type4->socket_type = DMIString(p, len, p[SOCKET_TYPE], end);
-                if (!Type4->socket_type) Type4->socket_type = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (ISVERPLUS(DMIData, 3, 8)) {
+                if (len > SOCKET_TYPE) current->socket_type = DMIString(p, len, p[SOCKET_TYPE], end);
+                if (!current->socket_type) current->socket_type = strdup(LAZYBIOS_NOT_FOUND_STR);
             } else {
-                Type4->socket_type = strdup(LAZYBIOS_NOT_FOUND_STR);
+                current->socket_type = strdup(LAZYBIOS_NOT_FOUND_STR);
             }
 
-            return Type4;
+            index++;
         }
         p = DMINext(p , end);
     }
-    return LAZYBIOS_NULL;
+    *type4_count = index;
+    return Type4;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Decoders
@@ -1000,15 +1006,17 @@ void lazybiosType4VoltageStr(uint8_t voltage, char *buf, size_t buf_len) {
 // End of Decoders
 
 // Free Function
-void lazybiosFreeType4(lazybiosType4_t* Type4) {
+void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count) {
     if (!Type4) return;
 
-    free(Type4->socket_designation);
-    free(Type4->processor_manufacturer);
-    free(Type4->processor_version);
-    free(Type4->serial_number);
-    free(Type4->asset_tag);
-    free(Type4->part_number);
-    free(Type4->socket_type);
+    for (size_t i = 0; i < type4_count; i++) {
+        free(Type4[i].socket_designation);
+        free(Type4[i].processor_manufacturer);
+        free(Type4[i].processor_version);
+        free(Type4[i].serial_number);
+        free(Type4[i].asset_tag);
+        free(Type4[i].part_number);
+        free(Type4[i].socket_type);
+    }
     free(Type4);
 }
