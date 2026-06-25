@@ -39,66 +39,72 @@
 #define BOARD_TYPE_INTERCONNECT_BOARD           0x0D
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx) {
-    if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;
+lazybiosType2_t* lazybiosGetType2(lazybiosType2_t *Type2, size_t *type2_count, lazybiosDMI_t* DMIData) {
+    if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
-    const uint8_t* p = ctx->dmi_data;
-    const uint8_t* end = ctx->dmi_data + ctx->dmi_len;
+    const uint8_t* p = DMIData->dmi_data;
+    const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-    while (p + SMBIOS_HEADER_SIZE <= end) {
+    size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BASEBOARD);
+    size_t index = 0;
+    Type2 = calloc(count, sizeof(lazybiosType2_t));
+    if (!Type2 && count > 0) return LAZYBIOS_NULL;
+
+    while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
         uint8_t type = p[0];
         uint8_t len = p[1];
 
         if (type == SMBIOS_TYPE_BASEBOARD) {
-            lazybiosType2_t *Type2 = calloc(1, sizeof(*Type2));
-            if (!Type2) return LAZYBIOS_NULL;
+            lazybiosType2_t *current = &Type2[index];
+            if (!current) return LAZYBIOS_NULL;
 
-            if (len >=MANUFACTURER) Type2->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-            if (!Type2->manufacturer) Type2->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
+            if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=PRODUCT) Type2->product = DMIString(p, len, p[PRODUCT], end);
-            if (!Type2->product) Type2->product = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > PRODUCT) current->product = DMIString(p, len, p[PRODUCT], end);
+            if (!current->product) current->product = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=VERSION) Type2->version = DMIString(p, len, p[VERSION], end);
-            if (!Type2->version) Type2->version = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > VERSION) current->version = DMIString(p, len, p[VERSION], end);
+            if (!current->version) current->version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=SERIAL_NUMBER) Type2->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-            if (!Type2->serial_number) Type2->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
+            if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=ASSET_TAG) Type2->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
-            if (!Type2->asset_tag) Type2->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (len > ASSET_TAG) current->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
+            if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            Type2->feature_flags = (len >=FEATURE_FLAGS) ? p[FEATURE_FLAGS] : LAZYBIOS_NOT_FOUND_U8;
+            current->feature_flags = (len > FEATURE_FLAGS) ? p[FEATURE_FLAGS] : LAZYBIOS_NOT_FOUND_U8;
 
-            Type2->location_in_chassis = (len >=LOCATION_IN_CHASSIS) ? DMIString(p, len, p[LOCATION_IN_CHASSIS], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
+            current->location_in_chassis = (len > LOCATION_IN_CHASSIS) ? DMIString(p, len, p[LOCATION_IN_CHASSIS], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
 
             if (len >=CHASSIS_HANDLE + sizeof(uint16_t)) {
-                memcpy(&Type2->chassis_handle, p + CHASSIS_HANDLE, sizeof(uint16_t));
+                memcpy(&current->chassis_handle, p + CHASSIS_HANDLE, sizeof(uint16_t));
             } else {
-                Type2->chassis_handle = LAZYBIOS_NOT_FOUND_U16;
+                current->chassis_handle = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            Type2->board_type = (len >=BOARD_TYPE) ? p[BOARD_TYPE] : LAZYBIOS_NOT_FOUND_U8;
+            current->board_type = (len > BOARD_TYPE) ? p[BOARD_TYPE] : LAZYBIOS_NOT_FOUND_U8;
 
-            Type2->number_of_contained_object_handles = (len >=NUMBER_OF_CONTAINED_OBJECT_HANDLES) ? p[NUMBER_OF_CONTAINED_OBJECT_HANDLES] : LAZYBIOS_NOT_FOUND_U8;
+            current->number_of_contained_object_handles = (len > NUMBER_OF_CONTAINED_OBJECT_HANDLES) ? p[NUMBER_OF_CONTAINED_OBJECT_HANDLES] : LAZYBIOS_NOT_FOUND_U8;
 
-            if (Type2->number_of_contained_object_handles > 0) {
-                const size_t array_bytes = Type2->number_of_contained_object_handles * sizeof(uint16_t);
+            if (current->number_of_contained_object_handles > 0) {
+                const size_t array_bytes = current->number_of_contained_object_handles * sizeof(uint16_t);
 
                 if (len >= CONTAINED_OBJECT_HANDLES + array_bytes) {
-                    Type2->contained_object_handles = malloc(array_bytes);
-                    if (Type2->contained_object_handles) memcpy(Type2->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
+                    current->contained_object_handles = malloc(array_bytes);
+                    if (current->contained_object_handles) memcpy(current->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
                 } else {
-                    Type2->number_of_contained_object_handles = 0;
-                    Type2->contained_object_handles = LAZYBIOS_NULL;
+                    current->number_of_contained_object_handles = 0;
+                    current->contained_object_handles = LAZYBIOS_NULL;
                 }
             }
 
-            return Type2;
+            index++;
         }
         p = DMINext(p, end);
     }
-    return LAZYBIOS_NULL;
+    *type2_count = index;
+    return Type2;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -146,15 +152,18 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 // End of Decoders
 
 // Free Function
-void lazybiosFreeType2(lazybiosType2_t* Type2) {
+void lazybiosFreeType2(lazybiosType2_t *Type2, size_t type2_count) {
     if (!Type2) return;
 
-    free(Type2->manufacturer);
-    free(Type2->product);
-    free(Type2->version);
-    free(Type2->serial_number);
-    free(Type2->asset_tag);
-    free(Type2->location_in_chassis);
-    free(Type2->contained_object_handles);
+    for (size_t i = 0; i < type2_count; i++) {
+        free(Type2[i].manufacturer);
+        free(Type2[i].product);
+        free(Type2[i].version);
+        free(Type2[i].serial_number);
+        free(Type2[i].asset_tag);
+        free(Type2[i].location_in_chassis);
+        free(Type2[i].contained_object_handles);
+    }
+
     free(Type2);
 }
