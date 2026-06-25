@@ -30,3 +30,4 @@ lazybios_test
 *.gcno
 *.gcov
 compile_commands.json
+.clang-format
