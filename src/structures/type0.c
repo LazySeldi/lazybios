@@ -22,27 +22,27 @@
 #define EXTENDED_FIRMWARE_ROM_SIZE                  0x18
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
-    if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;
+lazybiosType0_t* lazybiosGetType0(lazybiosType0_t *Type0, lazybiosDMI_t *DMIData) {
+    if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
-    const uint8_t* p   = ctx->dmi_data;
-    const uint8_t* end = ctx->dmi_data + ctx->dmi_len;
+    const uint8_t* p   = DMIData->dmi_data;
+    const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
     while (p + SMBIOS_HEADER_SIZE <= end) {
         uint8_t type = p[0];
         uint8_t len  = p[1];
 
         if (type == SMBIOS_TYPE_BIOS) {
-            lazybiosType0_t* Type0 = calloc(1, sizeof(*Type0));
+            Type0 = calloc(1, sizeof(*Type0));
             if (!Type0) return LAZYBIOS_NULL;
 
-            if (len >=VENDOR) Type0->vendor = DMIString(p, len, p[VENDOR], end);
+            if (len > VENDOR) Type0->vendor = DMIString(p, len, p[VENDOR], end);
             if (!Type0->vendor) Type0->vendor = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=FIRMWARE_VERSION) Type0->version = DMIString(p, len, p[FIRMWARE_VERSION], end);
+            if (len > FIRMWARE_VERSION) Type0->version = DMIString(p, len, p[FIRMWARE_VERSION], end);
             if (!Type0->version) Type0->version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=FIRMWARE_RELEASE_DATE) Type0->release_date = DMIString(p, len, p[FIRMWARE_RELEASE_DATE], end);
+            if (len > FIRMWARE_RELEASE_DATE) Type0->release_date = DMIString(p, len, p[FIRMWARE_RELEASE_DATE], end);
             if (!Type0->release_date) Type0->release_date = strdup(LAZYBIOS_NOT_FOUND_STR);
 
             if (len >= BIOS_STARTING_SEGMENT + sizeof(uint16_t)) {
@@ -51,15 +51,15 @@ lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
                 Type0->bios_starting_segment = LAZYBIOS_NOT_FOUND_U16;
             }
 
-            if (len >=FIRMWARE_ROM_SIZE && p[FIRMWARE_ROM_SIZE] == 0xFF) {
-                if (ISVERPLUS(ctx, 3, 1) && len >= EXTENDED_FIRMWARE_ROM_SIZE + sizeof(uint16_t)) {
+            if (len > FIRMWARE_ROM_SIZE && p[FIRMWARE_ROM_SIZE] == 0xFF) {
+                if (ISVERPLUS(DMIData, 3, 1) && len >= EXTENDED_FIRMWARE_ROM_SIZE + sizeof(uint16_t)) {
                     memcpy(&Type0->extended_rom_size, p + EXTENDED_FIRMWARE_ROM_SIZE,sizeof(uint16_t));
                 } else {
                     Type0->extended_rom_size = LAZYBIOS_NOT_FOUND_U16;
                 }
 
                 Type0->rom_size = LAZYBIOS_NOT_FOUND_U32;
-            } else if (len >=FIRMWARE_ROM_SIZE) {
+            } else if (len > FIRMWARE_ROM_SIZE) {
                 Type0->rom_size = (uint32_t)(p[FIRMWARE_ROM_SIZE] + 1) * 64;
                 Type0->extended_rom_size = LAZYBIOS_NOT_FOUND_U16;
             } else {
@@ -73,7 +73,7 @@ lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
                 Type0->characteristics = LAZYBIOS_NOT_FOUND_U64;
             }
 
-            if (len >=FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES) {
+            if (len > FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES) {
                 Type0->firmware_char_ext_bytes_count = len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES;
                 Type0->firmware_char_ext_bytes = malloc(Type0->firmware_char_ext_bytes_count);
 
@@ -82,11 +82,11 @@ lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx) {
                 }
             }
 
-            if (ISVERPLUS(ctx, 2, 4)) {
-                Type0->platform_major_release = (len >=PLATFORM_FIRMWARE_MAJOR_RELEASE) ? p[PLATFORM_FIRMWARE_MAJOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
-                Type0->platform_minor_release = (len >=PLATFORM_FIRMWARE_MINOR_RELEASE) ? p[PLATFORM_FIRMWARE_MINOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
-                Type0->ec_major_release = (len >=EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE) ? p[EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
-                Type0->ec_minor_release = (len >=EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE) ? p[EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
+            if (ISVERPLUS(DMIData, 2, 4)) {
+                Type0->platform_major_release = (len > PLATFORM_FIRMWARE_MAJOR_RELEASE) ? p[PLATFORM_FIRMWARE_MAJOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
+                Type0->platform_minor_release = (len > PLATFORM_FIRMWARE_MINOR_RELEASE) ? p[PLATFORM_FIRMWARE_MINOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
+                Type0->ec_major_release = (len > EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE) ? p[EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
+                Type0->ec_minor_release = (len > EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE) ? p[EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE] : LAZYBIOS_NOT_FOUND_U8;
             } else {
                 Type0->platform_major_release = LAZYBIOS_NOT_FOUND_U8;
                 Type0->platform_minor_release = LAZYBIOS_NOT_FOUND_U8;
