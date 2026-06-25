@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 3.3.0
+        VERSION 0.1.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -17,7 +17,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-# Include GNU standard directories
 include(GNUInstallDirs)
 
 # Library sources
@@ -36,7 +35,6 @@ add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
 option(LAZYBIOS_QUIET "Disable all lazybios logging" OFF)
 option(LAZYBIOS_DEBUG "Enable lazybios debug logging" OFF)
 
-# Set compile definitions based on options
 if(LAZYBIOS_QUIET)
     target_compile_definitions(lazybios PRIVATE LAZYBIOS_QUIET)
     message(STATUS "lazybios: Quiet mode enabled (no logging)")
@@ -47,7 +45,6 @@ if(LAZYBIOS_DEBUG)
     message(STATUS "lazybios: Debug mode enabled")
 endif()
 
-# Show status
 if(NOT LAZYBIOS_QUIET AND NOT LAZYBIOS_DEBUG)
     message(STATUS "lazybios: Normal logging enabled")
 endif()
@@ -58,22 +55,18 @@ set_target_properties(lazybios PROPERTIES
         POSITION_INDEPENDENT_CODE ON
 )
 
-# Include directories
 target_include_directories(lazybios PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Compiler options
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(lazybios PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# Create test executable
 add_executable(lazybios_test test/test.c)
 target_link_libraries(lazybios_test PRIVATE lazybios)
 
-# Generate pkg-config file
 configure_file(
         cmake-files/lazybios.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc
@@ -136,7 +129,6 @@ add_custom_target(uninstall
         COMMENT "Uninstalling lazybios..."
 )
 
-# Summary with pkg-config path info
 message(STATUS "
 lazybios ${PROJECT_VERSION} configured successfully!
 
