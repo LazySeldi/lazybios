@@ -31,50 +31,50 @@
 #define WAKEUP_TYPE_AC_POWER_RESTORED 	0x08
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx) {
-    if (!ctx || !ctx->dmi_data) return LAZYBIOS_NULL;
+lazybiosType1_t* lazybiosGetType1(lazybiosType1_t *Type1, lazybiosDMI_t *DMIData) {
+	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
-    const uint8_t* p   = ctx->dmi_data;
-    const uint8_t* end = ctx->dmi_data + ctx->dmi_len;
+    const uint8_t* p   = DMIData->dmi_data;
+    const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
     while (p + SMBIOS_HEADER_SIZE <= end) {
         uint8_t type = p[0];
         uint8_t len  = p[1];
 
         if (type == SMBIOS_TYPE_SYSTEM) {
-            lazybiosType1_t *Type1 = calloc(1, sizeof(*Type1));
+            Type1 = calloc(1, sizeof(*Type1));
             if (!Type1) return LAZYBIOS_NULL;
 
-            if (len >=MANUFACTURER) Type1->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
+            if (len > MANUFACTURER) Type1->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
             if (!Type1->manufacturer) Type1->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=PRODUCT_NAME) Type1->product_name = DMIString(p, len, p[PRODUCT_NAME], end);
+            if (len > PRODUCT_NAME) Type1->product_name = DMIString(p, len, p[PRODUCT_NAME], end);
             if (!Type1->product_name) Type1->product_name = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=VERSION) Type1->version = DMIString(p, len, p[VERSION], end);
+            if (len > VERSION) Type1->version = DMIString(p, len, p[VERSION], end);
             if (!Type1->version) Type1->version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (len >=SERIAL_NUMBER) Type1->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
+            if (len > SERIAL_NUMBER) Type1->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
             if (!Type1->serial_number) Type1->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-            if (ISVERPLUS(ctx, 2, 1)) {
-                if (len >=UUID) {
+            if (ISVERPLUS(DMIData, 2, 1)) {
+                if (len >= UUID + sizeof(Type1->uuid)) {
                     const uint8_t *uuid = p + UUID;
                     for (int i = 0; i < 16; i++) Type1->uuid[i] = uuid[i];
                 } else {
                     for (int i = 0; i < 16; i++) Type1->uuid[i] = LAZYBIOS_NOT_FOUND_U8;
                 }
-                Type1->wake_up_type = (len >=WAKE_UP_TYPE) ? p[WAKE_UP_TYPE] : LAZYBIOS_NOT_FOUND_U8;
+                Type1->wake_up_type = (len > WAKE_UP_TYPE) ? p[WAKE_UP_TYPE] : LAZYBIOS_NOT_FOUND_U8;
             } else {
                 for (int i = 0; i < 16; i++) Type1->uuid[i] = LAZYBIOS_NOT_FOUND_U8;
                 Type1->wake_up_type = LAZYBIOS_NOT_FOUND_U8;
             }
 
-            if (ISVERPLUS(ctx, 2, 4)) {
-                Type1->sku_number = (len >=SKU_NUMBER) ? DMIString(p, len, p[SKU_NUMBER], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
+            if (ISVERPLUS(DMIData, 2, 4)) {
+                Type1->sku_number = (len > SKU_NUMBER) ? DMIString(p, len, p[SKU_NUMBER], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
                 if (!Type1->sku_number) Type1->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                Type1->family = (len >=FAMILY) ? DMIString(p, len, p[FAMILY], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
+                Type1->family = (len > FAMILY) ? DMIString(p, len, p[FAMILY], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
                 if (!Type1->family) Type1->family = strdup(LAZYBIOS_NOT_FOUND_STR);
             } else {
                 Type1->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
@@ -94,7 +94,7 @@ lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx) {
 // Wake Up Type
 const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
     switch (wake_up_type) {
-        case WAKEUP_TYPE_RESERVED:          return "Reserved";
+    	case WAKEUP_TYPE_RESERVED:          return "Reserved";
         case WAKEUP_TYPE_OTHER:             return "Other";
         case WAKEUP_TYPE_UNKNOWN:           return "Unknown";
         case WAKEUP_TYPE_APM_TIMER:         return "APM Timer";
