@@ -10,7 +10,7 @@ extern "C" {
 #include <stdlib.h>
 
 // lazybios version
-#define LAZYBIOS_VER "3.3.0"
+#define LAZYBIOS_VER "0.1.0"
 
 // Just a little recommended buffer size for the 3 argument decoder functions
 #define LAZYBIOS_DECODER_BUF_SIZE 256
@@ -45,7 +45,7 @@ extern "C" {
 #define SMBIOS_TYPE_END                     127
 
 // Helper macros
-#define ISVERPLUS(ctx, req_major, req_minor) (((ctx)->entry_info.major > (req_major)) || ((ctx)->entry_info.major == (req_major) && (ctx)->entry_info.minor >= (req_minor))) // Returns 1 if the version is equal or newer and 0 if its older
+#define ISVERPLUS(DMIData, req_major, req_minor) (((DMIData)->entry_info.major > (req_major)) || ((DMIData)->entry_info.major == (req_major) && (DMIData)->entry_info.minor >= (req_minor))) // Returns 1 if the version is equal or newer and 0 if its older
 
 // Values for not found
 #define LAZYBIOS_NOT_FOUND_U8     0xFF
@@ -209,25 +209,34 @@ typedef enum { // I'm looking to implement more OSes but right now and for a lon
 } lazybiosBackend_t;
 
 typedef struct {
-    lazybiosBackend_t backend;
     uint8_t *dmi_data;
     size_t dmi_len;
     uint8_t *entry_data;
     size_t entry_len;
     smbios_entry_info_t entry_info;
+} lazybiosDMI_t;
+
+typedef struct {
+    lazybiosBackend_t backend;
+    lazybiosDMI_t *DMIData;
 
     lazybiosType0_t *Type0;
     lazybiosType1_t *Type1;
+
     lazybiosType2_t *Type2;
+    size_t type2_count;
+
     lazybiosType3_t *Type3;
+    size_t type3_count;
+
     lazybiosType4_t *Type4;
+    size_t type4_count;
 } lazybiosCTX_t;
 
 // ===== Public API =====
 lazybiosCTX_t* lazybiosCTXNew(void);
 
 int lazybiosInit(lazybiosCTX_t* ctx);
-// int lazybiosSysfs(lazybiosCTX_t* ctx); - I used to have this but now its deprecated since we can use lazybiosFile directly instead
 int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path);
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
 int lazybiosCleanup(lazybiosCTX_t* ctx);
@@ -235,17 +244,15 @@ int lazybiosCleanup(lazybiosCTX_t* ctx);
 // Core parsing functions
 char* DMIString(const uint8_t *p, uint8_t length, uint8_t index, const uint8_t *end);
 const uint8_t* DMINext(const uint8_t *ptr, const uint8_t *end);
-size_t lazybiosCountStructsByType(const lazybiosCTX_t* ctx, uint8_t target_type, size_t min_length);
+size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type);
 int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* buf);
 
 // Basic functions
 void lazybiosPrintVer(const lazybiosCTX_t* ctx);
-const smbios_entry_info_t* lazybiosGetEntryInfo(const lazybiosCTX_t* ctx);
-
 
 // Type 0 + Helpers
 
-lazybiosType0_t* lazybiosGetType0(lazybiosCTX_t* ctx);
+lazybiosType0_t* lazybiosGetType0(lazybiosType0_t *Type0, lazybiosDMI_t *DMIData);
 void lazybiosType0CharacteristicsStr(uint64_t characteristics, char *buf, size_t buf_len);
 void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char *buf, size_t buf_len);
 void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char *buf, size_t buf_len);
@@ -257,7 +264,7 @@ void lazybiosFreeType0(lazybiosType0_t* Type0);
 
 // Type 1 + Helpers
 
-lazybiosType1_t* lazybiosGetType1(lazybiosCTX_t* ctx);
+lazybiosType1_t* lazybiosGetType1(lazybiosType1_t *Type1, lazybiosDMI_t *DMIData);
 const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type);
 void lazybiosFreeType1(lazybiosType1_t* Type1);
 
@@ -266,36 +273,36 @@ void lazybiosFreeType1(lazybiosType1_t* Type1);
 
 // Type 2 + Helpers
 
-lazybiosType2_t* lazybiosGetType2(lazybiosCTX_t* ctx);
+lazybiosType2_t* lazybiosGetType2(lazybiosType2_t *Type2, size_t *type2_count, lazybiosDMI_t* DMIData);
 void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char *buf, size_t buf_len);
 const char* lazybiosType2BoardTypeStr(uint8_t board_type);
-void lazybiosFreeType2(lazybiosType2_t* Type2);
+void lazybiosFreeType2(lazybiosType2_t *Type2, size_t type2_count);
 
 // End of Type 2
 
 
 // Type 3 + Helpers
 
-lazybiosType3_t* lazybiosGetType3(lazybiosCTX_t* ctx);
+lazybiosType3_t* lazybiosGetType3(lazybiosType3_t *Type3, size_t *type3_count, lazybiosDMI_t *DMIData);
 void lazybiosType3TypeStr(uint8_t type, char *buf, size_t buf_len);
 const char* lazybiosType3StateStr(uint8_t state);
 const char* lazybiosType3SecurityStatusStr(uint8_t security_status);
 void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char *buf, size_t buf_len);
-void lazybiosFreeType3(lazybiosType3_t* Type3);
+void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count);
 
 // End of Type 3
 
 
 // Type 4 + Helpers
 
-lazybiosType4_t* lazybiosGetType4(lazybiosCTX_t* ctx);
+lazybiosType4_t* lazybiosGetType4(lazybiosType4_t *Type4, size_t *type4_count, lazybiosDMI_t *DMIData);
 const char* lazybiosType4ProcessorFamilyStr(uint16_t family);
 const char* lazybiosType4SocketTypeStr(uint8_t type);
 void lazybiosType4CharacteristicsStr(uint16_t characteristics, char *buf, size_t buf_len);
 const char* lazybiosType4TypeStr(uint8_t type);
 void lazybiosType4StatusStr(uint8_t status, char *buf, size_t buf_len);
 void lazybiosType4VoltageStr(uint8_t voltage, char *buf, size_t buf_len);
-void lazybiosFreeType4(lazybiosType4_t* Type4);
+void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count);
 
 // End of Type 4
 
