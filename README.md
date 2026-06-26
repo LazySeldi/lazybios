@@ -24,7 +24,7 @@
 ---
 
 ## About This Project
-1. This library began as a personal learning project to improve C skills. Bugs may exist, and contributions are welcome.  
+1. Bugs may exist(but very rare, since all my releases are tested againts the SMBIOS tables in test-dumps folder), and contributions are welcome.  
 2. There are no arbitrary version limits: the library implements structures according to the latest DMTF SMBIOS specification.  
 3. All new structures follow the current [DMTF SMBIOS Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
 
