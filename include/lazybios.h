@@ -201,6 +201,64 @@ typedef struct {
     char *socket_type;
 } lazybiosType4_t;
 
+typedef struct {
+	//--- (SMBIOS 2.1+) ---
+	uint16_t physical_memory_array_handle;
+	uint16_t memory_error_information_handle;
+	uint16_t total_width; // total width in bits for this mem device.
+	// If there are no error-correction bits, total_width value should be equal to Data Width. If the width is unknown, the field is set to FFFFh.
+	uint16_t data_width; // same thing
+	uint16_t size; //  size of memory deice
+	uint8_t form_factor;
+	uint8_t device_set;
+	char *device_locator;
+	char *bank_locator;
+	uint8_t memory_type;
+	uint16_t type_detail;
+
+	//--- (SMBIOS 2.3+) ---
+	uint16_t speed;
+	char *manufacturer;
+	char *serial_number;
+	char *asset_tag;
+	char *part_number;
+
+	//--- (SMBIOS 2.6+) ---
+	uint8_t attributes;
+
+	//--- (SMBIOS 2.7+) ---
+	uint32_t extended_size; // use this for devices with SMBIOS 2.7 instead of the uint16_t size
+	uint16_t configured_memory_speed;
+
+	//--- (SMBIOS 2.8+) ---
+	uint16_t minimum_voltage;
+	uint16_t maximum_voltage;
+	uint16_t configured_voltage;
+
+	//--- (SMBIOS 3.2+) ---
+	uint8_t memory_technology;
+	uint16_t memory_operating_mode_capability;
+	char *firmware_version;
+	uint16_t module_manufacturer_id;
+	uint16_t module_product_id;
+	uint16_t memory_subsystem_controller_manufacturer_id;
+	uint16_t memory_subsystem_controller_product_id;
+	uint64_t non_volatile_size;
+	uint64_t volatile_size;
+	uint64_t cache_size;
+	uint64_t logical_size;
+
+	//--- (SMBIOS 3.3+) ---
+	uint32_t extended_speed;
+	uint32_t extended_configured_memory_speed;
+
+	//--- (SMBIOS 3.7+) ---
+	uint16_t pmic0_manufacturer_id;
+	uint16_t pmic0_revision_number;
+	uint16_t rcd_manufacturer_id;
+	uint16_t rcd_revision_number;
+} lazybiosType17_t;
+
 typedef enum { // I'm looking to implement more OSes but right now and for a long time I'm mostly going to focus on Linux.
     LAZYBIOS_BACKEND_LINUX, // Only Sysfs Currently but /dev/mem coming some day
     LAZYBIOS_BACKEND_WINDOWS, // Using Windows API
@@ -231,6 +289,9 @@ typedef struct {
 
     lazybiosType4_t *Type4;
     size_t type4_count;
+
+	lazybiosType17_t *Type17;
+	size_t type17_count;
 } lazybiosCTX_t;
 
 // ===== Public API =====
@@ -250,8 +311,9 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* buf);
 // Basic functions
 void lazybiosPrintVer(const lazybiosCTX_t* ctx);
 
-// Type 0 + Helpers
 
+
+// Type 0 + Helpers
 lazybiosType0_t* lazybiosGetType0(lazybiosType0_t *Type0, lazybiosDMI_t *DMIData);
 void lazybiosType0CharacteristicsStr(uint64_t characteristics, char *buf, size_t buf_len);
 void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char *buf, size_t buf_len);
@@ -259,30 +321,24 @@ void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char *buf,
 uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]);
 void lazybiosFreeType0(lazybiosType0_t* Type0);
 
-// End of Type 0
 
 
 // Type 1 + Helpers
-
 lazybiosType1_t* lazybiosGetType1(lazybiosType1_t *Type1, lazybiosDMI_t *DMIData);
 const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type);
 void lazybiosFreeType1(lazybiosType1_t* Type1);
 
-// End of Type 1
 
 
 // Type 2 + Helpers
-
 lazybiosType2_t* lazybiosGetType2(lazybiosType2_t *Type2, size_t *type2_count, lazybiosDMI_t* DMIData);
 void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char *buf, size_t buf_len);
 const char* lazybiosType2BoardTypeStr(uint8_t board_type);
 void lazybiosFreeType2(lazybiosType2_t *Type2, size_t type2_count);
 
-// End of Type 2
 
 
 // Type 3 + Helpers
-
 lazybiosType3_t* lazybiosGetType3(lazybiosType3_t *Type3, size_t *type3_count, lazybiosDMI_t *DMIData);
 void lazybiosType3TypeStr(uint8_t type, char *buf, size_t buf_len);
 const char* lazybiosType3StateStr(uint8_t state);
@@ -290,11 +346,9 @@ const char* lazybiosType3SecurityStatusStr(uint8_t security_status);
 void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char *buf, size_t buf_len);
 void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count);
 
-// End of Type 3
 
 
 // Type 4 + Helpers
-
 lazybiosType4_t* lazybiosGetType4(lazybiosType4_t *Type4, size_t *type4_count, lazybiosDMI_t *DMIData);
 const char* lazybiosType4ProcessorFamilyStr(uint16_t family);
 const char* lazybiosType4SocketTypeStr(uint8_t type);
@@ -304,7 +358,31 @@ void lazybiosType4StatusStr(uint8_t status, char *buf, size_t buf_len);
 void lazybiosType4VoltageStr(uint8_t voltage, char *buf, size_t buf_len);
 void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count);
 
-// End of Type 4
+
+
+// Type 17 + Helpers
+lazybiosType17_t *lazybiosGetType17(lazybiosType17_t *Type17, size_t *type17_count, lazybiosDMI_t *DMIData);
+const char* lazybiosType17FormFactorStr(uint8_t form_factor);
+const char* lazybiosType17TypeStr(uint8_t memory_type);
+void lazybiosType17TypeDetailStr(uint16_t type_detail, char *buf, size_t buf_len);
+void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char *buf, size_t buf_len);
+const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology);
+void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char *buf, size_t buf_len);
+void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char *buf, size_t buf_len); // The can be used for these fields:
+// Module Manufacturer ID
+// Module Product ID
+// Memory Subsystem Controller Manufacturer ID
+// Memory Subsystem Controller Product ID
+void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char *buf, size_t buf_len);
+void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char *buf, size_t buf_len);
+void lazybiosType17CacheSizeStr(uint64_t cache_size, char *buf, size_t buf_len);
+void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char *buf, size_t buf_len);
+void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char *buf, size_t buf_len);
+void lazybiosType17PMIC0RevisionStr(uint16_t revision, char *buf, size_t buf_len);
+void lazybiosType17RCDManufacturerIDStr(uint16_t id, char *buf, size_t buf_len);
+void lazybiosType17RCDRevisionStr(uint16_t revision, char *buf, size_t buf_len);
+void lazybiosFreeType17(lazybiosType17_t* Type17, size_t type17_count);
+
 
 #ifdef __cplusplus
 }
