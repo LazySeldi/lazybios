@@ -572,6 +572,311 @@ static void printType4(lazybiosCTX_t* ctx) {
     }
 }
 
+static void printType17(lazybiosCTX_t* ctx) {
+    printf("=== MEMORY DEVICE ===\n");
+
+    if (!ctx->Type17) ctx->Type17 = lazybiosGetType17(ctx->Type17, &ctx->type17_count, ctx->DMIData);
+
+    if (ctx->Type17 && ctx->type17_count > 0) {
+        for (size_t i = 0; i < ctx->type17_count; i++) {
+            lazybiosType17_t *type17 = &ctx->Type17[i];
+
+            if (ctx->type17_count > 1) {
+                printf("--- Memory Device %zu ---\n", i + 1);
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 2, 1)) {
+                if (type17->physical_memory_array_handle == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Physical Memory Array Handle: Not Present\n");
+                } else {
+                    printf("Physical Memory Array Handle: 0x%04hX\n", type17->physical_memory_array_handle);
+                }
+
+                if (type17->memory_error_information_handle == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Memory Error Information Handle: Not Present\n");
+                } else {
+                    printf("Memory Error Information Handle: 0x%04hX\n", type17->memory_error_information_handle);
+                }
+
+                if (type17->total_width == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Total Width: Not Present\n");
+                } else {
+                    printf("Total Width: %u bits\n", type17->total_width == 0xFFFF ? 0 : type17->total_width);
+                }
+
+                if (type17->data_width == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Data Width: Not Present\n");
+                } else {
+                    printf("Data Width: %u bits\n", type17->data_width == 0xFFFF ? 0 : type17->data_width);
+                }
+
+                if (type17->size == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Size: Not Present\n");
+                } else {
+                    // Size: 0 = no device, 0xFFFF = unknown, Bit 15 = KB, else MB
+                    if (type17->size == 0) printf("Size: No Module Installed\n");
+                    else if (type17->size == 0xFFFF) printf("Size: Unknown\n");
+                    else printf("Size: %u %s\n", (type17->size & 0x7FFF), (type17->size & 0x8000) ? "KB" : "MB");
+                }
+
+                if (type17->form_factor == LAZYBIOS_NOT_FOUND_U8) {
+                    printf("Form Factor: Not Present\n");
+                } else {
+                    printf("Form Factor: %s\n", lazybiosType17FormFactorStr(type17->form_factor));
+                }
+
+                if (type17->device_set == LAZYBIOS_NOT_FOUND_U8) {
+                    printf("Device Set: Not Present\n");
+                } else {
+                    printf("Device Set: %u\n", type17->device_set);
+                }
+
+            	printf("Device Locator: %s\n", type17->device_locator);
+            	printf("Bank Locator: %s\n", type17->bank_locator);
+
+                if (type17->memory_type == LAZYBIOS_NOT_FOUND_U8) {
+                    printf("Memory Type: Not Present\n");
+                } else {
+                    printf("Memory Type: %s\n", lazybiosType17TypeStr(type17->memory_type));
+                }
+
+                if (type17->type_detail == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Type Detail: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17TypeDetailStr(type17->type_detail, buf, sizeof(buf));
+                    printf("Type Detail: %s\n", buf);
+                }
+            } else {
+                printf("[SMBIOS 2.1 required for Memory Device details]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 2, 3)) {
+                if (type17->speed == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Speed: Not Present\n");
+                } else {
+                    printf("Speed: %u MT/s\n", type17->speed == 0xFFFF ? 0 : type17->speed);
+                }
+
+            	printf("Manufacturer: %s\n", type17->manufacturer);
+            	printf("Serial Number: %s\n", type17->serial_number);
+            	printf("Asset Tag: %s\n", type17->asset_tag);
+            	printf("Part Number: %s\n", type17->part_number);
+
+            } else {
+                printf("Speed: [SMBIOS 2.3 required]\n");
+                printf("Manufacturer: [SMBIOS 2.3 required]\n");
+                printf("Serial Number: [SMBIOS 2.3 required]\n");
+                printf("Asset Tag: [SMBIOS 2.3 required]\n");
+                printf("Part Number: [SMBIOS 2.3 required]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 2, 6)) {
+                if (type17->attributes == LAZYBIOS_NOT_FOUND_U8) {
+                    printf("Attributes: Not Present\n");
+                } else {
+                    printf("Attributes: %u rank(s)\n", type17->attributes & 0x7F);
+                }
+            } else {
+                printf("Attributes: [SMBIOS 2.6 required]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 2, 7)) {
+                if (type17->extended_size == LAZYBIOS_NOT_FOUND_U32) {
+                    printf("Extended Size: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17ExtendedSizeStr(type17->extended_size, buf, sizeof(buf));
+                    printf("Extended Size: %s\n", buf);
+                }
+
+                if (type17->configured_memory_speed == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Configured Memory Speed: Not Present\n");
+                } else {
+                    printf("Configured Memory Speed: %u MT/s\n", type17->configured_memory_speed == 0xFFFF ? 0 : type17->configured_memory_speed);
+                }
+            } else {
+                printf("Extended Size: [SMBIOS 2.7 required]\n");
+                printf("Configured Memory Speed: [SMBIOS 2.7 required]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 2, 8)) {
+                if (type17->minimum_voltage == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Minimum Voltage: Not Present\n");
+                } else {
+                    printf("Minimum Voltage: %u mV\n", type17->minimum_voltage);
+                }
+
+                if (type17->maximum_voltage == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Maximum Voltage: Not Present\n");
+                } else {
+                    printf("Maximum Voltage: %u mV\n", type17->maximum_voltage);
+                }
+
+                if (type17->configured_voltage == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Configured Voltage: Not Present\n");
+                } else {
+                    printf("Configured Voltage: %u mV\n", type17->configured_voltage);
+                }
+            } else {
+                printf("Minimum Voltage: [SMBIOS 2.8 required]\n");
+                printf("Maximum Voltage: [SMBIOS 2.8 required]\n");
+                printf("Configured Voltage: [SMBIOS 2.8 required]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 3, 2)) {
+                char buf[LAZYBIOS_DECODER_BUF_SIZE];
+
+                if (type17->memory_technology == LAZYBIOS_NOT_FOUND_U8) {
+                    printf("Memory Technology: Not Present\n");
+                } else {
+                    printf("Memory Technology: %s\n", lazybiosType17MemoryTechnologyStr(type17->memory_technology));
+                }
+
+                if (type17->memory_operating_mode_capability == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Memory Operating Mode Capability: Not Present\n");
+                } else {
+                    lazybiosType17OperatingModeCapabilityStr(type17->memory_operating_mode_capability, buf, sizeof(buf));
+                    printf("Memory Operating Mode Capability: %s\n", buf);
+                }
+
+            	printf("Firmware Version: %s\n", type17->firmware_version);
+
+                if (type17->module_manufacturer_id == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Module Manufacturer ID: Not Present\n");
+                } else {
+                    lazybiosType17ModuleManufacturerIDStr(type17->module_manufacturer_id, buf, sizeof(buf));
+                    printf("Module Manufacturer ID: %s\n", buf);
+                }
+
+                if (type17->module_product_id == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Module Product ID: Not Present\n");
+                } else {
+                    lazybiosType17ModuleManufacturerIDStr(type17->module_product_id, buf, sizeof(buf));
+                    printf("Module Product ID: %s\n", buf);
+                }
+
+                if (type17->memory_subsystem_controller_manufacturer_id == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Memory Subsystem Controller Manufacturer ID: Not Present\n");
+                } else {
+                    lazybiosType17ModuleManufacturerIDStr(type17->memory_subsystem_controller_manufacturer_id, buf, sizeof(buf));
+                    printf("Memory Subsystem Controller Manufacturer ID: %s\n", buf);
+                }
+
+                if (type17->memory_subsystem_controller_product_id == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("Memory Subsystem Controller Product ID: Not Present\n");
+                } else {
+                    lazybiosType17ModuleManufacturerIDStr(type17->memory_subsystem_controller_product_id, buf, sizeof(buf));
+                    printf("Memory Subsystem Controller Product ID: %s\n", buf);
+                }
+
+                if (type17->non_volatile_size == LAZYBIOS_NOT_FOUND_U64) {
+                    printf("Non-volatile Size: Not Present\n");
+                } else {
+                    lazybiosType17NonVolatileSizeStr(type17->non_volatile_size, buf, sizeof(buf));
+                    printf("Non-volatile Size: %s\n", buf);
+                }
+
+                if (type17->volatile_size == LAZYBIOS_NOT_FOUND_U64) {
+                    printf("Volatile Size: Not Present\n");
+                } else {
+                    lazybiosType17VolatileSizeStr(type17->volatile_size, buf, sizeof(buf));
+                    printf("Volatile Size: %s\n", buf);
+                }
+
+                if (type17->cache_size == LAZYBIOS_NOT_FOUND_U64) {
+                    printf("Cache Size: Not Present\n");
+                } else {
+                    lazybiosType17CacheSizeStr(type17->cache_size, buf, sizeof(buf));
+                    printf("Cache Size: %s\n", buf);
+                }
+
+                if (type17->logical_size == LAZYBIOS_NOT_FOUND_U64) {
+                    printf("Logical Size: Not Present\n");
+                } else {
+                    printf("Logical Size: %llu bytes\n", (unsigned long long)type17->logical_size);
+                }
+            } else {
+                printf("Memory Technology: [SMBIOS 3.2 required]\n");
+                printf("Memory Operating Mode Capability: [SMBIOS 3.2 required]\n");
+                printf("Firmware Version: [SMBIOS 3.2 required]\n");
+                printf("Module Manufacturer ID: [SMBIOS 3.2 required]\n");
+                printf("Module Product ID: [SMBIOS 3.2 required]\n");
+                printf("Memory Subsystem Controller Manufacturer ID: [SMBIOS 3.2 required]\n");
+                printf("Memory Subsystem Controller Product ID: [SMBIOS 3.2 required]\n");
+                printf("Non-volatile Size: [SMBIOS 3.2 required]\n");
+                printf("Volatile Size: [SMBIOS 3.2 required]\n");
+                printf("Cache Size: [SMBIOS 3.2 required]\n");
+                printf("Logical Size: [SMBIOS 3.2 required]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 3, 3)) {
+                if (type17->extended_speed == LAZYBIOS_NOT_FOUND_U32) {
+                    printf("Extended Speed: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17ExtendedSpeedStr(type17->extended_speed, buf, sizeof(buf));
+                    printf("Extended Speed: %s\n", buf);
+                }
+
+                if (type17->extended_configured_memory_speed == LAZYBIOS_NOT_FOUND_U32) {
+                    printf("Extended Configured Memory Speed: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17ExtendedSpeedStr(type17->extended_configured_memory_speed, buf, sizeof(buf));
+                    printf("Extended Configured Memory Speed: %s\n", buf);
+                }
+            } else {
+                printf("Extended Speed: [SMBIOS 3.3 required]\n");
+                printf("Extended Configured Memory Speed: [SMBIOS 3.3 required]\n");
+            }
+
+            if (ISVERPLUS(ctx->DMIData, 3, 7)) {
+                if (type17->pmic0_manufacturer_id == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("PMIC0 Manufacturer ID: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17PMIC0ManufacturerIDStr(type17->pmic0_manufacturer_id, buf, sizeof(buf));
+                    printf("PMIC0 Manufacturer ID: %s\n", buf);
+                }
+
+                if (type17->pmic0_revision_number == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("PMIC0 Revision Number: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17PMIC0RevisionStr(type17->pmic0_revision_number, buf, sizeof(buf));
+                    printf("PMIC0 Revision Number: %s\n", buf);
+                }
+
+                if (type17->rcd_manufacturer_id == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("RCD Manufacturer ID: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17RCDManufacturerIDStr(type17->rcd_manufacturer_id, buf, sizeof(buf));
+                    printf("RCD Manufacturer ID: %s\n", buf);
+                }
+
+                if (type17->rcd_revision_number == LAZYBIOS_NOT_FOUND_U16) {
+                    printf("RCD Revision Number: Not Present\n");
+                } else {
+                    char buf[LAZYBIOS_DECODER_BUF_SIZE];
+                    lazybiosType17RCDRevisionStr(type17->rcd_revision_number, buf, sizeof(buf));
+                    printf("RCD Revision Number: %s\n", buf);
+                }
+            } else {
+                printf("PMIC0 Manufacturer ID: [SMBIOS 3.7 required]\n");
+                printf("PMIC0 Revision Number: [SMBIOS 3.7 required]\n");
+                printf("RCD Manufacturer ID: [SMBIOS 3.7 required]\n");
+                printf("RCD Revision Number: [SMBIOS 3.7 required]\n");
+            }
+
+            printf("\n");
+        }
+    } else {
+        printf("Failed to get Memory Device information\n\n");
+    }
+}
+
 int print_smbios_version_info(lazybiosCTX_t* ctx) {
     if (!ctx) return -1;
     printf("=== SMBIOS VERSION INFORMATION ===\n");
@@ -758,67 +1063,59 @@ int main(int argc, const char *argv[]) {
     print_smbios_version_info(ctx);
 
     if (print_all) {
-        if (!ctx->Type0) {
-            ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
-        }
+        if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
         printType0(ctx);
 
-        if (!ctx->Type1) {
-            ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
-        }
+        if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
         printType1(ctx);
 
-        if (!ctx->Type2) {
-            ctx->Type2 = lazybiosGetType2(ctx->Type2, &ctx->type2_count, ctx->DMIData);
-        }
+        if (!ctx->Type2) ctx->Type2 = lazybiosGetType2(ctx->Type2, &ctx->type2_count, ctx->DMIData);
         printType2(ctx);
 
-        if (!ctx->Type3) {
-            ctx->Type3 = lazybiosGetType3(ctx->Type3, &ctx->type3_count, ctx->DMIData);
-        }
+        if (!ctx->Type3) ctx->Type3 = lazybiosGetType3(ctx->Type3, &ctx->type3_count, ctx->DMIData);
         printType3(ctx);
 
-        if (!ctx->Type4) {
-            ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
-        }
+        if (!ctx->Type4) ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
         printType4(ctx);
+
+    	if (!ctx->Type17) ctx->Type17 = lazybiosGetType17(ctx->Type17, &ctx->type17_count, ctx->DMIData);
+    	printType17(ctx);
     }
     else {
         switch (type_to_print) {
             case 0:
-                if (!ctx->Type0) {
-                    ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
-                }
+                if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
+
                 printType0(ctx);
                 break;
 
             case 1:
-                if (!ctx->Type1) {
-                    ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
-                }
+                if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
+
                 printType1(ctx);
                 break;
 
             case 2:
-                if (!ctx->Type2) {
-                    ctx->Type2 = lazybiosGetType2(ctx->Type2, &ctx->type2_count, ctx->DMIData);
-                }
+                if (!ctx->Type2) ctx->Type2 = lazybiosGetType2(ctx->Type2, &ctx->type2_count, ctx->DMIData);
+
                 printType2(ctx);
                 break;
 
             case 3:
-                if (!ctx->Type3) {
-                    ctx->Type3 = lazybiosGetType3(ctx->Type3, &ctx->type3_count, ctx->DMIData);
-                }
+                if (!ctx->Type3) ctx->Type3 = lazybiosGetType3(ctx->Type3, &ctx->type3_count, ctx->DMIData);
+
                 printType3(ctx);
                 break;
 
             case 4:
-                if (!ctx->Type4) {
-                    ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
-                }
+                if (!ctx->Type4) ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
                 printType4(ctx);
                 break;
+
+        	case 17:
+        		if (!ctx->Type17) ctx->Type17 = lazybiosGetType17(ctx->Type17, &ctx->type17_count, ctx->DMIData);
+        		printType17(ctx);
+        		break;
 
             default:
                 fprintf(stderr, "Error: Type %d is not implemented or invalid\n", type_to_print);
