@@ -1,8 +1,8 @@
 # lazybios Documentation
 
-`lazybios` is a lightweight C library for reading and parsing SMBIOS/DMI data. It exposes a small context-based API, parses SMBIOS entry point metadata, and currently implements SMBIOS Types 0 through 4.
+`lazybios` is a lightweight C library for reading and parsing SMBIOS/DMI data. It exposes a small context-based API, parses SMBIOS entry point metadata, and currently implements SMBIOS Types 0 through 4 and Type 17.
 
-Current public project version: `0.1.0`.
+Current project version: `0.2.0`.
 
 ## Table of Contents
 
@@ -67,6 +67,12 @@ Current public project version: `0.1.0`.
     - [Type 4 Functions](#type-4-functions)
     - [Type 4 Example](#type-4-example)
     - [Type 4 Notes](#type-4-notes)
+  - [Type 17 Memory Device](#type-17-memory-device)
+    - [Type 17 Overview](#type-17-overview)
+    - [Type 17 Fields](#type-17-fields)
+    - [Type 17 Functions](#type-17-functions)
+    - [Type 17 Example](#type-17-example)
+    - [Type 17 Notes](#type-17-notes)
 - [Supported SMBIOS Type Constants](#supported-smbios-type-constants)
 - [Limitations and Platform Notes](#limitations-and-platform-notes)
 
@@ -83,6 +89,7 @@ Implemented parsers:
 | Type 2 | `lazybiosType2_t` | Baseboard information |
 | Type 3 | `lazybiosType3_t` | System enclosure or chassis information |
 | Type 4 | `lazybiosType4_t` | Processor information |
+| Type 17 | `lazybiosType17_t` | Memory device information |
 
 Key characteristics:
 
@@ -90,7 +97,7 @@ Key characteristics:
 - Uses Linux sysfs files under `/sys/firmware/dmi/tables/` on Linux.
 - Uses `GetSystemFirmwareTable` on Windows.
 - Provides file loaders for repeatable testing with dumped SMBIOS data.
-- Stores Type 2, Type 3, and Type 4 results as arrays because those structures can appear more than once.
+- Stores Type 2, Type 3, Type 4, and Type 17 results as arrays because those structures can appear more than once.
 
 ## Build and Installation
 
@@ -218,7 +225,7 @@ Options:
 | Option | Description |
 | :--- | :--- |
 | `--help` | Prints command help. |
-| `--type <number>` | Prints one implemented SMBIOS type. Valid implemented values are `0`, `1`, `2`, `3`, and `4`. |
+| `--type <number>` | Prints one implemented SMBIOS type. Valid implemented values are `0`, `1`, `2`, `3`, `4`, and `17`. |
 | `--dump [dir]` | Dumps raw SMBIOS data to a directory. Linux writes `smbios_entry_point` and `DMI`; Windows writes only `DMI.bin`. |
 | `--sources <entry> <dmi>` | Parses separate raw entry point and DMI table files. |
 | `--single-source <binary>` | Parses one merged file containing entry point bytes followed by DMI table bytes. |
@@ -234,7 +241,7 @@ The context stores:
 - The selected backend.
 - A pointer to the raw DMI container, `ctx->DMIData`.
 - Parsed Type 0 and Type 1 pointers.
-- Parsed Type 2, Type 3, and Type 4 arrays plus count fields.
+- Parsed Type 2, Type 3, Type 4, and Type 17 arrays plus count fields.
 
 ### DMI Data Layout
 
@@ -261,7 +268,7 @@ Data loading functions allocate `ctx->DMIData->entry_data` and/or `ctx->DMIData-
 SMBIOS type getter functions allocate parsed structures:
 
 - Type 0 and Type 1 return a single allocated structure.
-- Type 2, Type 3, and Type 4 return allocated arrays and write the parsed count through the provided count pointer.
+- Type 2, Type 3, Type 4, and Type 17 return allocated arrays and write the parsed count through the provided count pointer.
 
 If parsed structures are assigned into the context fields, `lazybiosCleanup(ctx)` frees them.
 
@@ -274,6 +281,7 @@ If parsed structures are managed outside the context, free them with the matchin
 | Type 2 | `lazybiosFreeType2(Type2, type2_count)` |
 | Type 3 | `lazybiosFreeType3(Type3, type3_count)` |
 | Type 4 | `lazybiosFreeType4(Type4, type4_count)` |
+| Type 17 | `lazybiosFreeType17(Type17, type17_count)` |
 
 Avoid calling a getter repeatedly and overwriting an existing pointer without freeing the previous result.
 
@@ -361,7 +369,7 @@ lazybiosCleanup(ctx);
 
 ### Read Multiple Structures
 
-Type 2, Type 3, and Type 4 can appear multiple times.
+Type 2, Type 3, Type 4, and Type 17 can appear multiple times.
 
 ```c
 ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
@@ -450,6 +458,8 @@ Top-level object for backend selection, raw DMI data, and parsed SMBIOS structur
 | `type3_count` | `size_t` | Number of parsed Type 3 entries. |
 | `Type4` | `lazybiosType4_t *` | Parsed Type 4 array, or `NULL`. |
 | `type4_count` | `size_t` | Number of parsed Type 4 entries. |
+| `Type17` | `lazybiosType17_t *` | Parsed Type 17 array, or `NULL`. |
+| `type17_count` | `size_t` | Number of parsed Type 17 entries. |
 
 ## SMBIOS Type Reference
 
@@ -741,6 +751,102 @@ for (size_t i = 0; i < ctx->type4_count; i++) {
   - `thread_count_2`
 - `lazybiosType4SocketTypeStr()` decodes the `processor_upgrade` enum. The separate `socket_type` field is parsed as a string for SMBIOS 3.8+ data.
 
+## Type 17 Memory Device
+
+### Type 17 Overview
+
+SMBIOS Type 17 describes installed memory devices and memory slots. Multiple Type 17 structures can exist, so `lazybios` returns an array.
+
+Public structure: `lazybiosType17_t`
+
+### Type 17 Fields
+
+| Field | Type | SMBIOS version | Description |
+| :--- | :--- | :--- | :--- |
+| `physical_memory_array_handle` | `uint16_t` | 2.1+ | Handle of the physical memory array that owns this device. |
+| `memory_error_information_handle` | `uint16_t` | 2.1+ | Handle of the memory error information structure, when available. |
+| `total_width` | `uint16_t` | 2.1+ | Total memory device width in bits, including error-correction bits. |
+| `data_width` | `uint16_t` | 2.1+ | Data width in bits. |
+| `size` | `uint16_t` | 2.1+ | Raw memory size field. `0` means no module installed; `0xFFFF` means unknown; bit 15 selects KB instead of MB. |
+| `form_factor` | `uint8_t` | 2.1+ | Memory device form factor enum. |
+| `device_set` | `uint8_t` | 2.1+ | Device set value. |
+| `device_locator` | `char *` | 2.1+ | Device locator string. |
+| `bank_locator` | `char *` | 2.1+ | Bank locator string. |
+| `memory_type` | `uint8_t` | 2.1+ | Memory type enum. |
+| `type_detail` | `uint16_t` | 2.1+ | Memory type detail bit field. |
+| `speed` | `uint16_t` | 2.3+ | Configured memory speed in MT/s. |
+| `manufacturer` | `char *` | 2.3+ | Memory device manufacturer string. |
+| `serial_number` | `char *` | 2.3+ | Memory device serial number string. |
+| `asset_tag` | `char *` | 2.3+ | Memory device asset tag string. |
+| `part_number` | `char *` | 2.3+ | Memory device part number string. |
+| `attributes` | `uint8_t` | 2.6+ | Memory device attributes. The low 7 bits are used as rank count by the test tool. |
+| `extended_size` | `uint32_t` | 2.7+ | Extended memory size in MiB when the legacy size field is not enough. |
+| `configured_memory_speed` | `uint16_t` | 2.7+ | Configured memory speed in MT/s. |
+| `minimum_voltage` | `uint16_t` | 2.8+ | Minimum operating voltage in mV. |
+| `maximum_voltage` | `uint16_t` | 2.8+ | Maximum operating voltage in mV. |
+| `configured_voltage` | `uint16_t` | 2.8+ | Configured operating voltage in mV. |
+| `memory_technology` | `uint8_t` | 3.2+ | Memory technology enum. |
+| `memory_operating_mode_capability` | `uint16_t` | 3.2+ | Memory operating mode capability bit field. |
+| `firmware_version` | `char *` | 3.2+ | Firmware version string. |
+| `module_manufacturer_id` | `uint16_t` | 3.2+ | Module manufacturer ID. |
+| `module_product_id` | `uint16_t` | 3.2+ | Module product ID. |
+| `memory_subsystem_controller_manufacturer_id` | `uint16_t` | 3.2+ | Memory subsystem controller manufacturer ID. |
+| `memory_subsystem_controller_product_id` | `uint16_t` | 3.2+ | Memory subsystem controller product ID. |
+| `non_volatile_size` | `uint64_t` | 3.2+ | Non-volatile size in bytes. |
+| `volatile_size` | `uint64_t` | 3.2+ | Volatile size in bytes. |
+| `cache_size` | `uint64_t` | 3.2+ | Cache size in bytes. |
+| `logical_size` | `uint64_t` | 3.2+ | Logical size in bytes. |
+| `extended_speed` | `uint32_t` | 3.3+ | Extended speed in MT/s. |
+| `extended_configured_memory_speed` | `uint32_t` | 3.3+ | Extended configured memory speed in MT/s. |
+| `pmic0_manufacturer_id` | `uint16_t` | 3.7+ | PMIC0 manufacturer ID. |
+| `pmic0_revision_number` | `uint16_t` | 3.7+ | PMIC0 revision number. |
+| `rcd_manufacturer_id` | `uint16_t` | 3.7+ | RCD manufacturer ID. |
+| `rcd_revision_number` | `uint16_t` | 3.7+ | RCD revision number. |
+
+### Type 17 Functions
+
+| Function | Description |
+| :--- | :--- |
+| `lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData)` | Counts and parses Type 17 structures into an allocated array. Writes a count to `type17_count`. |
+| `const char* lazybiosType17FormFactorStr(uint8_t form_factor)` | Decodes memory form factor values such as `DIMM`, `SODIMM`, `CUDIMM`, and `CSODIMM`. |
+| `const char* lazybiosType17TypeStr(uint8_t memory_type)` | Decodes memory type values such as `DRAM`, `DDR4`, `DDR5`, `LPDDR5`, `HBM3`, and `MRDIMM`. |
+| `void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len)` | Decodes the memory type detail bit field. |
+| `void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len)` | Decodes the extended size field as MiB or reports that the normal size field applies. |
+| `const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology)` | Decodes memory technology values such as `DRAM`, `NVDIMM-N`, `NVDIMM-F`, `NVDIMM-P`, and Intel Optane persistent memory. |
+| `void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len)` | Decodes memory operating mode capability flags. |
+| `void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len)` | Formats module and memory subsystem controller manufacturer/product IDs. |
+| `void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len)` | Formats volatile size or `Unknown`. |
+| `void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len)` | Formats non-volatile size or `Unknown`. |
+| `void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len)` | Formats cache size or `Unknown`. |
+| `void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len)` | Decodes extended speed fields as MT/s or reports that the normal speed field applies. |
+| `void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len)` | Formats the PMIC0 manufacturer ID. |
+| `void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len)` | Formats the PMIC0 revision number. |
+| `void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len)` | Formats the RCD manufacturer ID. |
+| `void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len)` | Formats the RCD revision number. |
+| `void lazybiosFreeType17(lazybiosType17_t* Type17, size_t type17_count)` | Frees a Type 17 array and its allocated members. |
+
+### Type 17 Example
+
+```c
+ctx->Type17 = lazybiosGetType17(ctx->Type17, &ctx->type17_count, ctx->DMIData);
+
+for (size_t i = 0; i < ctx->type17_count; i++) {
+    lazybiosType17_t *mem = &ctx->Type17[i];
+
+    if (mem->memory_type != LAZYBIOS_NOT_FOUND_U8) {
+        const char *type = lazybiosType17TypeStr(mem->memory_type);
+    }
+}
+```
+
+### Type 17 Notes
+
+- Type 17 data is array-based because systems commonly expose one structure per memory slot or installed memory device.
+- The raw `size` field needs interpretation: `0` means no module installed, `0xFFFF` means unknown, and bit 15 selects KB instead of MB.
+- For SMBIOS 2.7+ devices with large memory sizes, use `extended_size` when applicable.
+- Extended speed helpers return MT/s values for SMBIOS fields that store larger speed values.
+- ID formatter helpers return `Unknown` for the zero IDs used by the implementation.
+
 ## Supported SMBIOS Type Constants
 
 The public header defines constants for several SMBIOS structure IDs:
@@ -757,7 +863,7 @@ The public header defines constants for several SMBIOS structure IDs:
 | `SMBIOS_TYPE_ONBOARD_DEVICES` | `10` | No |
 | `SMBIOS_TYPE_OEM_STRINGS` | `11` | No |
 | `SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY` | `16` | No |
-| `SMBIOS_TYPE_MEMORY_DEVICE` | `17` | No |
+| `SMBIOS_TYPE_MEMORY_DEVICE` | `17` | Yes |
 | `SMBIOS_TYPE_END` | `127` | Used as table terminator |
 
 ## Limitations and Platform Notes
@@ -766,5 +872,5 @@ The public header defines constants for several SMBIOS structure IDs:
 - Windows support reads DMI table data through `GetSystemFirmwareTable`; it does not preserve a raw SMBIOS entry point buffer.
 - macOS is represented in the backend enum but is not implemented.
 - Type 0 and Type 1 getters return only the first matching structure.
-- Type 2, Type 3, and Type 4 getters allocate arrays and require count-aware cleanup.
+- Type 2, Type 3, Type 4, and Type 17 getters allocate arrays and require count-aware cleanup.
 - Fields guarded by SMBIOS version checks are filled with sentinel values or `"Not Present"` when unavailable.
