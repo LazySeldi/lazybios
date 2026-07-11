@@ -531,6 +531,9 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
     lazybiosFreeType4(ctx->Type4, ctx->type4_count);
     ctx->Type4 = LAZYBIOS_NULL;
 
+	lazybiosFreeType17(ctx->Type17, ctx->type17_count);
+	ctx->Type17 = LAZYBIOS_NULL;
+
     free(ctx->DMIData->dmi_data);
     free(ctx->DMIData->entry_data);
     free(ctx->DMIData);
