@@ -93,15 +93,19 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t *Type3, size_t *type3_count, l
       size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_CHASSIS);
       size_t index = 0;
       Type3 = calloc(count, sizeof(lazybiosType3_t));
-      if (!Type3 && count > 0) return LAZYBIOS_NULL;
+      if (!Type3) return LAZYBIOS_NULL;
+	  if (count == 0) {
+	  	  *type3_count = 0;
+		  return Type3;
+	  }
 
       while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
             uint8_t type = p[0];
             uint8_t len  = p[1];
 
             if (type == SMBIOS_TYPE_CHASSIS) {
+            	if (index >= count) break;
                 lazybiosType3_t *current = &Type3[index];
-                if (!Type3) return LAZYBIOS_NULL;
 
                 if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
                 if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
@@ -289,7 +293,7 @@ void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char *buf,
     }
 }
 
-// End of Decoders
+
 
 // Free Function
 void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count) {

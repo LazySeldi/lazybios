@@ -48,15 +48,19 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t *Type2, size_t *type2_count, l
     size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BASEBOARD);
     size_t index = 0;
     Type2 = calloc(count, sizeof(lazybiosType2_t));
-    if (!Type2 && count > 0) return LAZYBIOS_NULL;
+    if (!Type2) return LAZYBIOS_NULL;
+	if (count == 0) {
+		*type2_count = 0;
+		return Type2;
+	}
 
     while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
         uint8_t type = p[0];
         uint8_t len = p[1];
 
         if (type == SMBIOS_TYPE_BASEBOARD) {
+        	if (index >= count) break;
             lazybiosType2_t *current = &Type2[index];
-            if (!current) return LAZYBIOS_NULL;
 
             if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
             if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
@@ -75,7 +79,8 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t *Type2, size_t *type2_count, l
 
             current->feature_flags = (len > FEATURE_FLAGS) ? p[FEATURE_FLAGS] : LAZYBIOS_NOT_FOUND_U8;
 
-            current->location_in_chassis = (len > LOCATION_IN_CHASSIS) ? DMIString(p, len, p[LOCATION_IN_CHASSIS], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
+        	if (len > LOCATION_IN_CHASSIS) current->location_in_chassis = DMIString(p, len, p[LOCATION_IN_CHASSIS], end);
+        	if (!current->location_in_chassis) current->location_in_chassis = strdup(LAZYBIOS_NOT_FOUND_STR);
 
             if (len >=CHASSIS_HANDLE + sizeof(uint16_t)) {
                 memcpy(&current->chassis_handle, p + CHASSIS_HANDLE, sizeof(uint16_t));
@@ -141,7 +146,7 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
         case BOARD_TYPE_IO_MODULE:                  return "I/O Module";
         case BOARD_TYPE_MEMORY_MODULE:              return "Memory Module";
         case BOARD_TYPE_DAUGHTER_BOARD:             return "Daughter board";
-        case BOARD_TYPE_MOTHERBOARD:                return "Motherboard (includes processor, memory, and I/O";
+        case BOARD_TYPE_MOTHERBOARD:                return "Motherboard (includes processor, memory, and I/O)";
         case BOARD_TYPE_PROCESSOR_MEMORY_MODULE:    return "Processor/Memory Module";
         case BOARD_TYPE_PROCESSOR_IO_MODULE:        return "Processor/IO Module";
         case BOARD_TYPE_INTERCONNECT_BOARD:         return "Interconnect board";
@@ -149,7 +154,7 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
     }
 }
 
-// End of Decoders
+
 
 // Free Function
 void lazybiosFreeType2(lazybiosType2_t *Type2, size_t type2_count) {

@@ -395,15 +395,20 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t *Type4, size_t *type4_count, l
     size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PROCESSOR);
     size_t index = 0;
     Type4 = calloc(count, sizeof(lazybiosType4_t));
-    if (!Type4 && count > 0) return LAZYBIOS_NULL;
+    if (!Type4) return LAZYBIOS_NULL;
+	if (count == 0) {
+		*type4_count = 0;
+		return Type4;
+	}
 
     while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
         uint8_t type = p[0];
         uint8_t len = p[1];
 
         if (type == SMBIOS_TYPE_PROCESSOR) {
+        	if (index >= count) break;
+
             lazybiosType4_t *current = &Type4[index];
-            if (!Type4) return LAZYBIOS_NULL;
 
             if (len > SOCKET_DESIGNATION) current->socket_designation = DMIString(p, len, p[SOCKET_DESIGNATION], end);
             if (!current->socket_designation) current->socket_designation = strdup(LAZYBIOS_NOT_FOUND_STR);
@@ -1003,7 +1008,7 @@ void lazybiosType4VoltageStr(uint8_t voltage, char *buf, size_t buf_len) {
     }
 }
 
-// End of Decoders
+
 
 // Free Function
 void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count) {
