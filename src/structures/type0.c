@@ -210,7 +210,7 @@ uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
     return size_bits;
 }
 
-// End of Decoders
+
 
 
 // Free Function

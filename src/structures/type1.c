@@ -107,7 +107,7 @@ const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
     }
 }
 
-// End of Decoders
+
 
 
 // Free Function
