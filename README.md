@@ -26,7 +26,7 @@
 ## About This Project
 1. Bugs may exist(but very rare, since all my releases are tested againts the SMBIOS tables in test-dumps folder), and contributions are welcome.  
 2. There are no arbitrary version limits: the library implements structures according to the latest DMTF SMBIOS specification.  
-3. All new structures follow the current [DMTF SMBIOS Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
+3. All new structures follow the current latest [DMTF SMBIOS Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
 
 ---
 
@@ -95,6 +95,7 @@ sudo make install # Optional installs to whatever location you specified in the 
 ---
 ## For complete usage instructions and API reference guide, see:
 - **[DOCS.md](DOCS.md)** - Complete usage documentation and API reference!
+### Heads up: When using the library you may need to read some of the current SMBIOS docs that the library uses(for example lazybios will aways use the latest docs, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
 
 ## Contributing:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide on how to contribute!
