@@ -2,311 +2,395 @@
 // Type 3 ( System Enclosure or Chassis )
 //
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "lazybios.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fields
-#define MANUFACTURER                      0x04
-#define TYPE                              0x05
-#define VERSION                           0x06
-#define SERIAL_NUMBER                     0x07
-#define ASSET_TAG_NUMBER                  0x08
-#define BOOT_UP_STATE                     0x09
-#define POWER_SUPPLY_STATE                0x0A
-#define THERMAL_STATE                     0x0B
-#define SECURITY_STATUS                   0x0C
-#define OEM_DEFINED                       0x0D
-#define HEIGHT                            0x11
-#define NUMBER_OF_POWER_CORDS             0x12
-#define CONTAINED_ELEMENT_COUNT           0x13
-#define CONTAINED_ELEMENT_RECORD_LENGTH   0x14
-#define CONTAINED_ELEMENTS                0x15
-#define SKU_NUMBER(n, m)                  0x15 + (n * m)
-#define RACK_TYPE(n, m)                   0x16 + (n * m)
-#define RACK_HEIGHT(n, m)                 0x17 + (n * m)
+#define MANUFACTURER 0x04
+#define TYPE 0x05
+#define VERSION 0x06
+#define SERIAL_NUMBER 0x07
+#define ASSET_TAG_NUMBER 0x08
+#define BOOT_UP_STATE 0x09
+#define POWER_SUPPLY_STATE 0x0A
+#define THERMAL_STATE 0x0B
+#define SECURITY_STATUS 0x0C
+#define OEM_DEFINED 0x0D
+#define HEIGHT 0x11
+#define NUMBER_OF_POWER_CORDS 0x12
+#define CONTAINED_ELEMENT_COUNT 0x13
+#define CONTAINED_ELEMENT_RECORD_LENGTH 0x14
+#define CONTAINED_ELEMENTS 0x15
+#define SKU_NUMBER(n, m) 0x15 + (n * m)
+#define RACK_TYPE(n, m) 0x16 + (n * m)
+#define RACK_HEIGHT(n, m) 0x17 + (n * m)
 
 // Decoders
 
 // Chassis Type
-#define CHASSIS_TYPE_OTHER                  0x01
-#define CHASSIS_TYPE_UNKNOWN                0x02
-#define CHASSIS_TYPE_DESKTOP                0x03
-#define CHASSIS_TYPE_LOW_PROFILE_DESKTOP    0x04
-#define CHASSIS_TYPE_PIZZA_BOX              0x05
-#define CHASSIS_TYPE_MINI_TOWER             0x06
-#define CHASSIS_TYPE_TOWER                  0x07
-#define CHASSIS_TYPE_PORTABLE               0x08
-#define CHASSIS_TYPE_LAPTOP                 0x09
-#define CHASSIS_TYPE_NOTEBOOK               0x0A
-#define CHASSIS_TYPE_HAND_HELD              0x0B
-#define CHASSIS_TYPE_DOCKING_STATION        0x0C
-#define CHASSIS_TYPE_ALL_IN_ONE             0x0D
-#define CHASSIS_TYPE_SUB_NOTEBOOK           0x0E
-#define CHASSIS_TYPE_SPACE_SAVING           0x0F
-#define CHASSIS_TYPE_LUNCH_BOX              0x10
-#define CHASSIS_TYPE_MAIN_SERVER_CHASSIS    0x11
-#define CHASSIS_TYPE_EXPANSION_CHASSIS      0x12
-#define CHASSIS_TYPE_SUBCHASSIS             0x13
-#define CHASSIS_TYPE_BUS_EXPANSION_CHASSIS  0x14
-#define CHASSIS_TYPE_PERIPHERAL_CHASSIS     0x15
-#define CHASSIS_TYPE_RAID_CHASSIS           0x16
-#define CHASSIS_TYPE_RACK_MOUNT_CHASSIS     0x17
-#define CHASSIS_TYPE_SEALED_CASE_PC         0x18
-#define CHASSIS_TYPE_MULTI_SYSTEM_CHASSIS   0x19
-#define CHASSIS_TYPE_COMPACT_PCI            0x1A
-#define CHASSIS_TYPE_ADVANCED_TCA           0x1B
-#define CHASSIS_TYPE_BLADE                  0x1C
-#define CHASSIS_TYPE_BLADE_ENCLOSURE        0x1D
-#define CHASSIS_TYPE_TABLET                 0x1E
-#define CHASSIS_TYPE_CONVERTIBLE            0x1F
-#define CHASSIS_TYPE_DETACHABLE             0x20
-#define CHASSIS_TYPE_IOT_GATEWAY            0x21
-#define CHASSIS_TYPE_EMBEDDED_PC            0x22
-#define CHASSIS_TYPE_MINI_PC                0x23
-#define CHASSIS_TYPE_STICK_PC               0x24
+#define CHASSIS_TYPE_OTHER 0x01
+#define CHASSIS_TYPE_UNKNOWN 0x02
+#define CHASSIS_TYPE_DESKTOP 0x03
+#define CHASSIS_TYPE_LOW_PROFILE_DESKTOP 0x04
+#define CHASSIS_TYPE_PIZZA_BOX 0x05
+#define CHASSIS_TYPE_MINI_TOWER 0x06
+#define CHASSIS_TYPE_TOWER 0x07
+#define CHASSIS_TYPE_PORTABLE 0x08
+#define CHASSIS_TYPE_LAPTOP 0x09
+#define CHASSIS_TYPE_NOTEBOOK 0x0A
+#define CHASSIS_TYPE_HAND_HELD 0x0B
+#define CHASSIS_TYPE_DOCKING_STATION 0x0C
+#define CHASSIS_TYPE_ALL_IN_ONE 0x0D
+#define CHASSIS_TYPE_SUB_NOTEBOOK 0x0E
+#define CHASSIS_TYPE_SPACE_SAVING 0x0F
+#define CHASSIS_TYPE_LUNCH_BOX 0x10
+#define CHASSIS_TYPE_MAIN_SERVER_CHASSIS 0x11
+#define CHASSIS_TYPE_EXPANSION_CHASSIS 0x12
+#define CHASSIS_TYPE_SUBCHASSIS 0x13
+#define CHASSIS_TYPE_BUS_EXPANSION_CHASSIS 0x14
+#define CHASSIS_TYPE_PERIPHERAL_CHASSIS 0x15
+#define CHASSIS_TYPE_RAID_CHASSIS 0x16
+#define CHASSIS_TYPE_RACK_MOUNT_CHASSIS 0x17
+#define CHASSIS_TYPE_SEALED_CASE_PC 0x18
+#define CHASSIS_TYPE_MULTI_SYSTEM_CHASSIS 0x19
+#define CHASSIS_TYPE_COMPACT_PCI 0x1A
+#define CHASSIS_TYPE_ADVANCED_TCA 0x1B
+#define CHASSIS_TYPE_BLADE 0x1C
+#define CHASSIS_TYPE_BLADE_ENCLOSURE 0x1D
+#define CHASSIS_TYPE_TABLET 0x1E
+#define CHASSIS_TYPE_CONVERTIBLE 0x1F
+#define CHASSIS_TYPE_DETACHABLE 0x20
+#define CHASSIS_TYPE_IOT_GATEWAY 0x21
+#define CHASSIS_TYPE_EMBEDDED_PC 0x22
+#define CHASSIS_TYPE_MINI_PC 0x23
+#define CHASSIS_TYPE_STICK_PC 0x24
 
 // Chassis State
-#define CHASSIS_STATE_OTHER             0x01
-#define CHASSIS_STATE_UNKNOWN           0x02
-#define CHASSIS_STATE_SAFE              0x03
-#define CHASSIS_STATE_WARNING           0x04
-#define CHASSIS_STATE_CRITICAL          0x05
-#define CHASSIS_STATE_NON_RECOVERABLE   0x06
+#define CHASSIS_STATE_OTHER 0x01
+#define CHASSIS_STATE_UNKNOWN 0x02
+#define CHASSIS_STATE_SAFE 0x03
+#define CHASSIS_STATE_WARNING 0x04
+#define CHASSIS_STATE_CRITICAL 0x05
+#define CHASSIS_STATE_NON_RECOVERABLE 0x06
 
 // Chassis Status
-#define CHASSIS_SECURITY_STATUS_OTHER                       0x01
-#define CHASSIS_SECURITY_STATUS_UNKNOWN                     0x02
-#define CHASSIS_SECURITY_STATUS_NONE                        0x03
-#define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT    0x04
-#define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED       0x05
+#define CHASSIS_SECURITY_STATUS_OTHER 0x01
+#define CHASSIS_SECURITY_STATUS_UNKNOWN 0x02
+#define CHASSIS_SECURITY_STATUS_NONE 0x03
+#define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT 0x04
+#define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED 0x05
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-lazybiosType3_t* lazybiosGetType3(lazybiosType3_t *Type3, size_t *type3_count, lazybiosDMI_t *DMIData) {
-      if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
+lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, lazybiosDMI_t* DMIData) {
+	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
-      const uint8_t* p   = DMIData->dmi_data;
-      const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
+	const uint8_t* p = DMIData->dmi_data;
+	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-      size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_CHASSIS);
-      size_t index = 0;
-      Type3 = calloc(count, sizeof(lazybiosType3_t));
-      if (!Type3) return LAZYBIOS_NULL;
-	  if (count == 0) {
-	  	  *type3_count = 0;
-		  return Type3;
-	  }
+	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_CHASSIS);
+	size_t index = 0;
+	Type3 = calloc(count, sizeof(lazybiosType3_t));
+	if (!Type3) return LAZYBIOS_NULL;
+	if (count == 0) {
+		*type3_count = 0;
+		return Type3;
+	}
 
-      while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
-            uint8_t type = p[0];
-            uint8_t len  = p[1];
+	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
+		uint8_t type = p[0];
+		uint8_t len = p[1];
 
-            if (type == SMBIOS_TYPE_CHASSIS) {
-            	if (index >= count) break;
-                lazybiosType3_t *current = &Type3[index];
+		if (type == SMBIOS_TYPE_CHASSIS) {
+			if (index >= count) break;
+			lazybiosType3_t* current = &Type3[index];
 
-                if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-                if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+			if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
+			if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                current->type = (len > TYPE) ? p[TYPE] : LAZYBIOS_NOT_FOUND_U8;
+			current->type = (len > TYPE) ? p[TYPE] : LAZYBIOS_NOT_FOUND_U8;
 
-                if (len > VERSION) current->version = DMIString(p, len, p[VERSION], end);
-                if (!current->version) current->version = strdup(LAZYBIOS_NOT_FOUND_STR);
+			if (len > VERSION) current->version = DMIString(p, len, p[VERSION], end);
+			if (!current->version) current->version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-                if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+			if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
+			if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                if (len > ASSET_TAG_NUMBER) current->asset_tag = DMIString(p, len, p[ASSET_TAG_NUMBER], end);
-                if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+			if (len > ASSET_TAG_NUMBER) current->asset_tag = DMIString(p, len, p[ASSET_TAG_NUMBER], end);
+			if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
 
-                if (ISVERPLUS(DMIData, 2, 1)) {
-                    current->boot_up_state = (len > BOOT_UP_STATE) ? p[BOOT_UP_STATE] : LAZYBIOS_NOT_FOUND_U8;
-                    current->power_supply_state = (len > POWER_SUPPLY_STATE) ? p[POWER_SUPPLY_STATE] : LAZYBIOS_NOT_FOUND_U8;
-                    current->thermal_state = (len > THERMAL_STATE) ? p[THERMAL_STATE] : LAZYBIOS_NOT_FOUND_U8;
-                    current->security_status = (len > SECURITY_STATUS) ? p[SECURITY_STATUS] : LAZYBIOS_NOT_FOUND_U8;
-                } else {
-                    current->boot_up_state = LAZYBIOS_NOT_FOUND_U8;
-                    current->power_supply_state = LAZYBIOS_NOT_FOUND_U8;
-                    current->thermal_state = LAZYBIOS_NOT_FOUND_U8;
-                    current->security_status = LAZYBIOS_NOT_FOUND_U8;
-                }
+			if (ISVERPLUS(DMIData, 2, 1)) {
+				current->boot_up_state = (len > BOOT_UP_STATE) ? p[BOOT_UP_STATE] : LAZYBIOS_NOT_FOUND_U8;
+				current->power_supply_state = (len > POWER_SUPPLY_STATE) ? p[POWER_SUPPLY_STATE] : LAZYBIOS_NOT_FOUND_U8;
+				current->thermal_state = (len > THERMAL_STATE) ? p[THERMAL_STATE] : LAZYBIOS_NOT_FOUND_U8;
+				current->security_status = (len > SECURITY_STATUS) ? p[SECURITY_STATUS] : LAZYBIOS_NOT_FOUND_U8;
+			} else {
+				current->boot_up_state = LAZYBIOS_NOT_FOUND_U8;
+				current->power_supply_state = LAZYBIOS_NOT_FOUND_U8;
+				current->thermal_state = LAZYBIOS_NOT_FOUND_U8;
+				current->security_status = LAZYBIOS_NOT_FOUND_U8;
+			}
 
-                if (ISVERPLUS(DMIData, 2, 3)) {
-                    if (len >=OEM_DEFINED + sizeof(uint32_t)) {
-                        memcpy(&current->oem_defined, p + OEM_DEFINED, sizeof(uint32_t));
-                    } else {
-                        current->oem_defined = LAZYBIOS_NOT_FOUND_U32;
-                    }
+			if (ISVERPLUS(DMIData, 2, 3)) {
+				if (len >= OEM_DEFINED + sizeof(uint32_t)) {
+					memcpy(&current->oem_defined, p + OEM_DEFINED, sizeof(uint32_t));
+				} else {
+					current->oem_defined = LAZYBIOS_NOT_FOUND_U32;
+				}
 
-                    current->height = (len > HEIGHT) ? p[HEIGHT] : LAZYBIOS_NOT_FOUND_U8;
+				current->height = (len > HEIGHT) ? p[HEIGHT] : LAZYBIOS_NOT_FOUND_U8;
 
-                    current->number_of_power_cords = (len > NUMBER_OF_POWER_CORDS) ? p[NUMBER_OF_POWER_CORDS] : LAZYBIOS_NOT_FOUND_U8;
+				current->number_of_power_cords = (len > NUMBER_OF_POWER_CORDS) ? p[NUMBER_OF_POWER_CORDS] : LAZYBIOS_NOT_FOUND_U8;
 
-                    current->contained_element_count = (len > CONTAINED_ELEMENT_COUNT) ? p[CONTAINED_ELEMENT_COUNT] : LAZYBIOS_NOT_FOUND_U8;
-                    current->contained_element_record_length = (len > CONTAINED_ELEMENT_RECORD_LENGTH) ? p[CONTAINED_ELEMENT_RECORD_LENGTH] : LAZYBIOS_NOT_FOUND_U8;
+				current->contained_element_count = (len > CONTAINED_ELEMENT_COUNT) ? p[CONTAINED_ELEMENT_COUNT] : LAZYBIOS_NOT_FOUND_U8;
+				current->contained_element_record_length = (len > CONTAINED_ELEMENT_RECORD_LENGTH) ? p[CONTAINED_ELEMENT_RECORD_LENGTH] : LAZYBIOS_NOT_FOUND_U8;
 
-                    if ((current->contained_element_count > 0 && current->contained_element_count != LAZYBIOS_NOT_FOUND_U8) && (current->contained_element_record_length > 0 && current->contained_element_record_length != LAZYBIOS_NOT_FOUND_U8)) {
-                        const size_t array_bytes =(current->contained_element_count * current->contained_element_record_length) * sizeof(uint8_t);
-                        if (len >=CONTAINED_ELEMENTS + array_bytes) current->contained_elements = malloc(array_bytes);
-                        if (current->contained_elements) memcpy(current->contained_elements, p + CONTAINED_ELEMENTS, array_bytes);
+				if ((current->contained_element_count > 0 && current->contained_element_count != LAZYBIOS_NOT_FOUND_U8) && (current->contained_element_record_length > 0 && current->contained_element_record_length != LAZYBIOS_NOT_FOUND_U8)) {
+					const size_t array_bytes = (current->contained_element_count * current->contained_element_record_length) * sizeof(uint8_t);
+					if (len >= CONTAINED_ELEMENTS + array_bytes) current->contained_elements = malloc(array_bytes);
+					if (current->contained_elements) memcpy(current->contained_elements, p + CONTAINED_ELEMENTS, array_bytes);
 
-                        if (ISVERPLUS(DMIData, 2, 7)) {
-                            if (len > SKU_NUMBER(current->contained_element_count, current->contained_element_record_length)) current->sku_number = DMIString(p, len, p[SKU_NUMBER(current->contained_element_count, current->contained_element_record_length)], end);
-                            if (!current->sku_number) current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-                        } else {
-                            current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-                        }
+					if (ISVERPLUS(DMIData, 2, 7)) {
+						if (len > SKU_NUMBER(current->contained_element_count, current->contained_element_record_length)) current->sku_number = DMIString(p, len, p[SKU_NUMBER(current->contained_element_count, current->contained_element_record_length)], end);
+						if (!current->sku_number) current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+					} else {
+						current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+					}
 
-                        if (ISVERPLUS(DMIData, 3, 9)) {
-                            current->rack_type = (len > RACK_TYPE(current->contained_element_count, current->contained_element_record_length)) ? p[RACK_TYPE(current->contained_element_count, current->contained_element_record_length)] : LAZYBIOS_NOT_FOUND_U8;
-                            current->rack_height = (len > RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length)) ? p[RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length)] :LAZYBIOS_NOT_FOUND_U8;
-                        } else {
-                            current->rack_type = LAZYBIOS_NOT_FOUND_U8;
-                            current->rack_height = LAZYBIOS_NOT_FOUND_U8;
-                        }
-                    } else {
-                        current->contained_elements = LAZYBIOS_NULL;
-                        current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-                        current->rack_type = LAZYBIOS_NOT_FOUND_U8;
-                        current->rack_height = LAZYBIOS_NOT_FOUND_U8;
-                    }
-                } else {
-                    current->oem_defined = LAZYBIOS_NOT_FOUND_U32;
-                    current->height = LAZYBIOS_NOT_FOUND_U8;
-                    current->number_of_power_cords = LAZYBIOS_NOT_FOUND_U8;
-                    current->contained_element_count = LAZYBIOS_NOT_FOUND_U8;
-                    current->contained_element_record_length = LAZYBIOS_NOT_FOUND_U8;
-                    current->contained_elements = LAZYBIOS_NULL;
-                    current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-                    current->rack_type = LAZYBIOS_NOT_FOUND_U8;
-                    current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+					if (ISVERPLUS(DMIData, 3, 9)) {
+						current->rack_type = (len > RACK_TYPE(current->contained_element_count, current->contained_element_record_length)) ? p[RACK_TYPE(current->contained_element_count, current->contained_element_record_length)] : LAZYBIOS_NOT_FOUND_U8;
+						current->rack_height = (len > RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length)) ? p[RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length)] : LAZYBIOS_NOT_FOUND_U8;
+					} else {
+						current->rack_type = LAZYBIOS_NOT_FOUND_U8;
+						current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+					}
+				} else {
+					current->contained_elements = LAZYBIOS_NULL;
+					current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+					current->rack_type = LAZYBIOS_NOT_FOUND_U8;
+					current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+				}
+			} else {
+				current->oem_defined = LAZYBIOS_NOT_FOUND_U32;
+				current->height = LAZYBIOS_NOT_FOUND_U8;
+				current->number_of_power_cords = LAZYBIOS_NOT_FOUND_U8;
+				current->contained_element_count = LAZYBIOS_NOT_FOUND_U8;
+				current->contained_element_record_length = LAZYBIOS_NOT_FOUND_U8;
+				current->contained_elements = LAZYBIOS_NULL;
+				current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+				current->rack_type = LAZYBIOS_NOT_FOUND_U8;
+				current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+			}
 
-                }
-
-                index++;
-            }
-          p = DMINext(p, end);
-      }
-    *type3_count = index;
-    return Type3;
+			index++;
+		}
+		p = DMINext(p, end);
+	}
+	*type3_count = index;
+	return Type3;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Decoders
 
 // Chassis Type
-void lazybiosType3TypeStr(uint8_t type, char *buf, size_t buf_len) {
-    size_t len = 0;
-    buf[0] = '\0';
+void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
+	size_t len = 0;
+	buf[0] = '\0';
 
-    // Bit 7 is the Chassis lock
-    if (type & (1 << 7)) {
-        len += snprintf(buf + len, buf_len - len, "Chassis lock present, ");
-    }
+	// Bit 7 is the Chassis lock
+	if (type & (1 << 7)) {
+		len += snprintf(buf + len, buf_len - len, "Chassis lock present, ");
+	}
 
-    // Bits 6:0 = chassis type
-    uint8_t chassis_type = type & 0x7F;
-    switch (chassis_type) {
-        case CHASSIS_TYPE_OTHER:                  len += snprintf(buf + len, buf_len - len, "Other"); break;
-        case CHASSIS_TYPE_UNKNOWN:                len += snprintf(buf + len, buf_len - len, "Unknown"); break;
-        case CHASSIS_TYPE_DESKTOP:                len += snprintf(buf + len, buf_len - len, "Desktop"); break;
-        case CHASSIS_TYPE_LOW_PROFILE_DESKTOP:    len += snprintf(buf + len, buf_len - len, "Low Profile Desktop"); break;
-        case CHASSIS_TYPE_PIZZA_BOX:              len += snprintf(buf + len, buf_len - len, "Pizza Box"); break;
-        case CHASSIS_TYPE_MINI_TOWER:             len += snprintf(buf + len, buf_len - len, "Mini Tower"); break;
-        case CHASSIS_TYPE_TOWER:                  len += snprintf(buf + len, buf_len - len, "Tower"); break;
-        case CHASSIS_TYPE_PORTABLE:               len += snprintf(buf + len, buf_len - len, "Portable"); break;
-        case CHASSIS_TYPE_LAPTOP:                 len += snprintf(buf + len, buf_len - len, "Laptop"); break;
-        case CHASSIS_TYPE_NOTEBOOK:               len += snprintf(buf + len, buf_len - len, "Notebook"); break;
-        case CHASSIS_TYPE_HAND_HELD:              len += snprintf(buf + len, buf_len - len, "Hand Held"); break;
-        case CHASSIS_TYPE_DOCKING_STATION:        len += snprintf(buf + len, buf_len - len, "Docking Station"); break;
-        case CHASSIS_TYPE_ALL_IN_ONE:             len += snprintf(buf + len, buf_len - len, "All in One"); break;
-        case CHASSIS_TYPE_SUB_NOTEBOOK:           len += snprintf(buf + len, buf_len - len, "Sub Notebook"); break;
-        case CHASSIS_TYPE_SPACE_SAVING:           len += snprintf(buf + len, buf_len - len, "Space-saving"); break;
-        case CHASSIS_TYPE_LUNCH_BOX:              len += snprintf(buf + len, buf_len - len, "Lunch Box"); break;
-        case CHASSIS_TYPE_MAIN_SERVER_CHASSIS:    len += snprintf(buf + len, buf_len - len, "Main Server Chassis"); break;
-        case CHASSIS_TYPE_EXPANSION_CHASSIS:      len += snprintf(buf + len, buf_len - len, "Expansion Chassis"); break;
-        case CHASSIS_TYPE_SUBCHASSIS:             len += snprintf(buf + len, buf_len - len, "SubChassis"); break;
-        case CHASSIS_TYPE_BUS_EXPANSION_CHASSIS:  len += snprintf(buf + len, buf_len - len, "Bus Expansion Chassis"); break;
-        case CHASSIS_TYPE_PERIPHERAL_CHASSIS:     len += snprintf(buf + len, buf_len - len, "Peripheral Chassis"); break;
-        case CHASSIS_TYPE_RAID_CHASSIS:           len += snprintf(buf + len, buf_len - len, "RAID Chassis"); break;
-        case CHASSIS_TYPE_RACK_MOUNT_CHASSIS:     len += snprintf(buf + len, buf_len - len, "Rack Mount Chassis"); break;
-        case CHASSIS_TYPE_SEALED_CASE_PC:         len += snprintf(buf + len, buf_len - len, "Sealed-case PC"); break;
-        case CHASSIS_TYPE_MULTI_SYSTEM_CHASSIS:   len += snprintf(buf + len, buf_len - len, "Multi-system chassis"); break;
-        case CHASSIS_TYPE_COMPACT_PCI:            len += snprintf(buf + len, buf_len - len, "Compact PCI"); break;
-        case CHASSIS_TYPE_ADVANCED_TCA:           len += snprintf(buf + len, buf_len - len, "Advanced TCA"); break;
-        case CHASSIS_TYPE_BLADE:                  len += snprintf(buf + len, buf_len - len, "Blade"); break;
-        case CHASSIS_TYPE_BLADE_ENCLOSURE:        len += snprintf(buf + len, buf_len - len, "Blade Enclosure"); break;
-        case CHASSIS_TYPE_TABLET:                 len += snprintf(buf + len, buf_len - len, "Tablet"); break;
-        case CHASSIS_TYPE_CONVERTIBLE:            len += snprintf(buf + len, buf_len - len, "Convertible"); break;
-        case CHASSIS_TYPE_DETACHABLE:             len += snprintf(buf + len, buf_len - len, "Detachable"); break;
-        case CHASSIS_TYPE_IOT_GATEWAY:            len += snprintf(buf + len, buf_len - len, "IoT Gateway"); break;
-        case CHASSIS_TYPE_EMBEDDED_PC:            len += snprintf(buf + len, buf_len - len, "Embedded PC"); break;
-        case CHASSIS_TYPE_MINI_PC:                len += snprintf(buf + len, buf_len - len, "Mini PC"); break;
-        case CHASSIS_TYPE_STICK_PC:               len += snprintf(buf + len, buf_len - len, "Stick PC"); break;
-        default:                                  len += snprintf(buf + len, buf_len - len, "Unknown Chassis Type"); break;
-    }
+	// Bits 6:0 = chassis type
+	uint8_t chassis_type = type & 0x7F;
+	switch (chassis_type) {
+		case CHASSIS_TYPE_OTHER:
+			len += snprintf(buf + len, buf_len - len, "Other");
+			break;
+		case CHASSIS_TYPE_UNKNOWN:
+			len += snprintf(buf + len, buf_len - len, "Unknown");
+			break;
+		case CHASSIS_TYPE_DESKTOP:
+			len += snprintf(buf + len, buf_len - len, "Desktop");
+			break;
+		case CHASSIS_TYPE_LOW_PROFILE_DESKTOP:
+			len += snprintf(buf + len, buf_len - len, "Low Profile Desktop");
+			break;
+		case CHASSIS_TYPE_PIZZA_BOX:
+			len += snprintf(buf + len, buf_len - len, "Pizza Box");
+			break;
+		case CHASSIS_TYPE_MINI_TOWER:
+			len += snprintf(buf + len, buf_len - len, "Mini Tower");
+			break;
+		case CHASSIS_TYPE_TOWER:
+			len += snprintf(buf + len, buf_len - len, "Tower");
+			break;
+		case CHASSIS_TYPE_PORTABLE:
+			len += snprintf(buf + len, buf_len - len, "Portable");
+			break;
+		case CHASSIS_TYPE_LAPTOP:
+			len += snprintf(buf + len, buf_len - len, "Laptop");
+			break;
+		case CHASSIS_TYPE_NOTEBOOK:
+			len += snprintf(buf + len, buf_len - len, "Notebook");
+			break;
+		case CHASSIS_TYPE_HAND_HELD:
+			len += snprintf(buf + len, buf_len - len, "Hand Held");
+			break;
+		case CHASSIS_TYPE_DOCKING_STATION:
+			len += snprintf(buf + len, buf_len - len, "Docking Station");
+			break;
+		case CHASSIS_TYPE_ALL_IN_ONE:
+			len += snprintf(buf + len, buf_len - len, "All in One");
+			break;
+		case CHASSIS_TYPE_SUB_NOTEBOOK:
+			len += snprintf(buf + len, buf_len - len, "Sub Notebook");
+			break;
+		case CHASSIS_TYPE_SPACE_SAVING:
+			len += snprintf(buf + len, buf_len - len, "Space-saving");
+			break;
+		case CHASSIS_TYPE_LUNCH_BOX:
+			len += snprintf(buf + len, buf_len - len, "Lunch Box");
+			break;
+		case CHASSIS_TYPE_MAIN_SERVER_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "Main Server Chassis");
+			break;
+		case CHASSIS_TYPE_EXPANSION_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "Expansion Chassis");
+			break;
+		case CHASSIS_TYPE_SUBCHASSIS:
+			len += snprintf(buf + len, buf_len - len, "SubChassis");
+			break;
+		case CHASSIS_TYPE_BUS_EXPANSION_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "Bus Expansion Chassis");
+			break;
+		case CHASSIS_TYPE_PERIPHERAL_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "Peripheral Chassis");
+			break;
+		case CHASSIS_TYPE_RAID_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "RAID Chassis");
+			break;
+		case CHASSIS_TYPE_RACK_MOUNT_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "Rack Mount Chassis");
+			break;
+		case CHASSIS_TYPE_SEALED_CASE_PC:
+			len += snprintf(buf + len, buf_len - len, "Sealed-case PC");
+			break;
+		case CHASSIS_TYPE_MULTI_SYSTEM_CHASSIS:
+			len += snprintf(buf + len, buf_len - len, "Multi-system chassis");
+			break;
+		case CHASSIS_TYPE_COMPACT_PCI:
+			len += snprintf(buf + len, buf_len - len, "Compact PCI");
+			break;
+		case CHASSIS_TYPE_ADVANCED_TCA:
+			len += snprintf(buf + len, buf_len - len, "Advanced TCA");
+			break;
+		case CHASSIS_TYPE_BLADE:
+			len += snprintf(buf + len, buf_len - len, "Blade");
+			break;
+		case CHASSIS_TYPE_BLADE_ENCLOSURE:
+			len += snprintf(buf + len, buf_len - len, "Blade Enclosure");
+			break;
+		case CHASSIS_TYPE_TABLET:
+			len += snprintf(buf + len, buf_len - len, "Tablet");
+			break;
+		case CHASSIS_TYPE_CONVERTIBLE:
+			len += snprintf(buf + len, buf_len - len, "Convertible");
+			break;
+		case CHASSIS_TYPE_DETACHABLE:
+			len += snprintf(buf + len, buf_len - len, "Detachable");
+			break;
+		case CHASSIS_TYPE_IOT_GATEWAY:
+			len += snprintf(buf + len, buf_len - len, "IoT Gateway");
+			break;
+		case CHASSIS_TYPE_EMBEDDED_PC:
+			len += snprintf(buf + len, buf_len - len, "Embedded PC");
+			break;
+		case CHASSIS_TYPE_MINI_PC:
+			len += snprintf(buf + len, buf_len - len, "Mini PC");
+			break;
+		case CHASSIS_TYPE_STICK_PC:
+			len += snprintf(buf + len, buf_len - len, "Stick PC");
+			break;
+		default:
+			len += snprintf(buf + len, buf_len - len, "Unknown Chassis Type");
+			break;
+	}
 
-    if (len >= 2 && buf[len - 2] == ',') buf[len - 2] = '\0'; // remove trailing ", " ONLY if present
-    if (len == 0) {
-        snprintf(buf, buf_len, "None");
-    }
+	if (len >= 2 && buf[len - 2] == ',') buf[len - 2] = '\0'; // remove trailing ", " ONLY if present
+	if (len == 0) {
+		snprintf(buf, buf_len, "None");
+	}
 }
 
 // Chassis State
 const char* lazybiosType3StateStr(uint8_t state) {
-    switch(state) {
-        case CHASSIS_STATE_OTHER:           return "Other";
-        case CHASSIS_STATE_UNKNOWN:         return "Unknown";
-        case CHASSIS_STATE_SAFE:            return "Safe";
-        case CHASSIS_STATE_WARNING:         return "Warning";
-        case CHASSIS_STATE_CRITICAL:        return "Critical";
-        case CHASSIS_STATE_NON_RECOVERABLE: return "Non-recoverable";
-        default:                            return "Unknown Chassis State";
-    }
+	switch (state) {
+		case CHASSIS_STATE_OTHER:
+			return "Other";
+		case CHASSIS_STATE_UNKNOWN:
+			return "Unknown";
+		case CHASSIS_STATE_SAFE:
+			return "Safe";
+		case CHASSIS_STATE_WARNING:
+			return "Warning";
+		case CHASSIS_STATE_CRITICAL:
+			return "Critical";
+		case CHASSIS_STATE_NON_RECOVERABLE:
+			return "Non-recoverable";
+		default:
+			return "Unknown Chassis State";
+	}
 }
 
 // Chassis Status
 const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
-    switch(security_status) {
-        case CHASSIS_SECURITY_STATUS_OTHER:                     return "Other";
-        case CHASSIS_SECURITY_STATUS_UNKNOWN:                   return "Unknown";
-        case CHASSIS_SECURITY_STATUS_NONE:                      return "None";
-        case CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT:  return "External interface locked out";
-        case CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED:     return "External interface enabled";
-        default:                                                return "Unknown chassis security state";
-    }
+	switch (security_status) {
+		case CHASSIS_SECURITY_STATUS_OTHER:
+			return "Other";
+		case CHASSIS_SECURITY_STATUS_UNKNOWN:
+			return "Unknown";
+		case CHASSIS_SECURITY_STATUS_NONE:
+			return "None";
+		case CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT:
+			return "External interface locked out";
+		case CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED:
+			return "External interface enabled";
+		default:
+			return "Unknown chassis security state";
+	}
 }
 
 // Chassis Contained Elements
-void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char *buf, size_t buf_len) {
-    buf[0] = '\0';
+void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len) {
+	buf[0] = '\0';
 
-    if (contained_elements & 0x80) { // MSB = 1 → SMBIOS structure type
-        uint8_t struct_type = contained_elements & 0x7F;
-        snprintf(buf, buf_len, "SMBIOS Structure Type %u", struct_type);
-    } else { // MSB = 0 → board type
-        uint8_t board_type = contained_elements & 0x7F;
-        const char *str = lazybiosType2BoardTypeStr(board_type);
-        snprintf(buf, buf_len, "%s", str);
-    }
+	if (contained_elements & 0x80) { // MSB = 1 → SMBIOS structure type
+		uint8_t struct_type = contained_elements & 0x7F;
+		snprintf(buf, buf_len, "SMBIOS Structure Type %u", struct_type);
+	} else { // MSB = 0 → board type
+		uint8_t board_type = contained_elements & 0x7F;
+		const char* str = lazybiosType2BoardTypeStr(board_type);
+		snprintf(buf, buf_len, "%s", str);
+	}
 }
-
-
 
 // Free Function
 void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count) {
-    if (!Type3) return;
+	if (!Type3) return;
 
-    for (size_t i = 0; i < type3_count; i++) {
-        free(Type3[i].manufacturer);
-        free(Type3[i].version);
-        free(Type3[i].serial_number);
-        free(Type3[i].asset_tag);
-        free(Type3[i].contained_elements);
-        free(Type3[i].sku_number);
-    }
+	for (size_t i = 0; i < type3_count; i++) {
+		free(Type3[i].manufacturer);
+		free(Type3[i].version);
+		free(Type3[i].serial_number);
+		free(Type3[i].asset_tag);
+		free(Type3[i].contained_elements);
+		free(Type3[i].sku_number);
+	}
 
-    free(Type3);
+	free(Type3);
 }

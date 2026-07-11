@@ -3,124 +3,123 @@
 //
 
 #include "lazybios.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 // Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fields
-#define PHYSICAL_MEMORY_ARRAY_HANDLE					0x04
-#define MEMORY_ERROR_INFORMATION_HANDLE					0x06
-#define TOTAL_WIDTH										0x08
-#define DATA_WIDTH										0x0A
-#define SIZE											0x0C
-#define FORM_FACTOR										0x0E
-#define DEVICE_SET										0x0F
-#define DEVICE_LOCATOR									0x10
-#define BANK_LOCATOR									0x11
-#define MEMORY_TYPE										0x12
-#define TYPE_DETAIL										0x13
-#define SPEED											0x15
-#define MANUFACTURER									0x17
-#define SERIAL_NUMBER									0x18
-#define ASSET_TAG										0x19
-#define PART_NUMBER										0x1A
-#define ATTRIBUTES										0x1B
-#define EXTENDED_SIZE									0x1C
-#define CONFIGURED_MEMORY_SPEED							0x20
-#define MINIMUM_VOLTAGE									0x22
-#define MAXIMUM_VOLTAGE									0x24
-#define CONFIGURED_VOLTAGE								0x26
-#define MEMORY_TECHNOLOGY								0x28
-#define MEMORY_OPERATING_MODE_CAPABILITY				0x29
-#define FIRMWARE_VERSION								0x2B
-#define MODULE_MANUFACTURER_ID							0x2C
-#define MODULE_PRODUCT_ID								0x2E
-#define MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID		0x30
-#define MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID			0x32
-#define NON_VOLATILE_SIZE								0x34
-#define VOLATILE_SIZE									0x3C
-#define CACHE_SIZE										0x44
-#define LOGICAL_SIZE									0x4C
-#define EXTENDED_SPEED									0x54
-#define EXTENDED_CONFIGURED_MEMORY_SPEED				0x58
-#define PMIC0_MANUFACTURER_ID							0x5C
-#define PMIC0_REVISION_NUMBER							0x5E
-#define RCD_MANUFACTURER_ID								0x60
-#define RCD_REVISION_NUMBER								0x62
+#define PHYSICAL_MEMORY_ARRAY_HANDLE 0x04
+#define MEMORY_ERROR_INFORMATION_HANDLE 0x06
+#define TOTAL_WIDTH 0x08
+#define DATA_WIDTH 0x0A
+#define SIZE 0x0C
+#define FORM_FACTOR 0x0E
+#define DEVICE_SET 0x0F
+#define DEVICE_LOCATOR 0x10
+#define BANK_LOCATOR 0x11
+#define MEMORY_TYPE 0x12
+#define TYPE_DETAIL 0x13
+#define SPEED 0x15
+#define MANUFACTURER 0x17
+#define SERIAL_NUMBER 0x18
+#define ASSET_TAG 0x19
+#define PART_NUMBER 0x1A
+#define ATTRIBUTES 0x1B
+#define EXTENDED_SIZE 0x1C
+#define CONFIGURED_MEMORY_SPEED 0x20
+#define MINIMUM_VOLTAGE 0x22
+#define MAXIMUM_VOLTAGE 0x24
+#define CONFIGURED_VOLTAGE 0x26
+#define MEMORY_TECHNOLOGY 0x28
+#define MEMORY_OPERATING_MODE_CAPABILITY 0x29
+#define FIRMWARE_VERSION 0x2B
+#define MODULE_MANUFACTURER_ID 0x2C
+#define MODULE_PRODUCT_ID 0x2E
+#define MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID 0x30
+#define MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID 0x32
+#define NON_VOLATILE_SIZE 0x34
+#define VOLATILE_SIZE 0x3C
+#define CACHE_SIZE 0x44
+#define LOGICAL_SIZE 0x4C
+#define EXTENDED_SPEED 0x54
+#define EXTENDED_CONFIGURED_MEMORY_SPEED 0x58
+#define PMIC0_MANUFACTURER_ID 0x5C
+#define PMIC0_REVISION_NUMBER 0x5E
+#define RCD_MANUFACTURER_ID 0x60
+#define RCD_REVISION_NUMBER 0x62
 
 // Decoders
 
 // Form Factor
-#define FF_OTHER			0x01
-#define FF_UNKNOWN			0x02
-#define SIMM				0x03
-#define SIP					0x04
-#define CHIP				0x05
-#define DIP					0x06
-#define ZIP					0x07
-#define PROPRIETARY_CARD	0x08
-#define DIMM				0x09
-#define TSOP				0x0A
-#define ROW_OF_CHIPS		0x0B
-#define RIMM				0x0C
-#define SODIMM				0x0D
-#define SRIMM				0x0E
-#define FB_DIMM				0x0F
-#define DIE					0x10
-#define CAMM				0x11
-#define CUDIMM				0x12
-#define CSODIMM				0x13
-
+#define FF_OTHER 0x01
+#define FF_UNKNOWN 0x02
+#define SIMM 0x03
+#define SIP 0x04
+#define CHIP 0x05
+#define DIP 0x06
+#define ZIP 0x07
+#define PROPRIETARY_CARD 0x08
+#define DIMM 0x09
+#define TSOP 0x0A
+#define ROW_OF_CHIPS 0x0B
+#define RIMM 0x0C
+#define SODIMM 0x0D
+#define SRIMM 0x0E
+#define FB_DIMM 0x0F
+#define DIE 0x10
+#define CAMM 0x11
+#define CUDIMM 0x12
+#define CSODIMM 0x13
 
 // Memory Type
-#define MT_OTHER					   0x01
-#define MT_UNKNOWN					   0x02
-#define MT_DRAM                        0x03
-#define EDRAM                          0x04
-#define VRAM                           0x05
-#define SRAM                           0x06
-#define RAM                            0x07
-#define ROM                            0x08
-#define FLASH                          0x09
-#define EEPROM                         0x0A
-#define FEPROM                         0x0B
-#define EPROM                          0x0C
-#define CDRAM                          0x0D
-#define _3DRAM                         0x0E // can't start with a number for some reason
-#define SDRAM                          0x0F
-#define SGRAM                          0x10
-#define RDRAM                          0x11
-#define DDR                            0x12
-#define DDR2                           0x13
-#define DDR2_FB_DIMM                   0x14
-#define DDR3                           0x18
-#define FBD2                           0x19
-#define DDR4                           0x1A
-#define LPDDR                          0x1B
-#define LPDDR2                         0x1C
-#define LPDDR3                         0x1D
-#define LPDDR4                         0x1E
-#define LOGICAL_NON_VOLATILE_DEVICE    0x1F
-#define HBM                            0x20
-#define HBM2                           0x21
-#define DDR5                           0x22
-#define LPDDR5                         0x23
-#define HBM3                           0x24
-#define MRDIMM                         0x25
+#define MT_OTHER 0x01
+#define MT_UNKNOWN 0x02
+#define MT_DRAM 0x03
+#define EDRAM 0x04
+#define VRAM 0x05
+#define SRAM 0x06
+#define RAM 0x07
+#define ROM 0x08
+#define FLASH 0x09
+#define EEPROM 0x0A
+#define FEPROM 0x0B
+#define EPROM 0x0C
+#define CDRAM 0x0D
+#define _3DRAM 0x0E // can't start with a number for some reason
+#define SDRAM 0x0F
+#define SGRAM 0x10
+#define RDRAM 0x11
+#define DDR 0x12
+#define DDR2 0x13
+#define DDR2_FB_DIMM 0x14
+#define DDR3 0x18
+#define FBD2 0x19
+#define DDR4 0x1A
+#define LPDDR 0x1B
+#define LPDDR2 0x1C
+#define LPDDR3 0x1D
+#define LPDDR4 0x1E
+#define LOGICAL_NON_VOLATILE_DEVICE 0x1F
+#define HBM 0x20
+#define HBM2 0x21
+#define DDR5 0x22
+#define LPDDR5 0x23
+#define HBM3 0x24
+#define MRDIMM 0x25
 
 // Memory Technology
-#define MTECH_OTHER                    0x01
-#define MTECH_UNKNOWN				   0x02
-#define MTECH_DRAM                     0x03
-#define NVDIMM_N                       0x04
-#define NVDIMM_F                       0x05
-#define NVDIMM_P                       0x06
+#define MTECH_OTHER 0x01
+#define MTECH_UNKNOWN 0x02
+#define MTECH_DRAM 0x03
+#define NVDIMM_N 0x04
+#define NVDIMM_F 0x05
+#define NVDIMM_P 0x06
 #define INTEL_OPTANE_PERSISTENT_MEMORY 0x07
-#define MRDIMM_DEPRECATED              0x08
+#define MRDIMM_DEPRECATED 0x08
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-lazybiosType17_t* lazybiosGetType17(lazybiosType17_t *Type17, size_t *type17_count, lazybiosDMI_t *DMIData) {
+lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
@@ -281,60 +280,60 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t *Type17, size_t *type17_cou
 				current->memory_technology = (len > MEMORY_TECHNOLOGY) ? p[MEMORY_TECHNOLOGY] : LAZYBIOS_NOT_FOUND_U8;
 
 				if (len >= MEMORY_OPERATING_MODE_CAPABILITY + sizeof(uint16_t)) {
-				    memcpy(&current->memory_operating_mode_capability, p + MEMORY_OPERATING_MODE_CAPABILITY, sizeof(uint16_t));
+					memcpy(&current->memory_operating_mode_capability, p + MEMORY_OPERATING_MODE_CAPABILITY, sizeof(uint16_t));
 				} else {
-				    current->memory_operating_mode_capability = LAZYBIOS_NOT_FOUND_U16;
+					current->memory_operating_mode_capability = LAZYBIOS_NOT_FOUND_U16;
 				}
 
 				if (len > FIRMWARE_VERSION) current->firmware_version = DMIString(p, len, p[FIRMWARE_VERSION], end);
 				if (!current->firmware_version) current->firmware_version = strdup(LAZYBIOS_NOT_FOUND_STR);
 
 				if (len >= MODULE_MANUFACTURER_ID + sizeof(uint16_t)) {
-				    memcpy(&current->module_manufacturer_id, p + MODULE_MANUFACTURER_ID, sizeof(uint16_t));
+					memcpy(&current->module_manufacturer_id, p + MODULE_MANUFACTURER_ID, sizeof(uint16_t));
 				} else {
-				    current->module_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
+					current->module_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
 				}
 
 				if (len >= MODULE_PRODUCT_ID + sizeof(uint16_t)) {
-				    memcpy(&current->module_product_id, p + MODULE_PRODUCT_ID, sizeof(uint16_t));
+					memcpy(&current->module_product_id, p + MODULE_PRODUCT_ID, sizeof(uint16_t));
 				} else {
-				    current->module_product_id = LAZYBIOS_NOT_FOUND_U16;
+					current->module_product_id = LAZYBIOS_NOT_FOUND_U16;
 				}
 
 				if (len >= MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID + sizeof(uint16_t)) {
-				    memcpy(&current->memory_subsystem_controller_manufacturer_id, p + MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID, sizeof(uint16_t));
+					memcpy(&current->memory_subsystem_controller_manufacturer_id, p + MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID, sizeof(uint16_t));
 				} else {
-				    current->memory_subsystem_controller_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
+					current->memory_subsystem_controller_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
 				}
 
 				if (len >= MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID + sizeof(uint16_t)) {
-				    memcpy(&current->memory_subsystem_controller_product_id, p + MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID, sizeof(uint16_t));
+					memcpy(&current->memory_subsystem_controller_product_id, p + MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID, sizeof(uint16_t));
 				} else {
-				    current->memory_subsystem_controller_product_id = LAZYBIOS_NOT_FOUND_U16;
+					current->memory_subsystem_controller_product_id = LAZYBIOS_NOT_FOUND_U16;
 				}
 
 				if (len >= NON_VOLATILE_SIZE + sizeof(uint64_t)) {
-				    memcpy(&current->non_volatile_size, p + NON_VOLATILE_SIZE, sizeof(uint64_t));
+					memcpy(&current->non_volatile_size, p + NON_VOLATILE_SIZE, sizeof(uint64_t));
 				} else {
-				    current->non_volatile_size = LAZYBIOS_NOT_FOUND_U64;
+					current->non_volatile_size = LAZYBIOS_NOT_FOUND_U64;
 				}
 
 				if (len >= VOLATILE_SIZE + sizeof(uint64_t)) {
-				    memcpy(&current->volatile_size, p + VOLATILE_SIZE, sizeof(uint64_t));
+					memcpy(&current->volatile_size, p + VOLATILE_SIZE, sizeof(uint64_t));
 				} else {
-				    current->volatile_size = LAZYBIOS_NOT_FOUND_U64;
+					current->volatile_size = LAZYBIOS_NOT_FOUND_U64;
 				}
 
 				if (len >= CACHE_SIZE + sizeof(uint64_t)) {
-				    memcpy(&current->cache_size, p + CACHE_SIZE, sizeof(uint64_t));
+					memcpy(&current->cache_size, p + CACHE_SIZE, sizeof(uint64_t));
 				} else {
-				    current->cache_size = LAZYBIOS_NOT_FOUND_U64;
+					current->cache_size = LAZYBIOS_NOT_FOUND_U64;
 				}
 
 				if (len >= LOGICAL_SIZE + sizeof(uint64_t)) {
-				    memcpy(&current->logical_size, p + LOGICAL_SIZE, sizeof(uint64_t));
+					memcpy(&current->logical_size, p + LOGICAL_SIZE, sizeof(uint64_t));
 				} else {
-				    current->logical_size = LAZYBIOS_NOT_FOUND_U64;
+					current->logical_size = LAZYBIOS_NOT_FOUND_U64;
 				}
 			} else {
 				current->memory_technology = LAZYBIOS_NOT_FOUND_U8;
@@ -411,84 +410,139 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t *Type17, size_t *type17_cou
 // Form Factor
 const char* lazybiosType17FormFactorStr(uint8_t form_factor) {
 	switch (form_factor) {
-		case FF_OTHER: return "Other";
-		case FF_UNKNOWN: return "Unknown";
-		case SIMM: return "SIMM";
-		case SIP: return "SIP";
-		case CHIP: return "Chip";
-		case DIP: return "DIP";
-		case ZIP: return "Zip";
-		case PROPRIETARY_CARD: return "Proprietary Card";
-		case DIMM: return "DIMM";
-		case TSOP: return "TSOP";
-		case ROW_OF_CHIPS: return "Row of chips";
-		case RIMM: return "RIMM";
-		case SODIMM: return "SODIMM";
-		case SRIMM: return "SRIMM";
-		case FB_DIMM: return "FB-DIMM";
-		case DIE: return "Die";
-		case CAMM: return "CAMM";
-		case CUDIMM: return "CUDIMM";
-		case CSODIMM: return "CSODIMM";
-		default: return "Unknown Form Factor";
+		case FF_OTHER:
+			return "Other";
+		case FF_UNKNOWN:
+			return "Unknown";
+		case SIMM:
+			return "SIMM";
+		case SIP:
+			return "SIP";
+		case CHIP:
+			return "Chip";
+		case DIP:
+			return "DIP";
+		case ZIP:
+			return "Zip";
+		case PROPRIETARY_CARD:
+			return "Proprietary Card";
+		case DIMM:
+			return "DIMM";
+		case TSOP:
+			return "TSOP";
+		case ROW_OF_CHIPS:
+			return "Row of chips";
+		case RIMM:
+			return "RIMM";
+		case SODIMM:
+			return "SODIMM";
+		case SRIMM:
+			return "SRIMM";
+		case FB_DIMM:
+			return "FB-DIMM";
+		case DIE:
+			return "Die";
+		case CAMM:
+			return "CAMM";
+		case CUDIMM:
+			return "CUDIMM";
+		case CSODIMM:
+			return "CSODIMM";
+		default:
+			return "Unknown Form Factor";
 	}
 }
 
 // Memory Type
 const char* lazybiosType17TypeStr(uint8_t memory_type) {
 	switch (memory_type) {
-		case MT_OTHER: return "Other";
-		case MT_UNKNOWN: return "Unknown";
-		case MT_DRAM: return "DRAM";
-		case EDRAM: return "EDRAM";
-		case VRAM: return "VRAM";
-		case SRAM: return "SRAM";
-		case RAM: return "RAM";
-		case ROM: return "ROM";
-		case FLASH: return "FLASH";
-		case EEPROM: return "EEPROM";
-		case FEPROM: return "FEPROM";
-		case EPROM: return "EPROM";
-		case CDRAM: return "CDRAM";
-		case _3DRAM: return "3DRAM";
-		case SDRAM: return "SDRAM";
-		case SGRAM: return "SGRAM";
-		case RDRAM: return "RDRAM";
-		case DDR: return "DDR";
-		case DDR2: return "DDR2";
-		case DDR2_FB_DIMM: return "DDR2 FB-DIMM";
-		case DDR3: return "DDR3";
-		case FBD2: return "FBD2";
-		case DDR4: return "DDR4";
-		case LPDDR: return "LPDDR";
-		case LPDDR2: return "LPDDR2";
-		case LPDDR3: return "LPDDR3";
-		case LPDDR4: return "LPDDR4";
-		case LOGICAL_NON_VOLATILE_DEVICE: return "Logical non-volatile device";
-		case HBM: return "HBM (High Bandwidth Memory)";
-		case HBM2: return "HBM2 (High Bandwidth Memory Generation 2)";
-		case DDR5: return "DDR5";
-		case LPDDR5: return "LPDDR5";
-		case HBM3: return "HBM3 (High Bandwidth Memory Generation 3)";
-		case MRDIMM: return "MRDIMM";
-		default: return "Unknown";
+		case MT_OTHER:
+			return "Other";
+		case MT_UNKNOWN:
+			return "Unknown";
+		case MT_DRAM:
+			return "DRAM";
+		case EDRAM:
+			return "EDRAM";
+		case VRAM:
+			return "VRAM";
+		case SRAM:
+			return "SRAM";
+		case RAM:
+			return "RAM";
+		case ROM:
+			return "ROM";
+		case FLASH:
+			return "FLASH";
+		case EEPROM:
+			return "EEPROM";
+		case FEPROM:
+			return "FEPROM";
+		case EPROM:
+			return "EPROM";
+		case CDRAM:
+			return "CDRAM";
+		case _3DRAM:
+			return "3DRAM";
+		case SDRAM:
+			return "SDRAM";
+		case SGRAM:
+			return "SGRAM";
+		case RDRAM:
+			return "RDRAM";
+		case DDR:
+			return "DDR";
+		case DDR2:
+			return "DDR2";
+		case DDR2_FB_DIMM:
+			return "DDR2 FB-DIMM";
+		case DDR3:
+			return "DDR3";
+		case FBD2:
+			return "FBD2";
+		case DDR4:
+			return "DDR4";
+		case LPDDR:
+			return "LPDDR";
+		case LPDDR2:
+			return "LPDDR2";
+		case LPDDR3:
+			return "LPDDR3";
+		case LPDDR4:
+			return "LPDDR4";
+		case LOGICAL_NON_VOLATILE_DEVICE:
+			return "Logical non-volatile device";
+		case HBM:
+			return "HBM (High Bandwidth Memory)";
+		case HBM2:
+			return "HBM2 (High Bandwidth Memory Generation 2)";
+		case DDR5:
+			return "DDR5";
+		case LPDDR5:
+			return "LPDDR5";
+		case HBM3:
+			return "HBM3 (High Bandwidth Memory Generation 3)";
+		case MRDIMM:
+			return "MRDIMM";
+		default:
+			return "Unknown";
 	}
 }
 
 // Type Detail
-void lazybiosType17TypeDetailStr(uint16_t type_detail, char *buf, size_t buf_len) {
+void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (type_detail & (1 << 1))  len += snprintf(buf + len, buf_len - len, "Other, ");
-	if (type_detail & (1 << 2))  len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if (type_detail & (1 << 3))  len += snprintf(buf + len, buf_len - len, "Fast-paged, ");
-	if (type_detail & (1 << 4))  len += snprintf(buf + len, buf_len - len, "Static column, ");
-	if (type_detail & (1 << 5))  len += snprintf(buf + len, buf_len - len, "Pseudo-static, ");
-	if (type_detail & (1 << 6))  len += snprintf(buf + len, buf_len - len, "RAMBUS, ");
-	if (type_detail & (1 << 7))  len += snprintf(buf + len, buf_len - len, "Synchronous, ");
-	if (type_detail & (1 << 8))  len += snprintf(buf + len, buf_len - len, "CMOS, ");
-	if (type_detail & (1 << 9))  len += snprintf(buf + len, buf_len - len, "EDO, ");
+	if (type_detail & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Other, ");
+	if (type_detail & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Unknown, ");
+	if (type_detail & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Fast-paged, ");
+	if (type_detail & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Static column, ");
+	if (type_detail & (1 << 5)) len += snprintf(buf + len, buf_len - len, "Pseudo-static, ");
+	if (type_detail & (1 << 6)) len += snprintf(buf + len, buf_len - len, "RAMBUS, ");
+	if (type_detail & (1 << 7)) len += snprintf(buf + len, buf_len - len, "Synchronous, ");
+	if (type_detail & (1 << 8)) len += snprintf(buf + len, buf_len - len, "CMOS, ");
+	if (type_detail & (1 << 9)) len += snprintf(buf + len, buf_len - len, "EDO, ");
 	if (type_detail & (1 << 10)) len += snprintf(buf + len, buf_len - len, "Window DRAM, ");
 	if (type_detail & (1 << 11)) len += snprintf(buf + len, buf_len - len, "Cache DRAM, ");
 	if (type_detail & (1 << 12)) len += snprintf(buf + len, buf_len - len, "Non-volatile, ");
@@ -505,36 +559,45 @@ void lazybiosType17TypeDetailStr(uint16_t type_detail, char *buf, size_t buf_len
 }
 
 // Extended Size
-void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char *buf, size_t buf_len) {
-    if (extended_size == 0) {
-        snprintf(buf, buf_len, "Not used (Size field applies)");
-        return;
-    }
+void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len) {
+	if (extended_size == 0) {
+		snprintf(buf, buf_len, "Not used (Size field applies)");
+		return;
+	}
 
-    // Bit 31 is reserved, must be set to 0.
-    // Bits 30:0 represent the size of the memory device in megabytes (MiB).
-    uint32_t size_mib = extended_size & 0x7FFFFFFF;
+	// Bit 31 is reserved, must be set to 0.
+	// Bits 30:0 represent the size of the memory device in megabytes (MiB).
+	uint32_t size_mib = extended_size & 0x7FFFFFFF;
 
-    snprintf(buf, buf_len, "%u MiB", size_mib);
+	snprintf(buf, buf_len, "%u MiB", size_mib);
 }
 
 // Memory Technology
 const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
 	switch (memory_technology) {
-		case MTECH_OTHER: return "Other";
-		case MTECH_UNKNOWN: return "Unknown";
-		case MTECH_DRAM: return "DRAM";
-		case NVDIMM_N: return "NVDIMM-N";
-		case NVDIMM_F: return "NVDIMM-F";
-		case NVDIMM_P: return "NVDIMM-P";
-		case INTEL_OPTANE_PERSISTENT_MEMORY: return "Intel Optane persistent memory";
-		case MRDIMM_DEPRECATED: return "MRDIMM (Deprecated). This value has been deprecated from this table and moved to Memory Device - Type, subclause 7.18.2";
-		default: return "Unknown";
+		case MTECH_OTHER:
+			return "Other";
+		case MTECH_UNKNOWN:
+			return "Unknown";
+		case MTECH_DRAM:
+			return "DRAM";
+		case NVDIMM_N:
+			return "NVDIMM-N";
+		case NVDIMM_F:
+			return "NVDIMM-F";
+		case NVDIMM_P:
+			return "NVDIMM-P";
+		case INTEL_OPTANE_PERSISTENT_MEMORY:
+			return "Intel Optane persistent memory";
+		case MRDIMM_DEPRECATED:
+			return "MRDIMM (Deprecated). This value has been deprecated from this table and moved to Memory Device - Type, subclause 7.18.2";
+		default:
+			return "Unknown";
 	}
 }
 
 // Memory Operating Mode Capability
-void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char *buf, size_t buf_len) {
+void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -552,7 +615,7 @@ void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_cap
 }
 
 // Module Manufacturers IDs
-void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char *buf, size_t buf_len) {
+void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -561,7 +624,7 @@ void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char *buf, size_t buf_le
 }
 
 // Volatile Size
-void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char *buf, size_t buf_len) {
+void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len) {
 	if (volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -570,7 +633,7 @@ void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char *buf, size_t buf
 }
 
 // Non-Volatile Size
-void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char *buf, size_t buf_len) {
+void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len) {
 	if (non_volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -579,7 +642,7 @@ void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char *buf, siz
 }
 
 // Cache Size
-void lazybiosType17CacheSizeStr(uint64_t cache_size, char *buf, size_t buf_len) {
+void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) {
 	if (cache_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -588,7 +651,7 @@ void lazybiosType17CacheSizeStr(uint64_t cache_size, char *buf, size_t buf_len) 
 }
 
 // Extended Speed
-void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char *buf, size_t buf_len) {
+void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len) {
 	// Bit 31 is reserved, must be set to 0.
 	// Bits 30:0 represent the speed in MT/s.
 	uint32_t speed_mts = extended_speed & 0x7FFFFFFF;
@@ -601,7 +664,7 @@ void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char *buf, size_t b
 }
 
 // PMIC0 Manufacturer ID
-void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char *buf, size_t buf_len) {
+void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -610,7 +673,7 @@ void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char *buf, size_t buf_len
 }
 
 // PMIC0 Revision
-void lazybiosType17PMIC0RevisionStr(uint16_t revision, char *buf, size_t buf_len) {
+void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len) {
 	if (revision == 0xFF00) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -619,7 +682,7 @@ void lazybiosType17PMIC0RevisionStr(uint16_t revision, char *buf, size_t buf_len
 }
 
 // RCD Manufacturer ID
-void lazybiosType17RCDManufacturerIDStr(uint16_t id, char *buf, size_t buf_len) {
+void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -628,14 +691,13 @@ void lazybiosType17RCDManufacturerIDStr(uint16_t id, char *buf, size_t buf_len) 
 }
 
 // RCD Revision Number
-void lazybiosType17RCDRevisionStr(uint16_t revision, char *buf, size_t buf_len) {
+void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) {
 	if (revision == 0xFF00) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "0x%04X", revision);
 	}
 }
-
 
 // Free Function
 void lazybiosFreeType17(lazybiosType17_t* Type17, size_t type17_count) {
