@@ -11,6 +11,9 @@ extern "C" {
 
 // lazybios version
 #define LAZYBIOS_VER "0.3.0"
+#define LAZYBIOS_MAJOR 0
+#define LAZYBIOS_MINOR 3
+#define LAZYBIOS_PATCH 0
 
 // Just a little recommended buffer size for the 3 argument decoder functions
 #define LAZYBIOS_DECODER_BUF_SIZE 256
