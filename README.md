@@ -11,14 +11,15 @@
 - **Clean C API** - Simple function calls, only 3 steps to assure memory-safety
 - **Zero Dependencies** - Pure C standard library, except libc, but that will change in the future
 - **Memory Safe** - Proper allocation and cleanup
-- **Cross Platform** - Currently it's supported on Windows and Linux.
+- **Cross Platform** - Currently it's supported on Windows and Linux(MacOS coming next).
 
 ---
 
 ## Project Status
 1. **Windows support:** Implemented using Windows API calls.  
-   **Linux support:** Currently implemented via sysfs. /dev/mem support is planned for the future.  
-2. Cross-platform compatibility is a goal, but the current focus is on the Linux backend as the library is still in early development.  
+   **Linux support:** Fully implemented via sysfs and /dev/mem.\
+   **MacOS support:** Not implemented at all. I don't have a Mac to test this on, but I'll try to implement it.
+2. Cross-platform compatibility is a goal, but the current focus is on the Linux backend and now finally Windows backend.  
 3. The library is actively under development, features and structures may change.
 
 ---

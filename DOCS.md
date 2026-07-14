@@ -174,12 +174,12 @@ cmake .. -DLAZYBIOS_DEBUG=ON
 
 `lazybiosInit(ctx)` selects behavior from `ctx->backend`, which is initialized by `lazybiosCTXNew()` at compile-time platform detection.
 
-| Backend | Status | Behavior |
-| :--- | :--- | :--- |
-| `LAZYBIOS_BACKEND_LINUX` | Implemented via sysfs | Reads `/sys/firmware/dmi/tables/smbios_entry_point` and `/sys/firmware/dmi/tables/DMI`. If the DMI sysfs file cannot be opened, it attempts the `/dev/mem` backend, which currently returns failure. |
-| `LAZYBIOS_BACKEND_WINDOWS` | Implemented | Uses `GetSystemFirmwareTable` with the `RSMB` provider and stores the returned DMI payload. Windows does not provide a raw SMBIOS entry point file or physical table address through this path. |
-| `LAZYBIOS_BACKEND_MACOS` | Not implemented | Returns failure. |
-| `LAZYBIOS_BACKEND_UNKNOWN` | Not implemented | Returns failure. |
+| Backend | Status                              | Behavior                                                                                                                                                                                                            |
+| :--- |:------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `LAZYBIOS_BACKEND_LINUX` | Implemented both sysfs and /dev/mem | Reads `/sys/firmware/dmi/tables/smbios_entry_point` and `/sys/firmware/dmi/tables/DMI`. If the DMI sysfs file cannot be opened, it attempts the `/dev/mem` backend.                                                 |
+| `LAZYBIOS_BACKEND_WINDOWS` | Implemented                         | Uses `GetSystemFirmwareTable` with the `RSMB` provider and stores the returned DMI payload. Windows does not provide a raw SMBIOS entry point file(so we generate one) or physical table address through this path. |
+| `LAZYBIOS_BACKEND_MACOS` | Not implemented                     | Returns failure.                                                                                                                                                                                                    |
+| `LAZYBIOS_BACKEND_UNKNOWN` | Not implemented                     | Returns failure.                                                                                                                                                                                                    |
 
 ### Separate Dump Files
 
@@ -222,13 +222,13 @@ build/lazybios_test --dump .
 
 Options:
 
-| Option | Description |
-| :--- | :--- |
-| `--help` | Prints command help. |
-| `--type <number>` | Prints one implemented SMBIOS type. Valid implemented values are `0`, `1`, `2`, `3`, `4`, and `17`. |
-| `--dump [dir]` | Dumps raw SMBIOS data to a directory. Linux writes `smbios_entry_point` and `DMI`; Windows writes only `DMI.bin`. |
-| `--sources <entry> <dmi>` | Parses separate raw entry point and DMI table files. |
-| `--single-source <binary>` | Parses one merged file containing entry point bytes followed by DMI table bytes. |
+| Option | Description                                                                                                                                                     |
+| :--- |:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--help` | Prints command help.                                                                                                                                            |
+| `--type <number>` | Prints one implemented SMBIOS type. Valid implemented values are `0`, `1`, `2`, `3`, `4`, and `17`.                                                             |
+| `--dump [dir]` | Dumps raw SMBIOS data to a directory. Linux writes `smbios_entry_point` and `DMI`; Windows writes `DMI.bin` and a generated `generated_smbios_entry_point.bin`. |
+| `--sources <entry> <dmi>` | Parses separate raw entry point and DMI table files.                                                                                                            |
+| `--single-source <binary>` | Parses one merged file containing entry point bytes followed by DMI table bytes.                                                                                |
 
 ## Core Concepts
 
@@ -241,7 +241,7 @@ The context stores:
 - The selected backend.
 - A pointer to the raw DMI container, `ctx->DMIData`.
 - Parsed Type 0 and Type 1 pointers.
-- Parsed Type 2, Type 3, Type 4, and Type 17 arrays plus count fields.
+- Parsed Type 2, Type 3, Type 4, and Type 17.... arrays plus count fields.
 
 ### DMI Data Layout
 
@@ -257,7 +257,7 @@ typedef struct {
 } lazybiosDMI_t;
 ```
 
-`dmi_data` points at the raw DMI structure table. `entry_data` points at raw entry point bytes when they are available. On Windows, `entry_data` is currently `NULL` because the Windows API returns SMBIOS table data rather than the raw entry point file.
+`dmi_data` points at the raw DMI structure table. `entry_data` points at raw entry point bytes when they are available. On Windows, `entry_data` is manually generated because the Windows API returns SMBIOS table data rather than the raw entry point file.
 
 ### Memory Ownership
 
@@ -268,7 +268,7 @@ Data loading functions allocate `ctx->DMIData->entry_data` and/or `ctx->DMIData-
 SMBIOS type getter functions allocate parsed structures:
 
 - Type 0 and Type 1 return a single allocated structure.
-- Type 2, Type 3, Type 4, and Type 17 return allocated arrays and write the parsed count through the provided count pointer.
+- Type 2, Type 3, Type 4, and Type 17..... return allocated arrays and write the parsed count through the provided count pointer.
 
 If parsed structures are assigned into the context fields, `lazybiosCleanup(ctx)` frees them.
 
@@ -868,8 +868,8 @@ The public header defines constants for several SMBIOS structure IDs:
 
 ## Limitations and Platform Notes
 
-- Linux support currently depends on sysfs SMBIOS files. The `/dev/mem` fallback exists internally but is not implemented.
-- Windows support reads DMI table data through `GetSystemFirmwareTable`; it does not preserve a raw SMBIOS entry point buffer.
+- Linux support is complete with both sysfs and /dev/mem(as a fallback) support. 
+- Windows support reads DMI table data through `GetSystemFirmwareTable`; it now provides an "artifically" generated entry point.
 - macOS is represented in the backend enum but is not implemented.
 - Type 0 and Type 1 getters return only the first matching structure.
 - Type 2, Type 3, Type 4, and Type 17 getters allocate arrays and require count-aware cleanup.
