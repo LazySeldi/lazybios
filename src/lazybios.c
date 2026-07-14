@@ -620,9 +620,8 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 
 	switch (ctx->backend) {
 		case LAZYBIOS_BACKEND_LINUX: { // Brackets since you can't declare variables inside a case without brackets, you can only do that in C23
-			FILE* f = fopen(LINUX_SYSFS_DMI_TABLE, "r");
+			FILE* f = fopen(LINUX_SYSFS_DMI_TABLE, "rb");
 			if (!f) {
-				fclose(f);
 				return lazybiosDevMem(ctx);
 			}
 			fclose(f);
