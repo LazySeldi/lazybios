@@ -10,7 +10,7 @@ extern "C" {
 #include <stdlib.h>
 
 // lazybios version
-#define LAZYBIOS_VER "0.1.0"
+#define LAZYBIOS_VER "0.3.0"
 
 // Just a little recommended buffer size for the 3 argument decoder functions
 #define LAZYBIOS_DECODER_BUF_SIZE 256
@@ -44,16 +44,43 @@ extern "C" {
 #define SMBIOS_TYPE_MEMORY_DEVICE 17
 #define SMBIOS_TYPE_END 127
 
-// Helper macros
-#define ISVERPLUS(DMIData, req_major, req_minor) (((DMIData)->entry_info.major > (req_major)) || ((DMIData)->entry_info.major == (req_major) && (DMIData)->entry_info.minor >= (req_minor))) // Returns 1 if the version is equal or newer and 0 if its older
-
 // Values for not found
 #define LAZYBIOS_NOT_FOUND_U8 0xFF
 #define LAZYBIOS_NOT_FOUND_U16 0xFFFF
 #define LAZYBIOS_NOT_FOUND_U32 0xFFFFFFFF
 #define LAZYBIOS_NOT_FOUND_U64 0xFFFFFFFFFFFFFFFFULL
-#define LAZYBIOS_NULL NULL
+#define LAZYBIOS_NULL NULL // Why not lol
 #define LAZYBIOS_NOT_FOUND_STR "Not Present"
+
+// Helper macros
+#define ISVERPLUS(DMIData, req_major, req_minor) (((DMIData)->entry_info.major > (req_major)) || ((DMIData)->entry_info.major == (req_major) && (DMIData)->entry_info.minor >= (req_minor))) // Returns 1 if the version is equal or newer and 0 if its older
+
+#define READSTR(len, OFFSET, field, p, end) \
+	if (len > OFFSET) field = DMIString(p, len, p[OFFSET], end); \
+	if (!field) field = strdup(LAZYBIOS_NOT_FOUND_STR)
+
+#define READU8(field, len, OFFSET, p) field = (len > OFFSET) ? p[OFFSET] : LAZYBIOS_NOT_FOUND_U8;
+
+#define READU16(field, len, OFFSET, p) \
+	if (len >= OFFSET + sizeof(uint16_t)) { \
+		memcpy(&field, p + OFFSET, sizeof(uint16_t)); \
+	} else {  \
+		field = LAZYBIOS_NOT_FOUND_U16; \
+	}
+
+#define READU32(field, len, OFFSET, p) \
+	if (len >= OFFSET + sizeof(uint32_t)) { \
+		memcpy(&field, p + OFFSET, sizeof(uint32_t)); \
+	} else {  \
+		field = LAZYBIOS_NOT_FOUND_U32; \
+	}
+
+#define READU64(field, len, OFFSET, p) \
+	if (len >= OFFSET + sizeof(uint64_t)) { \
+		memcpy(&field, p + OFFSET, sizeof(uint64_t)); \
+	} else {  \
+		field = LAZYBIOS_NOT_FOUND_U64; \
+	}
 
 // ===== General Constants =====
 #define SMBIOS_HEADER_SIZE 4
