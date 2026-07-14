@@ -7,19 +7,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-#	include <windows.h>
-#	define OS_WINDOWS 1
+	#include <windows.h>
+	#define OS_WINDOWS 1
 
 #elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__gnu_linux__)
-#	define OS_LINUX 1
+	#include <sys/mman.h>
+	#define OS_LINUX 1
 
 #elif defined(__APPLE__) && defined(__MACH__)
 #	define OS_MACOS 1
 
 #else
-#	define OS_UNKNOWN 1
+	#define OS_UNKNOWN 1
 #endif
 
 // Logging system for lazybios
@@ -240,106 +243,366 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 		return LAZYBIOS_NULL;
 	}
 
-#if OS_LINUX
-	ctx->backend = LAZYBIOS_BACKEND_LINUX;
-#elif OS_WINDOWS
-	ctx->backend = LAZYBIOS_BACKEND_WINDOWS;
-#elif OS_MACOS
-	ctx->backend = LAZYBIOS_BACKEND_MACOS;
-#else
-	ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
-#endif
+	#if OS_LINUX
+		ctx->backend = LAZYBIOS_BACKEND_LINUX;
+	#elif OS_WINDOWS
+		ctx->backend = LAZYBIOS_BACKEND_WINDOWS;
+	#elif OS_MACOS
+		ctx->backend = LAZYBIOS_BACKEND_MACOS;
+	#else
+		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
+	#endif
 
 	return ctx;
 }
 
 static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
-	if (!ctx) return -1;
+    if (!ctx) return -1;
 
-#if OS_LINUX
-	lb_log("/dev/mem backend not implemented yet");
-	return -1;
-#else
-	return -1;
-#endif
+    #if OS_LINUX
+        #define SMBIOS_START 0xF0000
+        #define SMBIOS_SIZE  0x10000
+
+        int fd = open(DEV_MEM, O_RDONLY);
+        if (fd == -1) {
+            lb_log("Failed to open /dev/mem");
+            lb_dbg("Error: %s", strerror(errno));
+            return -1;
+        }
+
+        off_t base_addr = SMBIOS_START;
+        long page_size = sysconf(_SC_PAGESIZE);
+
+        off_t aligned_addr = (base_addr / page_size) * page_size;
+        off_t page_offset = base_addr - aligned_addr;
+        size_t map_size = SMBIOS_SIZE + page_offset;
+
+        void *mapped_data = mmap(NULL, map_size, PROT_READ, MAP_SHARED, fd, aligned_addr);
+        if (mapped_data == MAP_FAILED) {
+            lb_log("Failed to mmap /dev/mem data");
+            lb_dbg("Error: %s", strerror(errno));
+            close(fd);
+            return -1;
+        }
+
+        unsigned char *smbios_data = (unsigned char *)mapped_data + page_offset;
+
+        int found = 0;
+        size_t sig_offset = 0;
+        int is_smbios3 = 0;
+        int is_dmi = 0;
+		// This part wasn't fully made by me
+        for (size_t i = 0; i < SMBIOS_SIZE - 5; i++) {
+            // Check "_SM3_"
+            if (smbios_data[i] == '_' && smbios_data[i+1] == 'S' &&
+                smbios_data[i+2] == 'M' && smbios_data[i+3] == '3' &&
+                smbios_data[i+4] == '_') {
+                found = 1;
+                is_smbios3 = 1;
+                is_dmi = 0;
+                sig_offset = i;
+                break;
+            }
+
+            // Check "_SM_"
+            if (smbios_data[i] == '_' && smbios_data[i+1] == 'S' &&
+                smbios_data[i+2] == 'M' && smbios_data[i+3] == '_' &&
+                smbios_data[i+4] != '3') {
+                found = 1;
+                is_smbios3 = 0;
+                is_dmi = 0;
+                sig_offset = i;
+                break;
+            }
+
+            // Check "_DMI_"
+            if (smbios_data[i] == '_' && smbios_data[i+1] == 'D' &&
+                smbios_data[i+2] == 'M' && smbios_data[i+3] == 'I' &&
+                smbios_data[i+4] == '_') {
+                found = 1;
+                is_smbios3 = 0;
+                is_dmi = 1;
+                sig_offset = i;
+                break;
+            }
+        }
+
+        if (!found) {
+            lb_log("SMBIOS/DMI signature not found in /dev/mem");
+            munmap(mapped_data, map_size);
+            close(fd);
+            return -1;
+        }
+
+        unsigned char *entry = smbios_data + sig_offset;
+
+        // Determine entry length based on signature
+        size_t entry_len = 0;
+        if (is_smbios3) {
+            // SMBIOS 3.0 entry point: length at offset 0x06
+            entry_len = entry[0x06];
+            if (entry_len < 0x18) entry_len = 0x18; // Minimum valid size(for the ones below it's the same thing too)
+        } else if (is_dmi) {
+            // _DMI_ entry point: length at offset 0x05
+            entry_len = entry[0x05];
+            if (entry_len < 0x0F) entry_len = 0x0F;
+        } else {
+            // _SM_ entry point: length at offset 0x05
+            entry_len = entry[0x05];
+            if (entry_len < 0x1F) entry_len = 0x1F;
+        }
+
+        // we cap to prevent overflow
+        if (entry_len > 64) entry_len = 64;
+
+        ctx->DMIData->entry_len = entry_len;
+        ctx->DMIData->entry_data = malloc(entry_len);
+        if (!ctx->DMIData->entry_data) {
+            lb_log("Failed to allocate entry_data");
+            munmap(mapped_data, map_size);
+            close(fd);
+            return -1;
+        }
+        memcpy(ctx->DMIData->entry_data, entry, entry_len);
+
+        // We will parse the entry using the existing lazybiosParseEntry
+        // This will fill ctx->DMIData->entry_info so then we can use the table address and length.
+        if (lazybiosParseEntry(ctx, entry) != 0) {
+            lb_log("Failed to parse SMBIOS entry point");
+            free(ctx->DMIData->entry_data);
+            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            munmap(mapped_data, map_size);
+            close(fd);
+            return -1;
+        }
+
+        // Get table address and length from entry_info
+        uint64_t table_addr = ctx->DMIData->entry_info.table_address;
+        size_t table_len = ctx->DMIData->entry_info.table_length;
+
+        // Unmap the entry scan region
+        munmap(mapped_data, map_size);
+
+        // Map the table
+        off_t table_aligned = (table_addr / page_size) * page_size;
+        off_t table_offset_page = table_addr - table_aligned;
+        size_t table_map_size = table_len + table_offset_page;
+
+        void *mapped_table = mmap(NULL, table_map_size, PROT_READ, MAP_SHARED, fd, table_aligned);
+        if (mapped_table == MAP_FAILED) {
+            lb_log("Failed to mmap DMI/SMBIOS table at 0x%016lx", (unsigned long)table_addr);
+            lb_dbg("Error: %s", strerror(errno));
+            free(ctx->DMIData->entry_data);
+            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            close(fd);
+            return -1;
+        }
+
+        unsigned char *table_data = (unsigned char *)mapped_table + table_offset_page;
+
+        // Store table data in context
+        ctx->DMIData->dmi_len = table_len;
+        ctx->DMIData->dmi_data = malloc(table_len);
+        if (!ctx->DMIData->dmi_data) {
+            lb_log("Failed to allocate DMI buffer (%zu bytes)", table_len);
+            munmap(mapped_table, table_map_size);
+            free(ctx->DMIData->entry_data);
+            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            close(fd);
+            return -1;
+        }
+        memcpy(ctx->DMIData->dmi_data, table_data, table_len);
+
+        munmap(mapped_table, table_map_size);
+        close(fd);
+
+        return 0;
+    #else
+        return -1;
+    #endif
 }
 
-static inline int lazybiosWindows(lazybiosCTX_t* ctx) {
-	if (!ctx) return -1;
+static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows backend is appriciated, since I'm not an expert at the windows API, and it was not fully made by me.
+    if (!ctx) return -1;
 
-// Most of the Windows backend wasn't made by me I got help from AI for this since I don't know anything about the WindowsAPI
-#if OS_WINDOWS
-	// RSMB provider ID (little endian for "RSMB")
-	const DWORD sig = 0x52534D42;
+    #if OS_WINDOWS
+        // RSMB provider ID (little endian for "RSMB")
+        const DWORD sig = 0x52534D42;
 
-	// Query required size
-	DWORD size = GetSystemFirmwareTable(sig, 0, LAZYBIOS_NULL, 0);
-	if (size == 0) {
-		lb_log("GetSystemFirmwareTable failed (size=0)");
-		return -1;
-	}
+        // Query required size
+        DWORD size = GetSystemFirmwareTable(sig, 0, LAZYBIOS_NULL, 0);
+        if (size == 0) {
+            lb_log("GetSystemFirmwareTable failed (size=0)");
+            return -1;
+        }
 
-	uint8_t* buf = malloc(size);
-	if (!buf) return -1;
+        uint8_t* buf = malloc(size);
+        if (!buf) return -1;
 
-	// Fetch the table
-	DWORD got = GetSystemFirmwareTable(sig, 0, buf, size);
-	if (got != size) {
-		lb_log("SMBIOS read mismatch (%lu != %lu)", (unsigned long)got, (unsigned long)size);
-		free(buf);
-		return -1;
-	}
+        // Fetch the table
+        DWORD got = GetSystemFirmwareTable(sig, 0, buf, size);
+        if (got != size) {
+            lb_log("SMBIOS read mismatch (%lu != %lu)", (unsigned long)got, (unsigned long)size);
+            free(buf);
+            return -1;
+        }
 
-	// Cast to RawSMBIOSData header used by Windows API
-	typedef struct {
-		BYTE Used20CallingMethod;
-		BYTE SMBIOSMajorVersion;
-		BYTE SMBIOSMinorVersion;
-		BYTE DmiRevision;
-		DWORD Length; // Length of TableData
-		BYTE SMBIOSTableData[1]; // Start of DMI structures
-	} RawSMBIOSData;
+        // Cast to RawSMBIOSData header used by Windows API
+        typedef struct {
+            BYTE Used20CallingMethod;
+            BYTE SMBIOSMajorVersion;
+            BYTE SMBIOSMinorVersion;
+            BYTE DmiRevision;
+            DWORD Length; // Length of TableData
+            BYTE SMBIOSTableData[1]; // Start of DMI structures
+        } RawSMBIOSData;
 
-	RawSMBIOSData* raw = (RawSMBIOSData*)buf;
+        RawSMBIOSData* raw = (RawSMBIOSData*)buf;
 
-	// Sanity check: table length must fit inside returned buffer
-	if (raw->Length == 0 || raw->Length > size) {
-		lb_log("Invalid RawSMBIOSData.Length = %u", raw->Length);
-		free(buf);
-		return -1;
-	}
+        // Sanity check: table length must fit inside returned buffer
+        if (raw->Length == 0 || raw->Length > size) {
+            lb_log("Invalid RawSMBIOSData.Length = %u", raw->Length);
+            free(buf);
+            return -1;
+        }
 
-	// Fill ctx->DMIData->entry_info manually
-	ctx->DMIData->entry_info.major = raw->SMBIOSMajorVersion;
-	ctx->DMIData->entry_info.minor = raw->SMBIOSMinorVersion;
-	ctx->DMIData->entry_info.docrev = raw->DmiRevision;
-	ctx->DMIData->entry_info.table_length = raw->Length;
-	ctx->DMIData->entry_info.table_address = 0; // Windows gives no physical address
-	ctx->DMIData->entry_info.is_64bit = (raw->SMBIOSMajorVersion >= 3);
+        // Fill entry_info
+        ctx->DMIData->entry_info.major = raw->SMBIOSMajorVersion;
+        ctx->DMIData->entry_info.minor = raw->SMBIOSMinorVersion;
+        ctx->DMIData->entry_info.docrev = raw->DmiRevision;
+        ctx->DMIData->entry_info.table_length = raw->Length;
+        ctx->DMIData->entry_info.table_address = 0; // Windows gives no physical address
+        ctx->DMIData->entry_info.is_64bit = (raw->SMBIOSMajorVersion >= 3);
+        ctx->DMIData->entry_info.n_structures = 0; // Not available from Windows API
 
-	// Provide ONLY the DMI table payload
-	size_t dmi_len = raw->Length;
+        size_t dmi_len = raw->Length;
+        uint8_t* table = malloc(dmi_len);
+        if (!table) {
+            free(buf);
+            return -1;
+        }
+        memcpy(table, raw->SMBIOSTableData, dmi_len);
 
-	uint8_t* table = malloc(dmi_len);
-	if (!table) {
-		free(buf);
-		return -1;
-	}
+        // Free the original RSMB buffer
+        free(buf);
 
-	memcpy(table, raw->SMBIOSTableData, dmi_len);
+        // Store DMI table
+        ctx->DMIData->dmi_data = table;
+        ctx->DMIData->dmi_len = dmi_len;
 
-	// Free the original RSMB buffer — we only keep the DMI payload
-	free(buf);
+		// Since windows doesn't give us a table for the entry, we'll make a half-assed one
+        if (ctx->DMIData->entry_info.is_64bit) {
+            // the SMBIOS 3.x entry is 24B
+            uint8_t entry[24] = {0};
+            entry[0] = '_'; entry[1] = 'S'; entry[2] = 'M'; entry[3] = '3'; entry[4] = '_';
 
-	ctx->DMIData->dmi_data = table;
-	ctx->DMIData->entry_data = LAZYBIOS_NULL; // We don't have this in windows
-	ctx->DMIData->dmi_len = dmi_len;
+            // Length 0x18 (24B) and the version
+            entry[0x06] = 0x18;
+            entry[0x07] = ctx->DMIData->entry_info.major;
+            entry[0x08] = ctx->DMIData->entry_info.minor;
+            entry[0x09] = ctx->DMIData->entry_info.docrev;
 
-	return 0;
+            // Entry point revision is 0x01 for SMBIOS 3.0+
+            entry[0x0A] = 0x01;
 
-#else
-	return -1;
-#endif
+            // Reserved
+            entry[0x0B] = 0x00;
+
+            // Table maximum size (4 bytes, little-endian)
+            uint32_t table_max_size = (uint32_t)dmi_len;
+            entry[0x0C] = table_max_size & 0xFF;
+            entry[0x0D] = (table_max_size >> 8) & 0xFF;
+            entry[0x0E] = (table_max_size >> 16) & 0xFF;
+            entry[0x0F] = (table_max_size >> 24) & 0xFF;
+
+            // Table address (8 bytes, little-endian) - 0 on Windows
+            entry[0x10] = 0; entry[0x11] = 0; entry[0x12] = 0; entry[0x13] = 0;
+            entry[0x14] = 0; entry[0x15] = 0; entry[0x16] = 0; entry[0x17] = 0;
+
+            // Calculate checksum (sum of all bytes must be 0)
+            entry[0x05] = 0; // Zero out checksum first
+            uint8_t sum = 0;
+            for (int i = 0; i < sizeof(entry); i++) {
+                sum += entry[i];
+            }
+            entry[0x05] = (uint8_t)(-sum); // Two's complement
+
+            // Store the entry point
+            ctx->DMIData->entry_len = sizeof(entry);
+            ctx->DMIData->entry_data = malloc(sizeof(entry));
+            if (!ctx->DMIData->entry_data) {
+                free(ctx->DMIData->dmi_data);
+                ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+                return -1;
+            }
+            memcpy(ctx->DMIData->entry_data, entry, sizeof(entry));
+
+        } else {
+            // SMBIOS 2.x Entry Point: 31B
+            uint8_t entry[31] = {0};
+            entry[0] = '_'; entry[1] = 'S'; entry[2] = 'M'; entry[3] = '_';
+
+            // Length is 0x1F (31 bytes)
+            entry[0x05] = 0x1F;
+            entry[0x06] = ctx->DMIData->entry_info.major;
+            entry[0x07] = ctx->DMIData->entry_info.minor;
+
+            // Max structure size (2 bytes, little-endian)
+            entry[0x08] = 0x00; entry[0x09] = 0x00; // Not used
+
+            // Entry point revision is 0x00 for SMBIOS 2.x
+            entry[0x0A] = 0x00;
+
+            // Formatted area (5 bytes, reserved - all zeros)
+            entry[0x0B] = 0; entry[0x0C] = 0; entry[0x0D] = 0; entry[0x0E] = 0; entry[0x0F] = 0;
+            entry[0x10] = '_'; entry[0x11] = 'D'; entry[0x12] = 'M'; entry[0x13] = 'I'; entry[0x14] = '_';
+
+            // Table length (2 bytes, little-endian)
+            uint16_t table_len = (uint16_t)dmi_len;
+            entry[0x16] = table_len & 0xFF;
+            entry[0x17] = (table_len >> 8) & 0xFF;
+
+            // Table address (4 bytes, little-endian) - 0 on Windows
+            entry[0x18] = 0; entry[0x19] = 0; entry[0x1A] = 0; entry[0x1B] = 0;
+
+            // Structure count (2 bytes, little-endian) - Not available
+            entry[0x1C] = 0; entry[0x1D] = 0;
+
+            // BCD revision
+            entry[0x1E] = (ctx->DMIData->entry_info.major << 4) | ctx->DMIData->entry_info.minor;
+
+            // Calculate intermediate checksum (bytes 0x10 through 0x1E)
+            entry[0x15] = 0; // Zero out intermediate checksum first
+            uint8_t sum2 = 0;
+            for (int i = 0x10; i < 0x1F; i++) {
+                sum2 += entry[i];
+            }
+            entry[0x15] = (uint8_t)(-sum2);
+
+            // Calculate main checksum (bytes 0x00 through 0x0F)
+            entry[0x04] = 0; // Zero out main checksum first
+            uint8_t sum1 = 0;
+            for (int i = 0; i < 0x10; i++) {
+                sum1 += entry[i];
+            }
+            entry[0x04] = (uint8_t)(-sum1);
+
+            // Store the entry point
+            ctx->DMIData->entry_len = sizeof(entry);
+            ctx->DMIData->entry_data = malloc(sizeof(entry));
+            if (!ctx->DMIData->entry_data) {
+                free(ctx->DMIData->dmi_data);
+                ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+                return -1;
+            }
+            memcpy(ctx->DMIData->entry_data, entry, sizeof(entry));
+        }
+
+        return 0;
+
+    #else
+        return -1;
+    #endif
 }
 
 static inline int lazybiosMacOS(lazybiosCTX_t* ctx) {
@@ -359,6 +622,7 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 		case LAZYBIOS_BACKEND_LINUX: { // Brackets since you can't declare variables inside a case without brackets, you can only do that in C23
 			FILE* f = fopen(LINUX_SYSFS_DMI_TABLE, "r");
 			if (!f) {
+				fclose(f);
 				return lazybiosDevMem(ctx);
 			}
 			fclose(f);
@@ -375,14 +639,14 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 			lb_log("Unknown backend %d", ctx->backend);
 			return -1;
 		default:
-			lb_log("Nothing Found!");
+			lb_log("No backend found for initialization!");
 			return -1;
 	}
 }
 
 // ===== Core DMI Parsing Helpers =====
 
-// Finds the next structure in the DMI table
+// DMINext finds the next structure in the DMI table
 const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
 	if (p + 4 > end) return end; // header too small
 
