@@ -984,7 +984,7 @@ int main(int argc, const char* argv[]) {
 
 #if defined(_WIN32) || defined(_WIN64)
 		snprintf(path_dmi, sizeof(path_dmi), "%s\\DMI.bin", dump_dir);
-		snprintf(path_entry, sizeof(path_entry), "%s\\smbios_entry_point", dump_dir);
+		snprintf(path_entry, sizeof(path_entry), "%s\\generated_smbios_entry_point.bin", dump_dir);
 #else
 		snprintf(path_dmi, sizeof(path_dmi), "%s/DMI", dump_dir);
 		snprintf(path_entry, sizeof(path_entry), "%s/smbios_entry_point", dump_dir);
@@ -1012,18 +1012,27 @@ int main(int argc, const char* argv[]) {
 			fclose(dmi);
 			printf("%s and %s dumped successfully\n", path_entry, path_dmi);
 
-		} else { // This is for Windows
-			dmi = fopen(path_dmi, "wb");
-			printf("Dumping only DMI data to '%s'\n", path_dmi);
+		} else if (ctx->backend == LAZYBIOS_BACKEND_WINDOWS) {
+			entry = fopen(path_entry, "wb");
+			if (!entry) {
+				printf("Failed to open '%s': %s\n", path_entry, strerror(errno));
+				return -1;
+			}
 
+			dmi = fopen(path_dmi, "wb");
 			if (!dmi) {
-				printf("Couldn't create/modify the file: %s\n", strerror(errno));
+				printf("Failed to open '%s': %s\n", path_dmi, strerror(errno));
+				fclose(entry);
 				return -1;
 			}
 
 			fwrite(ctx->DMIData->dmi_data, 1, ctx->DMIData->dmi_len, dmi);
+			fwrite(ctx->DMIData->entry_data, 1, ctx->DMIData->entry_len, entry);
+			fclose(entry);
 			fclose(dmi);
-			printf("%s created/filled successfully\n", path_dmi);
+			printf("%s and %s dumped successfully\n", path_entry, path_dmi);
+		} else { // MacOS coming soon? I don't have a mac so I can't test. But I'll try it on VMs.
+			printf("Can't dump data. no backend found!");
 		}
 
 		lazybiosCleanup(ctx);
