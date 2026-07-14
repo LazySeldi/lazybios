@@ -61,36 +61,26 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 		if (type == SMBIOS_TYPE_BASEBOARD) {
 			if (index >= count) break;
 			lazybiosType2_t* current = &Type2[index];
+			
+			READSTR(len, MANUFACTURER, current->manufacturer, p, end);
 
-			if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-			if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, PRODUCT, current->product, p, end);
 
-			if (len > PRODUCT) current->product = DMIString(p, len, p[PRODUCT], end);
-			if (!current->product) current->product = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, VERSION, current->version, p, end);
 
-			if (len > VERSION) current->version = DMIString(p, len, p[VERSION], end);
-			if (!current->version) current->version = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, SERIAL_NUMBER, current->serial_number, p, end);
 
-			if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-			if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, ASSET_TAG, current->asset_tag, p, end);
 
-			if (len > ASSET_TAG) current->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
-			if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READU8(current->feature_flags, len, FEATURE_FLAGS, p);
 
-			current->feature_flags = (len > FEATURE_FLAGS) ? p[FEATURE_FLAGS] : LAZYBIOS_NOT_FOUND_U8;
+			READSTR(len, LOCATION_IN_CHASSIS, current->location_in_chassis, p, end);
 
-			if (len > LOCATION_IN_CHASSIS) current->location_in_chassis = DMIString(p, len, p[LOCATION_IN_CHASSIS], end);
-			if (!current->location_in_chassis) current->location_in_chassis = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READU16(current->chassis_handle, len, CHASSIS_HANDLE, p);
 
-			if (len >= CHASSIS_HANDLE + sizeof(uint16_t)) {
-				memcpy(&current->chassis_handle, p + CHASSIS_HANDLE, sizeof(uint16_t));
-			} else {
-				current->chassis_handle = LAZYBIOS_NOT_FOUND_U16;
-			}
+			READU8(current->board_type, len, BOARD_TYPE, p);
 
-			current->board_type = (len > BOARD_TYPE) ? p[BOARD_TYPE] : LAZYBIOS_NOT_FOUND_U8;
-
-			current->number_of_contained_object_handles = (len > NUMBER_OF_CONTAINED_OBJECT_HANDLES) ? p[NUMBER_OF_CONTAINED_OBJECT_HANDLES] : LAZYBIOS_NOT_FOUND_U8;
+			READU8(current->number_of_contained_object_handles, len, NUMBER_OF_CONTAINED_OBJECT_HANDLES, p);
 
 			if (current->number_of_contained_object_handles > 0) {
 				const size_t array_bytes = current->number_of_contained_object_handles * sizeof(uint16_t);

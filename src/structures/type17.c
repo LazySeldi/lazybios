@@ -143,52 +143,26 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 			lazybiosType17_t* current = &Type17[index];
 
 			if (ISVERPLUS(DMIData, 2, 1)) {
-				if (len >= PHYSICAL_MEMORY_ARRAY_HANDLE + sizeof(uint16_t)) {
-					memcpy(&current->physical_memory_array_handle, p + PHYSICAL_MEMORY_ARRAY_HANDLE, sizeof(uint16_t));
-				} else {
-					current->physical_memory_array_handle = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->physical_memory_array_handle, len, PHYSICAL_MEMORY_ARRAY_HANDLE, p);
 
-				if (len >= MEMORY_ERROR_INFORMATION_HANDLE + sizeof(uint16_t)) {
-					memcpy(&current->memory_error_information_handle, p + MEMORY_ERROR_INFORMATION_HANDLE, sizeof(uint16_t));
-				} else {
-					current->memory_error_information_handle = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->memory_error_information_handle, len, MEMORY_ERROR_INFORMATION_HANDLE, p);
 
-				if (len >= TOTAL_WIDTH + sizeof(uint16_t)) {
-					memcpy(&current->total_width, p + TOTAL_WIDTH, sizeof(uint16_t));
-				} else {
-					current->total_width = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->total_width, len, TOTAL_WIDTH, p);
 
-				if (len >= DATA_WIDTH + sizeof(uint16_t)) {
-					memcpy(&current->data_width, p + DATA_WIDTH, sizeof(uint16_t));
-				} else {
-					current->data_width = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->data_width, len, DATA_WIDTH, p);
 
-				if (len >= SIZE + sizeof(uint16_t)) {
-					memcpy(&current->size, p + SIZE, sizeof(uint16_t));
-				} else {
-					current->size = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->size, len, SIZE, p);
 
-				current->form_factor = (len > FORM_FACTOR) ? p[FORM_FACTOR] : LAZYBIOS_NOT_FOUND_U8;
-				current->device_set = (len > DEVICE_SET) ? p[DEVICE_SET] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->form_factor, len, FORM_FACTOR, p)
+				READU8(current->device_set, len, DEVICE_SET, p)
 
-				if (len > DEVICE_LOCATOR) current->device_locator = DMIString(p, len, p[DEVICE_LOCATOR], end);
-				if (!current->device_locator) current->device_locator = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, DEVICE_LOCATOR, current->device_locator, p, end);
 
-				if (len > BANK_LOCATOR) current->bank_locator = DMIString(p, len, p[BANK_LOCATOR], end);
-				if (!current->bank_locator) current->bank_locator = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, BANK_LOCATOR, current->bank_locator, p, end);
 
-				current->memory_type = (len > MEMORY_TYPE) ? p[MEMORY_TYPE] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->memory_type, len, MEMORY_TYPE, p)
 
-				if (len >= TYPE_DETAIL + sizeof(uint16_t)) {
-					memcpy(&current->type_detail, p + TYPE_DETAIL, sizeof(uint16_t));
-				} else {
-					current->type_detail = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->type_detail, len, TYPE_DETAIL, p);
 			} else {
 				current->physical_memory_array_handle = LAZYBIOS_NOT_FOUND_U16;
 				current->memory_error_information_handle = LAZYBIOS_NOT_FOUND_U16;
@@ -204,23 +178,15 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 			}
 
 			if (ISVERPLUS(DMIData, 2, 3)) {
-				if (len >= SPEED + sizeof(uint16_t)) {
-					memcpy(&current->speed, p + SPEED, sizeof(uint16_t));
-				} else {
-					current->speed = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->speed, len, SPEED, p);
 
-				if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-				if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, MANUFACTURER, current->manufacturer, p, end);
 
-				if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-				if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, SERIAL_NUMBER, current->serial_number, p, end);
 
-				if (len > ASSET_TAG) current->asset_tag = DMIString(p, len, p[ASSET_TAG], end);
-				if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, ASSET_TAG, current->asset_tag, p, end);
 
-				if (len > PART_NUMBER) current->part_number = DMIString(p, len, p[PART_NUMBER], end);
-				if (!current->part_number) current->part_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, PART_NUMBER, current->part_number, p, end);
 			} else {
 				current->speed = LAZYBIOS_NOT_FOUND_U16;
 				current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
@@ -230,46 +196,26 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 			}
 
 			if (ISVERPLUS(DMIData, 2, 6)) {
-				current->attributes = (len > ATTRIBUTES) ? p[ATTRIBUTES] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->attributes, len, ATTRIBUTES, p)
 			} else {
 				current->attributes = LAZYBIOS_NOT_FOUND_U8;
 			}
 
 			if (ISVERPLUS(DMIData, 2, 7)) {
-				if (len >= EXTENDED_SIZE + sizeof(uint32_t)) {
-					memcpy(&current->extended_size, p + EXTENDED_SIZE, sizeof(uint32_t));
-				} else {
-					current->extended_size = LAZYBIOS_NOT_FOUND_U32;
-				}
+				READU32(current->extended_size, len, EXTENDED_SIZE, p)
 
-				if (len >= CONFIGURED_MEMORY_SPEED + sizeof(uint16_t)) {
-					memcpy(&current->configured_memory_speed, p + CONFIGURED_MEMORY_SPEED, sizeof(uint16_t));
-				} else {
-					current->configured_memory_speed = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->configured_memory_speed, len, CONFIGURED_MEMORY_SPEED, p);
 			} else {
 				current->extended_size = LAZYBIOS_NOT_FOUND_U32;
 				current->configured_memory_speed = LAZYBIOS_NOT_FOUND_U16;
 			}
 
 			if (ISVERPLUS(DMIData, 2, 8)) {
-				if (len >= MINIMUM_VOLTAGE + sizeof(uint16_t)) {
-					memcpy(&current->minimum_voltage, p + MINIMUM_VOLTAGE, sizeof(uint16_t));
-				} else {
-					current->minimum_voltage = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->minimum_voltage, len, MINIMUM_VOLTAGE, p);
 
-				if (len >= MAXIMUM_VOLTAGE + sizeof(uint16_t)) {
-					memcpy(&current->maximum_voltage, p + MAXIMUM_VOLTAGE, sizeof(uint16_t));
-				} else {
-					current->maximum_voltage = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->maximum_voltage, len, MAXIMUM_VOLTAGE, p);
 
-				if (len >= CONFIGURED_VOLTAGE + sizeof(uint16_t)) {
-					memcpy(&current->configured_voltage, p + CONFIGURED_VOLTAGE, sizeof(uint16_t));
-				} else {
-					current->configured_voltage = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->configured_voltage, len, CONFIGURED_VOLTAGE, p);
 			} else {
 				current->minimum_voltage = LAZYBIOS_NOT_FOUND_U16;
 				current->maximum_voltage = LAZYBIOS_NOT_FOUND_U16;
@@ -277,64 +223,27 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 			}
 
 			if (ISVERPLUS(DMIData, 3, 2)) {
-				current->memory_technology = (len > MEMORY_TECHNOLOGY) ? p[MEMORY_TECHNOLOGY] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->memory_technology, len, MEMORY_TECHNOLOGY, p)
 
-				if (len >= MEMORY_OPERATING_MODE_CAPABILITY + sizeof(uint16_t)) {
-					memcpy(&current->memory_operating_mode_capability, p + MEMORY_OPERATING_MODE_CAPABILITY, sizeof(uint16_t));
-				} else {
-					current->memory_operating_mode_capability = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->memory_operating_mode_capability, len, MEMORY_OPERATING_MODE_CAPABILITY, p);
 
-				if (len > FIRMWARE_VERSION) current->firmware_version = DMIString(p, len, p[FIRMWARE_VERSION], end);
-				if (!current->firmware_version) current->firmware_version = strdup(LAZYBIOS_NOT_FOUND_STR);
+				READSTR(len, FIRMWARE_VERSION, current->firmware_version, p, end);
 
-				if (len >= MODULE_MANUFACTURER_ID + sizeof(uint16_t)) {
-					memcpy(&current->module_manufacturer_id, p + MODULE_MANUFACTURER_ID, sizeof(uint16_t));
-				} else {
-					current->module_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->module_manufacturer_id, len, MODULE_MANUFACTURER_ID, p);
 
-				if (len >= MODULE_PRODUCT_ID + sizeof(uint16_t)) {
-					memcpy(&current->module_product_id, p + MODULE_PRODUCT_ID, sizeof(uint16_t));
-				} else {
-					current->module_product_id = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->module_product_id, len, MODULE_PRODUCT_ID, p);
 
-				if (len >= MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID + sizeof(uint16_t)) {
-					memcpy(&current->memory_subsystem_controller_manufacturer_id, p + MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID, sizeof(uint16_t));
-				} else {
-					current->memory_subsystem_controller_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->memory_subsystem_controller_manufacturer_id, len, MEMORY_SUBSYSTEM_CONTROLLER_MANUFACTURER_ID, p);
 
-				if (len >= MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID + sizeof(uint16_t)) {
-					memcpy(&current->memory_subsystem_controller_product_id, p + MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID, sizeof(uint16_t));
-				} else {
-					current->memory_subsystem_controller_product_id = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->memory_subsystem_controller_product_id, len, MEMORY_SUBSYSTEM_CONTROLLER_PRODUCT_ID, p);
 
-				if (len >= NON_VOLATILE_SIZE + sizeof(uint64_t)) {
-					memcpy(&current->non_volatile_size, p + NON_VOLATILE_SIZE, sizeof(uint64_t));
-				} else {
-					current->non_volatile_size = LAZYBIOS_NOT_FOUND_U64;
-				}
+				READU64(current->non_volatile_size, len, NON_VOLATILE_SIZE, p)
 
-				if (len >= VOLATILE_SIZE + sizeof(uint64_t)) {
-					memcpy(&current->volatile_size, p + VOLATILE_SIZE, sizeof(uint64_t));
-				} else {
-					current->volatile_size = LAZYBIOS_NOT_FOUND_U64;
-				}
+				READU64(current->volatile_size, len, VOLATILE_SIZE, p)
 
-				if (len >= CACHE_SIZE + sizeof(uint64_t)) {
-					memcpy(&current->cache_size, p + CACHE_SIZE, sizeof(uint64_t));
-				} else {
-					current->cache_size = LAZYBIOS_NOT_FOUND_U64;
-				}
+				READU64(current->cache_size, len, CACHE_SIZE, p)
 
-				if (len >= LOGICAL_SIZE + sizeof(uint64_t)) {
-					memcpy(&current->logical_size, p + LOGICAL_SIZE, sizeof(uint64_t));
-				} else {
-					current->logical_size = LAZYBIOS_NOT_FOUND_U64;
-				}
+				READU64(current->logical_size, len, LOGICAL_SIZE, p)
 			} else {
 				current->memory_technology = LAZYBIOS_NOT_FOUND_U8;
 				current->memory_operating_mode_capability = LAZYBIOS_NOT_FOUND_U16;
@@ -350,46 +259,22 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 			}
 
 			if (ISVERPLUS(DMIData, 3, 3)) {
-				if (len >= EXTENDED_SPEED + sizeof(uint32_t)) {
-					memcpy(&current->extended_speed, p + EXTENDED_SPEED, sizeof(uint32_t));
-				} else {
-					current->extended_speed = LAZYBIOS_NOT_FOUND_U32;
-				}
+				READU32(current->extended_speed, len, EXTENDED_SPEED, p)
 
-				if (len >= EXTENDED_CONFIGURED_MEMORY_SPEED + sizeof(uint32_t)) {
-					memcpy(&current->extended_configured_memory_speed, p + EXTENDED_CONFIGURED_MEMORY_SPEED, sizeof(uint32_t));
-				} else {
-					current->extended_configured_memory_speed = LAZYBIOS_NOT_FOUND_U32;
-				}
+				READU32(current->extended_configured_memory_speed, len, EXTENDED_CONFIGURED_MEMORY_SPEED, p)
 			} else {
 				current->extended_speed = LAZYBIOS_NOT_FOUND_U32;
 				current->extended_configured_memory_speed = LAZYBIOS_NOT_FOUND_U32;
 			}
 
 			if (ISVERPLUS(DMIData, 3, 7)) {
-				if (len >= PMIC0_MANUFACTURER_ID + sizeof(uint16_t)) {
-					memcpy(&current->pmic0_manufacturer_id, p + PMIC0_MANUFACTURER_ID, sizeof(uint16_t));
-				} else {
-					current->pmic0_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->pmic0_manufacturer_id, len, PMIC0_MANUFACTURER_ID, p);
 
-				if (len >= PMIC0_REVISION_NUMBER + sizeof(uint16_t)) {
-					memcpy(&current->pmic0_revision_number, p + PMIC0_REVISION_NUMBER, sizeof(uint16_t));
-				} else {
-					current->pmic0_revision_number = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->pmic0_revision_number, len, PMIC0_REVISION_NUMBER, p);
 
-				if (len >= RCD_MANUFACTURER_ID + sizeof(uint16_t)) {
-					memcpy(&current->rcd_manufacturer_id, p + RCD_MANUFACTURER_ID, sizeof(uint16_t));
-				} else {
-					current->rcd_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->rcd_manufacturer_id, len, RCD_MANUFACTURER_ID, p);
 
-				if (len >= RCD_REVISION_NUMBER + sizeof(uint16_t)) {
-					memcpy(&current->rcd_revision_number, p + RCD_REVISION_NUMBER, sizeof(uint16_t));
-				} else {
-					current->rcd_revision_number = LAZYBIOS_NOT_FOUND_U16;
-				}
+				READU16(current->rcd_revision_number, len, RCD_REVISION_NUMBER, p);
 			} else {
 				current->pmic0_manufacturer_id = LAZYBIOS_NOT_FOUND_U16;
 				current->pmic0_revision_number = LAZYBIOS_NOT_FOUND_U16;

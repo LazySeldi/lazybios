@@ -107,25 +107,21 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 			if (index >= count) break;
 			lazybiosType3_t* current = &Type3[index];
 
-			if (len > MANUFACTURER) current->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-			if (!current->manufacturer) current->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, MANUFACTURER, current->manufacturer, p, end);
 
-			current->type = (len > TYPE) ? p[TYPE] : LAZYBIOS_NOT_FOUND_U8;
+			READU8(current->type, len, TYPE, p)
 
-			if (len > VERSION) current->version = DMIString(p, len, p[VERSION], end);
-			if (!current->version) current->version = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, VERSION, current->version, p, end);
 
-			if (len > SERIAL_NUMBER) current->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-			if (!current->serial_number) current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, SERIAL_NUMBER, current->serial_number, p, end);
 
-			if (len > ASSET_TAG_NUMBER) current->asset_tag = DMIString(p, len, p[ASSET_TAG_NUMBER], end);
-			if (!current->asset_tag) current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(len, ASSET_TAG_NUMBER, current->asset_tag, p, end);
 
 			if (ISVERPLUS(DMIData, 2, 1)) {
-				current->boot_up_state = (len > BOOT_UP_STATE) ? p[BOOT_UP_STATE] : LAZYBIOS_NOT_FOUND_U8;
-				current->power_supply_state = (len > POWER_SUPPLY_STATE) ? p[POWER_SUPPLY_STATE] : LAZYBIOS_NOT_FOUND_U8;
-				current->thermal_state = (len > THERMAL_STATE) ? p[THERMAL_STATE] : LAZYBIOS_NOT_FOUND_U8;
-				current->security_status = (len > SECURITY_STATUS) ? p[SECURITY_STATUS] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->boot_up_state, len, BOOT_UP_STATE, p)
+				READU8(current->power_supply_state, len, POWER_SUPPLY_STATE, p)
+				READU8(current->thermal_state, len, THERMAL_STATE, p)
+				READU8(current->security_status, len, SECURITY_STATUS, p)
 			} else {
 				current->boot_up_state = LAZYBIOS_NOT_FOUND_U8;
 				current->power_supply_state = LAZYBIOS_NOT_FOUND_U8;
@@ -134,18 +130,14 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 			}
 
 			if (ISVERPLUS(DMIData, 2, 3)) {
-				if (len >= OEM_DEFINED + sizeof(uint32_t)) {
-					memcpy(&current->oem_defined, p + OEM_DEFINED, sizeof(uint32_t));
-				} else {
-					current->oem_defined = LAZYBIOS_NOT_FOUND_U32;
-				}
+				READU32(current->oem_defined, len, OEM_DEFINED, p)
 
-				current->height = (len > HEIGHT) ? p[HEIGHT] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->height, len, HEIGHT, p)
 
-				current->number_of_power_cords = (len > NUMBER_OF_POWER_CORDS) ? p[NUMBER_OF_POWER_CORDS] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->number_of_power_cords, len, NUMBER_OF_POWER_CORDS, p)
 
-				current->contained_element_count = (len > CONTAINED_ELEMENT_COUNT) ? p[CONTAINED_ELEMENT_COUNT] : LAZYBIOS_NOT_FOUND_U8;
-				current->contained_element_record_length = (len > CONTAINED_ELEMENT_RECORD_LENGTH) ? p[CONTAINED_ELEMENT_RECORD_LENGTH] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(current->contained_element_count, len, CONTAINED_ELEMENT_COUNT, p)
+				READU8(current->contained_element_record_length, len, CONTAINED_ELEMENT_RECORD_LENGTH, p)
 
 				if ((current->contained_element_count > 0 && current->contained_element_count != LAZYBIOS_NOT_FOUND_U8) && (current->contained_element_record_length > 0 && current->contained_element_record_length != LAZYBIOS_NOT_FOUND_U8)) {
 					const size_t array_bytes = (current->contained_element_count * current->contained_element_record_length) * sizeof(uint8_t);

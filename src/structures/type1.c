@@ -64,7 +64,7 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData
 				} else {
 					for (int i = 0; i < 16; i++) Type1->uuid[i] = LAZYBIOS_NOT_FOUND_U8;
 				}
-				Type1->wake_up_type = (len > WAKE_UP_TYPE) ? p[WAKE_UP_TYPE] : LAZYBIOS_NOT_FOUND_U8;
+				READU8(Type1->wake_up_type, len, WAKE_UP_TYPE, p)
 			} else {
 				for (int i = 0; i < 16; i++) Type1->uuid[i] = LAZYBIOS_NOT_FOUND_U8;
 				Type1->wake_up_type = LAZYBIOS_NOT_FOUND_U8;
