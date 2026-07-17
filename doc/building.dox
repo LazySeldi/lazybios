@@ -1,0 +1,60 @@
+/**
+ * @page building Building and Integration
+ *
+ * @brief Build requirements, CMake integration, pkg-config integration, and logging options.
+ *
+ * @section build_requirements Requirements
+ *
+ * lazybios requires a C99 compiler and CMake 3.15 or newer. The library has no
+ * third-party runtime dependencies. A supported SMBIOS data source is required
+ * only when reading from the host; file-based parsing can be used on any build
+ * platform supported by the codebase.
+ *
+ * @section build_source Building from source
+ *
+ * @code{.sh}
+ * cmake -S . -B build
+ * cmake --build build
+ * @endcode
+ *
+ * The build produces the shared `lazybios` library and the `lazybios_test`
+ * inspection executable.
+ *
+ * @section build_install Installing
+ *
+ * @code{.sh}
+ * cmake --install build
+ * @endcode
+ *
+ * The installation exports a CMake package, installs the public header, and
+ * installs a pkg-config metadata file.
+ *
+ * @section build_cmake_consumer CMake consumers
+ *
+ * @code{.cmake}
+ * find_package(lazybios REQUIRED)
+ * target_link_libraries(your_target PRIVATE lazybios::lazybios)
+ * @endcode
+ *
+ * @section build_pkgconfig pkg-config consumers
+ *
+ * @code{.sh}
+ * pkg-config --cflags --libs lazybios
+ * @endcode
+ *
+ * @section build_logging Logging configuration
+ *
+ * `LAZYBIOS_QUIET` disables library logging. `LAZYBIOS_DEBUG` enables debug
+ * messages in addition to ordinary diagnostics. Configure either behavior with
+ * its corresponding CMake option:
+ *
+ * @code{.sh}
+ * cmake -S . -B build -DLAZYBIOS_QUIET=ON
+ * cmake -S . -B build -DLAZYBIOS_DEBUG=ON
+ * @endcode
+ *
+ * When neither option is enabled, normal library diagnostics remain active.
+ *
+ * @see @ref getting_started
+ * @see @ref api_context
+ */

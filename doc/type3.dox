@@ -1,0 +1,42 @@
+/**
+ * @page type3_guide Type 3: Chassis Information Guide
+ *
+ * @brief Chassis identity, state, security, contained elements, and rack data.
+ *
+ * @section type3_array Array result
+ *
+ * @ref lazybiosGetType3 returns all @ref SMBIOS_TYPE_CHASSIS structures as an
+ * array. Retain `type3_count` and pass it to @ref lazybiosFreeType3 for direct
+ * cleanup.
+ *
+ * @section type3_type Chassis type and lock
+ *
+ * The low seven bits of `type` select the enclosure type. Bit 7 indicates that
+ * a chassis lock is present. @ref lazybiosType3TypeStr decodes both parts.
+ *
+ * @snippet quick_start.c type3-description
+ *
+ * @section type3_state State and security
+ *
+ * Boot-up, power-supply, and thermal fields share the state decoder
+ * @ref lazybiosType3StateStr. Security status uses
+ * @ref lazybiosType3SecurityStatusStr. These fields require SMBIOS 2.1 or newer
+ * and otherwise contain @ref LAZYBIOS_NOT_FOUND_U8.
+ *
+ * @section type3_elements Contained elements
+ *
+ * `contained_elements` stores raw fixed-size records. Its allocation contains
+ * `contained_element_count * contained_element_record_length` bytes. The first
+ * byte of each record identifies either an SMBIOS structure type or a baseboard
+ * type and can be decoded with
+ * @ref lazybiosType3ContainedElementTypeStr. Preserve the declared record
+ * length when advancing because later SMBIOS revisions can extend a record.
+ *
+ * @section type3_rack Rack fields
+ *
+ * SKU position depends on the total contained-element area. Rack type and rack
+ * height follow that variable-length area and are parsed only for SMBIOS 3.9 or
+ * newer.
+ *
+ * @see @ref api_type3
+ */

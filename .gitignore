@@ -31,3 +31,4 @@ lazybios_test
 *.gcov
 compile_commands.json
 .clang-format
+docs/

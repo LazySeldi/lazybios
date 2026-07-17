@@ -1,0 +1,42 @@
+/**
+ * @page getting_started Getting Started
+ *
+ * @brief Minimal workflows for reading SMBIOS data and accessing parsed structures.
+ *
+ * @section start_lifecycle Required lifecycle
+ *
+ * Every ordinary workflow follows the same ownership sequence:
+ *
+ * 1. Allocate a @ref lazybiosCTX_t with @ref lazybiosCTXNew.
+ * 2. Load raw SMBIOS data with @ref lazybiosInit, @ref lazybiosFile, or
+ *    @ref lazybiosSingleFile.
+ * 3. Parse the required structures with the corresponding getter.
+ * 4. Store returned pointers and counts in the context when
+ *    @ref lazybiosCleanup should own them.
+ * 5. Call @ref lazybiosCleanup exactly once.
+ *
+ * @section start_host Read from the host system
+ *
+ * @snippet quick_start.c host-system
+ *
+ * @section start_files Read from separate dump files
+ *
+ * @snippet quick_start.c separate-files
+ *
+ * @section start_merged Read from a merged dump file
+ *
+ * @snippet quick_start.c merged-file
+ *
+ * @section start_arrays Read a repeated SMBIOS structure
+ *
+ * Types 2, 3, 4, 7, and 17 are returned as arrays. Always pass a count output
+ * pointer, retain the returned count, and use the same count during cleanup.
+ *
+ * @snippet quick_start.c processor-array
+ *
+ * @section start_next Next steps
+ *
+ * Continue with @ref data_sources for backend behavior, @ref core_concepts for
+ * ownership and sentinel rules, and @ref type_guides for field interpretation.
+ * The complete declarations are organized under @ref api.
+ */

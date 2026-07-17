@@ -1,0 +1,48 @@
+/**
+ * @page type4_guide Type 4: Processor Information Guide
+ *
+ * @brief Processor identity, socket, status, voltage, cache handles, and topology counts.
+ *
+ * @section type4_array Array result
+ *
+ * @ref lazybiosGetType4 returns every @ref SMBIOS_TYPE_PROCESSOR structure as
+ * an array of @ref lazybiosType4_t. Retain the returned count for iteration and
+ * @ref lazybiosFreeType4.
+ *
+ * @section type4_identity Identity and family
+ *
+ * Processor manufacturer, version, ID, serial number, asset tag, and part
+ * number are preserved from SMBIOS. Use @ref lazybiosType4ProcessorFamilyStr
+ * with `processor_family_2` when `processor_family` is `0xFE`; otherwise use the
+ * 8-bit `processor_family` value.
+ *
+ * @section type4_socket Socket information
+ *
+ * `socket_designation` is the installed socket label. `processor_upgrade` is
+ * the enumerated upgrade/socket form decoded by
+ * @ref lazybiosType4SocketTypeStr. The separate `socket_type` string is an
+ * SMBIOS 3.8 field and must not be confused with `processor_upgrade`.
+ *
+ * @section type4_status Status and voltage
+ *
+ * @ref lazybiosType4StatusStr reports socket population and processor status.
+ * @ref lazybiosType4VoltageStr handles both current-voltage and supported-
+ * voltage encodings. @ref lazybiosType4CharacteristicsStr decodes the processor
+ * characteristics bit field.
+ *
+ * @section type4_counts Topology counts
+ *
+ * The 8-bit core, enabled-core, and thread counts use `0xFF` to select their
+ * matching 16-bit extended fields. `thread_enabled` is a separate SMBIOS 3.6
+ * field.
+ *
+ * @snippet quick_start.c type4-counts
+ *
+ * @section type4_cache Cache handles
+ *
+ * L1, L2, and L3 members are SMBIOS handles referring to Type 7 structures.
+ * They are not indexes in the Type 7 array. Match them against raw structure
+ * handles when correlating processor and cache records.
+ *
+ * @see @ref api_type4
+ */

@@ -1,3 +1,9 @@
+/**
+ * @file type2.c
+ * @brief Implements parsing and decoding for SMBIOS Type 2 Baseboard Information.
+ * @author LazySeldi
+ */
+
 //
 // Type 2 ( Baseboard (or Module) Information )
 //
@@ -39,6 +45,14 @@
 #define BOARD_TYPE_INTERCONNECT_BOARD 0x0D
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Parses all SMBIOS Type 2 Baseboard Information structures.
+ *
+ * @param Type2 Existing Type 2 array pointer value; it is not dereferenced or released.
+ * @param type2_count Output location for the number of parsed structures.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated Type 2 array, or NULL on failure.
+ */
 lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
@@ -106,6 +120,13 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 // Decoders
 
 // Feature Flags
+/**
+ * @brief Decodes SMBIOS baseboard feature flags into a readable string.
+ *
+ * @param feature_flags Raw SMBIOS baseboard feature flags.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -124,6 +145,12 @@ void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_l
 }
 
 // Board Type
+/**
+ * @brief Decodes an SMBIOS baseboard type.
+ *
+ * @param board_type Raw SMBIOS baseboard type value.
+ * @return Static string describing the baseboard type.
+ */
 const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 	switch (board_type) {
 		case BOARD_TYPE_UNKNOWN:
@@ -158,6 +185,12 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 }
 
 // Free Function
+/**
+ * @brief Releases an array of parsed SMBIOS Type 2 structures.
+ *
+ * @param Type2 Type 2 array to release.
+ * @param type2_count Number of elements in Type2.
+ */
 void lazybiosFreeType2(lazybiosType2_t* Type2, size_t type2_count) {
 	if (!Type2) return;
 

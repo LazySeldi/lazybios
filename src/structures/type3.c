@@ -1,3 +1,9 @@
+/**
+ * @file type3.c
+ * @brief Implements parsing and decoding for SMBIOS Type 3 Chassis Information.
+ * @author LazySeldi
+ */
+
 //
 // Type 3 ( System Enclosure or Chassis )
 //
@@ -84,6 +90,14 @@
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED 0x05
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Parses all SMBIOS Type 3 Chassis Information structures.
+ *
+ * @param Type3 Existing Type 3 array pointer value; it is not dereferenced or released.
+ * @param type3_count Output location for the number of parsed structures.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated Type 3 array, or NULL on failure.
+ */
 lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
@@ -188,6 +202,13 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 // Decoders
 
 // Chassis Type
+/**
+ * @brief Decodes an SMBIOS chassis type and lock indicator.
+ *
+ * @param type Raw SMBIOS chassis type byte.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -320,6 +341,12 @@ void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
 }
 
 // Chassis State
+/**
+ * @brief Decodes an SMBIOS chassis state value.
+ *
+ * @param state Raw boot-up, power-supply, or thermal state value.
+ * @return Static string describing the chassis state.
+ */
 const char* lazybiosType3StateStr(uint8_t state) {
 	switch (state) {
 		case CHASSIS_STATE_OTHER:
@@ -340,6 +367,12 @@ const char* lazybiosType3StateStr(uint8_t state) {
 }
 
 // Chassis Status
+/**
+ * @brief Decodes an SMBIOS chassis security status.
+ *
+ * @param security_status Raw SMBIOS security status value.
+ * @return Static string describing the security status.
+ */
 const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
 	switch (security_status) {
 		case CHASSIS_SECURITY_STATUS_OTHER:
@@ -358,6 +391,13 @@ const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
 }
 
 // Chassis Contained Elements
+/**
+ * @brief Decodes the type field of a chassis contained-element record.
+ *
+ * @param contained_elements Raw contained-element type byte.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len) {
 	buf[0] = '\0';
 
@@ -372,6 +412,12 @@ void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf,
 }
 
 // Free Function
+/**
+ * @brief Releases an array of parsed SMBIOS Type 3 structures.
+ *
+ * @param Type3 Type 3 array to release.
+ * @param type3_count Number of elements in Type3.
+ */
 void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count) {
 	if (!Type3) return;
 

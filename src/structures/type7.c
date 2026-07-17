@@ -1,3 +1,9 @@
+/**
+ * @file type7.c
+ * @brief Implements parsing and decoding for SMBIOS Type 7 Cache Information.
+ * @author LazySeldi
+ */
+
 //
 // Type 7 ( Cache Information )
 //
@@ -56,6 +62,14 @@
 #define _20_WAY_SET_ASSOCIATIVE 0x0E
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Parses all SMBIOS Type 7 Cache Information structures.
+ *
+ * @param Type7 Existing Type 7 array pointer value; it is not dereferenced or released.
+ * @param type7_count Output location for the number of parsed structures.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated Type 7 array, or NULL on failure.
+ */
 lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
@@ -106,6 +120,12 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 
 // Cache Size -- This is for both Maximum Cache Size and Installed Size
 // Returns the cache size in KB based on the 16-bit  value
+/**
+ * @brief Converts a 16-bit SMBIOS cache size field to kibibytes.
+ *
+ * @param raw_size Raw 16-bit maximum or installed cache size value.
+ * @return Decoded cache size in KiB.
+ */
 uint64_t lazybiosType7CacheU16(uint16_t raw_size) {
 	uint8_t granularity = (raw_size >> 15) & 0x01;
 	uint16_t size_value = raw_size & 0x7FFF; // Bits 14:0
@@ -118,6 +138,13 @@ uint64_t lazybiosType7CacheU16(uint16_t raw_size) {
 }
 
 // SRAM Type
+/**
+ * @brief Decodes SMBIOS SRAM type flags into a readable string.
+ *
+ * @param sram_type Raw supported or current SRAM type bit field.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -138,6 +165,12 @@ void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len) {
 }
 
 // Error Correction Type
+/**
+ * @brief Decodes an SMBIOS cache error-correction type.
+ *
+ * @param ecc_type Raw SMBIOS error-correction type value.
+ * @return Static string describing the error-correction type.
+ */
 const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type) {
 	switch (ecc_type) {
 		case ECC_OTHER:
@@ -158,6 +191,12 @@ const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type) {
 }
 
 // System Cache Type
+/**
+ * @brief Decodes an SMBIOS system cache type.
+ *
+ * @param cache_type Raw SMBIOS system cache type value.
+ * @return Static string describing the cache type.
+ */
 const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type) {
 	switch (cache_type) {
 		case SC_OTHER:
@@ -176,6 +215,12 @@ const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type) {
 }
 
 // Associativity
+/**
+ * @brief Decodes an SMBIOS cache associativity value.
+ *
+ * @param associativity Raw SMBIOS cache associativity value.
+ * @return Static string describing the associativity.
+ */
 const char* lazybiosType7AssociativityStr(uint8_t associativity) {
 	switch (associativity) {
 		case ASS_OTHER:
@@ -212,6 +257,13 @@ const char* lazybiosType7AssociativityStr(uint8_t associativity) {
 }
 
 // Cache Configuration
+/**
+ * @brief Decodes an SMBIOS cache configuration bit field.
+ *
+ * @param config Raw SMBIOS cache configuration value.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -260,6 +312,12 @@ void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_l
 }
 
 // Cache Size 2 -- Used for Maximum Cache Size 2, and Installed Cache Size 2
+/**
+ * @brief Converts a 32-bit SMBIOS cache size field to kibibytes.
+ *
+ * @param raw_size Raw 32-bit maximum or installed cache size value.
+ * @return Decoded cache size in KiB.
+ */
 uint64_t lazybiosType7CacheU32(uint32_t raw_size) {
 	// If the field is 0, no cache is installed
 	if (raw_size == 0) {
@@ -277,6 +335,12 @@ uint64_t lazybiosType7CacheU32(uint32_t raw_size) {
 }
 
 // Free Function
+/**
+ * @brief Releases an array of parsed SMBIOS Type 7 structures.
+ *
+ * @param Type7 Type 7 array to release.
+ * @param type7_count Number of elements in Type7.
+ */
 void lazybiosFreeType7(lazybiosType7_t* Type7, size_t type7_count) {
 	if (!Type7) return;
 

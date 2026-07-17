@@ -1,0 +1,21 @@
+/**
+ * @page user_guide User Guide
+ *
+ * @brief Practical guidance for integrating, loading, parsing, and releasing lazybios data.
+ *
+ * The user guide complements the generated @ref api "Public API" reference. It
+ * explains workflows and SMBIOS interpretation rules without duplicating
+ * declarations or structure member lists.
+ *
+ * @subpage building
+ *
+ * @subpage getting_started
+ *
+ * @subpage data_sources
+ *
+ * @subpage core_concepts
+ *
+ * @subpage type_guides
+ *
+ * @subpage limitations
+ */

@@ -1,0 +1,60 @@
+/**
+ * @page type17_guide Type 17: Memory Device Guide
+ *
+ * @brief Memory-slot identity, capacity, speed, technology, voltage, and component IDs.
+ *
+ * @section type17_array Array result
+ *
+ * @ref lazybiosGetType17 returns one @ref lazybiosType17_t entry for every
+ * @ref SMBIOS_TYPE_MEMORY_DEVICE record. The array can include empty slots as
+ * well as installed devices. Retain `type17_count` for iteration and cleanup.
+ *
+ * @section type17_size Legacy and extended capacity
+ *
+ * Interpret the raw `size` member before displaying capacity:
+ *
+ * - `0` indicates that no memory device is installed.
+ * - `0xFFFF` indicates an unknown size.
+ * - Bit 15 selects KiB units for the remaining value.
+ * - `0x7FFF` selects `extended_size`, whose low 31 bits are MiB.
+ *
+ * @snippet quick_start.c type17-size
+ *
+ * @section type17_speed Speed fields
+ *
+ * `speed` and `configured_memory_speed` are the base MT/s fields. SMBIOS 3.3
+ * adds extended alternatives for larger values. Use
+ * @ref lazybiosType17ExtendedSpeedStr for either extended speed field when its
+ * corresponding base representation selects the extended value.
+ *
+ * @section type17_identity Identity and placement
+ *
+ * Device and bank locators describe physical placement. Manufacturer, serial
+ * number, asset tag, part number, and firmware version are firmware-provided
+ * strings. `physical_memory_array_handle` associates the device with a Type 16
+ * structure; it is not an array index.
+ *
+ * @section type17_classification Classification
+ *
+ * Decode form factor with @ref lazybiosType17FormFactorStr, memory type with
+ * @ref lazybiosType17TypeStr, type-detail flags with
+ * @ref lazybiosType17TypeDetailStr, memory technology with
+ * @ref lazybiosType17MemoryTechnologyStr, and operating modes with
+ * @ref lazybiosType17OperatingModeCapabilityStr.
+ *
+ * @section type17_width_voltage Width and voltage
+ *
+ * Total width includes error-correction bits while data width excludes them.
+ * The minimum, maximum, and configured voltage fields are expressed in mV when
+ * present. Check sentinels before using any version-dependent value.
+ *
+ * @section type17_regions Memory regions and identifiers
+ *
+ * Volatile, non-volatile, cache, and logical capacities are byte counts in the
+ * SMBIOS 3.2 fields. The available formatter helpers handle volatile,
+ * non-volatile, and cache capacities. Manufacturer, product, PMIC0, and RCD
+ * identifiers remain numeric values and can be formatted with the corresponding
+ * Type 17 helper.
+ *
+ * @see @ref api_type17
+ */

@@ -1,0 +1,71 @@
+/**
+ * @page core_concepts Core Concepts and Ownership
+ *
+ * @brief Context layout, memory ownership, entry points, sentinels, and decoder contracts.
+ *
+ * @section concepts_context Context layout
+ *
+ * @ref lazybiosCTX_t is the top-level owner. It contains the selected backend,
+ * a @ref lazybiosDMI_t raw-data container, and pointers for each supported
+ * parsed SMBIOS type. Repeated types have a matching count field.
+ *
+ * @section concepts_raw Raw DMI and entry-point data
+ *
+ * @ref lazybiosDMI_t owns the entry-point bytes and DMI table bytes. Its
+ * `entry_tag` selects the valid member of `entry_union`:
+ *
+ * - @ref SMBIOS_VER_2X selects @ref lazybiosSMBIOS2Entry.
+ * - @ref SMBIOS_VER_3X selects @ref lazybiosSMBIOS3Entry.
+ * - @ref SMBIOS_VER_UNKNOWN indicates that no supported entry point was parsed.
+ *
+ * The entry union points into `entry_data`; its members become invalid when the
+ * context is cleaned up.
+ *
+ * @section concepts_ownership Ownership rules
+ *
+ * Getters allocate their return values. Type 0 and Type 1 getters return one
+ * structure. Type 2, Type 3, Type 4, Type 7, and Type 17 getters return arrays
+ * and write the number of parsed elements through their count parameter.
+ *
+ * Assign getter results to the matching context member when using
+ * @ref lazybiosCleanup. If a caller keeps a result outside the context, it must
+ * call the matching `lazybiosFreeType*` function instead and must prevent the
+ * context from owning the same pointer. Never free individual string members
+ * independently of their containing parsed structure.
+ *
+ * @snippet quick_start.c explicit-cleanup
+ *
+ * @section concepts_sentinels Missing values
+ *
+ * Missing fixed-width fields use @ref LAZYBIOS_NOT_FOUND_U8,
+ * @ref LAZYBIOS_NOT_FOUND_U16, @ref LAZYBIOS_NOT_FOUND_U32, or
+ * @ref LAZYBIOS_NOT_FOUND_U64. Missing string fields are represented by an
+ * allocated copy of @ref LAZYBIOS_NOT_FOUND_STR. Check the applicable sentinel
+ * before decoding or displaying a value.
+ *
+ * @section concepts_versions Version checks
+ *
+ * SMBIOS structures grow over time. Getters check the parsed entry-point
+ * version before reading versioned fields and assign sentinels when a field is
+ * unavailable. @ref ISVERPLUS can be used by consumers that need the same
+ * major/minor comparison.
+ *
+ * @section concepts_decoders Decoder output buffers
+ *
+ * Functions ending in `Str` either return a pointer to static text or write
+ * formatted text to a caller-provided buffer. For buffer-writing decoders,
+ * provide a valid writable buffer and its full capacity. Use
+ * @ref LAZYBIOS_DECODER_BUF_SIZE as the baseline capacity unless the decoded
+ * bit field can require a larger application-specific buffer.
+ *
+ * @section concepts_traversal Low-level traversal
+ *
+ * @ref DMINext advances over a formatted structure and its trailing string-set.
+ * @ref DMIString copies a one-based string entry into newly allocated storage.
+ * @ref lazybiosCountStructsByType counts matching structures before array
+ * allocation. These helpers operate on bounded raw buffers; pass the exact end
+ * of the DMI allocation.
+ *
+ * @see @ref api_parsing
+ * @see @ref api_constants
+ */

@@ -1,0 +1,34 @@
+/**
+ * @page type1_guide Type 1: System Information Guide
+ *
+ * @brief System identity, UUID, wake-up event, SKU, and family interpretation.
+ *
+ * @section type1_selection Selection and ownership
+ *
+ * @ref lazybiosGetType1 returns the first @ref SMBIOS_TYPE_SYSTEM structure.
+ * Assign it to `ctx->Type1` for context cleanup or release it with
+ * @ref lazybiosFreeType1.
+ *
+ * @section type1_identity Identity strings
+ *
+ * Manufacturer, product name, version, and serial number belong to the base
+ * structure. SKU number and family require SMBIOS 2.4 or newer. Unavailable
+ * strings are allocated as @ref LAZYBIOS_NOT_FOUND_STR.
+ *
+ * @section type1_uuid UUID representation
+ *
+ * The `uuid` member contains the 16 raw SMBIOS bytes. The library does not
+ * convert those bytes to a textual UUID or reorder them for a presentation
+ * convention. Applications that print a UUID must apply the byte-order rules
+ * required by the relevant SMBIOS version.
+ *
+ * @section type1_wakeup Wake-up event
+ *
+ * `wake_up_type` is present in SMBIOS 2.1 and newer. Check
+ * @ref LAZYBIOS_NOT_FOUND_U8 before calling
+ * @ref lazybiosType1WakeupTypeStr.
+ *
+ * @snippet quick_start.c type1-wakeup
+ *
+ * @see @ref api_type1
+ */

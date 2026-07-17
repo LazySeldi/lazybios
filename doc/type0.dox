@@ -1,0 +1,40 @@
+/**
+ * @page type0_guide Type 0: BIOS Information Guide
+ *
+ * @brief BIOS identity, ROM capacity, release data, and firmware capability interpretation.
+ *
+ * @section type0_selection Selection and ownership
+ *
+ * @ref lazybiosGetType0 returns the first @ref SMBIOS_TYPE_BIOS structure. The
+ * returned @ref lazybiosType0_t and all allocated members are released by
+ * @ref lazybiosFreeType0 or by @ref lazybiosCleanup after assignment to
+ * `ctx->Type0`.
+ *
+ * @section type0_versions Version-dependent data
+ *
+ * Vendor, version, release date, starting segment, legacy ROM size, and BIOS
+ * characteristics originate in the base structure. Firmware characteristics
+ * extension bytes are available when the formatted structure contains them.
+ * Platform and embedded-controller release fields require SMBIOS 2.4 or newer.
+ * Extended ROM size requires SMBIOS 3.1 or newer when the legacy ROM-size byte
+ * selects the extended field.
+ *
+ * @section type0_rom ROM capacity
+ *
+ * `rom_size` contains the decoded legacy size in KiB when that representation
+ * applies. When the legacy byte is `0xFF`, check `extended_rom_size` and use
+ * @ref lazybiosType0ExtendedROMSizeU16 to separate its numeric value from the
+ * MiB, GiB, or reserved unit encoding.
+ *
+ * @section type0_characteristics Characteristics
+ *
+ * Use @ref lazybiosType0CharacteristicsStr for the main bit field. The
+ * extension array can contain multiple bytes; use
+ * @ref lazybiosType0CharacteristicsExtByte1Str and
+ * @ref lazybiosType0CharacteristicsExtByte2Str only when the corresponding
+ * byte exists according to `firmware_char_ext_bytes_count`.
+ *
+ * @snippet quick_start.c type0-decode
+ *
+ * @see @ref api_type0
+ */

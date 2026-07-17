@@ -1,0 +1,24 @@
+/**
+ * @page type_guides SMBIOS Type Guides
+ *
+ * @brief Interpretation and ownership guidance for each implemented SMBIOS structure type.
+ *
+ * Function signatures, structure members, macros, and return contracts are
+ * generated directly from the public header under @ref api_types. These guides
+ * focus on selection rules, version-dependent fields, and raw-value
+ * interpretation.
+ *
+ * @subpage type0_guide
+ *
+ * @subpage type1_guide
+ *
+ * @subpage type2_guide
+ *
+ * @subpage type3_guide
+ *
+ * @subpage type4_guide
+ *
+ * @subpage type7_guide
+ *
+ * @subpage type17_guide
+ */

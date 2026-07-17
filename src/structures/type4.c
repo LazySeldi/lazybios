@@ -1,3 +1,9 @@
+/**
+ * @file type4.c
+ * @brief Implements parsing and decoding for SMBIOS Type 4 Processor Information.
+ * @author LazySeldi
+ */
+
 //
 // Type 4 ( Processor Information )
 //
@@ -385,6 +391,14 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Parses all SMBIOS Type 4 Processor Information structures.
+ *
+ * @param Type4 Existing Type 4 array pointer value; it is not dereferenced or released.
+ * @param type4_count Output location for the number of parsed structures.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated Type 4 array, or NULL on failure.
+ */
 lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
@@ -520,6 +534,12 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 // Decoders
 
 // Processor Family
+/**
+ * @brief Decodes an SMBIOS processor family value.
+ *
+ * @param family Raw 8-bit or extended 16-bit processor family value.
+ * @return Static string describing the processor family.
+ */
 const char* lazybiosType4ProcessorFamilyStr(uint16_t family) { // I do not know if everything here is added as per DMTF docs because I asked AI to extract the fields since I wans't gonna write this whole thing by hand, it will be checked though.
 	switch (family) {
 		case PROC_FAMILY_OTHER:
@@ -1014,6 +1034,12 @@ const char* lazybiosType4ProcessorFamilyStr(uint16_t family) { // I do not know 
 }
 
 // Processor Socket Types
+/**
+ * @brief Decodes an SMBIOS processor upgrade or socket type.
+ *
+ * @param type Raw SMBIOS processor upgrade value.
+ * @return Static string describing the socket type.
+ */
 const char* lazybiosType4SocketTypeStr(uint8_t type) {
 	switch (type) {
 		case SOCKET_TYPE_OTHER:
@@ -1198,6 +1224,13 @@ const char* lazybiosType4SocketTypeStr(uint8_t type) {
 }
 
 // Processor Characteristics
+/**
+ * @brief Decodes SMBIOS processor characteristics into a readable string.
+ *
+ * @param characteristics Raw SMBIOS processor characteristics bit field.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -1220,6 +1253,12 @@ void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t
 }
 
 // Processor type
+/**
+ * @brief Decodes an SMBIOS processor type.
+ *
+ * @param type Raw SMBIOS processor type value.
+ * @return Static string describing the processor type.
+ */
 const char* lazybiosType4TypeStr(uint8_t type) {
 	switch (type) {
 		case PROC_TYPE_OTHER:
@@ -1240,6 +1279,13 @@ const char* lazybiosType4TypeStr(uint8_t type) {
 }
 
 // Processor Status
+/**
+ * @brief Decodes an SMBIOS processor status byte.
+ *
+ * @param status Raw SMBIOS processor status value.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -1273,6 +1319,13 @@ void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
 }
 
 // Processor Voltage
+/**
+ * @brief Decodes an SMBIOS processor voltage byte.
+ *
+ * @param voltage Raw SMBIOS processor voltage value.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -1308,6 +1361,12 @@ void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
 }
 
 // Free Function
+/**
+ * @brief Releases an array of parsed SMBIOS Type 4 structures.
+ *
+ * @param Type4 Type 4 array to release.
+ * @param type4_count Number of elements in Type4.
+ */
 void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count) {
 	if (!Type4) return;
 

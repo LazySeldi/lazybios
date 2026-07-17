@@ -1,0 +1,39 @@
+/**
+ * @page limitations Platform Notes and Limitations
+ *
+ * @brief Supported backends, implemented structure types, and API boundaries.
+ *
+ * @section limits_platforms Platform status
+ *
+ * - Linux host loading supports sysfs and a `/dev/mem` fallback.
+ * - Windows host loading uses `GetSystemFirmwareTable` and a generated entry point.
+ * - macOS and unknown host backends are not implemented.
+ * - File-based loaders remain independent of host backend selection.
+ *
+ * @section limits_types Implemented structures
+ *
+ * Parsers are provided for @ref api_type0, @ref api_type1, @ref api_type2,
+ * @ref api_type3, @ref api_type4, @ref api_type7, and @ref api_type17. Other
+ * public SMBIOS type identifiers can be used for traversal or counting but do
+ * not imply that a high-level parser exists.
+ *
+ * @section limits_results Result cardinality
+ *
+ * Type 0 and Type 1 getters return the first matching structure. Type 2, Type
+ * 3, Type 4, Type 7, and Type 17 getters return count-tracked arrays. No getter
+ * performs in-place population of the pointer passed as its first parameter.
+ *
+ * @section limits_normalization Raw representation
+ *
+ * Entry-point structures and many decoded fields intentionally retain their
+ * SMBIOS representation. The API does not normalize all sizes, identifiers,
+ * handles, or version-specific alternatives into a single schema. Use the
+ * relevant type guide and decoder functions when interpreting those values.
+ *
+ * @section limits_lifetime Lifetime boundaries
+ *
+ * Pointers returned by getters and @ref DMIString are allocated. Pointers in
+ * the entry union refer to context-owned entry data. Static strings returned by
+ * enum decoders must not be freed. See @ref core_concepts for the complete
+ * ownership model.
+ */

@@ -1,3 +1,9 @@
+/**
+ * @file type1.c
+ * @brief Implements parsing and decoding for SMBIOS Type 1 System Information.
+ * @author LazySeldi
+ */
+
 //
 // Type 1 ( System Information )
 //
@@ -31,6 +37,13 @@
 #define WAKEUP_TYPE_AC_POWER_RESTORED 0x08
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Parses the first SMBIOS Type 1 System Information structure.
+ *
+ * @param Type1 Existing Type 1 pointer value; it is not dereferenced or released.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated Type 1 structure, or NULL on failure or absence.
+ */
 lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
@@ -92,6 +105,12 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData
 // Decoders
 
 // Wake Up Type
+/**
+ * @brief Decodes an SMBIOS system wake-up type.
+ *
+ * @param wake_up_type Raw SMBIOS wake-up type value.
+ * @return Static string describing the wake-up type.
+ */
 const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 	switch (wake_up_type) {
 		case WAKEUP_TYPE_RESERVED:
@@ -118,6 +137,11 @@ const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 }
 
 // Free Function
+/**
+ * @brief Releases a parsed SMBIOS Type 1 structure.
+ *
+ * @param Type1 Type 1 structure to release.
+ */
 void lazybiosFreeType1(lazybiosType1_t* Type1) {
 	if (!Type1) return;
 

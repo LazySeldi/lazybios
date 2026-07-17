@@ -1,3 +1,9 @@
+/**
+ * @file type0.c
+ * @brief Implements parsing and decoding for SMBIOS Type 0 BIOS Information.
+ * @author LazySeldi
+ */
+
 //
 // Type 0 ( Platform Firmware Information )
 //
@@ -22,6 +28,13 @@
 #define EXTENDED_FIRMWARE_ROM_SIZE 0x18
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @brief Parses the first SMBIOS Type 0 BIOS Information structure.
+ *
+ * @param Type0 Existing Type 0 pointer value; it is not dereferenced or released.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated Type 0 structure, or NULL on failure or absence.
+ */
 lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
 
@@ -96,6 +109,13 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData
 // Decoders
 
 // Firmware Characteristics
+/**
+ * @brief Decodes BIOS characteristics into a readable string.
+ *
+ * @param characteristics SMBIOS BIOS characteristics bit field.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -142,6 +162,13 @@ void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t
 }
 
 // Firmware Characteristics Extension Byte 1
+/**
+ * @brief Decodes BIOS characteristics extension byte 1.
+ *
+ * @param char_ext_byte_1 SMBIOS characteristics extension byte 1.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -163,6 +190,13 @@ void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf,
 }
 
 // Firmware Characteristics Extension Byte 2
+/**
+ * @brief Decodes BIOS characteristics extension byte 2.
+ *
+ * @param char_ext_byte_2 SMBIOS characteristics extension byte 2.
+ * @param buf Output buffer that receives the decoded text.
+ * @param buf_len Capacity of buf in bytes.
+ */
 void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len) {
 	size_t len = 0;
 	buf[0] = '\0';
@@ -183,6 +217,13 @@ void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf,
 }
 
 // Firmware Extended ROM Size
+/**
+ * @brief Extracts the size and unit from an extended BIOS ROM size field.
+ *
+ * @param raw Raw SMBIOS extended ROM size value.
+ * @param unit Output array that receives "MiB", "GiB", or "RES".
+ * @return Size portion of the extended ROM size field.
+ */
 uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 	uint16_t unit_bits = (raw >> 14) & 0x03;
 	uint16_t size_bits = raw & 0x3FFF;
@@ -203,6 +244,11 @@ uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 }
 
 // Free Function
+/**
+ * @brief Releases a parsed SMBIOS Type 0 structure.
+ *
+ * @param Type0 Type 0 structure to release.
+ */
 void lazybiosFreeType0(lazybiosType0_t* Type0) {
 	if (!Type0) return;
 

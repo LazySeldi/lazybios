@@ -1,0 +1,61 @@
+/**
+ * @page data_sources Backends and Input Modes
+ *
+ * @brief Platform backend behavior and supported file layouts.
+ *
+ * @section sources_selection Backend selection
+ *
+ * @ref lazybiosCTXNew selects a @ref lazybiosBackend_t value from the target
+ * platform. Applications may inspect `ctx->backend` before calling
+ * @ref lazybiosInit. Backend selection affects only host initialization;
+ * @ref lazybiosFile and @ref lazybiosSingleFile provide deterministic input
+ * paths for captured tables.
+ *
+ * @section sources_linux Linux
+ *
+ * The Linux backend reads the entry point and DMI table from sysfs. If the DMI
+ * sysfs table cannot be opened, it attempts the `/dev/mem` backend. Access to
+ * physical memory can require elevated operating-system permissions.
+ *
+ * The default sysfs paths are exposed as @ref LINUX_SYSFS_SMBIOS_ENTRY and
+ * @ref LINUX_SYSFS_DMI_TABLE. The physical-memory device path is exposed as
+ * @ref DEV_MEM.
+ *
+ * @section sources_windows Windows
+ *
+ * The Windows backend obtains the DMI table with `GetSystemFirmwareTable`.
+ * That API does not provide the physical table address or a raw entry point, so
+ * lazybios constructs a compatible entry point from the returned version and
+ * table metadata. Consumers must not treat the generated table address as a
+ * physical address.
+ *
+ * @section sources_macos macOS and unknown platforms
+ *
+ * The backend values exist in @ref lazybiosBackend_t, but host initialization
+ * is not implemented for macOS or unknown platforms. File-based parsing remains
+ * available when the platform can build the library.
+ *
+ * @section sources_separate Separate entry point and DMI files
+ *
+ * @ref lazybiosFile expects one raw SMBIOS entry point file and one raw DMI
+ * structure-table file. This layout corresponds to the two Linux sysfs files.
+ * The function owns copies of both file contents through @ref lazybiosDMI_t.
+ *
+ * @section sources_merged Merged file
+ *
+ * @ref lazybiosSingleFile expects the SMBIOS entry point at offset zero and the
+ * DMI structure table immediately after it. The loader identifies whether the
+ * leading entry point uses the SMBIOS 2.x or 3.x layout and uses the appropriate
+ * entry-point length.
+ *
+ * @section sources_failure Failure behavior
+ *
+ * Loading functions return `0` on success and `-1` on invalid input, I/O
+ * failure, allocation failure, unsupported backend, or invalid entry-point
+ * data. A failed load must not be followed by a structure getter. Release the
+ * context with @ref lazybiosCleanup before returning or attempting a fresh
+ * lifecycle.
+ *
+ * @see @ref api_context
+ * @see @ref api_entry
+ */

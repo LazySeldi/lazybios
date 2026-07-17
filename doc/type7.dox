@@ -1,0 +1,35 @@
+/**
+ * @page type7_guide Type 7: Cache Information Guide
+ *
+ * @brief Cache level, configuration, capacity, SRAM type, and associativity interpretation.
+ *
+ * @section type7_array Array result
+ *
+ * Systems commonly expose separate Type 7 records for L1, L2, L3, and other
+ * caches. @ref lazybiosGetType7 returns all @ref SMBIOS_TYPE_CACHES records and
+ * writes the array length to `type7_count`.
+ *
+ * @section type7_capacity Capacity fields
+ *
+ * Use @ref lazybiosType7CacheU16 for `maximum_cache_size` and `installed_size`.
+ * When either 16-bit field is `0xFFFF`, use its matching SMBIOS 3.1 extended
+ * field with @ref lazybiosType7CacheU32. Both helpers return KiB.
+ *
+ * @snippet quick_start.c type7-capacity
+ *
+ * @section type7_configuration Configuration
+ *
+ * @ref lazybiosType7CacheConfigurationStr decodes cache level, socketed state,
+ * location, enabled state, and operational mode. The socket designation remains
+ * a firmware-provided string.
+ *
+ * @section type7_capabilities Capabilities
+ *
+ * Use @ref lazybiosType7SRAMTypeStr for supported and current SRAM bit fields.
+ * Error correction, system cache type, and associativity use
+ * @ref lazybiosType7ErrorCorrectionTypeStr,
+ * @ref lazybiosType7SystemCacheTypeStr, and
+ * @ref lazybiosType7AssociativityStr respectively.
+ *
+ * @see @ref api_type7
+ */

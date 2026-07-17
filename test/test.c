@@ -1,3 +1,9 @@
+/**
+ * @file test.c
+ * @brief Provides the command-line test and inspection program for lazybios.
+ * @author LazySeldi
+ */
+
 //
 // test.c - File for testing ALL SMBIOS types we have implemented currently
 //
@@ -1023,6 +1029,12 @@ static void printType17(lazybiosCTX_t* ctx) {
 	}
 }
 
+/**
+ * @brief Prints detailed SMBIOS entry point version information.
+ *
+ * @param ctx Initialized lazybios context containing parsed entry point data.
+ * @return 0 on success, or -1 if ctx is NULL.
+ */
 int print_smbios_version_info(lazybiosCTX_t* ctx) {
     if (!ctx) return -1;
     printf("=== SMBIOS VERSION INFORMATION ===\n");
@@ -1090,6 +1102,13 @@ static inline void print_usage(const char* progname) {
 	printf("  --single-source <binary>    Uses the parser on the single specified file <binary>, which should hold the entry point first and dmi data merged together\n");
 }
 
+/**
+ * @brief Runs the lazybios command-line test and inspection program.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line argument strings.
+ * @return Process exit status, with zero indicating success.
+ */
 int main(int argc, const char* argv[]) {
 	printf("lazybios Version: %s\n", LAZYBIOS_VER);
 	printf("=============================================\n\n");

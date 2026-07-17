@@ -1,0 +1,36 @@
+/**
+ * @page type2_guide Type 2: Baseboard Information Guide
+ *
+ * @brief Baseboard identity, feature flags, chassis association, and contained handles.
+ *
+ * @section type2_array Array result
+ *
+ * @ref lazybiosGetType2 counts every @ref SMBIOS_TYPE_BASEBOARD structure and
+ * returns an array of @ref lazybiosType2_t. The count written to
+ * `type2_count` defines the valid range and must be passed to
+ * @ref lazybiosFreeType2 when cleanup is performed directly.
+ *
+ * @section type2_identity Identity and association
+ *
+ * Each entry can identify its manufacturer, product, version, serial number,
+ * asset tag, and physical location. `chassis_handle` is a reference to an
+ * SMBIOS Type 3 structure, not an array index in the parsed Type 3 result.
+ *
+ * @section type2_features Feature flags
+ *
+ * `feature_flags` reports hosting, daughter-board, removability,
+ * replaceability, and hot-swap properties. Decode the combined bit field with
+ * @ref lazybiosType2FeatureflagsStr.
+ *
+ * @snippet quick_start.c type2-flags
+ *
+ * @section type2_handles Contained object handles
+ *
+ * `number_of_contained_object_handles` gives the number of 16-bit entries in
+ * `contained_object_handles`. The parser allocates the handle array only when
+ * the formatted structure contains the complete declared sequence. Treat the
+ * handles as SMBIOS structure handles and resolve them against raw structure
+ * headers when cross-structure association is required.
+ *
+ * @see @ref api_type2
+ */

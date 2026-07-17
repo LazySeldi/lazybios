@@ -35,7 +35,7 @@
 ## In here are all of the currently supported SMBIOS types:
 
 <details>
-  <summary><h3 style="display:inline;">Implemented Types:</h3></summary>
+  <summary>Implemented Types</summary>
 <h3>Type 0: BIOS Information</h3>
 <h3>Type 1: System Information</h3>
 <h3>Type 2: Baseboard Information</h3>
@@ -95,8 +95,16 @@ sudo make install # Optional installs to whatever location you specified in the 
 </details>
 
 ---
-## For complete usage instructions and API reference guide, see:
-- **[DOCS.md](DOCS.md)** - Complete usage documentation and API reference!
+## Documentation
+
+Generate the complete user guide and API reference with:
+
+```shell
+doxygen Doxyfile
+```
+
+The generated documentation entry point is `docs/html/index.html`.
+
 ### Heads up: When using the library you may need to read some of the current SMBIOS docs that the library uses(for example lazybios will aways use the latest docs, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
 
 ## Contributing:
@@ -108,5 +116,3 @@ sudo make install # Optional installs to whatever location you specified in the 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-

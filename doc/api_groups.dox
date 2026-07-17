@@ -1,0 +1,76 @@
+/**
+ * @defgroup api Public API
+ * @brief Entry points, data types, constants, and decoders exposed by lazybios.
+ */
+
+/**
+ * @defgroup api_context Context and Data Loading
+ * @ingroup api
+ * @brief Context lifetime, backend selection, and SMBIOS data loading.
+ */
+
+/**
+ * @defgroup api_entry SMBIOS Entry Point Data
+ * @ingroup api
+ * @brief Raw SMBIOS 2.x and 3.x entry point representations.
+ */
+
+/**
+ * @defgroup api_parsing Core Parsing Helpers
+ * @ingroup api
+ * @brief DMI traversal, string extraction, entry parsing, and version reporting.
+ */
+
+/**
+ * @defgroup api_constants Constants and Utility Macros
+ * @ingroup api
+ * @brief Version constants, SMBIOS identifiers, sentinels, offsets, and read helpers.
+ */
+
+/**
+ * @defgroup api_types SMBIOS Structure APIs
+ * @ingroup api
+ * @brief Parsers, decoded structures, formatters, and cleanup functions by SMBIOS type.
+ */
+
+/**
+ * @defgroup api_type0 Type 0: BIOS Information
+ * @ingroup api_types
+ * @brief BIOS and platform firmware information parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type1 Type 1: System Information
+ * @ingroup api_types
+ * @brief System identity and wake-up information parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type2 Type 2: Baseboard Information
+ * @ingroup api_types
+ * @brief Baseboard and module information parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type3 Type 3: Chassis Information
+ * @ingroup api_types
+ * @brief System enclosure and chassis information parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type4 Type 4: Processor Information
+ * @ingroup api_types
+ * @brief Processor socket, identity, topology, and status parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type7 Type 7: Cache Information
+ * @ingroup api_types
+ * @brief Cache configuration, capacity, and capability parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type17 Type 17: Memory Device Information
+ * @ingroup api_types
+ * @brief Memory device identity, capacity, technology, and status parsing and decoding.
+ */
