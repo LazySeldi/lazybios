@@ -572,6 +572,152 @@ static void printType4(lazybiosCTX_t* ctx) {
 	}
 }
 
+static void printType7(lazybiosCTX_t* ctx) {
+	printf("=== CACHE INFORMATION ===\n");
+
+	if (!ctx->Type7) ctx->Type7 = lazybiosGetType7(ctx->Type7, &ctx->type7_count, ctx->DMIData);
+
+	if (ctx->Type7 && ctx->type7_count > 0) {
+		for (size_t i = 0; i < ctx->type7_count; i++) {
+			lazybiosType7_t* type7 = &ctx->Type7[i];
+
+			if (ctx->type7_count > 1) {
+				printf("--- Cache %zu ---\n", i + 1);
+			}
+
+			printf("Socket Designation: %s\n", type7->socket_designation);
+
+			if (type7->cache_configuration == LAZYBIOS_NOT_FOUND_U16) {
+				printf("Cache Configuration: Not Present\n");
+			} else {
+				char buf[LAZYBIOS_DECODER_BUF_SIZE];
+				lazybiosType7CacheConfigurationStr(type7->cache_configuration, buf, sizeof(buf));
+				printf("Cache Configuration: %s\n", buf);
+			}
+
+			if (type7->maximum_cache_size == 0xFFFF) {
+				if (type7->maximum_cache_size_2 == LAZYBIOS_NOT_FOUND_U32) {
+					printf("Maximum Cache Size: Not Present\n");
+				} else {
+					uint64_t size_kb = lazybiosType7CacheU32(type7->maximum_cache_size_2);
+					if (size_kb > 1024) {
+						printf("Maximum Cache Size: %.2f MB\n", (double)size_kb / 1024.0);
+					} else {
+						printf("Maximum Cache Size: %llu KB\n", (unsigned long long)size_kb);
+					}
+				}
+			} else {
+				uint64_t size_kb = lazybiosType7CacheU16(type7->maximum_cache_size);
+				if (size_kb > 1024) {
+					printf("Maximum Cache Size: %.2f MB\n", (double)size_kb / 1024.0);
+				} else {
+					printf("Maximum Cache Size: %llu KB\n", (unsigned long long)size_kb);
+				}
+			}
+
+			if (type7->installed_size == 0xFFFF) {
+				if (type7->installed_cache_size_2 == LAZYBIOS_NOT_FOUND_U32) {
+					printf("Installed Size: Not Present\n");
+				} else {
+					uint64_t size_kb = lazybiosType7CacheU32(type7->installed_cache_size_2);
+					if (size_kb > 1024) {
+						printf("Installed Size: %.2f MB\n", (double)size_kb / 1024.0);
+					} else {
+						printf("Installed Size: %llu KB\n", (unsigned long long)size_kb);
+					}
+				}
+			} else {
+				uint64_t size_kb = lazybiosType7CacheU16(type7->installed_size);
+				if (size_kb > 1024) {
+					printf("Installed Size: %.2f MB\n", (double)size_kb / 1024.0);
+				} else {
+					printf("Installed Size: %llu KB\n", (unsigned long long)size_kb);
+				}
+			}
+
+			if (type7->supported_sram_type == LAZYBIOS_NOT_FOUND_U16) {
+				printf("Supported SRAM Type: Not Present\n");
+			} else {
+				char buf[LAZYBIOS_DECODER_BUF_SIZE];
+				lazybiosType7SRAMTypeStr(type7->supported_sram_type, buf, sizeof(buf));
+				printf("Supported SRAM Type: %s\n", buf);
+			}
+
+			if (type7->current_sram_type == LAZYBIOS_NOT_FOUND_U16) {
+				printf("Current SRAM Type: Not Present\n");
+			} else {
+				char buf[LAZYBIOS_DECODER_BUF_SIZE];
+				lazybiosType7SRAMTypeStr(type7->current_sram_type, buf, sizeof(buf));
+				printf("Current SRAM Type: %s\n", buf);
+			}
+
+			if (ISVERPLUS(ctx->DMIData, 2, 1)) {
+				if (type7->cache_speed == LAZYBIOS_NOT_FOUND_U8) {
+					printf("Cache Speed: Not Present\n");
+				} else if (type7->cache_speed == 0) {
+					printf("Cache Speed: Unknown\n");
+				} else {
+					printf("Cache Speed: %hhu ns\n", type7->cache_speed);
+				}
+
+				if (type7->error_correction_type == LAZYBIOS_NOT_FOUND_U8) {
+					printf("Error Correction Type: Not Present\n");
+				} else {
+					printf("Error Correction Type: %s\n", lazybiosType7ErrorCorrectionTypeStr(type7->error_correction_type));
+				}
+
+				if (type7->system_cache_type == LAZYBIOS_NOT_FOUND_U8) {
+					printf("System Cache Type: Not Present\n");
+				} else {
+					printf("System Cache Type: %s\n", lazybiosType7SystemCacheTypeStr(type7->system_cache_type));
+				}
+
+				if (type7->associativity == LAZYBIOS_NOT_FOUND_U8) {
+					printf("Associativity: Not Present\n");
+				} else {
+					printf("Associativity: %s\n", lazybiosType7AssociativityStr(type7->associativity));
+				}
+			} else {
+				printf("Cache Speed: [SMBIOS 2.1 required]\n");
+				printf("Error Correction Type: [SMBIOS 2.1 required]\n");
+				printf("System Cache Type: [SMBIOS 2.1 required]\n");
+				printf("Associativity: [SMBIOS 2.1 required]\n");
+			}
+
+			if (ISVERPLUS(ctx->DMIData, 3, 1)) {
+				if (type7->maximum_cache_size_2 == LAZYBIOS_NOT_FOUND_U32) {
+					printf("Maximum Cache Size 2: Not Present\n");
+				} else {
+					uint64_t size_kb = lazybiosType7CacheU32(type7->maximum_cache_size_2);
+					if (size_kb > 1024) {
+						printf("Maximum Cache Size 2: %.2f MB\n", (double)size_kb / 1024.0);
+					} else {
+						printf("Maximum Cache Size 2: %llu KB\n", (unsigned long long)size_kb);
+					}
+				}
+
+				if (type7->installed_cache_size_2 == LAZYBIOS_NOT_FOUND_U32) {
+					printf("Installed Cache Size 2: Not Present\n");
+				} else {
+					uint64_t size_kb = lazybiosType7CacheU32(type7->installed_cache_size_2);
+					if (size_kb > 1024) {
+						printf("Installed Cache Size 2: %.2f MB\n", (double)size_kb / 1024.0);
+					} else {
+						printf("Installed Cache Size 2: %llu KB\n", (unsigned long long)size_kb);
+					}
+				}
+			} else {
+				printf("Maximum Cache Size 2: [SMBIOS 3.1 required]\n");
+				printf("Installed Cache Size 2: [SMBIOS 3.1 required]\n");
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Cache information\n\n");
+	}
+}
+
 static void printType17(lazybiosCTX_t* ctx) {
 	printf("=== MEMORY DEVICE ===\n");
 
@@ -878,23 +1024,60 @@ static void printType17(lazybiosCTX_t* ctx) {
 }
 
 int print_smbios_version_info(lazybiosCTX_t* ctx) {
-	if (!ctx) return -1;
-	printf("=== SMBIOS VERSION INFORMATION ===\n");
-	lazybiosPrintVer(ctx);
+    if (!ctx) return -1;
+    printf("=== SMBIOS VERSION INFORMATION ===\n");
+    lazybiosPrintVer(ctx);
 
-	printf("Table Length: %u bytes\n", ctx->DMIData->entry_info.table_length);
-	if (ctx->backend == LAZYBIOS_BACKEND_WINDOWS) {
-		printf("Table Address: Not available (Windows API)\n");
-	} else {
-		printf("Table Address: 0x%lX\n", ctx->DMIData->entry_info.table_address);
-	}
-	printf("Is 64-bit: %s\n", ISVERPLUS(ctx->DMIData, 3, 0) == 1 ? "Yes (SMBIOS 3.x)" : "No (SMBIOS 2.x)");
-	if (ISVERPLUS(ctx->DMIData, 3, 0)) {
-		printf("Docrev: %u\n", ctx->DMIData->entry_info.docrev);
-	}
-	printf("\n");
+    if (ctx->DMIData->entry_tag == SMBIOS_VER_3X) {
+        lazybiosSMBIOS3Entry* v3 = ctx->DMIData->entry_union.v3;
 
-	return 0;
+        printf("Entry Point Version: 3.x\n");
+        printf("Anchor: %c%c%c%c%c\n", v3->anchor[0], v3->anchor[1], v3->anchor[2], v3->anchor[3], v3->anchor[4]);
+        printf("Entry Point Length: %u bytes\n", v3->entry_point_length);
+        printf("Major Version: %u\n", v3->major_version);
+        printf("Minor Version: %u\n", v3->minor_version);
+        printf("Docrev: %u\n", v3->docrev);
+        printf("Entry Point Revision: %u\n", v3->entry_point_revision);
+        printf("Table Max Size: %u bytes\n", v3->structure_table_max_size);
+
+        if (ctx->backend == LAZYBIOS_BACKEND_WINDOWS) {
+            printf("Table Address: Not available (Windows API)\n");
+        } else {
+            printf("Table Address: 0x%lX\n", (unsigned long)v3->structure_table_address);
+        }
+        printf("Is 64-bit: Yes\n");
+
+    } else if (ctx->DMIData->entry_tag == SMBIOS_VER_2X) {
+        lazybiosSMBIOS2Entry* v2 = ctx->DMIData->entry_union.v2;
+
+        printf("Entry Point Version: 2.x\n");
+        printf("Anchor: %c%c%c%c\n", v2->anchor[0], v2->anchor[1], v2->anchor[2], v2->anchor[3]);
+        printf("Entry Point Length: %u bytes\n", v2->entry_point_length);
+        printf("Major Version: %u\n", v2->major_version);
+        printf("Minor Version: %u\n", v2->minor_version);
+        printf("Maximum Structure Size: %u bytes\n", v2->maximum_structure_size);
+        printf("Entry Point Revision: %u\n", v2->entry_point_revision);
+        printf("Intermediate Anchor: %c%c%c%c%c\n", v2->intermediate_anchor[0], v2->intermediate_anchor[1], v2->intermediate_anchor[2], v2->intermediate_anchor[3], v2->intermediate_anchor[4]);
+        printf("Structure Table Length: %u bytes\n", v2->structure_table_length);
+        printf("Number of Structures: %u\n", v2->structure_count);
+        printf("BCD Revision: %u.%u\n", (v2->bcd_revision >> 4) & 0x0F, v2->bcd_revision & 0x0F);
+
+        if (ctx->backend == LAZYBIOS_BACKEND_WINDOWS) {
+            printf("Table Address: Not available (Windows API)\n");
+        } else {
+            printf("Table Address: 0x%lX\n", (unsigned long)v2->structure_table_address);
+        }
+        printf("Is 64-bit: No\n");
+
+    } else {
+        printf("Entry Point Version: Unknown\n");
+        printf("Table Length: Not Present\n");
+        printf("Table Address: Not Present\n");
+        printf("Is 64-bit: Not Present\n");
+    }
+    printf("\n");
+
+    return 0;
 }
 
 static inline void print_usage(const char* progname) {
@@ -1080,6 +1263,9 @@ int main(int argc, const char* argv[]) {
 		if (!ctx->Type4) ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
 		printType4(ctx);
 
+		if (!ctx->Type7) ctx->Type7 = lazybiosGetType7(ctx->Type7, &ctx->type7_count, ctx->DMIData);
+		printType7(ctx);
+
 		if (!ctx->Type17) ctx->Type17 = lazybiosGetType17(ctx->Type17, &ctx->type17_count, ctx->DMIData);
 		printType17(ctx);
 	} else {
@@ -1111,6 +1297,11 @@ int main(int argc, const char* argv[]) {
 			case 4:
 				if (!ctx->Type4) ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
 				printType4(ctx);
+				break;
+
+			case 7:
+				if (!ctx->Type7) ctx->Type7 = lazybiosGetType7(ctx->Type7, &ctx->type7_count, ctx->DMIData);
+				printType7(ctx);
 				break;
 
 			case 17:

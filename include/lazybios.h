@@ -10,30 +10,54 @@ extern "C" {
 #include <stdlib.h>
 
 // lazybios version
-#define LAZYBIOS_VER "0.3.0"
+#define LAZYBIOS_VER "0.4.0"
 #define LAZYBIOS_MAJOR 0
-#define LAZYBIOS_MINOR 3
+#define LAZYBIOS_MINOR 4
 #define LAZYBIOS_PATCH 0
 
 // Just a little recommended buffer size for the 3 argument decoder functions
 #define LAZYBIOS_DECODER_BUF_SIZE 256
 
 // SMBIOS offsets
-#define SMBIOS3_ANCHOR "_SM3_"
-#define SMBIOS3_MAJOR_OFFSET 0x07
-#define SMBIOS3_MINOR_OFFSET 0x08
-#define SMBIOS3_DOCREV_OFFSET 0x09
-#define SMBIOS3_TABLE_LENGTH 0x0C
-#define SMBIOS3_TABLE_ADDRESS 0x10
+// V3
+#define SMBIOS3_ANCHOR                 "_SM3_"
+#define SMBIOS3_ANCHOR_OFFSET          0x00
+#define SMBIOS3_CHECKSUM_OFFSET        0x05
+#define SMBIOS3_LENGTH_OFFSET          0x06
+#define SMBIOS3_MAJOR_OFFSET           0x07
+#define SMBIOS3_MINOR_OFFSET           0x08
+#define SMBIOS3_DOCREV_OFFSET          0x09
+#define SMBIOS3_REVISION_OFFSET        0x0A
+#define SMBIOS3_RESERVED_OFFSET        0x0B
+#define SMBIOS3_TABLE_MAX_SIZE_OFFSET  0x0C
+#define SMBIOS3_TABLE_ADDRESS_OFFSET   0x10
+#define SMBIOS3_ENTRY_POINT_LENGTH     0x18
+#define SMBIOS3_ANCHOR_SIZE            5
 
-#define SMBIOS2_ANCHOR "_SM_"
-#define SMBIOS2_DMI_ANCHOR "_DMI_"
-#define SMBIOS2_MAJOR_OFFSET 0x06
-#define SMBIOS2_MINOR_OFFSET 0x07
-#define SMBIOS2_TABLE_LENGTH 0x16
-#define SMBIOS2_TABLE_ADDRESS 0x18
-#define SMBIOS2_N_STRUCTURES 0x1C
+// V2
+#define SMBIOS2_ANCHOR                     "_SM_"
+#define SMBIOS2_INTERMEDIATE_ANCHOR        "_DMI_"
+#define SMBIOS2_ANCHOR_OFFSET              0x00
+#define SMBIOS2_CHECKSUM_OFFSET            0x04
+#define SMBIOS2_LENGTH_OFFSET              0x05
+#define SMBIOS2_MAJOR_OFFSET               0x06
+#define SMBIOS2_MINOR_OFFSET               0x07
+#define SMBIOS2_MAX_STRUCTURE_SIZE_OFFSET  0x08
+#define SMBIOS2_REVISION_OFFSET            0x0A
+#define SMBIOS2_FORMATTED_AREA_OFFSET      0x0B
+#define SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET 0x10
+#define SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET 0x15
+#define SMBIOS2_TABLE_LENGTH_OFFSET        0x16
+#define SMBIOS2_TABLE_ADDRESS_OFFSET       0x18
+#define SMBIOS2_STRUCTURE_COUNT_OFFSET     0x1C
+#define SMBIOS2_BCD_REVISION_OFFSET        0x1E
+#define SMBIOS2_ENTRY_POINT_LENGTH         0x1F
+#define SMBIOS2_ENTRY_POINT_LENGTH_V21     0x1E
+#define SMBIOS2_ANCHOR_SIZE                4
+#define SMBIOS2_INTERMEDIATE_ANCHOR_SIZE   5
+#define SMBIOS2_FORMATTED_AREA_SIZE        5
 
+// Structures
 #define SMBIOS_TYPE_BIOS 0
 #define SMBIOS_TYPE_SYSTEM 1
 #define SMBIOS_TYPE_BASEBOARD 2
@@ -56,7 +80,16 @@ extern "C" {
 #define LAZYBIOS_NOT_FOUND_STR "Not Present"
 
 // Helper macros
-#define ISVERPLUS(DMIData, req_major, req_minor) (((DMIData)->entry_info.major > (req_major)) || ((DMIData)->entry_info.major == (req_major) && (DMIData)->entry_info.minor >= (req_minor))) // Returns 1 if the version is equal or newer and 0 if its older
+// Returns 1 if the version is equal or newer and 0 if its older
+#define ISVERPLUS(DMIData, req_major, req_minor) ( \
+((DMIData)->entry_tag == SMBIOS_VER_3X) ? \
+(((DMIData)->entry_union.v3->major_version > (req_major)) || \
+((DMIData)->entry_union.v3->major_version == (req_major) && (DMIData)->entry_union.v3->minor_version >= (req_minor))) \
+: \
+(((DMIData)->entry_union.v2->major_version > (req_major)) || \
+((DMIData)->entry_union.v2->major_version == (req_major) && (DMIData)->entry_union.v2->minor_version >= (req_minor))) \
+)
+
 
 #define READSTR(len, OFFSET, field, p, end) \
 	if (len > OFFSET) field = DMIString(p, len, p[OFFSET], end); \
@@ -92,6 +125,59 @@ extern "C" {
 #define DEV_MEM "/dev/mem"
 
 // ===== Data Structures =====
+// ===== Raw Entry Point Structures =====
+typedef struct {
+	uint8_t  anchor[4];                  // "_SM_"
+	uint8_t  checksum;
+	uint8_t  entry_point_length;
+	uint8_t  major_version;
+	uint8_t  minor_version;
+	uint16_t maximum_structure_size;
+	uint8_t  entry_point_revision;
+	uint8_t  formatted_area[5];
+	uint8_t  intermediate_anchor[5];     // "_DMI_"
+	uint8_t  intermediate_checksum;
+	uint16_t structure_table_length;
+	uint32_t structure_table_address;
+	uint16_t structure_count;
+	uint8_t  bcd_revision;
+} lazybiosSMBIOS2Entry;
+
+typedef struct {
+	uint8_t  anchor[5];              // "_SM3_"
+	uint8_t  checksum;
+	uint8_t  entry_point_length;
+	uint8_t  major_version;
+	uint8_t  minor_version;
+	uint8_t  docrev;
+	uint8_t  entry_point_revision;
+	uint8_t  reserved;
+	uint32_t structure_table_max_size;
+	uint64_t structure_table_address;
+} lazybiosSMBIOS3Entry;
+
+// Version Tag
+typedef enum {
+	SMBIOS_VER_UNKNOWN = 0,
+	SMBIOS_VER_2X,
+	SMBIOS_VER_3X,
+	// SMBIOS_VER_4X, -- When it's released I guess
+} lazybiosSMBIOSVersionTag;
+
+typedef struct {
+	uint8_t* dmi_data;
+	size_t dmi_len;
+	uint8_t* entry_data;
+	size_t entry_len;
+
+	// The tagged union (no normalized struct!)
+	lazybiosSMBIOSVersionTag entry_tag;
+	union {
+		lazybiosSMBIOS2Entry* v2;
+		lazybiosSMBIOS3Entry* v3;
+	} entry_union;
+} lazybiosDMI_t;
+
 typedef struct {
 	uint8_t major;
 	uint8_t minor;
@@ -232,6 +318,26 @@ typedef struct {
 } lazybiosType4_t;
 
 typedef struct {
+	//--- (SMBIOS 2.0+) ---
+	char* socket_designation;
+	uint16_t cache_configuration;
+	uint16_t maximum_cache_size;
+	uint16_t installed_size;
+	uint16_t supported_sram_type; // Same decoder with current_sram_type
+	uint16_t current_sram_type;
+
+	//--- (SMBIOS 2.1+) ---
+	uint8_t cache_speed;
+	uint8_t error_correction_type;
+	uint8_t system_cache_type;
+	uint8_t associativity;
+
+	//--- (SMBIOS 3.1+) ---
+	uint32_t maximum_cache_size_2; // They make this stuff so complicated bro. The decoder is going to be hell.
+	uint32_t installed_cache_size_2; // Same thing
+} lazybiosType7_t;
+
+typedef struct {
 	//--- (SMBIOS 2.1+) ---
 	uint16_t physical_memory_array_handle;
 	uint16_t memory_error_information_handle;
@@ -297,14 +403,6 @@ typedef enum { // I'm looking to implement more OSes but right now and for a lon
 } lazybiosBackend_t;
 
 typedef struct {
-	uint8_t* dmi_data;
-	size_t dmi_len;
-	uint8_t* entry_data;
-	size_t entry_len;
-	smbios_entry_info_t entry_info;
-} lazybiosDMI_t;
-
-typedef struct {
 	lazybiosBackend_t backend;
 	lazybiosDMI_t* DMIData;
 
@@ -319,6 +417,9 @@ typedef struct {
 
 	lazybiosType4_t* Type4;
 	size_t type4_count;
+
+	lazybiosType7_t* Type7;
+	size_t type7_count;
 
 	lazybiosType17_t* Type17;
 	size_t type17_count;
@@ -336,8 +437,7 @@ int lazybiosCleanup(lazybiosCTX_t* ctx);
 char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end);
 const uint8_t* DMINext(const uint8_t* ptr, const uint8_t* end);
 size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type);
-int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* buf);
-
+int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_len);
 // Basic functions
 void lazybiosPrintVer(const lazybiosCTX_t* ctx);
 
@@ -377,6 +477,17 @@ const char* lazybiosType4TypeStr(uint8_t type);
 void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len);
 void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len);
 void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count);
+
+// Type 7 + Helpers
+lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData);
+uint64_t lazybiosType7CacheU16(uint16_t raw_size);
+void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len);
+const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type);
+const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type);
+const char* lazybiosType7AssociativityStr(uint8_t associativity);
+void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len);
+uint64_t lazybiosType7CacheU32(uint32_t raw_size);
+void lazybiosFreeType7(lazybiosType7_t* Type7, size_t type7_count);
 
 // Type 17 + Helpers
 lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData);
