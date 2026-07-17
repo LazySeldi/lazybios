@@ -179,16 +179,6 @@ typedef struct {
 } lazybiosDMI_t;
 
 typedef struct {
-	uint8_t major;
-	uint8_t minor;
-	uint8_t docrev; // Only valid for SMBIOS 3.x
-	uint32_t table_length;
-	uint64_t table_address;
-	uint16_t n_structures;
-	bool is_64bit;
-} smbios_entry_info_t;
-
-typedef struct {
 	// --- (SMBIOS 2.0+) ---
 	char* vendor;
 	char* version;
