@@ -1,8 +1,8 @@
 # lazybios Documentation
 
-`lazybios` is a lightweight C library for reading and parsing SMBIOS/DMI data. It exposes a small context-based API, parses SMBIOS entry point metadata, and currently implements SMBIOS Types 0 through 4 and Type 17.
+`lazybios` is a lightweight C library for reading and parsing SMBIOS/DMI data. It exposes a small context-based API, parses SMBIOS entry point metadata, and currently implements SMBIOS Types 0 through 4, Type 7, and Type 17.
 
-Current project version: `0.2.0`.
+Current project version: `0.4.0`.
 
 ## Table of Contents
 
@@ -27,6 +27,7 @@ Current project version: `0.2.0`.
   - [Read From the Host System](#read-from-the-host-system)
   - [Read From Dump Files](#read-from-dump-files)
   - [Read Multiple Structures](#read-multiple-structures)
+  - [Read a Cache Size (Type 7)](#read-a-cache-size-type-7)
 - [Public API Reference](#public-api-reference)
   - [Context Management Functions](#context-management-functions)
   - [Data Loading Functions](#data-loading-functions)
@@ -34,6 +35,8 @@ Current project version: `0.2.0`.
   - [General Helper Functions](#general-helper-functions)
 - [Public Data Structures](#public-data-structures)
   - [smbios_entry_info_t](#smbios_entry_info_t)
+  - [lazybiosSMBIOSVersionTag](#lazybiossmbiosversiontag)
+  - [lazybiosSMBIOS2Entry / lazybiosSMBIOS3Entry](#lazybiossmbios2entry--lazybiossmbios3entry)
   - [lazybiosDMI_t](#lazybiosdmi_t)
   - [lazybiosCTX_t](#lazybiosctx_t)
 - [SMBIOS Type Reference](#smbios-type-reference)
@@ -67,6 +70,12 @@ Current project version: `0.2.0`.
     - [Type 4 Functions](#type-4-functions)
     - [Type 4 Example](#type-4-example)
     - [Type 4 Notes](#type-4-notes)
+  - [Type 7 Cache Information](#type-7-cache-information)
+    - [Type 7 Overview](#type-7-overview)
+    - [Type 7 Fields](#type-7-fields)
+    - [Type 7 Functions](#type-7-functions)
+    - [Type 7 Example](#type-7-example)
+    - [Type 7 Notes](#type-7-notes)
   - [Type 17 Memory Device](#type-17-memory-device)
     - [Type 17 Overview](#type-17-overview)
     - [Type 17 Fields](#type-17-fields)
@@ -89,6 +98,7 @@ Implemented parsers:
 | Type 2 | `lazybiosType2_t` | Baseboard information |
 | Type 3 | `lazybiosType3_t` | System enclosure or chassis information |
 | Type 4 | `lazybiosType4_t` | Processor information |
+| Type 7 | `lazybiosType7_t` | Cache information |
 | Type 17 | `lazybiosType17_t` | Memory device information |
 
 Key characteristics:
@@ -97,7 +107,7 @@ Key characteristics:
 - Uses Linux sysfs files under `/sys/firmware/dmi/tables/` on Linux.
 - Uses `GetSystemFirmwareTable` on Windows.
 - Provides file loaders for repeatable testing with dumped SMBIOS data.
-- Stores Type 2, Type 3, Type 4, and Type 17 results as arrays because those structures can appear more than once.
+- Stores Type 2, Type 3, Type 4, Type 7, and Type 17 results as arrays because those structures can appear more than once.
 
 ## Build and Installation
 
@@ -225,7 +235,7 @@ Options:
 | Option | Description                                                                                                                                                     |
 | :--- |:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--help` | Prints command help.                                                                                                                                            |
-| `--type <number>` | Prints one implemented SMBIOS type. Valid implemented values are `0`, `1`, `2`, `3`, `4`, and `17`.                                                             |
+| `--type <number>` | Prints one implemented SMBIOS type. Valid implemented values are `0`, `1`, `2`, `3`, `4`, `7`, and `17`.                                                        |
 | `--dump [dir]` | Dumps raw SMBIOS data to a directory. Linux writes `smbios_entry_point` and `DMI`; Windows writes `DMI.bin` and a generated `generated_smbios_entry_point.bin`. |
 | `--sources <entry> <dmi>` | Parses separate raw entry point and DMI table files.                                                                                                            |
 | `--single-source <binary>` | Parses one merged file containing entry point bytes followed by DMI table bytes.                                                                                |
@@ -241,11 +251,11 @@ The context stores:
 - The selected backend.
 - A pointer to the raw DMI container, `ctx->DMIData`.
 - Parsed Type 0 and Type 1 pointers.
-- Parsed Type 2, Type 3, Type 4, and Type 17.... arrays plus count fields.
+- Parsed Type 2, Type 3, Type 4, Type 7, and Type 17 arrays plus count fields.
 
 ### DMI Data Layout
 
-`lazybiosDMI_t` owns the raw data used by all parsers.
+`lazybiosDMI_t` owns the raw data used by all parsers. The parsed entry point is exposed as a tagged union rather than a normalized struct: `entry_tag` identifies the SMBIOS version, and the corresponding member of `entry_union` points directly at the raw entry point bytes, reinterpreted as the matching entry point layout.
 
 ```c
 typedef struct {
@@ -253,11 +263,27 @@ typedef struct {
     size_t dmi_len;
     uint8_t *entry_data;
     size_t entry_len;
-    smbios_entry_info_t entry_info;
+
+    // The tagged union (no normalized struct!)
+    lazybiosSMBIOSVersionTag entry_tag;
+    union {
+        lazybiosSMBIOS2Entry *v2;
+        lazybiosSMBIOS3Entry *v3;
+    } entry_union;
 } lazybiosDMI_t;
 ```
 
-`dmi_data` points at the raw DMI structure table. `entry_data` points at raw entry point bytes when they are available. On Windows, `entry_data` is manually generated because the Windows API returns SMBIOS table data rather than the raw entry point file.
+`dmi_data` points at the raw DMI structure table. `entry_data` points at raw entry point bytes when they are available, and `entry_union.v2` / `entry_union.v3` alias directly into `entry_data`. On Windows, `entry_data` is manually generated because the Windows API returns SMBIOS table data rather than the raw entry point file.
+
+`entry_tag` is set by `lazybiosParseEntry()` and takes one of these values:
+
+| Value | Meaning |
+| :--- | :--- |
+| `SMBIOS_VER_UNKNOWN` | No entry point has been parsed yet. Neither union member is valid. |
+| `SMBIOS_VER_2X` | `entry_union.v2` is valid and points at a `lazybiosSMBIOS2Entry`. |
+| `SMBIOS_VER_3X` | `entry_union.v3` is valid and points at a `lazybiosSMBIOS3Entry`. |
+
+Always check `entry_tag` before reading `entry_union.v2` or `entry_union.v3` directly; `ISVERPLUS()` and `lazybiosPrintVer()` already do this correctly and are the preferred way to query the parsed version.
 
 ### Memory Ownership
 
@@ -268,7 +294,7 @@ Data loading functions allocate `ctx->DMIData->entry_data` and/or `ctx->DMIData-
 SMBIOS type getter functions allocate parsed structures:
 
 - Type 0 and Type 1 return a single allocated structure.
-- Type 2, Type 3, Type 4, and Type 17..... return allocated arrays and write the parsed count through the provided count pointer.
+- Type 2, Type 3, Type 4, Type 7, and Type 17 return allocated arrays and write the parsed count through the provided count pointer.
 
 If parsed structures are assigned into the context fields, `lazybiosCleanup(ctx)` frees them.
 
@@ -281,6 +307,7 @@ If parsed structures are managed outside the context, free them with the matchin
 | Type 2 | `lazybiosFreeType2(Type2, type2_count)` |
 | Type 3 | `lazybiosFreeType3(Type3, type3_count)` |
 | Type 4 | `lazybiosFreeType4(Type4, type4_count)` |
+| Type 7 | `lazybiosFreeType7(Type7, type7_count)` |
 | Type 17 | `lazybiosFreeType17(Type17, type17_count)` |
 
 Avoid calling a getter repeatedly and overwriting an existing pointer without freeing the previous result.
@@ -369,7 +396,7 @@ lazybiosCleanup(ctx);
 
 ### Read Multiple Structures
 
-Type 2, Type 3, Type 4, and Type 17 can appear multiple times.
+Type 2, Type 3, Type 4, Type 7, and Type 17 can appear multiple times.
 
 ```c
 ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
@@ -379,6 +406,43 @@ for (size_t i = 0; i < ctx->type4_count; i++) {
     /* Use cpu->socket_designation, cpu->processor_version, etc. */
 }
 ```
+
+### Read a Cache Size (Type 7)
+
+```c
+#include "lazybios.h"
+#include <stdio.h>
+
+int main(void) {
+    lazybiosCTX_t *ctx = lazybiosCTXNew();
+    if (!ctx) return 1;
+
+    if (lazybiosInit(ctx) != 0) {
+        lazybiosCleanup(ctx);
+        return 1;
+    }
+
+    ctx->Type7 = lazybiosGetType7(ctx->Type7, &ctx->type7_count, ctx->DMIData);
+
+    for (size_t i = 0; i < ctx->type7_count; i++) {
+        lazybiosType7_t *cache = &ctx->Type7[i];
+
+        uint64_t size_kb;
+        if (cache->installed_size == LAZYBIOS_NOT_FOUND_U16) {
+            size_kb = lazybiosType7CacheU32(cache->installed_cache_size_2);
+        } else {
+            size_kb = lazybiosType7CacheU16(cache->installed_size);
+        }
+
+        printf("%s: %llu KB\n", cache->socket_designation, (unsigned long long)size_kb);
+    }
+
+    lazybiosCleanup(ctx);
+    return 0;
+}
+```
+
+`lazybiosCleanup(ctx)` frees the `Type7` array (via `lazybiosFreeType7()`), the raw DMI/entry buffers, `ctx->DMIData`, and `ctx` itself, since `ctx->Type7` was assigned back into the context.
 
 ## Public API Reference
 
@@ -406,7 +470,7 @@ The public API is declared in `include/lazybios.h`.
 | `char* DMIString(const uint8_t *p, uint8_t length, uint8_t index, const uint8_t *end)` | Copies the string at `index` from an SMBIOS structure string area. The returned string is allocated and must be freed by the caller unless ownership is stored in a parsed structure. |
 | `const uint8_t* DMINext(const uint8_t *ptr, const uint8_t *end)` | Finds the next SMBIOS structure by skipping the formatted section and string-set terminator. |
 | `size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type)` | Counts DMI structures whose type byte matches `target_type`, stopping at Type 127 or the end of the buffer. |
-| `int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* buf)` | Parses SMBIOS 2.x or 3.x entry point metadata into `ctx->DMIData->entry_info`. |
+| `int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_len)` | Identifies the SMBIOS entry point anchor in `entry_buf`, verifies its checksum(s), and sets `ctx->DMIData->entry_tag` plus the matching `ctx->DMIData->entry_union.v2` or `.v3` pointer. |
 
 ### General Helper Functions
 
@@ -418,21 +482,30 @@ The public API is declared in `include/lazybios.h`.
 
 ### smbios_entry_info_t
 
-Parsed metadata from the SMBIOS entry point.
+Declared in the header as a normalized summary of entry point metadata (`major`, `minor`, `docrev`, `table_length`, `table_address`, `n_structures`, `is_64bit`). It is **not** currently populated by any parsing path and is not a member of `lazybiosDMI_t`. Use `entry_tag` and `entry_union` (below) or `ISVERPLUS()` to query version and entry point data instead.
 
-| Field | Type | Description |
+### lazybiosSMBIOSVersionTag
+
+Tag identifying which entry point layout `lazybiosDMI_t.entry_union` holds.
+
+| Value | Meaning |
+| :--- | :--- |
+| `SMBIOS_VER_UNKNOWN` | No entry point parsed. |
+| `SMBIOS_VER_2X` | `entry_union.v2` is active. |
+| `SMBIOS_VER_3X` | `entry_union.v3` is active. |
+
+### lazybiosSMBIOS2Entry / lazybiosSMBIOS3Entry
+
+Raw SMBIOS entry point layouts. `lazybiosParseEntry()` reinterprets `entry_data` as one of these, depending on the anchor string it finds, and stores the result in `lazybiosDMI_t.entry_union`.
+
+| Struct | Anchor | Key fields |
 | :--- | :--- | :--- |
-| `major` | `uint8_t` | SMBIOS major version. |
-| `minor` | `uint8_t` | SMBIOS minor version. |
-| `docrev` | `uint8_t` | SMBIOS document revision for SMBIOS 3.x. Set to `LAZYBIOS_NOT_FOUND_U8` for SMBIOS 2.x. |
-| `table_length` | `uint32_t` | Length of the DMI structure table. |
-| `table_address` | `uint64_t` | Physical address from the entry point when available. Windows sets this to `0`. |
-| `n_structures` | `uint16_t` | SMBIOS 2.x structure count. SMBIOS 3.x sets this to `LAZYBIOS_NOT_FOUND_U16`. |
-| `is_64bit` | `bool` | `true` for SMBIOS 3.x entry point data, `false` for SMBIOS 2.x entry point data. |
+| `lazybiosSMBIOS2Entry` | `"_SM_"` / `"_DMI_"` | `major_version`, `minor_version`, `maximum_structure_size`, `structure_table_length`, `structure_table_address`, `structure_count`, `bcd_revision` |
+| `lazybiosSMBIOS3Entry` | `"_SM3_"` | `major_version`, `minor_version`, `docrev`, `structure_table_max_size`, `structure_table_address` |
 
 ### lazybiosDMI_t
 
-Raw DMI storage plus parsed entry point metadata.
+Raw DMI storage plus a tagged union giving direct access to the parsed SMBIOS entry point.
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
@@ -440,7 +513,9 @@ Raw DMI storage plus parsed entry point metadata.
 | `dmi_len` | `size_t` | Length of `dmi_data`. |
 | `entry_data` | `uint8_t *` | Raw entry point bytes when available. |
 | `entry_len` | `size_t` | Length of `entry_data`. |
-| `entry_info` | `smbios_entry_info_t` | Parsed entry point metadata. |
+| `entry_tag` | `lazybiosSMBIOSVersionTag` | Selects which member of `entry_union` is valid. |
+| `entry_union.v2` | `lazybiosSMBIOS2Entry *` | Valid when `entry_tag == SMBIOS_VER_2X`. Points into `entry_data`. |
+| `entry_union.v3` | `lazybiosSMBIOS3Entry *` | Valid when `entry_tag == SMBIOS_VER_3X`. Points into `entry_data`. |
 
 ### lazybiosCTX_t
 
@@ -458,6 +533,8 @@ Top-level object for backend selection, raw DMI data, and parsed SMBIOS structur
 | `type3_count` | `size_t` | Number of parsed Type 3 entries. |
 | `Type4` | `lazybiosType4_t *` | Parsed Type 4 array, or `NULL`. |
 | `type4_count` | `size_t` | Number of parsed Type 4 entries. |
+| `Type7` | `lazybiosType7_t *` | Parsed Type 7 array, or `NULL`. |
+| `type7_count` | `size_t` | Number of parsed Type 7 entries. |
 | `Type17` | `lazybiosType17_t *` | Parsed Type 17 array, or `NULL`. |
 | `type17_count` | `size_t` | Number of parsed Type 17 entries. |
 
@@ -751,6 +828,70 @@ for (size_t i = 0; i < ctx->type4_count; i++) {
   - `thread_count_2`
 - `lazybiosType4SocketTypeStr()` decodes the `processor_upgrade` enum. The separate `socket_type` field is parsed as a string for SMBIOS 3.8+ data.
 
+## Type 7 Cache Information
+
+### Type 7 Overview
+
+SMBIOS Type 7 describes cache devices such as processor L1, L2, and L3 caches. Multiple Type 7 structures can exist, so `lazybios` returns an array.
+
+Public structure: `lazybiosType7_t`
+
+### Type 7 Fields
+
+| Field | Type | SMBIOS version | Description |
+| :--- | :--- | :--- | :--- |
+| `socket_designation` | `char *` | 2.0+ | Cache socket designation string. |
+| `cache_configuration` | `uint16_t` | 2.0+ | Cache level, socketed state, location, enabled state, and operational mode bit field. |
+| `maximum_cache_size` | `uint16_t` | 2.0+ | Raw 16-bit maximum cache size field. `0xFFFF` indicates that `maximum_cache_size_2` should be used when available. |
+| `installed_size` | `uint16_t` | 2.0+ | Raw 16-bit installed cache size field. `0xFFFF` indicates that `installed_cache_size_2` should be used when available. |
+| `supported_sram_type` | `uint16_t` | 2.0+ | Supported SRAM type bit field. |
+| `current_sram_type` | `uint16_t` | 2.0+ | Current SRAM type bit field. |
+| `cache_speed` | `uint8_t` | 2.1+ | Cache speed in nanoseconds, or `0` when unknown. |
+| `error_correction_type` | `uint8_t` | 2.1+ | Error correction type enum. |
+| `system_cache_type` | `uint8_t` | 2.1+ | System cache type enum. |
+| `associativity` | `uint8_t` | 2.1+ | Cache associativity enum. |
+| `maximum_cache_size_2` | `uint32_t` | 3.1+ | Raw 32-bit maximum cache size field used when the 16-bit field is `0xFFFF`. |
+| `installed_cache_size_2` | `uint32_t` | 3.1+ | Raw 32-bit installed cache size field used when the 16-bit field is `0xFFFF`. |
+
+### Type 7 Functions
+
+| Function | Description |
+| :--- | :--- |
+| `lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData)` | Counts and parses Type 7 structures into an allocated array. Writes a count to `type7_count`. |
+| `uint64_t lazybiosType7CacheU16(uint16_t raw_size)` | Decodes the 16-bit maximum or installed cache size field and returns the size in KB. |
+| `void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len)` | Decodes supported or current SRAM type flags into a comma-separated string. |
+| `const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type)` | Decodes cache error correction type values. |
+| `const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type)` | Decodes system cache type values such as `Instruction`, `Data`, and `Unified`. |
+| `const char* lazybiosType7AssociativityStr(uint8_t associativity)` | Decodes cache associativity values. |
+| `void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len)` | Decodes the cache configuration bit field. |
+| `uint64_t lazybiosType7CacheU32(uint32_t raw_size)` | Decodes the 32-bit maximum or installed cache size field and returns the size in KB. |
+| `void lazybiosFreeType7(lazybiosType7_t* Type7, size_t type7_count)` | Frees a Type 7 array and its allocated members. |
+
+### Type 7 Example
+
+```c
+ctx->Type7 = lazybiosGetType7(ctx->Type7, &ctx->type7_count, ctx->DMIData);
+
+for (size_t i = 0; i < ctx->type7_count; i++) {
+    lazybiosType7_t *cache = &ctx->Type7[i];
+
+    uint64_t installed_kb;
+    if (cache->installed_size == 0xFFFF) {
+        installed_kb = lazybiosType7CacheU32(cache->installed_cache_size_2);
+    } else {
+        installed_kb = lazybiosType7CacheU16(cache->installed_size);
+    }
+}
+```
+
+### Type 7 Notes
+
+- Type 7 data is array-based because systems commonly expose separate structures for L1, L2, L3, and other caches.
+- `lazybiosType7CacheU16()` is used for both `maximum_cache_size` and `installed_size`.
+- `lazybiosType7CacheU32()` is used for both `maximum_cache_size_2` and `installed_cache_size_2`.
+- When a 16-bit cache size field is `0xFFFF`, use the matching 32-bit cache size field.
+- Cache size helpers return KB. The test executable prints MB when the decoded value is greater than 1024 KB.
+
 ## Type 17 Memory Device
 
 ### Type 17 Overview
@@ -858,7 +999,7 @@ The public header defines constants for several SMBIOS structure IDs:
 | `SMBIOS_TYPE_BASEBOARD` | `2` | Yes |
 | `SMBIOS_TYPE_CHASSIS` | `3` | Yes |
 | `SMBIOS_TYPE_PROCESSOR` | `4` | Yes |
-| `SMBIOS_TYPE_CACHES` | `7` | No |
+| `SMBIOS_TYPE_CACHES` | `7` | Yes |
 | `SMBIOS_TYPE_PORT_CONNECTOR` | `8` | No |
 | `SMBIOS_TYPE_ONBOARD_DEVICES` | `10` | No |
 | `SMBIOS_TYPE_OEM_STRINGS` | `11` | No |
@@ -868,9 +1009,9 @@ The public header defines constants for several SMBIOS structure IDs:
 
 ## Limitations and Platform Notes
 
-- Linux support is complete with both sysfs and /dev/mem(as a fallback) support. 
+- Linux support is complete with both sysfs and /dev/mem(as a fallback) support.
 - Windows support reads DMI table data through `GetSystemFirmwareTable`; it now provides an "artifically" generated entry point.
 - macOS is represented in the backend enum but is not implemented.
 - Type 0 and Type 1 getters return only the first matching structure.
-- Type 2, Type 3, Type 4, and Type 17 getters allocate arrays and require count-aware cleanup.
+- Type 2, Type 3, Type 4, Type 7, and Type 17 getters allocate arrays and require count-aware cleanup.
 - Fields guarded by SMBIOS version checks are filled with sentinel values or `"Not Present"` when unavailable.
