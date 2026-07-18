@@ -7,13 +7,14 @@
 ---
 ## Features
 
-- **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x
+- **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones)
 - **Clean C API** - Simple function calls, only 3 steps to assure memory-safety.
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
 - **Cross Platform** - Currently it's supported on Windows and Linux(MacOS coming next).
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
+- **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
 
 ---
 
@@ -43,6 +44,7 @@
 <h3>Type 2: Baseboard Information</h3>
 <h3>Type 3: Chassis Information</h3>
 <h3>Type 4: Processor Information</h3>
+<h3>Type 7: Cache Information</h3>
 <h3>Type 17: Memory Devices</h3>
 </details>
 
@@ -107,7 +109,7 @@ doxygen Doxyfile
 
 The generated documentation entry point is `docs/html/index.html`.
 
-### Heads up: When using the library you may need to read some of the current SMBIOS docs that the library uses(for example lazybios will aways use the latest docs, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
+### Heads up: When using the library you may need to read some of the current SMBIOS specification that the library uses(for example lazybios will aways use the latest specification, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
 
 ## Contributing:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide on how to contribute!
