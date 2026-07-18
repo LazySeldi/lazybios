@@ -8,11 +8,12 @@
 ## Features
 
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x
-- **Clean C API** - Simple function calls, only 3 steps to assure memory-safety
-- **Zero Dependencies** - Pure C standard library, except libc, but that will change in the future
+- **Clean C API** - Simple function calls, only 3 steps to assure memory-safety.
+- **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
 - **Cross Platform** - Currently it's supported on Windows and Linux(MacOS coming next).
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
+- **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 
 ---
 
