@@ -12,6 +12,7 @@
 - **Zero Dependencies** - Pure C standard library, except libc, but that will change in the future
 - **Memory Safe** - Proper allocation and cleanup
 - **Cross Platform** - Currently it's supported on Windows and Linux(MacOS coming next).
+- **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 
 ---
 
