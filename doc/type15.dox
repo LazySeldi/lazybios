@@ -1,0 +1,50 @@
+/**
+ * @page type15_guide Type 15: System Event Log Guide
+ *
+ * @brief Event-log location, access, status, and supported event descriptors.
+ *
+ * @section type15_scope Metadata scope
+ *
+ * @ref lazybiosGetType15 parses the SMBIOS Type 15 metadata structure. It does
+ * not access the separate nonvolatile event-log storage area. The access
+ * method, address, offsets, and area length describe how platform-specific
+ * software can locate that storage.
+ *
+ * @section type15_access Access method and address
+ *
+ * Decode `access_method` with @ref lazybiosType15AccessMethodStr. For indexed
+ * I/O methods, use @ref lazybiosType15IndexAddress and
+ * @ref lazybiosType15DataAddress to split the packed DWORD. Memory-mapped
+ * access uses the complete DWORD as a physical address. GPNV access uses
+ * @ref lazybiosType15GPNVHandle.
+ *
+ * @section type15_status Status and change notification
+ *
+ * @ref lazybiosType15LogStatusStr reports whether the log area is valid and
+ * full. `log_change_token` changes whenever the event log changes; zero means
+ * that the token mechanism is not implemented. These fields can be dynamic
+ * and might not be current when read through the SMBIOS table interface.
+ *
+ * @section type15_descriptors Supported event descriptors
+ *
+ * SMBIOS 2.1 added the log header format and supported event descriptor list.
+ * Decode the header with @ref lazybiosType15LogHeaderFormatStr. Each
+ * @ref lazybiosType15LogTypeDescriptor_t contains an event type and the
+ * standard format of its variable data, decoded with
+ * @ref lazybiosType15LogTypeStr and
+ * @ref lazybiosType15VariableDataFormatTypeStr.
+ *
+ * The parser uses `length_of_each_log_type_descriptor` as the stride between
+ * records and does not assume that future descriptors remain two bytes long.
+ * It exposes the two fields defined by SMBIOS 3.9 and ignores extension bytes.
+ * An incomplete list or descriptor length below two bytes makes the descriptor
+ * array absent while preserving the encoded count and length fields.
+ *
+ * @section type15_ownership Ownership
+ *
+ * The Type 15 structure array and each nested descriptor array are allocated by
+ * the parser. Release the complete result with @ref lazybiosFreeType15 or
+ * assign it to @ref lazybiosCTX::Type15 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type15
+ */
