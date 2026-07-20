@@ -8,7 +8,7 @@
 // Type 3 ( System Enclosure or Chassis )
 //
 
-#include "lazybios.h"
+#include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,7 +99,7 @@
  * @return Newly allocated Type 3 array, or NULL on failure.
  */
 lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
+	if (!DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -107,7 +107,7 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_CHASSIS);
 	size_t index = 0;
 	Type3 = calloc(count, sizeof(lazybiosType3_t));
-	if (!Type3) return LAZYBIOS_NULL;
+	if (!Type3) return NULL;
 	if (count == 0) {
 		*type3_count = 0;
 		return Type3;
@@ -120,74 +120,85 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 		if (type == SMBIOS_TYPE_CHASSIS) {
 			if (index >= count) break;
 			lazybiosType3_t* current = &Type3[index];
+			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			const uint8_t* structure_end = DMINext(p, end);
 
-			READSTR(len, MANUFACTURER, current->manufacturer, p, end);
+			READSTR(current, manufacturer, len, MANUFACTURER, p, structure_end);
 
-			READU8(current->type, len, TYPE, p)
+			READU8(current, type, len, TYPE, p);
 
-			READSTR(len, VERSION, current->version, p, end);
+			READSTR(current, version, len, VERSION, p, structure_end);
 
-			READSTR(len, SERIAL_NUMBER, current->serial_number, p, end);
+			READSTR(current, serial_number, len, SERIAL_NUMBER, p, structure_end);
 
-			READSTR(len, ASSET_TAG_NUMBER, current->asset_tag, p, end);
+			READSTR(current, asset_tag, len, ASSET_TAG_NUMBER, p, structure_end);
 
-			if (ISVERPLUS(DMIData, 2, 1)) {
-				READU8(current->boot_up_state, len, BOOT_UP_STATE, p)
-				READU8(current->power_supply_state, len, POWER_SUPPLY_STATE, p)
-				READU8(current->thermal_state, len, THERMAL_STATE, p)
-				READU8(current->security_status, len, SECURITY_STATUS, p)
+			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
+				READU8(current, boot_up_state, len, BOOT_UP_STATE, p);
+				READU8(current, power_supply_state, len, POWER_SUPPLY_STATE, p);
+				READU8(current, thermal_state, len, THERMAL_STATE, p);
+				READU8(current, security_status, len, SECURITY_STATUS, p);
 			} else {
-				current->boot_up_state = LAZYBIOS_NOT_FOUND_U8;
-				current->power_supply_state = LAZYBIOS_NOT_FOUND_U8;
-				current->thermal_state = LAZYBIOS_NOT_FOUND_U8;
-				current->security_status = LAZYBIOS_NOT_FOUND_U8;
+				current->boot_up_state = 0;
+				current->power_supply_state = 0;
+				current->thermal_state = 0;
+				current->security_status = 0;
 			}
 
-			if (ISVERPLUS(DMIData, 2, 3)) {
-				READU32(current->oem_defined, len, OEM_DEFINED, p)
+			if (lazybiosIsVersionPlus(DMIData, 2, 3)) {
+				READU32(current, oem_defined, len, OEM_DEFINED, p);
 
-				READU8(current->height, len, HEIGHT, p)
+				READU8(current, height, len, HEIGHT, p);
 
-				READU8(current->number_of_power_cords, len, NUMBER_OF_POWER_CORDS, p)
+				READU8(current, number_of_power_cords, len, NUMBER_OF_POWER_CORDS, p);
 
-				READU8(current->contained_element_count, len, CONTAINED_ELEMENT_COUNT, p)
-				READU8(current->contained_element_record_length, len, CONTAINED_ELEMENT_RECORD_LENGTH, p)
+				READU8(current, contained_element_count, len, CONTAINED_ELEMENT_COUNT, p);
+				READU8(current, contained_element_record_length, len, CONTAINED_ELEMENT_RECORD_LENGTH, p);
 
-				if ((current->contained_element_count > 0 && current->contained_element_count != LAZYBIOS_NOT_FOUND_U8) && (current->contained_element_record_length > 0 && current->contained_element_record_length != LAZYBIOS_NOT_FOUND_U8)) {
-					const size_t array_bytes = (current->contained_element_count * current->contained_element_record_length) * sizeof(uint8_t);
-					if (len >= CONTAINED_ELEMENTS + array_bytes) current->contained_elements = malloc(array_bytes);
-					if (current->contained_elements) memcpy(current->contained_elements, p + CONTAINED_ELEMENTS, array_bytes);
+				if (LAZYBIOS_FIELD_STATUS(current, contained_element_count) == LAZYBIOS_FIELD_PRESENT &&
+					LAZYBIOS_FIELD_STATUS(current, contained_element_record_length) == LAZYBIOS_FIELD_PRESENT) {
+					const size_t array_bytes = (size_t)current->contained_element_count *
+						current->contained_element_record_length;
 
-					if (ISVERPLUS(DMIData, 2, 7)) {
-						if (len > SKU_NUMBER(current->contained_element_count, current->contained_element_record_length)) current->sku_number = DMIString(p, len, p[SKU_NUMBER(current->contained_element_count, current->contained_element_record_length)], end);
-						if (!current->sku_number) current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+					if (array_bytes == 0) {
+						LAZYBIOS_MARK_PRESENT(current, contained_elements);
+					} else if ((size_t)len >= CONTAINED_ELEMENTS + array_bytes) {
+						current->contained_elements = malloc(array_bytes);
+						if (current->contained_elements) {
+							memcpy(current->contained_elements, p + CONTAINED_ELEMENTS, array_bytes);
+							LAZYBIOS_MARK_PRESENT(current, contained_elements);
+						}
 					} else {
-						current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+						LAZYBIOS_MARK_ABSENT(current, contained_elements);
 					}
 
-					if (ISVERPLUS(DMIData, 3, 9)) {
-						current->rack_type = (len > RACK_TYPE(current->contained_element_count, current->contained_element_record_length)) ? p[RACK_TYPE(current->contained_element_count, current->contained_element_record_length)] : LAZYBIOS_NOT_FOUND_U8;
-						current->rack_height = (len > RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length)) ? p[RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length)] : LAZYBIOS_NOT_FOUND_U8;
+					if (lazybiosIsVersionPlus(DMIData, 2, 7)) {
+						READSTR(current, sku_number, len,
+							SKU_NUMBER(current->contained_element_count, current->contained_element_record_length), p, structure_end);
 					} else {
-						current->rack_type = LAZYBIOS_NOT_FOUND_U8;
-						current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+						current->sku_number = NULL;
 					}
-				} else {
-					current->contained_elements = LAZYBIOS_NULL;
-					current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-					current->rack_type = LAZYBIOS_NOT_FOUND_U8;
-					current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+
+					if (lazybiosIsVersionPlus(DMIData, 3, 9)) {
+						READU8(current, rack_type, len,
+							RACK_TYPE(current->contained_element_count, current->contained_element_record_length), p);
+						READU8(current, rack_height, len,
+							RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length), p);
+					} else {
+						current->rack_type = 0;
+						current->rack_height = 0;
+					}
 				}
 			} else {
-				current->oem_defined = LAZYBIOS_NOT_FOUND_U32;
-				current->height = LAZYBIOS_NOT_FOUND_U8;
-				current->number_of_power_cords = LAZYBIOS_NOT_FOUND_U8;
-				current->contained_element_count = LAZYBIOS_NOT_FOUND_U8;
-				current->contained_element_record_length = LAZYBIOS_NOT_FOUND_U8;
-				current->contained_elements = LAZYBIOS_NULL;
-				current->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-				current->rack_type = LAZYBIOS_NOT_FOUND_U8;
-				current->rack_height = LAZYBIOS_NOT_FOUND_U8;
+				current->oem_defined = 0;
+				current->height = 0;
+				current->number_of_power_cords = 0;
+				current->contained_element_count = 0;
+				current->contained_element_record_length = 0;
+				current->contained_elements = NULL;
+				current->sku_number = NULL;
+				current->rack_type = 0;
+				current->rack_height = 0;
 			}
 
 			index++;

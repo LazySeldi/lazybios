@@ -8,7 +8,7 @@
 // Type 4 ( Processor Information )
 //
 
-#include "lazybios.h"
+#include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -400,7 +400,7 @@
  * @return Newly allocated Type 4 array, or NULL on failure.
  */
 lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
+	if (!DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -408,7 +408,7 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PROCESSOR);
 	size_t index = 0;
 	Type4 = calloc(count, sizeof(lazybiosType4_t));
-	if (!Type4) return LAZYBIOS_NULL;
+	if (!Type4) return NULL;
 	if (count == 0) {
 		*type4_count = 0;
 		return Type4;
@@ -422,105 +422,93 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 			if (index >= count) break;
 
 			lazybiosType4_t* current = &Type4[index];
+			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			const uint8_t* structure_end = DMINext(p, end);
 
-			READSTR(len, SOCKET_DESIGNATION, current->socket_designation, p, end);
+			READSTR(current, socket_designation, len, SOCKET_DESIGNATION, p, structure_end);
 
-			READU8(current->processor_type, len, PROCESSOR_TYPE, p)
-			READU8(current->processor_family, len, PROCESSOR_FAMILY, p)
+			READU8(current, processor_type, len, PROCESSOR_TYPE, p);
+			READU8(current, processor_family, len, PROCESSOR_FAMILY, p);
 
-			READSTR(len, PROCESSOR_MANUFACTURER, current->processor_manufacturer, p, end);
+			READSTR(current, processor_manufacturer, len, PROCESSOR_MANUFACTURER, p, structure_end);
 
-			READU64(current->processor_id, len, PROCESSOR_ID, p)
+			READU64(current, processor_id, len, PROCESSOR_ID, p);
 
-			READSTR(len, PROCESSOR_VERSION, current->processor_version, p, end);
+			READSTR(current, processor_version, len, PROCESSOR_VERSION, p, structure_end);
 
-			READU8(current->voltage, len, VOLTAGE, p)
+			READU8(current, voltage, len, VOLTAGE, p);
 
-			READU16(current->external_clock, len, EXTERNAL_CLOCK, p);
+			READU16(current, external_clock, len, EXTERNAL_CLOCK, p);
 
-			READU16(current->max_speed, len, MAX_SPEED, p);
+			READU16(current, max_speed, len, MAX_SPEED, p);
 
-			READU16(current->current_speed, len, CURRENT_SPEED, p);
+			READU16(current, current_speed, len, CURRENT_SPEED, p);
 
-			READU8(current->status, len, STATUS, p)
-			READU8(current->processor_upgrade, len, PROCESSOR_UPGRADE, p)
+			READU8(current, status, len, STATUS, p);
+			READU8(current, processor_upgrade, len, PROCESSOR_UPGRADE, p);
 
-			if (ISVERPLUS(DMIData, 2, 1)) {
-				READU16(current->l1_cache_handle, len, L1_CACHE_HANDLE, p);
+			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
+				READU16(current, l1_cache_handle, len, L1_CACHE_HANDLE, p);
 
-				READU16(current->l2_cache_handle, len, L2_CACHE_HANDLE, p);
+				READU16(current, l2_cache_handle, len, L2_CACHE_HANDLE, p);
 
-				READU16(current->l3_cache_handle, len, L3_CACHE_HANDLE, p);
+				READU16(current, l3_cache_handle, len, L3_CACHE_HANDLE, p);
 			} else {
-				current->l1_cache_handle = LAZYBIOS_NOT_FOUND_U16;
-				current->l2_cache_handle = LAZYBIOS_NOT_FOUND_U16;
-				current->l3_cache_handle = LAZYBIOS_NOT_FOUND_U16;
+				current->l1_cache_handle = 0;
+				current->l2_cache_handle = 0;
+				current->l3_cache_handle = 0;
 			}
 
-			if (ISVERPLUS(DMIData, 2, 3)) {
-				READSTR(len, SERIAL_NUMBER, current->serial_number, p, end);
+			if (lazybiosIsVersionPlus(DMIData, 2, 3)) {
+				READSTR(current, serial_number, len, SERIAL_NUMBER, p, structure_end);
 
-				READSTR(len, ASSET_TAG, current->asset_tag, p, end);
+				READSTR(current, asset_tag, len, ASSET_TAG, p, structure_end);
 
-				READSTR(len, PART_NUMBER, current->part_number, p, end);
+				READSTR(current, part_number, len, PART_NUMBER, p, structure_end);
 			} else {
-				current->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-				current->asset_tag = strdup(LAZYBIOS_NOT_FOUND_STR);
-				current->part_number = strdup(LAZYBIOS_NOT_FOUND_STR);
+				current->serial_number = NULL;
+				current->asset_tag = NULL;
+				current->part_number = NULL;
 			}
 
-			if (ISVERPLUS(DMIData, 2, 5)) {
-				if (len > CORE_COUNT) {
-					current->core_count = p[CORE_COUNT];
-				} else {
-					current->core_count = LAZYBIOS_NOT_FOUND_U8;
-				}
+			if (lazybiosIsVersionPlus(DMIData, 2, 5)) {
+				READU8(current, core_count, len, CORE_COUNT, p);
+				READU8(current, core_enabled, len, CORE_ENABLED, p);
+				READU8(current, thread_count, len, THREAD_COUNT, p);
 
-				if (len > CORE_ENABLED) {
-					current->core_enabled = p[CORE_ENABLED];
-				} else {
-					current->core_enabled = LAZYBIOS_NOT_FOUND_U8;
-				}
+				READU16(current, processor_characteristics, len, PROCESSOR_CHARACTERISTICS, p);
 
-				if (len > THREAD_COUNT) {
-					current->thread_count = p[THREAD_COUNT];
-				} else {
-					current->thread_count = LAZYBIOS_NOT_FOUND_U8;
-				}
-
-				READU16(current->processor_characteristics, len, PROCESSOR_CHARACTERISTICS, p);
-
-				READU16(current->processor_family_2, len, PROCESSOR_FAMILY_2, p);
+				READU16(current, processor_family_2, len, PROCESSOR_FAMILY_2, p);
 			} else {
-				current->core_count = LAZYBIOS_NOT_FOUND_U8;
-				current->core_enabled = LAZYBIOS_NOT_FOUND_U8;
-				current->thread_count = LAZYBIOS_NOT_FOUND_U8;
-				current->processor_characteristics = LAZYBIOS_NOT_FOUND_U16;
-				current->processor_family_2 = LAZYBIOS_NOT_FOUND_U16;
+				current->core_count = 0;
+				current->core_enabled = 0;
+				current->thread_count = 0;
+				current->processor_characteristics = 0;
+				current->processor_family_2 = 0;
 			}
 
-			if (ISVERPLUS(DMIData, 3, 0)) {
-				READU16(current->core_count_2, len, CORE_COUNT_2, p);
+			if (lazybiosIsVersionPlus(DMIData, 3, 0)) {
+				READU16(current, core_count_2, len, CORE_COUNT_2, p);
 
-				READU16(current->core_enabled_2, len, CORE_ENABLED_2, p);
+				READU16(current, core_enabled_2, len, CORE_ENABLED_2, p);
 
-				READU16(current->thread_count_2, len, THREAD_COUNT_2, p);
+				READU16(current, thread_count_2, len, THREAD_COUNT_2, p);
 			} else {
-				current->core_count_2 = LAZYBIOS_NOT_FOUND_U16;
-				current->core_enabled_2 = LAZYBIOS_NOT_FOUND_U16;
-				current->thread_count_2 = LAZYBIOS_NOT_FOUND_U16;
+				current->core_count_2 = 0;
+				current->core_enabled_2 = 0;
+				current->thread_count_2 = 0;
 			}
 
-			if (ISVERPLUS(DMIData, 3, 6)) {
-				READU16(current->thread_enabled, len, THREAD_ENABLED, p);
+			if (lazybiosIsVersionPlus(DMIData, 3, 6)) {
+				READU16(current, thread_enabled, len, THREAD_ENABLED, p);
 			} else {
-				current->thread_enabled = LAZYBIOS_NOT_FOUND_U16;
+				current->thread_enabled = 0;
 			}
 
-			if (ISVERPLUS(DMIData, 3, 8)) {
-				READSTR(len, SOCKET_TYPE, current->socket_type, p, end);
+			if (lazybiosIsVersionPlus(DMIData, 3, 8)) {
+				READSTR(current, socket_type, len, SOCKET_TYPE, p, structure_end);
 			} else {
-				current->socket_type = strdup(LAZYBIOS_NOT_FOUND_STR);
+				current->socket_type = NULL;
 			}
 
 			index++;

@@ -8,7 +8,7 @@
 // Type 1 ( System Information )
 //
 
-#include "lazybios.h"
+#include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,7 +45,7 @@
  * @return Newly allocated Type 1 structure, or NULL on failure or absence.
  */
 lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
+	if (!DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -56,49 +56,43 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData
 
 		if (type == SMBIOS_TYPE_SYSTEM) {
 			Type1 = calloc(1, sizeof(*Type1));
-			if (!Type1) return LAZYBIOS_NULL;
+			if (!Type1) return NULL;
+			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			const uint8_t* structure_end = DMINext(p, end);
 
-			if (len > MANUFACTURER) Type1->manufacturer = DMIString(p, len, p[MANUFACTURER], end);
-			if (!Type1->manufacturer) Type1->manufacturer = strdup(LAZYBIOS_NOT_FOUND_STR);
+			READSTR(Type1, manufacturer, len, MANUFACTURER, p, structure_end);
+			READSTR(Type1, product_name, len, PRODUCT_NAME, p, structure_end);
+			READSTR(Type1, version, len, VERSION, p, structure_end);
+			READSTR(Type1, serial_number, len, SERIAL_NUMBER, p, structure_end);
 
-			if (len > PRODUCT_NAME) Type1->product_name = DMIString(p, len, p[PRODUCT_NAME], end);
-			if (!Type1->product_name) Type1->product_name = strdup(LAZYBIOS_NOT_FOUND_STR);
-
-			if (len > VERSION) Type1->version = DMIString(p, len, p[VERSION], end);
-			if (!Type1->version) Type1->version = strdup(LAZYBIOS_NOT_FOUND_STR);
-
-			if (len > SERIAL_NUMBER) Type1->serial_number = DMIString(p, len, p[SERIAL_NUMBER], end);
-			if (!Type1->serial_number) Type1->serial_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-
-			if (ISVERPLUS(DMIData, 2, 1)) {
+			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
 				if (len >= UUID + sizeof(Type1->uuid)) {
 					const uint8_t* uuid = p + UUID;
 					for (int i = 0; i < 16; i++) Type1->uuid[i] = uuid[i];
+					LAZYBIOS_MARK_PRESENT(Type1, uuid);
 				} else {
-					for (int i = 0; i < 16; i++) Type1->uuid[i] = LAZYBIOS_NOT_FOUND_U8;
+					for (int i = 0; i < 16; i++) Type1->uuid[i] = 0;
+					LAZYBIOS_MARK_ABSENT(Type1, uuid);
 				}
-				READU8(Type1->wake_up_type, len, WAKE_UP_TYPE, p)
+				READU8(Type1, wake_up_type, len, WAKE_UP_TYPE, p);
 			} else {
-				for (int i = 0; i < 16; i++) Type1->uuid[i] = LAZYBIOS_NOT_FOUND_U8;
-				Type1->wake_up_type = LAZYBIOS_NOT_FOUND_U8;
+				for (int i = 0; i < 16; i++) Type1->uuid[i] = 0;
+				Type1->wake_up_type = 0;
 			}
 
-			if (ISVERPLUS(DMIData, 2, 4)) {
-				Type1->sku_number = (len > SKU_NUMBER) ? DMIString(p, len, p[SKU_NUMBER], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
-				if (!Type1->sku_number) Type1->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-
-				Type1->family = (len > FAMILY) ? DMIString(p, len, p[FAMILY], end) : strdup(LAZYBIOS_NOT_FOUND_STR);
-				if (!Type1->family) Type1->family = strdup(LAZYBIOS_NOT_FOUND_STR);
+			if (lazybiosIsVersionPlus(DMIData, 2, 4)) {
+				READSTR(Type1, sku_number, len, SKU_NUMBER, p, structure_end);
+				READSTR(Type1, family, len, FAMILY, p, structure_end);
 			} else {
-				Type1->sku_number = strdup(LAZYBIOS_NOT_FOUND_STR);
-				Type1->family = strdup(LAZYBIOS_NOT_FOUND_STR);
+				Type1->sku_number = NULL;
+				Type1->family = NULL;
 			}
 
 			return Type1;
 		}
 		p = DMINext(p, end);
 	}
-	return LAZYBIOS_NULL;
+	return NULL;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

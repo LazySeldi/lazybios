@@ -8,7 +8,7 @@
 // Type 2 ( Baseboard (or Module) Information )
 //
 
-#include "lazybios.h"
+#include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +54,7 @@
  * @return Newly allocated Type 2 array, or NULL on failure.
  */
 lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
+	if (!DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -62,7 +62,7 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BASEBOARD);
 	size_t index = 0;
 	Type2 = calloc(count, sizeof(lazybiosType2_t));
-	if (!Type2) return LAZYBIOS_NULL;
+	if (!Type2) return NULL;
 	if (count == 0) {
 		*type2_count = 0;
 		return Type2;
@@ -75,37 +75,45 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 		if (type == SMBIOS_TYPE_BASEBOARD) {
 			if (index >= count) break;
 			lazybiosType2_t* current = &Type2[index];
+			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			const uint8_t* structure_end = DMINext(p, end);
 			
-			READSTR(len, MANUFACTURER, current->manufacturer, p, end);
+			READSTR(current, manufacturer, len, MANUFACTURER, p, structure_end);
 
-			READSTR(len, PRODUCT, current->product, p, end);
+			READSTR(current, product, len, PRODUCT, p, structure_end);
 
-			READSTR(len, VERSION, current->version, p, end);
+			READSTR(current, version, len, VERSION, p, structure_end);
 
-			READSTR(len, SERIAL_NUMBER, current->serial_number, p, end);
+			READSTR(current, serial_number, len, SERIAL_NUMBER, p, structure_end);
 
-			READSTR(len, ASSET_TAG, current->asset_tag, p, end);
+			READSTR(current, asset_tag, len, ASSET_TAG, p, structure_end);
 
-			READU8(current->feature_flags, len, FEATURE_FLAGS, p);
+			READU8(current, feature_flags, len, FEATURE_FLAGS, p);
 
-			READSTR(len, LOCATION_IN_CHASSIS, current->location_in_chassis, p, end);
+			READSTR(current, location_in_chassis, len, LOCATION_IN_CHASSIS, p, structure_end);
 
-			READU16(current->chassis_handle, len, CHASSIS_HANDLE, p);
+			READU16(current, chassis_handle, len, CHASSIS_HANDLE, p);
 
-			READU8(current->board_type, len, BOARD_TYPE, p);
+			READU8(current, board_type, len, BOARD_TYPE, p);
 
-			READU8(current->number_of_contained_object_handles, len, NUMBER_OF_CONTAINED_OBJECT_HANDLES, p);
+			READU8(current, number_of_contained_object_handles, len, NUMBER_OF_CONTAINED_OBJECT_HANDLES, p);
 
-			if (current->number_of_contained_object_handles > 0) {
+			if (LAZYBIOS_FIELD_STATUS(current, number_of_contained_object_handles) == LAZYBIOS_FIELD_PRESENT &&
+				current->number_of_contained_object_handles > 0) {
 				const size_t array_bytes = current->number_of_contained_object_handles * sizeof(uint16_t);
 
 				if (len >= CONTAINED_OBJECT_HANDLES + array_bytes) {
 					current->contained_object_handles = malloc(array_bytes);
-					if (current->contained_object_handles) memcpy(current->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
+					if (current->contained_object_handles) {
+						memcpy(current->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
+						LAZYBIOS_MARK_PRESENT(current, contained_object_handles);
+					}
 				} else {
-					current->number_of_contained_object_handles = 0;
-					current->contained_object_handles = LAZYBIOS_NULL;
+					current->contained_object_handles = NULL;
+					LAZYBIOS_MARK_ABSENT(current, contained_object_handles);
 				}
+			} else if (LAZYBIOS_FIELD_STATUS(current, number_of_contained_object_handles) == LAZYBIOS_FIELD_PRESENT) {
+				LAZYBIOS_MARK_PRESENT(current, contained_object_handles);
 			}
 
 			index++;

@@ -8,7 +8,7 @@
 // Type 7 ( Cache Information )
 //
 
-#include "lazybios.h"
+#include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +71,7 @@
  * @return Newly allocated Type 7 array, or NULL on failure.
  */
 lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return LAZYBIOS_NULL;
+	if (!DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -80,7 +80,7 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 	size_t index = 0;
 
 	Type7 = calloc(count, sizeof(lazybiosType7_t));
-	if (!Type7) return LAZYBIOS_NULL;
+	if (!Type7) return NULL;
 	if (count == 0) {
 		*type7_count = 0;
 		return Type7;
@@ -93,19 +93,25 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 		if (type == SMBIOS_TYPE_CACHES) {
 			if (index >= count) break;
 			lazybiosType7_t* current = &Type7[index];
+			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			const uint8_t* structure_end = DMINext(p, end);
 
-			READSTR(len, SOCKET_DESIGNATION, current->socket_designation, p, end);
-			READU16(current->cache_configuration, len, CACHE_CONFIGURATION, p);
-			READU16(current->maximum_cache_size, len, MAXIMUM_CACHE_SIZE, p);
-			READU16(current->installed_size, len, INSTALLED_SIZE, p);
-			READU16(current->supported_sram_type, len, SUPPORTED_SRAM_TYPE, p);
-			READU16(current->current_sram_type, len, CURRENT_SRAM_TYPE, p);
-			READU8(current->cache_speed, len, CACHE_SPEED, p);
-			READU8(current->error_correction_type, len, ERROR_CORRECTION_TYPE, p);
-			READU8(current->system_cache_type, len, SYSTEM_CACHE_TYPE, p);
-			READU8(current->associativity, len, ASSOCIATIVITY, p);
-			READU32(current->maximum_cache_size_2, len, MAXIMUM_CACHE_SIZE_2, p);
-			READU32(current->installed_cache_size_2, len, INSTALLED_CACHE_SIZE_2, p);
+			READSTR(current, socket_designation, len, SOCKET_DESIGNATION, p, structure_end);
+			READU16(current, cache_configuration, len, CACHE_CONFIGURATION, p);
+			READU16(current, maximum_cache_size, len, MAXIMUM_CACHE_SIZE, p);
+			READU16(current, installed_size, len, INSTALLED_SIZE, p);
+			READU16(current, supported_sram_type, len, SUPPORTED_SRAM_TYPE, p);
+			READU16(current, current_sram_type, len, CURRENT_SRAM_TYPE, p);
+			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
+				READU8(current, cache_speed, len, CACHE_SPEED, p);
+				READU8(current, error_correction_type, len, ERROR_CORRECTION_TYPE, p);
+				READU8(current, system_cache_type, len, SYSTEM_CACHE_TYPE, p);
+				READU8(current, associativity, len, ASSOCIATIVITY, p);
+			}
+			if (lazybiosIsVersionPlus(DMIData, 3, 1)) {
+				READU32(current, maximum_cache_size_2, len, MAXIMUM_CACHE_SIZE_2, p);
+				READU32(current, installed_cache_size_2, len, INSTALLED_CACHE_SIZE_2, p);
+			}
 
 			index++;
 		}
