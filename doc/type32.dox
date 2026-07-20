@@ -1,0 +1,33 @@
+/**
+ * @page type32_guide Type 32: System Boot Information Guide
+ *
+ * @brief System boot result codes and status-specific additional data.
+ *
+ * @section type32_array Array result
+ *
+ * @ref lazybiosGetType32 returns every System Boot Information structure and
+ * writes the number of structures to `type32_count`. SMBIOS requires exactly
+ * one structure of this type, but the array result preserves every structure
+ * found in the supplied table.
+ *
+ * @section type32_status Boot status
+ *
+ * `boot_status` identifies the reason or result of the previous system boot.
+ * Decode standard, reserved, vendor-specific, and product-specific values with
+ * @ref lazybiosType32BootStatusStr.
+ *
+ * @section type32_additional Additional data
+ *
+ * Status code 7 and reserved or implementation-specific status codes can carry
+ * additional bytes. `additional_data_size` reports their length and
+ * `additional_data` owns an exact copy. A present zero-length additional-data
+ * field has a size of zero and a NULL pointer.
+ *
+ * @section type32_ownership Ownership
+ *
+ * Release the returned array and its additional-data buffers with
+ * @ref lazybiosFreeType32, or assign it to @ref lazybiosCTX::Type32 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type32
+ */
