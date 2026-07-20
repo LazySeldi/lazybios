@@ -194,3 +194,123 @@
  * @ingroup api_types
  * @brief Voltage-probe location, status, range, precision, and OEM information.
  */
+
+/**
+ * @defgroup api_type27 Type 27: Cooling Device
+ * @ingroup api_types
+ * @brief Cooling-device type, status, redundancy group, speed, and probe relationship information.
+ */
+
+/**
+ * @defgroup api_type28 Type 28: Temperature Probe
+ * @ingroup api_types
+ * @brief Temperature-probe location, status, range, precision, and OEM information.
+ */
+
+/**
+ * @defgroup api_type29 Type 29: Electrical Current Probe
+ * @ingroup api_types
+ * @brief Current-probe location, status, range, precision, and OEM information.
+ */
+
+/**
+ * @defgroup api_type30 Type 30: Out-of-Band Remote Access
+ * @ingroup api_types
+ * @brief Remote-access facility manufacturer and inbound or outbound connection policy.
+ */
+
+/**
+ * @defgroup api_type31 Type 31: Boot Integrity Services Entry Point
+ * @ingroup api_types
+ * @brief Boot Integrity Services entry-point addresses and structure checksum information.
+ */
+
+/**
+ * @defgroup api_type32 Type 32: System Boot Information
+ * @ingroup api_types
+ * @brief System boot status classification and status-specific additional data.
+ */
+
+/**
+ * @defgroup api_type33 Type 33: 64-Bit Memory Error Information
+ * @ingroup api_types
+ * @brief Memory error classification, syndrome, 64-bit addresses, and resolution information.
+ */
+
+/**
+ * @defgroup api_type34 Type 34: Management Device
+ * @ingroup api_types
+ * @brief Environmental management-device identity, type, address, and addressing method.
+ */
+
+/**
+ * @defgroup api_type35 Type 35: Management Device Component
+ * @ingroup api_types
+ * @brief Associations between management devices, environmental components, and threshold records.
+ */
+
+/**
+ * @defgroup api_type36 Type 36: Management Device Threshold Data
+ * @ingroup api_types
+ * @brief Threshold values associated with environmental management-device components.
+ */
+
+/**
+ * @defgroup api_type37 Type 37: Memory Channel
+ * @ingroup api_types
+ * @brief Memory-channel classification, load limits, and associated memory devices.
+ */
+
+/**
+ * @defgroup api_type38 Type 38: IPMI Device Information
+ * @ingroup api_types
+ * @brief IPMI BMC interface, addressing, register-spacing, and interrupt information.
+ */
+
+/**
+ * @defgroup api_type39 Type 39: System Power Supply
+ * @ingroup api_types
+ * @brief Power-supply identity, capacity, characteristics, and probe associations.
+ */
+
+/**
+ * @defgroup api_type40 Type 40: Additional Information
+ * @ingroup api_types
+ * @brief Supplemental values and descriptions associated with fields in other SMBIOS structures.
+ */
+
+/**
+ * @defgroup api_type41 Type 41: Onboard Devices Extended Information
+ * @ingroup api_types
+ * @brief Onboard-device identity, status, instance, and bus location information.
+ */
+
+/**
+ * @defgroup api_type42 Type 42: Management Controller Host Interface
+ * @ingroup api_types
+ * @brief Management-controller interface data and associated protocol records.
+ */
+
+/**
+ * @defgroup api_type43 Type 43: TPM Device
+ * @ingroup api_types
+ * @brief Trusted Platform Module identity, specification, firmware, and characteristics.
+ */
+
+/**
+ * @defgroup api_type44 Type 44: Processor Additional Information
+ * @ingroup api_types
+ * @brief Architecture-specific processor data associated with Type 4 processor structures.
+ */
+
+/**
+ * @defgroup api_type45 Type 45: Firmware Inventory Information
+ * @ingroup api_types
+ * @brief Firmware component identity, version, state, characteristics, and associated structures.
+ */
+
+/**
+ * @defgroup api_type46 Type 46: String Property
+ * @ingroup api_types
+ * @brief String properties associated with parent SMBIOS structures.
+ */
