@@ -1,0 +1,31 @@
+/**
+ * @page type34_guide Type 34: Management Device Guide
+ *
+ * @brief Management-device identity, hardware type, address, and addressing method.
+ *
+ * @section type34_array Array result
+ *
+ * @ref lazybiosGetType34 returns every Management Device structure and writes
+ * the number of structures to `type34_count`. Each description string is owned
+ * by its parsed structure.
+ *
+ * @section type34_classification Device and address types
+ *
+ * Decode `device_type` with @ref lazybiosType34DeviceTypeStr. The enumeration
+ * identifies standard environmental-monitoring devices. Decode `address_type`
+ * with @ref lazybiosType34AddressTypeStr to determine how the raw `address`
+ * value is interpreted.
+ *
+ * @section type34_relationships Managed components
+ *
+ * Type 35 Management Device Component structures reference a Type 34 structure
+ * and associate it with the probes or cooling devices that it controls.
+ *
+ * @section type34_ownership Ownership
+ *
+ * Release the returned array and its description strings with
+ * @ref lazybiosFreeType34, or assign it to @ref lazybiosCTX::Type34 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type34
+ */
