@@ -1,0 +1,33 @@
+/**
+ * @page type43_guide Type 43: TPM Device Guide
+ *
+ * @brief Trusted Platform Module identity, firmware, and capabilities.
+ *
+ * @section type43_array Array result
+ *
+ * @ref lazybiosGetType43 returns every TPM Device structure and writes the
+ * number of structures to `type43_count`. `vendor_id` contains the four TCG
+ * vendor-ID bytes followed by a terminating null byte for direct display.
+ *
+ * @section type43_versions Versions and firmware
+ *
+ * `major_spec_version` and `minor_spec_version` identify the TPM specification
+ * supported by the device. @ref lazybiosType43FirmwareVersionStr interprets
+ * the firmware fields according to the major version: TPM 1.x uses the
+ * revision bytes in its TPM_VERSION structure, while TPM 2.x uses both
+ * vendor-specific 32-bit firmware-version values.
+ *
+ * @section type43_characteristics Characteristics
+ *
+ * @ref lazybiosType43CharacteristicsStr reports when characteristics are not
+ * supported and otherwise describes firmware-update, platform-software, and
+ * OEM mechanisms for changing the TPM family.
+ *
+ * @section type43_ownership Ownership
+ *
+ * Release the returned structures and description strings with
+ * @ref lazybiosFreeType43, or assign the result to @ref lazybiosCTX::Type43 and
+ * use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type43
+ */
