@@ -1,0 +1,38 @@
+/**
+ * @page type39_guide Type 39: System Power Supply Guide
+ *
+ * @brief System power-supply identity, capacity, state, and component associations.
+ *
+ * @section type39_array Array result
+ *
+ * @ref lazybiosGetType39 returns one structure for each possible system power
+ * supply and writes the number of structures to `type39_count`. All returned
+ * strings are owned by their parsed structure.
+ *
+ * @section type39_characteristics Characteristics
+ *
+ * The `power_supply_characteristics` word contains the DMTF power-supply type,
+ * operational status, input-voltage range switching method, and unplugged,
+ * present, and hot-replaceable flags. Decode these values with
+ * @ref lazybiosType39PowerSupplyTypeStr, @ref lazybiosType39StatusStr,
+ * @ref lazybiosType39InputVoltageRangeSwitchingStr, and
+ * @ref lazybiosType39CharacteristicsFlagsStr.
+ *
+ * `max_power_capacity` is the maximum sustained output in watts. The encoded
+ * value `0x8000` means that the capacity is unknown; LazyBIOS preserves that
+ * value as present data.
+ *
+ * @section type39_handles Component handles
+ *
+ * Structures long enough to include the optional tail can provide handles to
+ * an input voltage probe (Type 26), cooling device (Type 27), and input current
+ * probe (Type 29). Each handle remains absent when its bytes are not included
+ * in the formatted structure.
+ *
+ * @section type39_ownership Ownership
+ *
+ * Release the returned array and strings with @ref lazybiosFreeType39, or
+ * assign it to @ref lazybiosCTX::Type39 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type39
+ */
