@@ -1,0 +1,32 @@
+/**
+ * @page type10_guide Type 10: On Board Devices Information Guide
+ *
+ * @brief Legacy onboard-device type, enablement, and description information.
+ *
+ * @section type10_obsolete Obsolete structure
+ *
+ * Type 10 became obsolete in SMBIOS 2.6 and was replaced by Type 41 Onboard
+ * Devices Extended Information. Firmware can provide both structures for
+ * compatibility.
+ *
+ * @section type10_array Structures and device entries
+ *
+ * @ref lazybiosGetType10 returns every Type 10 structure and writes the number
+ * of structures to `type10_count`. Each formatted structure contains zero or
+ * more two-byte device entries. `device_count` is derived from the formatted
+ * length, and every entry owns its decoded description string.
+ *
+ * @section type10_decoding Device type and status
+ *
+ * Bit 7 of `device_type_and_status` indicates whether the device is enabled;
+ * bits 6:0 identify its type. Decode these fields with
+ * @ref lazybiosType10DeviceStatusStr and @ref lazybiosType10DeviceTypeStr.
+ *
+ * @section type10_ownership Ownership
+ *
+ * Release every structure, device array, and description string with
+ * @ref lazybiosFreeType10, or assign the result to @ref lazybiosCTX::Type10 and
+ * use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type10
+ */
