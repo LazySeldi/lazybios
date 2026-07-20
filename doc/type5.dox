@@ -1,0 +1,41 @@
+/**
+ * @page type5_guide Type 5: Memory Controller Information Guide
+ *
+ * @brief Legacy memory-controller capability and module-socket information.
+ *
+ * @section type5_obsolete Obsolete structure
+ *
+ * Type 5 became obsolete in SMBIOS 2.1. New software should use Type 16
+ * Physical Memory Array and Type 17 Memory Device structures. The Type 5 API
+ * remains useful when interpreting SMBIOS 2.0 tables and firmware that emits
+ * both legacy and replacement structures.
+ *
+ * @section type5_array Array result and handles
+ *
+ * @ref lazybiosGetType5 returns every Memory Controller Information structure
+ * and writes the number of structures to `type5_count`.
+ * `number_of_associated_memory_slots` determines the number of entries in
+ * `memory_module_configuration_handles`. Each handle references an obsolete
+ * Type 6 Memory Module Information structure. The handle array is available
+ * only when the complete declared array is encoded.
+ *
+ * @section type5_decoding Capabilities
+ *
+ * Decode `error_detecting_method` with
+ * @ref lazybiosType5ErrorDetectingMethodStr. Supported and enabled correction
+ * flags use @ref lazybiosType5ErrorCorrectingCapabilityStr. Interleave values,
+ * speeds, memory types, and socket voltages have corresponding Type 5 decoder
+ * functions. `maximum_memory_module_size` is an exponent: `2^n` is the maximum
+ * supported module size per slot in MiB.
+ *
+ * `enabled_error_correcting_capabilities` is present only in the SMBIOS 2.1
+ * layout. Its offset follows the variable-length handle array.
+ *
+ * @section type5_ownership Ownership
+ *
+ * Release the returned structures and their handle arrays with
+ * @ref lazybiosFreeType5, or assign them to @ref lazybiosCTX::Type5 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type5
+ */
