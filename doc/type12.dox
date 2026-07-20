@@ -1,0 +1,32 @@
+/**
+ * @page type12_guide Type 12: System Configuration Options Guide
+ *
+ * @brief Baseboard jumper and switch configuration strings and their ownership rules.
+ *
+ * @section type12_array Array result
+ *
+ * @ref lazybiosGetType12 returns every
+ * @ref SMBIOS_TYPE_SYSTEM_CONFIGURATION_OPTIONS structure and writes the
+ * number of structures to `type12_count`. Pass the same count to
+ * @ref lazybiosFreeType12 when cleanup is performed directly.
+ *
+ * @section type12_options Configuration strings
+ *
+ * Each @ref lazybiosType12_t contains the firmware-provided option count and
+ * an equally sized `options` array. The strings describe settings required to
+ * configure baseboard jumpers and switches. Their syntax is firmware-defined,
+ * so the library preserves the text without interpretation.
+ *
+ * The Count field is an unrestricted SMBIOS BYTE. Determine its availability
+ * with @ref LAZYBIOS_FIELD_STATUS instead of comparing its value with a
+ * sentinel. A present count of zero represents an empty option collection.
+ *
+ * @section type12_ownership Ownership
+ *
+ * The structure array, each nested `options` array, and every option string are
+ * allocated by the parser. Release the complete result with
+ * @ref lazybiosFreeType12 or assign it to @ref lazybiosCTX::Type12 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type12
+ */
