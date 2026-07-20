@@ -1,0 +1,31 @@
+/**
+ * @page type25_guide Type 25: System Power Controls Guide
+ *
+ * @brief Date and time fields for the next scheduled system power-on.
+ *
+ * @section type25_array Array result
+ *
+ * @ref lazybiosGetType25 returns every System Power Controls structure and
+ * writes the number of structures to `type25_count`. The presence of this
+ * structure indicates that timed system power-on is available.
+ *
+ * @section type25_schedule Scheduled power-on
+ *
+ * The month, day, hour, minute, and second fields are packed BCD values. Valid
+ * ranges are 1 through 12 for the month, 1 through 31 for the day, 0 through
+ * 23 for the hour, and 0 through 59 for minutes and seconds. A value with an
+ * invalid BCD digit or a value outside its field range does not constrain that
+ * schedule component.
+ *
+ * @ref lazybiosType25NextScheduledPowerOnStr validates each component and
+ * formats the result as `MM-DD HH:MM:SS`. Unspecified, absent, or invalid
+ * components are represented by `*`.
+ *
+ * @section type25_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType25 or assign it to @ref lazybiosCTX::Type25 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type25
+ */
