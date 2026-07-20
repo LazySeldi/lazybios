@@ -1,0 +1,35 @@
+/**
+ * @page type18_guide Type 18: 32-Bit Memory Error Information Guide
+ *
+ * @brief Memory error classification, operation, syndrome, address, and resolution.
+ *
+ * @section type18_array Array result
+ *
+ * @ref lazybiosGetType18 returns every
+ * @ref SMBIOS_TYPE_32BIT_MEMORY_ERROR_INFORMATION structure and writes the
+ * number of structures to `type18_count`. A Type 16 Physical Memory Array can
+ * reference one of these records through its error-information handle.
+ *
+ * @section type18_classification Error classification
+ *
+ * Decode `error_type`, `error_granularity`, and `error_operation` with
+ * @ref lazybiosType18ErrorTypeStr, @ref lazybiosType18ErrorGranularityStr, and
+ * @ref lazybiosType18ErrorOperationStr.
+ *
+ * @section type18_numeric Syndrome and address fields
+ *
+ * `vendor_syndrome` contains vendor-specific ECC syndrome or CRC information;
+ * zero means unknown. `memory_array_error_address` is relative to the memory
+ * array's bus, while `device_error_address` is relative to the failing memory
+ * device. `error_resolution` gives the byte range within which the error can be
+ * located. The value `0x80000000` means unknown for both addresses and the
+ * resolution. All of these special encodings remain present raw values.
+ *
+ * @section type18_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType18 or assign it to @ref lazybiosCTX::Type18 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type18
+ */
