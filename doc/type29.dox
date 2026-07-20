@@ -1,0 +1,34 @@
+/**
+ * @page type29_guide Type 29: Electrical Current Probe Guide
+ *
+ * @brief Current-probe placement, health, range, and measurement precision.
+ *
+ * @section type29_array Array result
+ *
+ * @ref lazybiosGetType29 returns every Electrical Current Probe structure and
+ * writes the number of structures to `type29_count`. Each description string
+ * is owned by its parsed structure.
+ *
+ * @section type29_classification Location and status
+ *
+ * `location_and_status` combines a five-bit physical location and a three-bit
+ * monitored-current status. Decode them independently with
+ * @ref lazybiosType29LocationStr and @ref lazybiosType29StatusStr.
+ *
+ * @section type29_measurement Measurement fields
+ *
+ * `maximum_value`, `minimum_value`, `tolerance`, and `nominal_value` are
+ * expressed in milliamps. `resolution` is expressed in tenths of a milliamp,
+ * and `accuracy` is expressed in hundredths of a percent. For every 16-bit
+ * measurement field, `0x8000` means unknown and remains a present raw value.
+ * `nominal_value` is optional and its availability is determined by the
+ * formatted structure length.
+ *
+ * @section type29_ownership Ownership
+ *
+ * Release the returned array and its description strings with
+ * @ref lazybiosFreeType29, or assign it to @ref lazybiosCTX::Type29 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type29
+ */
