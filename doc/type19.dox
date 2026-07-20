@@ -1,0 +1,34 @@
+/**
+ * @page type19_guide Type 19: Memory Array Mapped Address Guide
+ *
+ * @brief Address ranges mapped to physical memory arrays.
+ *
+ * @section type19_array Array result
+ *
+ * @ref lazybiosGetType19 returns one structure for each contiguous address
+ * range mapped to a Type 16 Physical Memory Array and writes the number of
+ * structures to `type19_count`. `memory_array_handle` identifies the owning
+ * Type 16 structure, and `partition_width` reports the number of memory devices
+ * that form one row in the described partition.
+ *
+ * @section type19_address Address fields
+ *
+ * Legacy `starting_address` and `ending_address` values are expressed in KiB.
+ * The ending value identifies the last KiB in the inclusive range. When both
+ * legacy values are `0xFFFFFFFF`, the SMBIOS 2.7 extended fields contain the
+ * actual inclusive byte addresses. @ref lazybiosType19StartingAddressBytes and
+ * @ref lazybiosType19EndingAddressBytes select the applicable representation
+ * and return byte addresses.
+ *
+ * A zero extended field is encoded but unused when its corresponding legacy
+ * field is not `0xFFFFFFFF`. Field availability remains separate from these
+ * specification values through @ref LAZYBIOS_FIELD_STATUS.
+ *
+ * @section type19_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType19 or assign it to @ref lazybiosCTX::Type19 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type19
+ */
