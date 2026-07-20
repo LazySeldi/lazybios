@@ -84,7 +84,7 @@ void decode_type0(const lazybiosType0_t* bios, char* output, size_t output_size)
 
 //! [type1-wakeup]
 const char* decode_type1_wakeup(const lazybiosType1_t* system) {
-	if (system->wake_up_type == LAZYBIOS_NOT_FOUND_U8) return LAZYBIOS_NOT_FOUND_STR;
+	if (LAZYBIOS_FIELD_STATUS(system, wake_up_type) != LAZYBIOS_FIELD_PRESENT) return "Not Present";
 	return lazybiosType1WakeupTypeStr(system->wake_up_type);
 }
 //! [type1-wakeup]

@@ -21,7 +21,7 @@
  * Boot-up, power-supply, and thermal fields share the state decoder
  * @ref lazybiosType3StateStr. Security status uses
  * @ref lazybiosType3SecurityStatusStr. These fields require SMBIOS 2.1 or newer
- * and otherwise contain @ref LAZYBIOS_NOT_FOUND_U8.
+ * and otherwise report @ref LAZYBIOS_FIELD_ABSENT through their field status.
  *
  * @section type3_elements Contained elements
  *

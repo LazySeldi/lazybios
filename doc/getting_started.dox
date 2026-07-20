@@ -7,7 +7,7 @@
  *
  * Every ordinary workflow follows the same ownership sequence:
  *
- * 1. Allocate a @ref lazybiosCTX_t with @ref lazybiosCTXNew.
+ * 1. Allocate a @ref lazybiosCTX with @ref lazybiosCTXNew.
  * 2. Load raw SMBIOS data with @ref lazybiosInit, @ref lazybiosFile, or
  *    @ref lazybiosSingleFile.
  * 3. Parse the required structures with the corresponding getter.
@@ -29,14 +29,16 @@
  *
  * @section start_arrays Read a repeated SMBIOS structure
  *
- * Types 2, 3, 4, 7, and 17 are returned as arrays. Always pass a count output
- * pointer, retain the returned count, and use the same count during cleanup.
+ * Getters for repeatable SMBIOS structure types return count-tracked arrays.
+ * Always pass a count output pointer, retain the returned count, and use the
+ * same count during cleanup. The relevant type API and guide document the
+ * getter's result cardinality.
  *
  * @snippet quick_start.c processor-array
  *
  * @section start_next Next steps
  *
  * Continue with @ref data_sources for backend behavior, @ref core_concepts for
- * ownership and sentinel rules, and @ref type_guides for field interpretation.
+ * ownership and field-status rules, and @ref type_guides for field interpretation.
  * The complete declarations are organized under @ref api.
  */

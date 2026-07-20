@@ -12,16 +12,15 @@
  *
  * @section limits_types Implemented structures
  *
- * Parsers are provided for @ref api_type0, @ref api_type1, @ref api_type2,
- * @ref api_type3, @ref api_type4, @ref api_type7, and @ref api_type17. Other
- * public SMBIOS type identifiers can be used for traversal or counting but do
- * not imply that a high-level parser exists.
+ * The implemented high-level structure parsers are listed under
+ * @ref api_types. A public SMBIOS type identifier can exist for traversal or
+ * counting without implying that a matching high-level parser is available.
  *
  * @section limits_results Result cardinality
  *
- * Type 0 and Type 1 getters return the first matching structure. Type 2, Type
- * 3, Type 4, Type 7, and Type 17 getters return count-tracked arrays. No getter
- * performs in-place population of the pointer passed as its first parameter.
+ * Each structure-type API documents whether its getter returns the first
+ * matching structure or a count-tracked array. No getter performs in-place
+ * population of the pointer passed as its first parameter.
  *
  * @section limits_normalization Raw representation
  *

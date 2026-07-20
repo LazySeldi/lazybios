@@ -12,8 +12,8 @@
  * @section type1_identity Identity strings
  *
  * Manufacturer, product name, version, and serial number belong to the base
- * structure. SKU number and family require SMBIOS 2.4 or newer. Unavailable
- * strings are allocated as @ref LAZYBIOS_NOT_FOUND_STR.
+ * structure. SKU number and family require SMBIOS 2.4 or newer. Check each
+ * string field with @ref LAZYBIOS_FIELD_STATUS before relying on its value.
  *
  * @section type1_uuid UUID representation
  *
@@ -24,9 +24,8 @@
  *
  * @section type1_wakeup Wake-up event
  *
- * `wake_up_type` is present in SMBIOS 2.1 and newer. Check
- * @ref LAZYBIOS_NOT_FOUND_U8 before calling
- * @ref lazybiosType1WakeupTypeStr.
+ * `wake_up_type` is present in SMBIOS 2.1 and newer. Check it with
+ * @ref LAZYBIOS_FIELD_STATUS before calling @ref lazybiosType1WakeupTypeStr.
  *
  * @snippet quick_start.c type1-wakeup
  *

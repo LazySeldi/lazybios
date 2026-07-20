@@ -46,7 +46,8 @@
  *
  * Total width includes error-correction bits while data width excludes them.
  * The minimum, maximum, and configured voltage fields are expressed in mV when
- * present. Check sentinels before using any version-dependent value.
+ * present. Check @ref LAZYBIOS_FIELD_STATUS before using any version-dependent
+ * value.
  *
  * @section type17_regions Memory regions and identifiers
  *

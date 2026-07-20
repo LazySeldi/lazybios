@@ -24,7 +24,7 @@
 /**
  * @defgroup api_constants Constants and Utility Macros
  * @ingroup api
- * @brief Version constants, SMBIOS identifiers, sentinels, offsets, and read helpers.
+ * @brief Version constants, field-status values, and public utility macros.
  */
 
 /**
@@ -64,13 +64,133 @@
  */
 
 /**
+ * @defgroup api_type5 Type 5: Memory Controller Information (Obsolete)
+ * @ingroup api_types
+ * @brief Legacy memory-controller capabilities, slots, and module-handle information.
+ */
+
+/**
+ * @defgroup api_type6 Type 6: Memory Module Information (Obsolete)
+ * @ingroup api_types
+ * @brief Legacy memory-module socket, bank, type, size, and error information.
+ */
+
+/**
  * @defgroup api_type7 Type 7: Cache Information
  * @ingroup api_types
  * @brief Cache configuration, capacity, and capability parsing and decoding.
  */
 
 /**
+ * @defgroup api_type8 Type 8: Port Connector Information
+ * @ingroup api_types
+ * @brief Port designator, connector type, and function parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type9 Type 9: System Slots
+ * @ingroup api_types
+ * @brief System slot identity, capabilities, PCI location, peer groups, and dimensions.
+ */
+
+/**
+ * @defgroup api_type10 Type 10: On Board Devices Information (Obsolete)
+ * @ingroup api_types
+ * @brief Legacy onboard-device type, status, and description information.
+ */
+
+/**
+ * @defgroup api_type11 Type 11: OEM Strings
+ * @ingroup api_types
+ * @brief OEM-defined free-form string collection parsing and ownership.
+ */
+
+/**
+ * @defgroup api_type12 Type 12: System Configuration Options
+ * @ingroup api_types
+ * @brief Baseboard jumper and switch configuration string parsing and ownership.
+ */
+
+/**
+ * @defgroup api_type13 Type 13: Firmware Language Information
+ * @ingroup api_types
+ * @brief Installable firmware language, format, and current-language parsing.
+ */
+
+/**
+ * @defgroup api_type14 Type 14: Group Associations
+ * @ingroup api_types
+ * @brief Component grouping and hierarchy parsing and ownership.
+ */
+
+/**
+ * @defgroup api_type15 Type 15: System Event Log
+ * @ingroup api_types
+ * @brief System event-log metadata, access information, and descriptor decoding.
+ */
+
+/**
+ * @defgroup api_type16 Type 16: Physical Memory Array
+ * @ingroup api_types
+ * @brief Physical memory array capacity, purpose, and error-correction information.
+ */
+
+/**
  * @defgroup api_type17 Type 17: Memory Device Information
  * @ingroup api_types
  * @brief Memory device identity, capacity, technology, and status parsing and decoding.
+ */
+
+/**
+ * @defgroup api_type18 Type 18: 32-Bit Memory Error Information
+ * @ingroup api_types
+ * @brief Memory error classification, address, syndrome, and resolution information.
+ */
+
+/**
+ * @defgroup api_type19 Type 19: Memory Array Mapped Address
+ * @ingroup api_types
+ * @brief Physical memory array address-range mapping and partition information.
+ */
+
+/**
+ * @defgroup api_type20 Type 20: Memory Device Mapped Address
+ * @ingroup api_types
+ * @brief Memory device address-range, partition, and interleave information.
+ */
+
+/**
+ * @defgroup api_type21 Type 21: Built-in Pointing Device
+ * @ingroup api_types
+ * @brief Built-in pointing-device type, interface, and button information.
+ */
+
+/**
+ * @defgroup api_type22 Type 22: Portable Battery
+ * @ingroup api_types
+ * @brief Portable battery identity, chemistry, capacity, voltage, and SBDS information.
+ */
+
+/**
+ * @defgroup api_type23 Type 23: System Reset
+ * @ingroup api_types
+ * @brief Automatic system-reset capabilities, limits, counters, and timers.
+ */
+
+/**
+ * @defgroup api_type24 Type 24: Hardware Security
+ * @ingroup api_types
+ * @brief System-wide password and front-panel reset security settings.
+ */
+
+/**
+ * @defgroup api_type25 Type 25: System Power Controls
+ * @ingroup api_types
+ * @brief Scheduled system power-on date and time information.
+ */
+
+/**
+ * @defgroup api_type26 Type 26: Voltage Probe
+ * @ingroup api_types
+ * @brief Voltage-probe location, status, range, precision, and OEM information.
  */
