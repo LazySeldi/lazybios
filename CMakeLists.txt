@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 0.4.0
+        VERSION 0.5.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -27,8 +27,28 @@ set(LAZYBIOS_SOURCES
         src/structures/type2.c
         src/structures/type3.c
         src/structures/type4.c
-        src/structures/type17.c
+        src/structures/type5.c
+        src/structures/type6.c
         src/structures/type7.c
+        src/structures/type8.c
+        src/structures/type9.c
+        src/structures/type10.c
+        src/structures/type11.c
+        src/structures/type12.c
+        src/structures/type13.c
+        src/structures/type14.c
+        src/structures/type15.c
+        src/structures/type16.c
+        src/structures/type17.c
+        src/structures/type18.c
+        src/structures/type19.c
+        src/structures/type20.c
+        src/structures/type21.c
+        src/structures/type22.c
+        src/structures/type23.c
+        src/structures/type24.c
+        src/structures/type25.c
+        src/structures/type26.c
 )
 
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
@@ -60,6 +80,10 @@ set_target_properties(lazybios PROPERTIES
 target_include_directories(lazybios PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_include_directories(lazybios PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/internal
 )
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
