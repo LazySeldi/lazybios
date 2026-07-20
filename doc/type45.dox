@@ -1,0 +1,44 @@
+/**
+ * @page type45_guide Type 45: Firmware Inventory Information Guide
+ *
+ * @brief Firmware component inventory, state, and structure associations.
+ *
+ * @section type45_array Array result
+ *
+ * @ref lazybiosGetType45 returns one entry for every firmware component and
+ * writes the number of entries to `type45_count`. Each entry can describe
+ * platform firmware, management-controller firmware, or firmware belonging to
+ * another device represented in the SMBIOS table.
+ *
+ * @section type45_formats Version and identifier formats
+ *
+ * `version_format` applies to both `firmware_version` and
+ * `lowest_supported_firmware_version`. Decode it with
+ * @ref lazybiosType45VersionFormatStr. Decode `firmware_id_format` with
+ * @ref lazybiosType45FirmwareIDFormatStr before interpreting `firmware_id`.
+ *
+ * `image_size` is measured in bytes. The raw value
+ * `0xFFFFFFFFFFFFFFFF` means that the image size is unknown. It remains a
+ * present field because this value is defined by SMBIOS rather than used as
+ * LazyBIOS field-availability metadata.
+ *
+ * @section type45_associations Associated components
+ *
+ * `number_of_associated_components` determines the number of entries in
+ * `associated_component_handles`. The formatted structure length is not used
+ * to infer that count because SMBIOS permits future fields after the list.
+ * Each handle can reference any SMBIOS structure representing a device that
+ * owns the firmware component.
+ *
+ * If the declared handle list extends beyond the formatted structure,
+ * `field_status.associated_component_handles` remains absent. A zero count is
+ * valid and produces a present list with no allocated elements.
+ *
+ * @section type45_ownership Ownership
+ *
+ * Release the returned structure array, copied strings, and associated-handle
+ * arrays with @ref lazybiosFreeType45, or assign the result to
+ * @ref lazybiosCTX::Type45 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type45
+ */
