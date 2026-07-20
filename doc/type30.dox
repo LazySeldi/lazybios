@@ -1,0 +1,27 @@
+/**
+ * @page type30_guide Type 30: Out-of-Band Remote Access Guide
+ *
+ * @brief Remote-access facility identity and connection policy information.
+ *
+ * @section type30_array Array result
+ *
+ * @ref lazybiosGetType30 returns every Out-of-Band Remote Access structure and
+ * writes the number of structures to `type30_count`. Each manufacturer string
+ * is owned by its parsed structure.
+ *
+ * @section type30_connections Connection policy
+ *
+ * Bit 0 of `connections` identifies whether the facility accepts inbound
+ * remote-management connections. Bit 1 identifies whether the facility can
+ * initiate outbound connections to an alert-management facility. Decode the
+ * states with @ref lazybiosType30InboundConnectionStr and
+ * @ref lazybiosType30OutboundConnectionStr. Bits 7 through 2 are reserved.
+ *
+ * @section type30_ownership Ownership
+ *
+ * Release the returned array and its manufacturer strings with
+ * @ref lazybiosFreeType30, or assign it to @ref lazybiosCTX::Type30 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type30
+ */
