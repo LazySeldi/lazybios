@@ -2376,6 +2376,1197 @@ static void printType26(lazybiosCTX_t* ctx) {
 	}
 }
 
+static void printType27(lazybiosCTX_t* ctx) {
+	printf("=== COOLING DEVICE ===\n");
+
+	if (!ctx->Type27) ctx->Type27 = lazybiosGetType27(ctx->Type27, &ctx->type27_count, ctx->DMIData);
+
+	if (ctx->Type27 && ctx->type27_count > 0) {
+		for (size_t i = 0; i < ctx->type27_count; i++) {
+			lazybiosType27_t* type27 = &ctx->Type27[i];
+
+			if (ctx->type27_count > 1) {
+				printf("--- Cooling Device %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type27, temperature_probe_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Temperature Probe Handle: Not Present\n");
+			} else {
+				printf("Temperature Probe Handle: 0x%04hX\n", type27->temperature_probe_handle);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type27, device_type_and_status) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Device Type: Not Present\n");
+				printf("Status: Not Present\n");
+			} else {
+				printf("Device Type: %s\n", lazybiosType27DeviceTypeStr(type27->device_type_and_status));
+				printf("Status: %s\n", lazybiosType27StatusStr(type27->device_type_and_status));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type27, cooling_unit_group) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Cooling Unit Group: Not Present\n");
+			} else if (type27->cooling_unit_group == 0) {
+				printf("Cooling Unit Group: None\n");
+			} else {
+				printf("Cooling Unit Group: %hhu\n", type27->cooling_unit_group);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type27, oem_defined) != LAZYBIOS_FIELD_PRESENT) {
+				printf("OEM-defined Information: Not Present\n");
+			} else {
+				printf("OEM-defined Information: 0x%08X\n", type27->oem_defined);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type27, nominal_speed) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Nominal Speed: Not Present\n");
+			} else if (type27->nominal_speed == 0x8000) {
+				printf("Nominal Speed: Unknown or Non-rotating\n");
+			} else {
+				printf("Nominal Speed: %hu rpm\n", type27->nominal_speed);
+			}
+
+			if (lazybiosIsVersionPlus(ctx->DMIData, 2, 7)) {
+				printf("Description: %s\n", type27->description ? type27->description : "Not Present");
+			} else if (!compact_output) {
+				printf("Description: [SMBIOS 2.7 required]\n");
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Cooling Device information\n\n");
+	}
+}
+
+static void printType28(lazybiosCTX_t* ctx) {
+	printf("=== TEMPERATURE PROBE ===\n");
+
+	if (!ctx->Type28) ctx->Type28 = lazybiosGetType28(ctx->Type28, &ctx->type28_count, ctx->DMIData);
+
+	if (ctx->Type28 && ctx->type28_count > 0) {
+		for (size_t i = 0; i < ctx->type28_count; i++) {
+			lazybiosType28_t* type28 = &ctx->Type28[i];
+
+			if (ctx->type28_count > 1) {
+				printf("--- Temperature Probe %zu ---\n", i + 1);
+			}
+
+			printf("Description: %s\n", type28->description ? type28->description : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type28, location_and_status) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Location: Not Present\n");
+				printf("Status: Not Present\n");
+			} else {
+				printf("Location: %s\n", lazybiosType28LocationStr(type28->location_and_status));
+				printf("Status: %s\n", lazybiosType28StatusStr(type28->location_and_status));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, maximum_value) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Maximum Value: Not Present\n");
+			} else if (type28->maximum_value == 0x8000) {
+				printf("Maximum Value: Unknown\n");
+			} else {
+				printf("Maximum Value: %hu.%hu degrees C\n", type28->maximum_value / 10, type28->maximum_value % 10);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, minimum_value) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Minimum Value: Not Present\n");
+			} else if (type28->minimum_value == 0x8000) {
+				printf("Minimum Value: Unknown\n");
+			} else {
+				printf("Minimum Value: %hu.%hu degrees C\n", type28->minimum_value / 10, type28->minimum_value % 10);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, resolution) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Resolution: Not Present\n");
+			} else if (type28->resolution == 0x8000) {
+				printf("Resolution: Unknown\n");
+			} else {
+				printf("Resolution: %hu.%03hu degrees C\n", type28->resolution / 1000, type28->resolution % 1000);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, tolerance) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Tolerance: Not Present\n");
+			} else if (type28->tolerance == 0x8000) {
+				printf("Tolerance: Unknown\n");
+			} else {
+				printf("Tolerance: +/- %hu.%hu degrees C\n", type28->tolerance / 10, type28->tolerance % 10);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, accuracy) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Accuracy: Not Present\n");
+			} else if (type28->accuracy == 0x8000) {
+				printf("Accuracy: Unknown\n");
+			} else {
+				printf("Accuracy: +/- %hu.%02hu%%\n", type28->accuracy / 100, type28->accuracy % 100);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, oem_defined) != LAZYBIOS_FIELD_PRESENT) {
+				printf("OEM-defined Information: Not Present\n");
+			} else {
+				printf("OEM-defined Information: 0x%08X\n", type28->oem_defined);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type28, nominal_value) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Nominal Value: Not Present\n");
+			} else if (type28->nominal_value == 0x8000) {
+				printf("Nominal Value: Unknown\n");
+			} else {
+				printf("Nominal Value: %hu.%hu degrees C\n", type28->nominal_value / 10, type28->nominal_value % 10);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Temperature Probe information\n\n");
+	}
+}
+
+static void printType29(lazybiosCTX_t* ctx) {
+	printf("=== ELECTRICAL CURRENT PROBE ===\n");
+
+	if (!ctx->Type29) ctx->Type29 = lazybiosGetType29(ctx->Type29, &ctx->type29_count, ctx->DMIData);
+
+	if (ctx->Type29 && ctx->type29_count > 0) {
+		for (size_t i = 0; i < ctx->type29_count; i++) {
+			lazybiosType29_t* type29 = &ctx->Type29[i];
+
+			if (ctx->type29_count > 1) {
+				printf("--- Electrical Current Probe %zu ---\n", i + 1);
+			}
+
+			printf("Description: %s\n", type29->description ? type29->description : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type29, location_and_status) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Location: Not Present\n");
+				printf("Status: Not Present\n");
+			} else {
+				printf("Location: %s\n", lazybiosType29LocationStr(type29->location_and_status));
+				printf("Status: %s\n", lazybiosType29StatusStr(type29->location_and_status));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, maximum_value) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Maximum Value: Not Present\n");
+			} else if (type29->maximum_value == 0x8000) {
+				printf("Maximum Value: Unknown\n");
+			} else {
+				printf("Maximum Value: %hu mA\n", type29->maximum_value);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, minimum_value) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Minimum Value: Not Present\n");
+			} else if (type29->minimum_value == 0x8000) {
+				printf("Minimum Value: Unknown\n");
+			} else {
+				printf("Minimum Value: %hu mA\n", type29->minimum_value);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, resolution) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Resolution: Not Present\n");
+			} else if (type29->resolution == 0x8000) {
+				printf("Resolution: Unknown\n");
+			} else {
+				printf("Resolution: %hu.%hu mA\n", type29->resolution / 10, type29->resolution % 10);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, tolerance) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Tolerance: Not Present\n");
+			} else if (type29->tolerance == 0x8000) {
+				printf("Tolerance: Unknown\n");
+			} else {
+				printf("Tolerance: +/- %hu mA\n", type29->tolerance);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, accuracy) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Accuracy: Not Present\n");
+			} else if (type29->accuracy == 0x8000) {
+				printf("Accuracy: Unknown\n");
+			} else {
+				printf("Accuracy: +/- %hu.%02hu%%\n", type29->accuracy / 100, type29->accuracy % 100);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, oem_defined) != LAZYBIOS_FIELD_PRESENT) {
+				printf("OEM-defined Information: Not Present\n");
+			} else {
+				printf("OEM-defined Information: 0x%08X\n", type29->oem_defined);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type29, nominal_value) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Nominal Value: Not Present\n");
+			} else if (type29->nominal_value == 0x8000) {
+				printf("Nominal Value: Unknown\n");
+			} else {
+				printf("Nominal Value: %hu mA\n", type29->nominal_value);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Electrical Current Probe information\n\n");
+	}
+}
+
+static void printType30(lazybiosCTX_t* ctx) {
+	printf("=== OUT-OF-BAND REMOTE ACCESS ===\n");
+
+	if (!ctx->Type30) ctx->Type30 = lazybiosGetType30(ctx->Type30, &ctx->type30_count, ctx->DMIData);
+
+	if (ctx->Type30 && ctx->type30_count > 0) {
+		for (size_t i = 0; i < ctx->type30_count; i++) {
+			lazybiosType30_t* type30 = &ctx->Type30[i];
+
+			if (ctx->type30_count > 1) {
+				printf("--- Out-of-Band Remote Access %zu ---\n", i + 1);
+			}
+
+			printf("Manufacturer Name: %s\n",
+				type30->manufacturer_name ? type30->manufacturer_name : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type30, connections) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Inbound Connection: Not Present\n");
+				printf("Outbound Connection: Not Present\n");
+			} else {
+				printf("Inbound Connection: %s\n", lazybiosType30InboundConnectionStr(type30->connections));
+				printf("Outbound Connection: %s\n", lazybiosType30OutboundConnectionStr(type30->connections));
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Out-of-Band Remote Access information\n\n");
+	}
+}
+
+static void printType31(lazybiosCTX_t* ctx) {
+	printf("=== BOOT INTEGRITY SERVICES ENTRY POINT ===\n");
+
+	if (!ctx->Type31) ctx->Type31 = lazybiosGetType31(ctx->Type31, &ctx->type31_count, ctx->DMIData);
+
+	if (ctx->Type31 && ctx->type31_count > 0) {
+		for (size_t i = 0; i < ctx->type31_count; i++) {
+			lazybiosType31_t* type31 = &ctx->Type31[i];
+
+			if (ctx->type31_count > 1) {
+				printf("--- Boot Integrity Services Entry Point %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type31, checksum) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Checksum: Not Present\n");
+			} else {
+				printf("Checksum: 0x%02X\n", type31->checksum);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type31, checksum_valid) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Structure Checksum: Not Available\n");
+			} else {
+				printf("Structure Checksum: %s\n", type31->checksum_valid ? "Valid" : "Invalid");
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type31, bis_entry_point_16) != LAZYBIOS_FIELD_PRESENT) {
+				printf("16-bit Entry Point: Not Present\n");
+			} else {
+				printf("16-bit Entry Point: 0x%08X\n", type31->bis_entry_point_16);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type31, bis_entry_point_32) != LAZYBIOS_FIELD_PRESENT) {
+				printf("32-bit Entry Point: Not Present\n");
+			} else {
+				printf("32-bit Entry Point: 0x%08X\n", type31->bis_entry_point_32);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type31, reserved_1) != LAZYBIOS_FIELD_PRESENT ||
+				LAZYBIOS_FIELD_STATUS(type31, reserved_2) != LAZYBIOS_FIELD_PRESENT ||
+				LAZYBIOS_FIELD_STATUS(type31, reserved_3) != LAZYBIOS_FIELD_PRESENT ||
+				LAZYBIOS_FIELD_STATUS(type31, reserved_4) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Reserved Fields: Not Present\n");
+			} else {
+				printf("Reserved Fields: 0x%02X, 0x%04hX, 0x%016llX, 0x%08X\n",
+					type31->reserved_1,
+					type31->reserved_2,
+					(unsigned long long)type31->reserved_3,
+					type31->reserved_4);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Boot Integrity Services Entry Point information\n\n");
+	}
+}
+
+static void printType32(lazybiosCTX_t* ctx) {
+	printf("=== SYSTEM BOOT INFORMATION ===\n");
+
+	if (!ctx->Type32) ctx->Type32 = lazybiosGetType32(ctx->Type32, &ctx->type32_count, ctx->DMIData);
+
+	if (ctx->Type32 && ctx->type32_count > 0) {
+		for (size_t i = 0; i < ctx->type32_count; i++) {
+			lazybiosType32_t* type32 = &ctx->Type32[i];
+
+			if (ctx->type32_count > 1) {
+				printf("--- System Boot Information %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type32, reserved) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Reserved Bytes: Not Present\n");
+			} else {
+				printf("Reserved Bytes:");
+				for (size_t j = 0; j < sizeof(type32->reserved); j++) {
+					printf(" %02X", type32->reserved[j]);
+				}
+				printf("\n");
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type32, boot_status) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Boot Status: Not Present\n");
+			} else {
+				printf("Boot Status: %s (%hhu)\n",
+					lazybiosType32BootStatusStr(type32->boot_status), type32->boot_status);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type32, additional_data) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Additional Data: Not Present\n");
+			} else if (type32->additional_data_size == 0) {
+				printf("Additional Data: None\n");
+			} else {
+				printf("Additional Data:");
+				for (size_t j = 0; j < type32->additional_data_size; j++) {
+					printf(" %02X", type32->additional_data[j]);
+				}
+				printf("\n");
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get System Boot Information\n\n");
+	}
+}
+
+static void printType33(lazybiosCTX_t* ctx) {
+	printf("=== 64-BIT MEMORY ERROR INFORMATION ===\n");
+
+	if (!ctx->Type33) ctx->Type33 = lazybiosGetType33(ctx->Type33, &ctx->type33_count, ctx->DMIData);
+
+	if (ctx->Type33 && ctx->type33_count > 0) {
+		for (size_t i = 0; i < ctx->type33_count; i++) {
+			lazybiosType33_t* type33 = &ctx->Type33[i];
+
+			if (ctx->type33_count > 1) {
+				printf("--- 64-Bit Memory Error Information %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, error_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Error Type: Not Present\n");
+			} else {
+				printf("Error Type: %s\n", lazybiosType33ErrorTypeStr(type33->error_type));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, error_granularity) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Error Granularity: Not Present\n");
+			} else {
+				printf("Error Granularity: %s\n",
+					lazybiosType33ErrorGranularityStr(type33->error_granularity));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, error_operation) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Error Operation: Not Present\n");
+			} else {
+				printf("Error Operation: %s\n", lazybiosType33ErrorOperationStr(type33->error_operation));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, vendor_syndrome) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Vendor Syndrome: Not Present\n");
+			} else if (type33->vendor_syndrome == 0) {
+				printf("Vendor Syndrome: Unknown\n");
+			} else {
+				printf("Vendor Syndrome: 0x%08X\n", type33->vendor_syndrome);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, memory_array_error_address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Memory Array Error Address: Not Present\n");
+			} else if (type33->memory_array_error_address == 0x8000000000000000ULL) {
+				printf("Memory Array Error Address: Unknown\n");
+			} else {
+				printf("Memory Array Error Address: 0x%016llX\n",
+					(unsigned long long)type33->memory_array_error_address);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, device_error_address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Device Error Address: Not Present\n");
+			} else if (type33->device_error_address == 0x8000000000000000ULL) {
+				printf("Device Error Address: Unknown\n");
+			} else {
+				printf("Device Error Address: 0x%016llX\n",
+					(unsigned long long)type33->device_error_address);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type33, error_resolution) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Error Resolution: Not Present\n");
+			} else if (type33->error_resolution == 0x80000000U) {
+				printf("Error Resolution: Unknown\n");
+			} else {
+				printf("Error Resolution: %u bytes\n", type33->error_resolution);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get 64-Bit Memory Error information\n\n");
+	}
+}
+
+static void printType34(lazybiosCTX_t* ctx) {
+	printf("=== MANAGEMENT DEVICE ===\n");
+
+	if (!ctx->Type34) ctx->Type34 = lazybiosGetType34(ctx->Type34, &ctx->type34_count, ctx->DMIData);
+
+	if (ctx->Type34 && ctx->type34_count > 0) {
+		for (size_t i = 0; i < ctx->type34_count; i++) {
+			lazybiosType34_t* type34 = &ctx->Type34[i];
+
+			if (ctx->type34_count > 1) {
+				printf("--- Management Device %zu ---\n", i + 1);
+			}
+
+			printf("Description: %s\n", type34->description ? type34->description : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type34, device_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Device Type: Not Present\n");
+			} else {
+				printf("Device Type: %s\n", lazybiosType34DeviceTypeStr(type34->device_type));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type34, address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Address: Not Present\n");
+			} else {
+				printf("Address: 0x%08X\n", type34->address);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type34, address_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Address Type: Not Present\n");
+			} else {
+				printf("Address Type: %s\n", lazybiosType34AddressTypeStr(type34->address_type));
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Management Device information\n\n");
+	}
+}
+
+static void printType35(lazybiosCTX_t* ctx) {
+	printf("=== MANAGEMENT DEVICE COMPONENT ===\n");
+
+	if (!ctx->Type35) ctx->Type35 = lazybiosGetType35(ctx->Type35, &ctx->type35_count, ctx->DMIData);
+
+	if (ctx->Type35 && ctx->type35_count > 0) {
+		for (size_t i = 0; i < ctx->type35_count; i++) {
+			lazybiosType35_t* type35 = &ctx->Type35[i];
+
+			if (ctx->type35_count > 1) {
+				printf("--- Management Device Component %zu ---\n", i + 1);
+			}
+
+			printf("Description: %s\n", type35->description ? type35->description : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type35, management_device_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Management Device Handle: Not Present\n");
+			} else {
+				printf("Management Device Handle: 0x%04hX\n", type35->management_device_handle);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type35, component_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Component Handle: Not Present\n");
+			} else {
+				printf("Component Handle: 0x%04hX\n", type35->component_handle);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type35, threshold_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Threshold Handle: Not Present\n");
+			} else {
+				printf("Threshold Handle: 0x%04hX\n", type35->threshold_handle);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Management Device Component information\n\n");
+	}
+}
+
+static void printType36(lazybiosCTX_t* ctx) {
+	printf("=== MANAGEMENT DEVICE THRESHOLD DATA ===\n");
+
+	if (!ctx->Type36) ctx->Type36 = lazybiosGetType36(ctx->Type36, &ctx->type36_count, ctx->DMIData);
+
+	if (ctx->Type36 && ctx->type36_count > 0) {
+		for (size_t i = 0; i < ctx->type36_count; i++) {
+			lazybiosType36_t* type36 = &ctx->Type36[i];
+
+			if (ctx->type36_count > 1) {
+				printf("--- Management Device Threshold Data %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_non_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Lower Non-critical Threshold: Not Present\n");
+			} else if (type36->lower_threshold_non_critical == 0x8000) {
+				printf("Lower Non-critical Threshold: Unavailable\n");
+			} else {
+				printf("Lower Non-critical Threshold: %hu\n", type36->lower_threshold_non_critical);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_non_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Upper Non-critical Threshold: Not Present\n");
+			} else if (type36->upper_threshold_non_critical == 0x8000) {
+				printf("Upper Non-critical Threshold: Unavailable\n");
+			} else {
+				printf("Upper Non-critical Threshold: %hu\n", type36->upper_threshold_non_critical);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Lower Critical Threshold: Not Present\n");
+			} else if (type36->lower_threshold_critical == 0x8000) {
+				printf("Lower Critical Threshold: Unavailable\n");
+			} else {
+				printf("Lower Critical Threshold: %hu\n", type36->lower_threshold_critical);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Upper Critical Threshold: Not Present\n");
+			} else if (type36->upper_threshold_critical == 0x8000) {
+				printf("Upper Critical Threshold: Unavailable\n");
+			} else {
+				printf("Upper Critical Threshold: %hu\n", type36->upper_threshold_critical);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_non_recoverable) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Lower Non-recoverable Threshold: Not Present\n");
+			} else if (type36->lower_threshold_non_recoverable == 0x8000) {
+				printf("Lower Non-recoverable Threshold: Unavailable\n");
+			} else {
+				printf("Lower Non-recoverable Threshold: %hu\n", type36->lower_threshold_non_recoverable);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_non_recoverable) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Upper Non-recoverable Threshold: Not Present\n");
+			} else if (type36->upper_threshold_non_recoverable == 0x8000) {
+				printf("Upper Non-recoverable Threshold: Unavailable\n");
+			} else {
+				printf("Upper Non-recoverable Threshold: %hu\n", type36->upper_threshold_non_recoverable);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Management Device Threshold Data information\n\n");
+	}
+}
+
+static void printType37(lazybiosCTX_t* ctx) {
+	printf("=== MEMORY CHANNEL ===\n");
+
+	if (!ctx->Type37) ctx->Type37 = lazybiosGetType37(ctx->Type37, &ctx->type37_count, ctx->DMIData);
+
+	if (ctx->Type37 && ctx->type37_count > 0) {
+		for (size_t i = 0; i < ctx->type37_count; i++) {
+			lazybiosType37_t* type37 = &ctx->Type37[i];
+
+			if (ctx->type37_count > 1) {
+				printf("--- Memory Channel %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type37, channel_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Channel Type: Not Present\n");
+			} else {
+				printf("Channel Type: %s\n", lazybiosType37ChannelTypeStr(type37->channel_type));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type37, maximum_channel_load) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Maximum Channel Load: Not Present\n");
+			} else {
+				printf("Maximum Channel Load: %hhu\n", type37->maximum_channel_load);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type37, memory_device_count) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Memory Device Count: Not Present\n");
+			} else {
+				printf("Memory Device Count: %hhu\n", type37->memory_device_count);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type37, memory_devices) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Memory Devices: Not Present\n");
+			} else {
+				for (size_t j = 0; j < type37->memory_device_count; j++) {
+					lazybiosType37MemoryDevice_t* device = &type37->memory_devices[j];
+					printf("Memory Device %zu Load: %hhu\n", j + 1, device->load);
+					printf("Memory Device %zu Handle: 0x%04hX\n", j + 1, device->handle);
+				}
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Memory Channel information\n\n");
+	}
+}
+
+static void printType38(lazybiosCTX_t* ctx) {
+	printf("=== IPMI DEVICE INFORMATION ===\n");
+
+	if (!ctx->Type38) ctx->Type38 = lazybiosGetType38(ctx->Type38, &ctx->type38_count, ctx->DMIData);
+
+	if (ctx->Type38 && ctx->type38_count > 0) {
+		for (size_t i = 0; i < ctx->type38_count; i++) {
+			lazybiosType38_t* type38 = &ctx->Type38[i];
+			char buf[LAZYBIOS_DECODER_BUF_SIZE];
+
+			if (ctx->type38_count > 1) {
+				printf("--- IPMI Device Information %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, interface_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Interface Type: Not Present\n");
+			} else {
+				printf("Interface Type: %s\n", lazybiosType38InterfaceTypeStr(type38->interface_type));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, ipmi_specification_revision) != LAZYBIOS_FIELD_PRESENT) {
+				printf("IPMI Specification Revision: Not Present\n");
+			} else {
+				lazybiosType38SpecificationRevisionStr(type38->ipmi_specification_revision, buf, sizeof(buf));
+				printf("IPMI Specification Revision: %s\n", buf);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, i2c_target_address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("I2C Target Address: Not Present\n");
+			} else {
+				printf("I2C Target Address: 0x%02hhX\n", type38->i2c_target_address);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, nv_storage_device_address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("NV Storage Device Address: Not Present\n");
+			} else if (type38->nv_storage_device_address == 0xFF) {
+				printf("NV Storage Device Address: No Storage Device\n");
+			} else {
+				printf("NV Storage Device Address: 0x%02hhX\n", type38->nv_storage_device_address);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, base_address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Base Address: Not Present\n");
+				printf("Base Address Type: Not Present\n");
+			} else {
+				printf("Base Address Type: %s\n", lazybiosType38BaseAddressTypeStr(type38->base_address));
+				if (LAZYBIOS_FIELD_STATUS(type38, base_address_modifier_interrupt_info) == LAZYBIOS_FIELD_PRESENT) {
+					printf("Base Address: 0x%016llX\n", (unsigned long long)lazybiosType38BaseAddressValue(
+						type38->base_address, type38->base_address_modifier_interrupt_info));
+				} else {
+					printf("Base Address: 0x%016llX (raw)\n", (unsigned long long)type38->base_address);
+				}
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, base_address_modifier_interrupt_info) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Register Spacing: Not Present\n");
+				printf("Interrupt Information: Not Present\n");
+			} else {
+				printf("Register Spacing: %s\n",
+					lazybiosType38RegisterSpacingStr(type38->base_address_modifier_interrupt_info));
+				lazybiosType38InterruptInfoStr(type38->base_address_modifier_interrupt_info, buf, sizeof(buf));
+				printf("Interrupt Information: %s\n", buf);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type38, interrupt_number) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Interrupt Number: Not Present\n");
+			} else if (type38->interrupt_number == 0) {
+				printf("Interrupt Number: Unspecified/Unsupported\n");
+			} else {
+				printf("Interrupt Number: %hhu\n", type38->interrupt_number);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get IPMI Device information\n\n");
+	}
+}
+
+static void printType39(lazybiosCTX_t* ctx) {
+	printf("=== SYSTEM POWER SUPPLY ===\n");
+
+	if (!ctx->Type39) ctx->Type39 = lazybiosGetType39(ctx->Type39, &ctx->type39_count, ctx->DMIData);
+
+	if (ctx->Type39 && ctx->type39_count > 0) {
+		for (size_t i = 0; i < ctx->type39_count; i++) {
+			lazybiosType39_t* type39 = &ctx->Type39[i];
+
+			if (ctx->type39_count > 1) {
+				printf("--- System Power Supply %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type39, power_unit_group) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Power Unit Group: Not Present\n");
+			} else if (type39->power_unit_group == 0) {
+				printf("Power Unit Group: 0 (Not Redundant)\n");
+			} else {
+				printf("Power Unit Group: %hhu\n", type39->power_unit_group);
+			}
+
+			printf("Location: %s\n", type39->location ? type39->location : "Not Present");
+			printf("Device Name: %s\n", type39->device_name ? type39->device_name : "Not Present");
+			printf("Manufacturer: %s\n", type39->manufacturer ? type39->manufacturer : "Not Present");
+			printf("Serial Number: %s\n", type39->serial_number ? type39->serial_number : "Not Present");
+			printf("Asset Tag Number: %s\n", type39->asset_tag_number ? type39->asset_tag_number : "Not Present");
+			printf("Model Part Number: %s\n", type39->model_part_number ? type39->model_part_number : "Not Present");
+			printf("Revision Level: %s\n", type39->revision_level ? type39->revision_level : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type39, max_power_capacity) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Maximum Power Capacity: Not Present\n");
+			} else if (type39->max_power_capacity == 0x8000) {
+				printf("Maximum Power Capacity: Unknown\n");
+			} else {
+				printf("Maximum Power Capacity: %hu W\n", type39->max_power_capacity);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type39, power_supply_characteristics) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Power Supply Type: Not Present\n");
+				printf("Power Supply Status: Not Present\n");
+				printf("Input Voltage Range Switching: Not Present\n");
+				printf("Power Supply Flags: Not Present\n");
+			} else {
+				char buf[LAZYBIOS_DECODER_BUF_SIZE];
+				printf("Power Supply Type: %s\n",
+					lazybiosType39PowerSupplyTypeStr(type39->power_supply_characteristics));
+				printf("Power Supply Status: %s\n", lazybiosType39StatusStr(type39->power_supply_characteristics));
+				printf("Input Voltage Range Switching: %s\n",
+					lazybiosType39InputVoltageRangeSwitchingStr(type39->power_supply_characteristics));
+				lazybiosType39CharacteristicsFlagsStr(type39->power_supply_characteristics, buf, sizeof(buf));
+				printf("Power Supply Flags: %s\n", buf);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type39, input_voltage_probe_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Input Voltage Probe Handle: Not Present\n");
+			} else {
+				printf("Input Voltage Probe Handle: 0x%04hX\n", type39->input_voltage_probe_handle);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type39, cooling_device_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Cooling Device Handle: Not Present\n");
+			} else {
+				printf("Cooling Device Handle: 0x%04hX\n", type39->cooling_device_handle);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type39, input_current_probe_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Input Current Probe Handle: Not Present\n");
+			} else {
+				printf("Input Current Probe Handle: 0x%04hX\n", type39->input_current_probe_handle);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get System Power Supply information\n\n");
+	}
+}
+
+static void printType40(lazybiosCTX_t* ctx) {
+	printf("=== ADDITIONAL INFORMATION ===\n");
+
+	if (!ctx->Type40) ctx->Type40 = lazybiosGetType40(ctx->Type40, &ctx->type40_count, ctx->DMIData);
+
+	if (ctx->Type40 && ctx->type40_count > 0) {
+		for (size_t i = 0; i < ctx->type40_count; i++) {
+			lazybiosType40_t* type40 = &ctx->Type40[i];
+
+			if (ctx->type40_count > 1) {
+				printf("--- Additional Information %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type40, additional_information_entry_count) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Additional Information Entry Count: Not Present\n");
+			} else {
+				printf("Additional Information Entry Count: %hhu\n",
+					type40->additional_information_entry_count);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type40, additional_information_entries) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Additional Information Entries: Not Present\n");
+			} else {
+				for (size_t j = 0; j < type40->additional_information_entry_count; j++) {
+					lazybiosType40Entry_t* entry = &type40->additional_information_entries[j];
+					printf("--- Entry %zu ---\n", j + 1);
+					printf("Entry Length: %hhu bytes\n", entry->entry_length);
+					printf("Referenced Handle: 0x%04hX\n", entry->referenced_handle);
+					printf("Referenced Offset: 0x%02hhX\n", entry->referenced_offset);
+					if (entry->field_status.string != LAZYBIOS_FIELD_PRESENT) {
+						printf("String: Not Present\n");
+					} else {
+						printf("String: %s\n", entry->string ? entry->string : "Not Specified");
+					}
+					printf("Value:");
+					for (size_t k = 0; k < entry->value_length; k++) {
+						printf(" %02hhX", entry->value[k]);
+					}
+					printf("\n");
+				}
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Additional Information\n\n");
+	}
+}
+
+static void printType41(lazybiosCTX_t* ctx) {
+	printf("=== ONBOARD DEVICES EXTENDED INFORMATION ===\n");
+
+	if (!ctx->Type41) ctx->Type41 = lazybiosGetType41(ctx->Type41, &ctx->type41_count, ctx->DMIData);
+
+	if (ctx->Type41 && ctx->type41_count > 0) {
+		for (size_t i = 0; i < ctx->type41_count; i++) {
+			lazybiosType41_t* type41 = &ctx->Type41[i];
+
+			if (ctx->type41_count > 1) {
+				printf("--- Onboard Device %zu ---\n", i + 1);
+			}
+
+			printf("Reference Designation: %s\n",
+				type41->reference_designation ? type41->reference_designation : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type41, device_type_and_status) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Device Type: Not Present\n");
+				printf("Device Status: Not Present\n");
+			} else {
+				printf("Device Type: %s\n", lazybiosType41DeviceTypeStr(type41->device_type_and_status));
+				printf("Device Status: %s\n", lazybiosType41DeviceStatusStr(type41->device_type_and_status));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type41, device_type_instance) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Device Type Instance: Not Present\n");
+			} else {
+				printf("Device Type Instance: %hhu\n", type41->device_type_instance);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type41, segment_group_number) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Segment Group Number: Not Present\n");
+			} else if (type41->segment_group_number == 0xFFFF) {
+				printf("Segment Group Number: Not Applicable\n");
+			} else {
+				printf("Segment Group Number: %hu\n", type41->segment_group_number);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type41, bus_number) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Bus Number: Not Present\n");
+			} else if (type41->bus_number == 0xFF) {
+				printf("Bus Number: Not Applicable\n");
+			} else {
+				printf("Bus Number: %hhu\n", type41->bus_number);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type41, device_function_number) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Device/Function Number: Not Present\n");
+			} else {
+				char buf[LAZYBIOS_DECODER_BUF_SIZE];
+				lazybiosType41DeviceFunctionStr(type41->device_function_number, buf, sizeof(buf));
+				printf("Device/Function Number: %s\n", buf);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Onboard Devices Extended information\n\n");
+	}
+}
+
+static void printType42(lazybiosCTX_t* ctx) {
+	printf("=== MANAGEMENT CONTROLLER HOST INTERFACE ===\n");
+
+	if (!ctx->Type42) ctx->Type42 = lazybiosGetType42(ctx->Type42, &ctx->type42_count, ctx->DMIData);
+
+	if (ctx->Type42 && ctx->type42_count > 0) {
+		for (size_t i = 0; i < ctx->type42_count; i++) {
+			lazybiosType42_t* type42 = &ctx->Type42[i];
+
+			if (ctx->type42_count > 1) {
+				printf("--- Management Controller Host Interface %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type42, interface_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Interface Type: Not Present\n");
+			} else {
+				printf("Interface Type: %s (0x%02hhX)\n",
+					lazybiosType42InterfaceTypeStr(type42->interface_type), type42->interface_type);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type42, interface_type_specific_data) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Interface Type Specific Data: Not Present\n");
+			} else {
+				printf("Interface Type Specific Data (%zu bytes):", type42->interface_type_specific_data_size);
+				for (size_t j = 0; j < type42->interface_type_specific_data_size; j++) {
+					printf(" %02hhX", type42->interface_type_specific_data[j]);
+				}
+				printf("\n");
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type42, number_of_protocol_records) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Protocol Record Count: Not Present\n");
+			} else {
+				printf("Protocol Record Count: %hhu\n", type42->number_of_protocol_records);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type42, protocol_records) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Protocol Records: Not Present\n");
+			} else {
+				for (size_t j = 0; j < type42->number_of_protocol_records; j++) {
+					lazybiosType42ProtocolRecord_t* protocol = &type42->protocol_records[j];
+					printf("--- Protocol Record %zu ---\n", j + 1);
+					printf("Protocol Type: %s (0x%02hhX)\n",
+						lazybiosType42ProtocolTypeStr(protocol->protocol_type), protocol->protocol_type);
+					printf("Protocol Type Specific Data (%hhu bytes):",
+						protocol->protocol_type_specific_data_length);
+					for (size_t k = 0; k < protocol->protocol_type_specific_data_length; k++) {
+						printf(" %02hhX", protocol->protocol_type_specific_data[k]);
+					}
+					printf("\n");
+				}
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Management Controller Host Interface information\n\n");
+	}
+}
+
+static void printType43(lazybiosCTX_t* ctx) {
+	printf("=== TPM DEVICE ===\n");
+
+	if (!ctx->Type43) ctx->Type43 = lazybiosGetType43(ctx->Type43, &ctx->type43_count, ctx->DMIData);
+
+	if (ctx->Type43 && ctx->type43_count > 0) {
+		for (size_t i = 0; i < ctx->type43_count; i++) {
+			lazybiosType43_t* type43 = &ctx->Type43[i];
+			char buf[LAZYBIOS_DECODER_BUF_SIZE];
+
+			if (ctx->type43_count > 1) {
+				printf("--- TPM Device %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type43, vendor_id) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Vendor ID: Not Present\n");
+			} else {
+				printf("Vendor ID: %s\n", type43->vendor_id);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type43, major_spec_version) != LAZYBIOS_FIELD_PRESENT ||
+				LAZYBIOS_FIELD_STATUS(type43, minor_spec_version) != LAZYBIOS_FIELD_PRESENT) {
+				printf("TPM Specification Version: Not Present\n");
+			} else {
+				printf("TPM Specification Version: %hhu.%hhu\n",
+					type43->major_spec_version, type43->minor_spec_version);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type43, firmware_version_1) != LAZYBIOS_FIELD_PRESENT ||
+				LAZYBIOS_FIELD_STATUS(type43, firmware_version_2) != LAZYBIOS_FIELD_PRESENT ||
+				LAZYBIOS_FIELD_STATUS(type43, major_spec_version) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Firmware Revision: Not Present\n");
+			} else {
+				lazybiosType43FirmwareVersionStr(type43->major_spec_version, type43->firmware_version_1,
+					type43->firmware_version_2, buf, sizeof(buf));
+				printf("Firmware Revision: %s\n", buf);
+			}
+
+			printf("Description: %s\n", type43->description ? type43->description : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type43, characteristics) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Characteristics: Not Present\n");
+			} else {
+				lazybiosType43CharacteristicsStr(type43->characteristics, buf, sizeof(buf));
+				printf("Characteristics: %s\n", buf);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type43, oem_defined) != LAZYBIOS_FIELD_PRESENT) {
+				printf("OEM-defined: Not Present\n");
+			} else {
+				printf("OEM-defined: 0x%08X\n", type43->oem_defined);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get TPM Device information\n\n");
+	}
+}
+
+static void printType44(lazybiosCTX_t* ctx) {
+	printf("=== PROCESSOR ADDITIONAL INFORMATION ===\n");
+
+	if (!ctx->Type44) ctx->Type44 = lazybiosGetType44(ctx->Type44, &ctx->type44_count, ctx->DMIData);
+
+	if (ctx->Type44 && ctx->type44_count > 0) {
+		for (size_t i = 0; i < ctx->type44_count; i++) {
+			lazybiosType44_t* type44 = &ctx->Type44[i];
+
+			if (ctx->type44_count > 1) {
+				printf("--- Processor Additional Information %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type44, referenced_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Referenced Processor Handle: Not Present\n");
+			} else {
+				printf("Referenced Processor Handle: 0x%04hX\n", type44->referenced_handle);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type44, block_length) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Processor-specific Data Length: Not Present\n");
+			} else {
+				printf("Processor-specific Data Length: %hhu bytes\n", type44->block_length);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type44, processor_type) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Processor Type: Not Present\n");
+			} else {
+				printf("Processor Type: %s\n", lazybiosType44ProcessorTypeStr(type44->processor_type));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type44, processor_specific_data) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Processor-specific Data: Not Present\n");
+			} else {
+				printf("Processor-specific Data:");
+				for (size_t j = 0; j < type44->block_length; j++) {
+					printf(" %02hhX", type44->processor_specific_data[j]);
+				}
+				printf("\n");
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Processor Additional Information\n\n");
+	}
+}
+
+static void printType45(lazybiosCTX_t* ctx) {
+	printf("=== FIRMWARE INVENTORY INFORMATION ===\n");
+
+	if (!ctx->Type45) ctx->Type45 = lazybiosGetType45(ctx->Type45, &ctx->type45_count, ctx->DMIData);
+
+	if (ctx->Type45 && ctx->type45_count > 0) {
+		for (size_t i = 0; i < ctx->type45_count; i++) {
+			lazybiosType45_t* type45 = &ctx->Type45[i];
+
+			if (ctx->type45_count > 1) {
+				printf("--- Firmware Component %zu ---\n", i + 1);
+			}
+
+			printf("Firmware Component Name: %s\n",
+				type45->firmware_component_name ? type45->firmware_component_name : "Not Present");
+			printf("Firmware Version: %s\n", type45->firmware_version ? type45->firmware_version : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type45, version_format) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Version Format: Not Present\n");
+			} else {
+				printf("Version Format: %s\n", lazybiosType45VersionFormatStr(type45->version_format));
+			}
+
+			printf("Firmware ID: %s\n", type45->firmware_id ? type45->firmware_id : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type45, firmware_id_format) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Firmware ID Format: Not Present\n");
+			} else {
+				printf("Firmware ID Format: %s\n",
+					lazybiosType45FirmwareIDFormatStr(type45->firmware_id_format));
+			}
+
+			printf("Release Date: %s\n", type45->release_date ? type45->release_date : "Not Present");
+			printf("Manufacturer: %s\n", type45->manufacturer ? type45->manufacturer : "Not Present");
+			printf("Lowest Supported Firmware Version: %s\n",
+				type45->lowest_supported_firmware_version ? type45->lowest_supported_firmware_version : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type45, image_size) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Image Size: Not Present\n");
+			} else if (type45->image_size == UINT64_MAX) {
+				printf("Image Size: Unknown\n");
+			} else {
+				printf("Image Size: %llu bytes\n", (unsigned long long)type45->image_size);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type45, characteristics) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Characteristics: Not Present\n");
+			} else {
+				char buf[LAZYBIOS_DECODER_BUF_SIZE];
+				lazybiosType45CharacteristicsStr(type45->characteristics, buf, sizeof(buf));
+				printf("Characteristics: %s\n", buf);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type45, state) != LAZYBIOS_FIELD_PRESENT) {
+				printf("State: Not Present\n");
+			} else {
+				printf("State: %s\n", lazybiosType45StateStr(type45->state));
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type45, number_of_associated_components) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Number of Associated Components: Not Present\n");
+			} else {
+				printf("Number of Associated Components: %hhu\n", type45->number_of_associated_components);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type45, associated_component_handles) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Associated Component Handles: Not Present\n");
+			} else if (type45->number_of_associated_components == 0) {
+				printf("Associated Component Handles: None\n");
+			} else {
+				printf("Associated Component Handles:");
+				for (size_t j = 0; j < type45->number_of_associated_components; j++) {
+					printf(" 0x%04hX", type45->associated_component_handles[j]);
+				}
+				printf("\n");
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get Firmware Inventory information\n\n");
+	}
+}
+
+static void printType46(lazybiosCTX_t* ctx) {
+	printf("=== STRING PROPERTY ===\n");
+
+	if (!ctx->Type46) ctx->Type46 = lazybiosGetType46(ctx->Type46, &ctx->type46_count, ctx->DMIData);
+
+	if (ctx->Type46 && ctx->type46_count > 0) {
+		for (size_t i = 0; i < ctx->type46_count; i++) {
+			lazybiosType46_t* type46 = &ctx->Type46[i];
+
+			if (ctx->type46_count > 1) {
+				printf("--- String Property %zu ---\n", i + 1);
+			}
+
+			if (LAZYBIOS_FIELD_STATUS(type46, string_property_id) != LAZYBIOS_FIELD_PRESENT) {
+				printf("String Property ID: Not Present\n");
+			} else {
+				printf("String Property ID: %hu (%s)\n", type46->string_property_id,
+					lazybiosType46StringPropertyIDStr(type46->string_property_id));
+			}
+
+			printf("String Property Value: %s\n",
+				type46->string_property_value ? type46->string_property_value : "Not Present");
+
+			if (LAZYBIOS_FIELD_STATUS(type46, parent_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Parent Handle: Not Present\n");
+			} else {
+				printf("Parent Handle: 0x%04hX\n", type46->parent_handle);
+			}
+
+			printf("\n");
+		}
+	} else {
+		printf("Failed to get String Property information\n\n");
+	}
+}
+
 /**
  * @brief Prints detailed SMBIOS entry point version information.
  *
@@ -2697,6 +3888,66 @@ int main(int argc, const char* argv[]) {
 
 		if (!ctx->Type26) ctx->Type26 = lazybiosGetType26(ctx->Type26, &ctx->type26_count, ctx->DMIData);
 		printType26(ctx);
+
+		if (!ctx->Type27) ctx->Type27 = lazybiosGetType27(ctx->Type27, &ctx->type27_count, ctx->DMIData);
+		printType27(ctx);
+
+		if (!ctx->Type28) ctx->Type28 = lazybiosGetType28(ctx->Type28, &ctx->type28_count, ctx->DMIData);
+		printType28(ctx);
+
+		if (!ctx->Type29) ctx->Type29 = lazybiosGetType29(ctx->Type29, &ctx->type29_count, ctx->DMIData);
+		printType29(ctx);
+
+		if (!ctx->Type30) ctx->Type30 = lazybiosGetType30(ctx->Type30, &ctx->type30_count, ctx->DMIData);
+		printType30(ctx);
+
+		if (!ctx->Type31) ctx->Type31 = lazybiosGetType31(ctx->Type31, &ctx->type31_count, ctx->DMIData);
+		printType31(ctx);
+
+		if (!ctx->Type32) ctx->Type32 = lazybiosGetType32(ctx->Type32, &ctx->type32_count, ctx->DMIData);
+		printType32(ctx);
+
+		if (!ctx->Type33) ctx->Type33 = lazybiosGetType33(ctx->Type33, &ctx->type33_count, ctx->DMIData);
+		printType33(ctx);
+
+		if (!ctx->Type34) ctx->Type34 = lazybiosGetType34(ctx->Type34, &ctx->type34_count, ctx->DMIData);
+		printType34(ctx);
+
+		if (!ctx->Type35) ctx->Type35 = lazybiosGetType35(ctx->Type35, &ctx->type35_count, ctx->DMIData);
+		printType35(ctx);
+
+		if (!ctx->Type36) ctx->Type36 = lazybiosGetType36(ctx->Type36, &ctx->type36_count, ctx->DMIData);
+		printType36(ctx);
+
+		if (!ctx->Type37) ctx->Type37 = lazybiosGetType37(ctx->Type37, &ctx->type37_count, ctx->DMIData);
+		printType37(ctx);
+
+		if (!ctx->Type38) ctx->Type38 = lazybiosGetType38(ctx->Type38, &ctx->type38_count, ctx->DMIData);
+		printType38(ctx);
+
+		if (!ctx->Type39) ctx->Type39 = lazybiosGetType39(ctx->Type39, &ctx->type39_count, ctx->DMIData);
+		printType39(ctx);
+
+		if (!ctx->Type40) ctx->Type40 = lazybiosGetType40(ctx->Type40, &ctx->type40_count, ctx->DMIData);
+		printType40(ctx);
+
+		if (!ctx->Type41) ctx->Type41 = lazybiosGetType41(ctx->Type41, &ctx->type41_count, ctx->DMIData);
+		printType41(ctx);
+
+		if (!ctx->Type42) ctx->Type42 = lazybiosGetType42(ctx->Type42, &ctx->type42_count, ctx->DMIData);
+		printType42(ctx);
+
+		if (!ctx->Type43) ctx->Type43 = lazybiosGetType43(ctx->Type43, &ctx->type43_count, ctx->DMIData);
+		printType43(ctx);
+
+		if (!ctx->Type44) ctx->Type44 = lazybiosGetType44(ctx->Type44, &ctx->type44_count, ctx->DMIData);
+		printType44(ctx);
+
+		if (!ctx->Type45) ctx->Type45 = lazybiosGetType45(ctx->Type45, &ctx->type45_count, ctx->DMIData);
+		printType45(ctx);
+
+		if (!ctx->Type46) ctx->Type46 = lazybiosGetType46(ctx->Type46, &ctx->type46_count, ctx->DMIData);
+		printType46(ctx);
 	} else {
 		switch (type_to_print) {
 			case 0:
@@ -2836,6 +4087,106 @@ int main(int argc, const char* argv[]) {
 			case 26:
 				if (!ctx->Type26) ctx->Type26 = lazybiosGetType26(ctx->Type26, &ctx->type26_count, ctx->DMIData);
 				printType26(ctx);
+				break;
+
+			case 27:
+				if (!ctx->Type27) ctx->Type27 = lazybiosGetType27(ctx->Type27, &ctx->type27_count, ctx->DMIData);
+				printType27(ctx);
+				break;
+
+			case 28:
+				if (!ctx->Type28) ctx->Type28 = lazybiosGetType28(ctx->Type28, &ctx->type28_count, ctx->DMIData);
+				printType28(ctx);
+				break;
+
+			case 29:
+				if (!ctx->Type29) ctx->Type29 = lazybiosGetType29(ctx->Type29, &ctx->type29_count, ctx->DMIData);
+				printType29(ctx);
+				break;
+
+			case 30:
+				if (!ctx->Type30) ctx->Type30 = lazybiosGetType30(ctx->Type30, &ctx->type30_count, ctx->DMIData);
+				printType30(ctx);
+				break;
+
+			case 31:
+				if (!ctx->Type31) ctx->Type31 = lazybiosGetType31(ctx->Type31, &ctx->type31_count, ctx->DMIData);
+				printType31(ctx);
+				break;
+
+			case 32:
+				if (!ctx->Type32) ctx->Type32 = lazybiosGetType32(ctx->Type32, &ctx->type32_count, ctx->DMIData);
+				printType32(ctx);
+				break;
+
+			case 33:
+				if (!ctx->Type33) ctx->Type33 = lazybiosGetType33(ctx->Type33, &ctx->type33_count, ctx->DMIData);
+				printType33(ctx);
+				break;
+
+			case 34:
+				if (!ctx->Type34) ctx->Type34 = lazybiosGetType34(ctx->Type34, &ctx->type34_count, ctx->DMIData);
+				printType34(ctx);
+				break;
+
+			case 35:
+				if (!ctx->Type35) ctx->Type35 = lazybiosGetType35(ctx->Type35, &ctx->type35_count, ctx->DMIData);
+				printType35(ctx);
+				break;
+
+			case 36:
+				if (!ctx->Type36) ctx->Type36 = lazybiosGetType36(ctx->Type36, &ctx->type36_count, ctx->DMIData);
+				printType36(ctx);
+				break;
+
+			case 37:
+				if (!ctx->Type37) ctx->Type37 = lazybiosGetType37(ctx->Type37, &ctx->type37_count, ctx->DMIData);
+				printType37(ctx);
+				break;
+
+			case 38:
+				if (!ctx->Type38) ctx->Type38 = lazybiosGetType38(ctx->Type38, &ctx->type38_count, ctx->DMIData);
+				printType38(ctx);
+				break;
+
+			case 39:
+				if (!ctx->Type39) ctx->Type39 = lazybiosGetType39(ctx->Type39, &ctx->type39_count, ctx->DMIData);
+				printType39(ctx);
+				break;
+
+			case 40:
+				if (!ctx->Type40) ctx->Type40 = lazybiosGetType40(ctx->Type40, &ctx->type40_count, ctx->DMIData);
+				printType40(ctx);
+				break;
+
+			case 41:
+				if (!ctx->Type41) ctx->Type41 = lazybiosGetType41(ctx->Type41, &ctx->type41_count, ctx->DMIData);
+				printType41(ctx);
+				break;
+
+			case 42:
+				if (!ctx->Type42) ctx->Type42 = lazybiosGetType42(ctx->Type42, &ctx->type42_count, ctx->DMIData);
+				printType42(ctx);
+				break;
+
+			case 43:
+				if (!ctx->Type43) ctx->Type43 = lazybiosGetType43(ctx->Type43, &ctx->type43_count, ctx->DMIData);
+				printType43(ctx);
+				break;
+
+			case 44:
+				if (!ctx->Type44) ctx->Type44 = lazybiosGetType44(ctx->Type44, &ctx->type44_count, ctx->DMIData);
+				printType44(ctx);
+				break;
+
+			case 45:
+				if (!ctx->Type45) ctx->Type45 = lazybiosGetType45(ctx->Type45, &ctx->type45_count, ctx->DMIData);
+				printType45(ctx);
+				break;
+
+			case 46:
+				if (!ctx->Type46) ctx->Type46 = lazybiosGetType46(ctx->Type46, &ctx->type46_count, ctx->DMIData);
+				printType46(ctx);
 				break;
 
 			default:
