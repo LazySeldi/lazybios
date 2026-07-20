@@ -7,7 +7,7 @@
 //
 // lazybios.c - Core library functions
 //
-#include "lazybios.h"
+#include "lazybios_internal.h"
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -168,7 +168,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (got != ctx->DMIData->dmi_len) {
 		lb_log("Short read of DMI data (%zu of %zu bytes)", got, ctx->DMIData->dmi_len);
 		free(ctx->DMIData->dmi_data);
-		ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+		ctx->DMIData->dmi_data = NULL;
 		return -1;
 	}
 
@@ -254,7 +254,7 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
 	if (got != ctx->DMIData->dmi_len) {
 		lb_log("Short read in DMI table");
 		free(ctx->DMIData->dmi_data);
-		ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+		ctx->DMIData->dmi_data = NULL;
 		return -1;
 	}
 	return 0;
@@ -270,12 +270,12 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
  */
 lazybiosCTX_t* lazybiosCTXNew(void) {
 	lazybiosCTX_t* ctx = calloc(1, sizeof(*ctx));
-	if (!ctx) return LAZYBIOS_NULL;
+	if (!ctx) return NULL;
 
 	ctx->DMIData = calloc(1, sizeof(*ctx->DMIData));
 	if (!ctx->DMIData) {
 		free(ctx);
-		return LAZYBIOS_NULL;
+		return NULL;
 	}
 
 	#if defined(OS_LINUX)
@@ -406,7 +406,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
         if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) != 0) {
             lb_log("Failed to parse SMBIOS entry point");
             free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            ctx->DMIData->entry_data = NULL;
             munmap(mapped_data, map_size);
             close(fd);
             return -1;
@@ -430,7 +430,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
         if (uint64_to_off_t(table_addr, &table_addr_off) != 0) {
             lb_log("SMBIOS table address does not fit in off_t: 0x%016lx", (unsigned long)table_addr);
             free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            ctx->DMIData->entry_data = NULL;
             close(fd);
             return -1;
         }
@@ -443,7 +443,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
         if (table_len > SIZE_MAX - table_offset_unsigned) {
             lb_log("SMBIOS table mapping size overflow");
             free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            ctx->DMIData->entry_data = NULL;
             close(fd);
             return -1;
         }
@@ -455,7 +455,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
             lb_log("Failed to mmap DMI/SMBIOS table at 0x%016lx", (unsigned long)table_addr);
             lb_dbg("Error: %s", strerror(errno));
             free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            ctx->DMIData->entry_data = NULL;
             close(fd);
             return -1;
         }
@@ -469,7 +469,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
             lb_log("Failed to allocate DMI buffer (%zu bytes)", table_len);
             munmap(mapped_table, table_map_size);
             free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            ctx->DMIData->entry_data = NULL;
             close(fd);
             return -1;
         }
@@ -490,7 +490,7 @@ static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows
         const DWORD sig = 0x52534D42;
 
         // Query required size
-        DWORD size = GetSystemFirmwareTable(sig, 0, LAZYBIOS_NULL, 0);
+        DWORD size = GetSystemFirmwareTable(sig, 0, NULL, 0);
         if (size == 0) {
             lb_log("GetSystemFirmwareTable failed (size=0)");
             return -1;
@@ -586,7 +586,7 @@ static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows
             ctx->DMIData->entry_data = malloc(sizeof(entry));
             if (!ctx->DMIData->entry_data) {
                 free(ctx->DMIData->dmi_data);
-                ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+                ctx->DMIData->dmi_data = NULL;
                 return -1;
             }
             memcpy(ctx->DMIData->entry_data, entry, sizeof(entry));
@@ -646,7 +646,7 @@ static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows
             ctx->DMIData->entry_data = malloc(sizeof(entry));
             if (!ctx->DMIData->entry_data) {
                 free(ctx->DMIData->dmi_data);
-                ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+                ctx->DMIData->dmi_data = NULL;
                 return -1;
             }
             memcpy(ctx->DMIData->entry_data, entry, sizeof(entry));
@@ -654,9 +654,9 @@ static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows
 
         if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) != 0) {
             free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = LAZYBIOS_NULL;
+            ctx->DMIData->entry_data = NULL;
             free(ctx->DMIData->dmi_data);
-            ctx->DMIData->dmi_data = LAZYBIOS_NULL;
+            ctx->DMIData->dmi_data = NULL;
             ctx->DMIData->dmi_len = 0;
             return -1;
         }
@@ -768,7 +768,7 @@ const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
  */
 char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end) {
 	if (index == 0)
-		return LAZYBIOS_NULL;
+		return NULL;
 
 	// Point to the start of the unformatted string area
 	const uint8_t* str = p + length;
@@ -777,7 +777,7 @@ char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* 
 	for (uint8_t i = 1; i < index; i++) {
 		while (str < end && *str != 0)
 			str++;
-		if (str >= end) return LAZYBIOS_NULL; // out of bounds
+		if (str >= end) return NULL; // out of bounds
 		str++; // here we skip the null terminator
 	}
 
@@ -789,17 +789,46 @@ char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* 
 		s++;
 
 	if (s >= end)
-		return LAZYBIOS_NULL; // unterminated -> BIOS corruption
+		return NULL; // unterminated -> BIOS corruption
 
 	// Length is safe
 	size_t len = (size_t)(s - str);
 
 	char* copy = malloc(len + 1);
-	if (!copy) return LAZYBIOS_NULL;
+	if (!copy) return NULL;
 
 	memcpy(copy, str, len);
 	copy[len] = '\0';
 	return copy;
+}
+
+/**
+ * @brief Tests whether the parsed SMBIOS version meets a minimum version.
+ *
+ * @param DMIData Raw DMI table container with a parsed SMBIOS entry point.
+ * @param required_major Required SMBIOS major version.
+ * @param required_minor Required SMBIOS minor version.
+ * @return Nonzero when the parsed version is equal to or newer than the required version; otherwise zero.
+ * @ingroup api_entry
+ */
+int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, uint8_t required_minor) {
+	uint8_t major;
+	uint8_t minor;
+
+	if (!DMIData) return 0;
+
+	if (DMIData->entry_tag == SMBIOS_VER_3X && DMIData->entry_union.v3) {
+		major = DMIData->entry_union.v3->major_version;
+		minor = DMIData->entry_union.v3->minor_version;
+	} else if (DMIData->entry_tag == SMBIOS_VER_2X && DMIData->entry_union.v2) {
+		major = DMIData->entry_union.v2->major_version;
+		minor = DMIData->entry_union.v2->minor_version;
+	} else {
+		return 0;
+	}
+
+	return major > required_major ||
+		(major == required_major && minor >= required_minor);
 }
 
 static inline int lazybiosVerifyChecksum(const uint8_t* entry_buf, size_t len) {
@@ -920,25 +949,85 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
 
 	lazybiosFreeType0(ctx->Type0);
-	ctx->Type0 = LAZYBIOS_NULL;
+	ctx->Type0 = NULL;
 
 	lazybiosFreeType1(ctx->Type1);
-	ctx->Type1 = LAZYBIOS_NULL;
+	ctx->Type1 = NULL;
 
 	lazybiosFreeType2(ctx->Type2, ctx->type2_count);
-	ctx->Type2 = LAZYBIOS_NULL;
+	ctx->Type2 = NULL;
 
 	lazybiosFreeType3(ctx->Type3, ctx->type3_count);
-	ctx->Type3 = LAZYBIOS_NULL;
+	ctx->Type3 = NULL;
 
 	lazybiosFreeType4(ctx->Type4, ctx->type4_count);
-	ctx->Type4 = LAZYBIOS_NULL;
+	ctx->Type4 = NULL;
+
+	lazybiosFreeType5(ctx->Type5, ctx->type5_count);
+	ctx->Type5 = NULL;
+
+	lazybiosFreeType6(ctx->Type6, ctx->type6_count);
+	ctx->Type6 = NULL;
 
 	lazybiosFreeType7(ctx->Type7, ctx->type7_count);
-	ctx->Type7 = LAZYBIOS_NULL;
+	ctx->Type7 = NULL;
+
+	lazybiosFreeType8(ctx->Type8, ctx->type8_count);
+	ctx->Type8 = NULL;
+
+	lazybiosFreeType9(ctx->Type9, ctx->type9_count);
+	ctx->Type9 = NULL;
+
+	lazybiosFreeType10(ctx->Type10, ctx->type10_count);
+	ctx->Type10 = NULL;
+
+	lazybiosFreeType11(ctx->Type11, ctx->type11_count);
+	ctx->Type11 = NULL;
+
+	lazybiosFreeType12(ctx->Type12, ctx->type12_count);
+	ctx->Type12 = NULL;
+
+	lazybiosFreeType13(ctx->Type13, ctx->type13_count);
+	ctx->Type13 = NULL;
+
+	lazybiosFreeType14(ctx->Type14, ctx->type14_count);
+	ctx->Type14 = NULL;
+
+	lazybiosFreeType15(ctx->Type15, ctx->type15_count);
+	ctx->Type15 = NULL;
+
+	lazybiosFreeType16(ctx->Type16, ctx->type16_count);
+	ctx->Type16 = NULL;
 
 	lazybiosFreeType17(ctx->Type17, ctx->type17_count);
-	ctx->Type17 = LAZYBIOS_NULL;
+	ctx->Type17 = NULL;
+
+	lazybiosFreeType18(ctx->Type18, ctx->type18_count);
+	ctx->Type18 = NULL;
+
+	lazybiosFreeType19(ctx->Type19, ctx->type19_count);
+	ctx->Type19 = NULL;
+
+	lazybiosFreeType20(ctx->Type20, ctx->type20_count);
+	ctx->Type20 = NULL;
+
+	lazybiosFreeType21(ctx->Type21, ctx->type21_count);
+	ctx->Type21 = NULL;
+
+	lazybiosFreeType22(ctx->Type22, ctx->type22_count);
+	ctx->Type22 = NULL;
+
+	lazybiosFreeType23(ctx->Type23, ctx->type23_count);
+	ctx->Type23 = NULL;
+
+	lazybiosFreeType24(ctx->Type24, ctx->type24_count);
+	ctx->Type24 = NULL;
+
+	lazybiosFreeType25(ctx->Type25, ctx->type25_count);
+	ctx->Type25 = NULL;
+
+	lazybiosFreeType26(ctx->Type26, ctx->type26_count);
+	ctx->Type26 = NULL;
 
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);
