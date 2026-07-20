@@ -1,0 +1,42 @@
+/**
+ * @page type22_guide Type 22: Portable Battery Guide
+ *
+ * @brief Portable battery identity, electrical characteristics, and SBDS data.
+ *
+ * @section type22_array Array result
+ *
+ * @ref lazybiosGetType22 returns one structure for each portable battery pack
+ * and writes the number of structures to `type22_count`. All returned strings
+ * are owned by the parsed structure array.
+ *
+ * @section type22_identity Identity and chemistry
+ *
+ * The location, manufacturer, manufacture date, serial number, device name,
+ * and SBDS version fields use the SMBIOS string set. Decode
+ * `device_chemistry` with @ref lazybiosType22DeviceChemistryStr. For an SMBIOS
+ * 2.2 Smart Battery, a zero manufacture-date or serial-number string index
+ * selects its corresponding packed SBDS field. An `Unknown` device chemistry
+ * selects `sbds_device_chemistry` when that string is supplied.
+ *
+ * @section type22_capacity Capacity, voltage, and error
+ *
+ * `design_capacity` is measured in mWh and zero means unknown. In SMBIOS 2.2
+ * and later, multiply it by `design_capacity_multiplier`; use
+ * @ref lazybiosType22DesignCapacityMWh for this calculation. `design_voltage`
+ * is measured in mV and zero means unknown. A `maximum_error` value of `0xFF`
+ * means unknown rather than unavailable.
+ *
+ * @section type22_date Packed manufacture date
+ *
+ * `sbds_manufacture_date` stores a year biased by 1980, a month, and a day in
+ * one 16-bit value. @ref lazybiosType22SBDSManufactureDateStr formats a valid
+ * value as `YYYY-MM-DD` and reports an out-of-range month or day as invalid.
+ *
+ * @section type22_ownership Ownership
+ *
+ * Release the returned array and all contained strings with
+ * @ref lazybiosFreeType22, or assign it to @ref lazybiosCTX::Type22 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type22
+ */
