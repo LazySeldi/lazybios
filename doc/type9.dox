@@ -1,0 +1,56 @@
+/**
+ * @page type9_guide Type 9: System Slots Guide
+ *
+ * @brief System slot identity, capabilities, PCI location, peer groups, and physical dimensions.
+ *
+ * @section type9_array Array result
+ *
+ * One Type 9 structure is provided for each system slot. @ref lazybiosGetType9
+ * returns every @ref SMBIOS_TYPE_SYSTEM_SLOTS structure and writes the array
+ * length to `type9_count`. Pass the same count to @ref lazybiosFreeType9 when
+ * cleanup is performed directly.
+ *
+ * @section type9_identity Identity and basic properties
+ *
+ * `slot_designation` is the firmware-provided reference name. Decode
+ * `slot_type`, `slot_data_bus_width`, `current_usage`, and `slot_length` with
+ * @ref lazybiosType9SlotTypeStr, @ref lazybiosType9SlotWidthStr,
+ * @ref lazybiosType9CurrentUsageStr, and @ref lazybiosType9SlotLengthStr.
+ * `slot_id` has a bus-specific meaning determined by `slot_type` and remains in
+ * its raw 16-bit SMBIOS representation.
+ *
+ * @section type9_characteristics Characteristics
+ *
+ * @ref lazybiosType9Characteristics1Str decodes the original slot capability
+ * byte. SMBIOS 2.1 added `slot_characteristics_2`, decoded with
+ * @ref lazybiosType9Characteristics2Str.
+ *
+ * @section type9_location PCI location
+ *
+ * SMBIOS 2.6 added the base segment group, bus, and packed device/function
+ * fields. @ref lazybiosType9DeviceFunctionStr extracts the five-bit device
+ * number and three-bit function number. A packed value of `0xFF` indicates
+ * that the PCI location is not applicable.
+ *
+ * @section type9_peers Peer devices
+ *
+ * SMBIOS 3.2 added the base `data_bus_width` and a variable array of peer
+ * locations. `peer_grouping_count` gives the number of entries in
+ * `peer_groups`. Each @ref lazybiosType9PeerGroup_t contains its own segment,
+ * bus, packed device/function value, and electrical width. The parser exposes
+ * peer entries only when the formatted structure contains the complete
+ * declared peer array. Use @ref LAZYBIOS_FIELD_STATUS to distinguish an absent
+ * count from a present count of zero. If the count is present but the declared
+ * peer array does not fit, `peer_groups` reports @ref LAZYBIOS_FIELD_ABSENT.
+ *
+ * @section type9_dimensions Slot information and dimensions
+ *
+ * SMBIOS 3.4 added `slot_information`, `slot_physical_width`, and `slot_pitch`.
+ * For slot type `0xC4`, `slot_information` contains the PCI Express generation.
+ * Decode `slot_physical_width` with @ref lazybiosType9SlotWidthStr.
+ * `slot_pitch` is stored in units of 1/100 millimeter; zero means that the pitch
+ * is unknown or not supplied. SMBIOS 3.5 added `slot_height`, decoded with
+ * @ref lazybiosType9SlotHeightStr.
+ *
+ * @see @ref api_type9
+ */
