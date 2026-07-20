@@ -1,0 +1,32 @@
+/**
+ * @page type37_guide Type 37: Memory Channel Guide
+ *
+ * @brief Memory-channel classification, load limits, and device associations.
+ *
+ * @section type37_array Array result
+ *
+ * @ref lazybiosGetType37 returns every Memory Channel structure and writes the
+ * number of structures to `type37_count`. Each structure contains a counted
+ * array of @ref lazybiosType37MemoryDevice_t entries.
+ *
+ * @section type37_devices Memory-device entries
+ *
+ * `memory_device_count` determines the number of entries; the formatted
+ * structure length is used only to verify that all declared entries are
+ * available. This follows the SMBIOS requirement that consumers must not infer
+ * the entry count from the structure length because later specification
+ * revisions can append fields.
+ *
+ * Each entry provides its channel load and a handle that references a Type 17
+ * Memory Device structure. If the declared entry array extends beyond the
+ * formatted structure, `field_status.memory_devices` remains absent and no
+ * partial array is returned.
+ *
+ * @section type37_ownership Ownership
+ *
+ * Release the returned structures and their entry arrays with
+ * @ref lazybiosFreeType37, or assign the result to @ref lazybiosCTX::Type37 and
+ * use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type37
+ */
