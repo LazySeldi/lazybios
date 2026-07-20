@@ -1,0 +1,34 @@
+/**
+ * @page type40_guide Type 40: Additional Information Guide
+ *
+ * @brief Supplemental values and descriptions for fields in other structures.
+ *
+ * @section type40_array Array result
+ *
+ * @ref lazybiosGetType40 returns every Additional Information structure and
+ * writes the number of structures to `type40_count`. Each structure contains a
+ * counted array of @ref lazybiosType40Entry_t records.
+ *
+ * @section type40_entries Entry interpretation
+ *
+ * Each entry identifies another SMBIOS structure by `referenced_handle` and a
+ * field within that structure by `referenced_offset`. The optional `string`
+ * can describe the supplemental value. The value is exposed as `value_length`
+ * bytes in `value` because the SMBIOS specification defines its representation
+ * as the same type and size as the referenced field.
+ *
+ * The parser validates the minimum six-byte entry length and the complete
+ * bounds of every declared entry before returning the entry array. If any
+ * entry is incomplete, `field_status.additional_information_entries` remains
+ * absent and no partial array is exposed. The encoded entry count remains
+ * present when its byte was available.
+ *
+ * @section type40_ownership Ownership
+ *
+ * The returned structure array, each entry array, each optional string, and
+ * each value byte array are allocated by the parser. Release the complete
+ * result with @ref lazybiosFreeType40, or assign it to
+ * @ref lazybiosCTX::Type40 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type40
+ */
