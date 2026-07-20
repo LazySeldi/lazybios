@@ -1,0 +1,35 @@
+/**
+ * @page type13_guide Type 13: Firmware Language Information Guide
+ *
+ * @brief Installable firmware languages, description format, and current language.
+ *
+ * @section type13_array Array result
+ *
+ * @ref lazybiosGetType13 returns every
+ * @ref SMBIOS_TYPE_FIRMWARE_LANGUAGE_INFORMATION structure and writes the
+ * number of structures to `type13_count`. Pass the same count to
+ * @ref lazybiosFreeType13 when cleanup is performed directly.
+ *
+ * @section type13_languages Language collection
+ *
+ * `installable_languages` gives the number of descriptions in the `languages`
+ * array. A present count of zero represents an empty collection. The
+ * `current_language` member contains a separately allocated copy of the string
+ * selected by the one-based Current Language field.
+ *
+ * @section type13_format Description format
+ *
+ * SMBIOS 2.1 added bit 0 of `flags`. A clear bit selects the long format
+ * `language|territory|encoding`; a set bit selects the four-character
+ * abbreviated language and territory format. Decode this bit with
+ * @ref lazybiosType13LanguageFormatStr. Bits 7:1 are reserved.
+ *
+ * @section type13_ownership Ownership
+ *
+ * The structure array, each nested `languages` array, every language string,
+ * and `current_language` are allocated by the parser. Release the complete
+ * result with @ref lazybiosFreeType13 or assign it to
+ * @ref lazybiosCTX::Type13 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type13
+ */
