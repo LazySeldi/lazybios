@@ -1,0 +1,27 @@
+/**
+ * @page type46_guide Type 46: String Property Guide
+ *
+ * @brief String properties attached to other SMBIOS structures.
+ *
+ * @section type46_array Array result
+ *
+ * @ref lazybiosGetType46 returns every String Property structure and writes
+ * the number of structures to `type46_count`. Multiple Type 46 structures can
+ * reference the same parent structure.
+ *
+ * @section type46_property Property identifiers
+ *
+ * `parent_handle` identifies the SMBIOS structure to which
+ * `string_property_value` applies. Decode `string_property_id` with
+ * @ref lazybiosType46StringPropertyIDStr. SMBIOS defines identifier 1 as a
+ * UTF-8 UEFI device-path string and divides the remaining identifier space
+ * among future DMTF, firmware-vendor, and OEM use.
+ *
+ * @section type46_ownership Ownership
+ *
+ * Release the returned structure array and copied property strings with
+ * @ref lazybiosFreeType46, or assign the result to @ref lazybiosCTX::Type46
+ * and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type46
+ */
