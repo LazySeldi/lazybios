@@ -1,0 +1,32 @@
+/**
+ * @page type14_guide Type 14: Group Associations Guide
+ *
+ * @brief Component grouping, hierarchy, and nested association records.
+ *
+ * @section type14_array Array result
+ *
+ * @ref lazybiosGetType14 returns every @ref SMBIOS_TYPE_GROUP_ASSOCIATIONS
+ * structure and writes the number of structures to `type14_count`. Multiple
+ * Type 14 structures can describe separate groups or reference another group.
+ *
+ * @section type14_items Group members
+ *
+ * `group_name` is the firmware-provided description of the association. Each
+ * @ref lazybiosType14Item_t in `items` contains an SMBIOS structure type and
+ * the handle of the associated structure. Applications can use the type and
+ * handle together to locate the referenced structure.
+ *
+ * Type 14 does not encode an item count. The parser derives `item_count` from
+ * the formatted length using `(Length - 5) / 3`. The count and array are marked
+ * absent when the formatted length cannot contain an exact number of three-byte
+ * item records.
+ *
+ * @section type14_ownership Ownership
+ *
+ * The structure array, each `group_name`, and every nested `items` array are
+ * allocated by the parser. Release the complete result with
+ * @ref lazybiosFreeType14 or assign it to @ref lazybiosCTX::Type14 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type14
+ */
