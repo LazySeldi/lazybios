@@ -1,0 +1,34 @@
+/**
+ * @page type23_guide Type 23: System Reset Guide
+ *
+ * @brief Automatic reset configuration, limits, and watchdog timing.
+ *
+ * @section type23_array Array result
+ *
+ * @ref lazybiosGetType23 returns every System Reset structure and writes the
+ * number of structures to `type23_count`.
+ *
+ * @section type23_capabilities Capabilities
+ *
+ * `capabilities` reports whether automatic reset is enabled, whether a
+ * watchdog timer is present, the boot action after a watchdog reset, and the
+ * boot action after the reset limit is reached. Decode the complete bit field
+ * with @ref lazybiosType23CapabilitiesStr. The two boot actions are also
+ * available separately through @ref lazybiosType23BootOptionStr and
+ * @ref lazybiosType23BootOptionOnLimitStr.
+ *
+ * @section type23_limits Counters and timers
+ *
+ * `reset_count` and `reset_limit` are reset counts. `timer_interval` and
+ * `timeout` are expressed in minutes. For each of these 16-bit fields,
+ * `0xFFFF` means unknown. It remains a present specification value and is not
+ * used to represent an absent field.
+ *
+ * @section type23_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType23 or assign it to @ref lazybiosCTX::Type23 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type23
+ */
