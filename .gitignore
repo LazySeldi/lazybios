@@ -32,3 +32,4 @@ lazybios_test
 compile_commands.json
 .clang-format
 docs/
+*.pdf
