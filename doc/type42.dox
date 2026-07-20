@@ -1,0 +1,45 @@
+/**
+ * @page type42_guide Type 42: Management Controller Host Interface Guide
+ *
+ * @brief Management-controller host-interface data and shared protocols.
+ *
+ * @section type42_array Array result
+ *
+ * @ref lazybiosGetType42 returns every Management Controller Host Interface
+ * structure and writes the number of structures to `type42_count`. Decode the
+ * interface classification with @ref lazybiosType42InterfaceTypeStr.
+ *
+ * @section type42_versions Layout revisions
+ *
+ * SMBIOS 3.2 added the explicit interface-type-specific data length required
+ * to parse the complete structure. For SMBIOS 3.2 and later,
+ * `interface_type_specific_data_length` is the encoded length and
+ * `interface_type_specific_data_size` is the validated accessible size.
+ *
+ * Before SMBIOS 3.2, the specification only defines a reliably parseable
+ * four-byte IANA vendor ID after an OEM interface type. LazyBIOS exposes those
+ * four bytes through `interface_type_specific_data` and reports a derived
+ * `interface_type_specific_data_size` of four. The newer encoded length,
+ * protocol count, and protocol records remain absent.
+ *
+ * @section type42_protocols Protocol records
+ *
+ * Each @ref lazybiosType42ProtocolRecord_t contains a protocol type, its
+ * encoded data length, and the corresponding opaque protocol-specific bytes.
+ * Decode the type with @ref lazybiosType42ProtocolTypeStr. Protocol-specific
+ * formats are defined by their respective IPMI, MCTP, Redfish, or OEM
+ * specifications and are preserved without reinterpretation.
+ *
+ * The parser validates the complete counted record sequence before exposing
+ * it. An interface data length below the required four bytes or any truncated
+ * protocol record leaves `field_status.protocol_records` absent while
+ * preserving available encoded length and count fields.
+ *
+ * @section type42_ownership Ownership
+ *
+ * Release interface data, protocol arrays, protocol-specific data, and the
+ * structure array with @ref lazybiosFreeType42, or assign the result to
+ * @ref lazybiosCTX::Type42 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type42
+ */
