@@ -1,0 +1,29 @@
+/**
+ * @page type36_guide Type 36: Management Device Threshold Data Guide
+ *
+ * @brief Threshold values for environmental management-device components.
+ *
+ * @section type36_array Array result
+ *
+ * @ref lazybiosGetType36 returns every Management Device Threshold Data
+ * structure and writes the number of structures to `type36_count`.
+ *
+ * @section type36_values Threshold interpretation
+ *
+ * The six threshold fields describe lower and upper non-critical, critical,
+ * and non-recoverable limits. Their units are determined by the component
+ * referenced from the associated Type 35 structure: millivolts for voltage
+ * probes, milliamperes for current probes, tenths of a degree Celsius for
+ * temperature probes, or revolutions per minute for cooling devices.
+ *
+ * A threshold value of `0x8000` means that the threshold is unavailable. The
+ * parser preserves this value and marks the field present because it was
+ * supplied by the firmware.
+ *
+ * @section type36_ownership Ownership
+ *
+ * Release the returned array with @ref lazybiosFreeType36, or assign it to
+ * @ref lazybiosCTX::Type36 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type36
+ */
