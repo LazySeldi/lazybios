@@ -1,0 +1,28 @@
+/**
+ * @page type35_guide Type 35: Management Device Component Guide
+ *
+ * @brief Associations between management devices, monitored components, and thresholds.
+ *
+ * @section type35_array Array result
+ *
+ * @ref lazybiosGetType35 returns every Management Device Component structure
+ * and writes the number of structures to `type35_count`. Each description
+ * string is owned by its parsed structure.
+ *
+ * @section type35_relationships Handle relationships
+ *
+ * `management_device_handle` references the Type 34 device containing the
+ * component. `component_handle` references a Type 26 voltage probe, Type 27
+ * cooling device, Type 28 temperature probe, or Type 29 current probe.
+ * `threshold_handle` references the optional Type 36 threshold data associated
+ * with that component. LazyBIOS preserves these raw handles and does not resolve
+ * them automatically.
+ *
+ * @section type35_ownership Ownership
+ *
+ * Release the returned array and its description strings with
+ * @ref lazybiosFreeType35, or assign it to @ref lazybiosCTX::Type35 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type35
+ */
