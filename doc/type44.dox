@@ -1,0 +1,33 @@
+/**
+ * @page type44_guide Type 44: Processor Additional Information Guide
+ *
+ * @brief Architecture-specific processor data associated with Type 4 records.
+ *
+ * @section type44_array Array result
+ *
+ * @ref lazybiosGetType44 returns every Processor Additional Information
+ * structure and writes the number of structures to `type44_count`. Multiple
+ * Type 44 structures can reference the same Type 4 processor handle when
+ * different cores or architecture-specific subtypes require separate data.
+ *
+ * @section type44_block Processor-specific block
+ *
+ * `referenced_handle` identifies the associated Type 4 structure.
+ * `block_length` is the encoded length of `processor_specific_data`, and
+ * `processor_type` selects the architecture decoded by
+ * @ref lazybiosType44ProcessorTypeStr.
+ *
+ * Processor-specific formats are maintained by architecture workgroups and
+ * vendors. LazyBIOS therefore exposes the validated bytes without imposing a
+ * single architecture layout. If the declared data length exceeds the
+ * formatted structure, `field_status.processor_specific_data` remains absent
+ * while the available block length and processor type remain accessible.
+ *
+ * @section type44_ownership Ownership
+ *
+ * Release the returned structure array and processor-specific byte arrays with
+ * @ref lazybiosFreeType44, or assign the result to @ref lazybiosCTX::Type44 and
+ * use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type44
+ */
