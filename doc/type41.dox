@@ -1,0 +1,34 @@
+/**
+ * @page type41_guide Type 41: Onboard Devices Extended Information Guide
+ *
+ * @brief Onboard-device identity, status, instance, and bus location.
+ *
+ * @section type41_array Array result
+ *
+ * @ref lazybiosGetType41 returns one structure per onboard device function and
+ * writes the number of structures to `type41_count`. Multi-function devices
+ * can therefore have multiple Type 41 structures associated through Type 14.
+ *
+ * @section type41_identity Device identity
+ *
+ * `reference_designation` normally contains the board silkscreen label.
+ * Decode `device_type_and_status` with @ref lazybiosType41DeviceTypeStr and
+ * @ref lazybiosType41DeviceStatusStr. `device_type_instance` identifies the
+ * ordering of devices that have the same onboard-device type.
+ *
+ * @section type41_bus Bus location
+ *
+ * PCI-family devices provide a segment group, bus number, and packed device
+ * and function number. Use @ref lazybiosType41DeviceFunctionStr for the packed
+ * byte. Devices without applicable PCI bus information use the specification's
+ * all-ones encodings; these values are preserved as present data and decode as
+ * not applicable where supported.
+ *
+ * @section type41_ownership Ownership
+ *
+ * Release the returned array and reference-designation strings with
+ * @ref lazybiosFreeType41, or assign it to @ref lazybiosCTX::Type41 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type41
+ */
