@@ -1,0 +1,27 @@
+/**
+ * @page type24_guide Type 24: Hardware Security Guide
+ *
+ * @brief System-wide password and front-panel reset security settings.
+ *
+ * @section type24_array Array result
+ *
+ * @ref lazybiosGetType24 returns every Hardware Security structure and writes
+ * the number of structures to `type24_count`.
+ *
+ * @section type24_settings Security settings
+ *
+ * `hardware_security_settings` contains four independent two-bit values. Use
+ * @ref lazybiosType24PowerOnPasswordStatusStr,
+ * @ref lazybiosType24KeyboardPasswordStatusStr,
+ * @ref lazybiosType24AdministratorPasswordStatusStr, and
+ * @ref lazybiosType24FrontPanelResetStatusStr to decode them. Each setting can
+ * be disabled, enabled, not implemented, or unknown.
+ *
+ * @section type24_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType24 or assign it to @ref lazybiosCTX::Type24 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type24
+ */
