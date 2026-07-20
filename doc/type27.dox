@@ -1,0 +1,39 @@
+/**
+ * @page type27_guide Type 27: Cooling Device Guide
+ *
+ * @brief Cooling-device classification, health, redundancy, and speed information.
+ *
+ * @section type27_array Array result
+ *
+ * @ref lazybiosGetType27 returns every Cooling Device structure and writes the
+ * number of structures to `type27_count`. Each available description string is
+ * owned by its parsed structure.
+ *
+ * @section type27_classification Device type and status
+ *
+ * `device_type_and_status` combines a five-bit cooling-device type and a
+ * three-bit device status. Decode them independently with
+ * @ref lazybiosType27DeviceTypeStr and @ref lazybiosType27StatusStr.
+ *
+ * @section type27_relationships Relationships and redundancy
+ *
+ * `temperature_probe_handle` identifies the Type 28 probe monitoring the
+ * cooling device. A zero `cooling_unit_group` means that the device is not a
+ * member of a redundant cooling unit. Matching nonzero group values identify
+ * cooling devices in the same redundant unit.
+ *
+ * @section type27_speed Speed and description
+ *
+ * `nominal_speed` is expressed in revolutions per minute. The raw value
+ * `0x8000` means that the speed is unknown or that the device does not rotate.
+ * The description field is available in SMBIOS 2.7 and newer when the formatted
+ * structure is at least 0Fh bytes long.
+ *
+ * @section type27_ownership Ownership
+ *
+ * Release the returned array and its description strings with
+ * @ref lazybiosFreeType27, or assign it to @ref lazybiosCTX::Type27 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type27
+ */
