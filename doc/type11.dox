@@ -1,0 +1,34 @@
+/**
+ * @page type11_guide Type 11: OEM Strings Guide
+ *
+ * @brief OEM-defined free-form strings and their ownership rules.
+ *
+ * @section type11_array Array result
+ *
+ * @ref lazybiosGetType11 returns every @ref SMBIOS_TYPE_OEM_STRINGS structure
+ * and writes the number of structures to `type11_count`. Pass the same count to
+ * @ref lazybiosFreeType11 when cleanup is performed directly.
+ *
+ * @section type11_strings String collection
+ *
+ * Each @ref lazybiosType11_t contains the number of OEM strings in
+ * `string_count` and an equally sized `strings` array. Entries retain their
+ * firmware-defined text without interpretation because SMBIOS assigns no
+ * standardized meaning or encoding beyond the ordinary string-set rules.
+ * A structure with a count of zero has no string entries.
+ *
+ * `string_count` is an unrestricted SMBIOS BYTE. A value of `0xFF` therefore
+ * declares 255 strings and remains present. The parser determines whether Count
+ * is available from the structure's formatted length; use
+ * @ref LAZYBIOS_FIELD_STATUS to test it. A declared string collection that does
+ * not fit the string-set reports @ref LAZYBIOS_FIELD_ABSENT.
+ *
+ * @section type11_ownership Ownership
+ *
+ * The structure array, each nested `strings` array, and every string entry are
+ * allocated by the parser. Release the complete result with
+ * @ref lazybiosFreeType11 or assign it to @ref lazybiosCTX::Type11 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type11
+ */
