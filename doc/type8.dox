@@ -1,0 +1,35 @@
+/**
+ * @page type8_guide Type 8: Port Connector Information Guide
+ *
+ * @brief Port reference designators, connector types, and port functions.
+ *
+ * @section type8_array Array result
+ *
+ * One Type 8 structure is present for each system port. @ref lazybiosGetType8
+ * returns every @ref SMBIOS_TYPE_PORT_CONNECTOR structure and writes the array
+ * length to `type8_count`. Pass the same count to @ref lazybiosFreeType8 when
+ * cleanup is performed directly.
+ *
+ * @section type8_designators Reference designators
+ *
+ * `internal_reference_designator` identifies the connector inside the system
+ * enclosure. `external_reference_designator` identifies the externally visible
+ * connector. SMBIOS uses a zero string index and a connector type of zero when
+ * the corresponding internal or external connector is not present.
+ *
+ * @section type8_connectors Connector types
+ *
+ * `internal_connector_type` and `external_connector_type` use the same SMBIOS
+ * connector enumeration. Decode either field with
+ * @ref lazybiosType8ConnectorTypeStr. The value `0xFF` means that the reference
+ * designator strings supply the connector information. The Port Type
+ * enumeration also defines `0xFF` as Other. These values remain present SMBIOS
+ * data when checked with @ref LAZYBIOS_FIELD_STATUS.
+ *
+ * @section type8_function Port function
+ *
+ * `port_type` describes the function provided by the port independently of its
+ * physical connectors. Decode it with @ref lazybiosType8PortTypeStr.
+ *
+ * @see @ref api_type8
+ */
