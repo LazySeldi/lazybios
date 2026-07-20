@@ -1,0 +1,39 @@
+/**
+ * @page type6_guide Type 6: Memory Module Information Guide
+ *
+ * @brief Legacy memory-module socket, connection, capacity, and error information.
+ *
+ * @section type6_obsolete Obsolete structure
+ *
+ * Type 6 became obsolete in SMBIOS 2.1 and was replaced by Type 17 Memory
+ * Device. Type 6 structures can still appear for compatibility with legacy DMI
+ * software.
+ *
+ * @section type6_array Array result
+ *
+ * @ref lazybiosGetType6 returns one structure for each legacy memory-module
+ * socket and writes the number of structures to `type6_count`. Type 5 handle
+ * arrays identify their associated Type 6 structures.
+ *
+ * @section type6_decoding Module interpretation
+ *
+ * @ref lazybiosType6BankConnectionsStr decodes the two RAS connection nibbles;
+ * a nibble value of `0xF` means no connection. Current speed is expressed in
+ * nanoseconds and zero means unknown. Decode memory-type and error-status flags
+ * with @ref lazybiosType6CurrentMemoryTypeStr and
+ * @ref lazybiosType6ErrorStatusStr.
+ *
+ * Installed and enabled sizes encode `2^n` MiB in bits 6:0 and the single- or
+ * double-bank connection in bit 7. Low seven-bit values `0x7D`, `0x7E`, and `0x7F` describe
+ * an undetermined installed size, an installed module with no enabled memory,
+ * and an unpopulated socket. Use @ref lazybiosType6InstalledSizeStr and
+ * @ref lazybiosType6EnabledSizeStr to apply these rules.
+ *
+ * @section type6_ownership Ownership
+ *
+ * Release the returned structures and socket-designation strings with
+ * @ref lazybiosFreeType6, or assign them to @ref lazybiosCTX::Type6 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type6
+ */
