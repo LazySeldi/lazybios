@@ -1,0 +1,33 @@
+/**
+ * @page type33_guide Type 33: 64-Bit Memory Error Information Guide
+ *
+ * @brief Memory error classification, operation, syndrome, 64-bit addresses, and resolution.
+ *
+ * @section type33_array Array result
+ *
+ * @ref lazybiosGetType33 returns every 64-Bit Memory Error Information
+ * structure and writes the number of structures to `type33_count`. This type
+ * reports error addresses that cannot be represented by Type 18.
+ *
+ * @section type33_classification Error classification
+ *
+ * Decode `error_type`, `error_granularity`, and `error_operation` with
+ * @ref lazybiosType33ErrorTypeStr, @ref lazybiosType33ErrorGranularityStr, and
+ * @ref lazybiosType33ErrorOperationStr.
+ *
+ * @section type33_numeric Syndrome and address fields
+ *
+ * `vendor_syndrome` contains vendor-specific ECC syndrome or CRC information;
+ * zero means unknown. `memory_array_error_address` is relative to the memory
+ * array's bus, while `device_error_address` is relative to the failing memory
+ * device. The value `0x8000000000000000` means unknown for either address.
+ * `error_resolution` gives the byte range within which the error can be located;
+ * `0x80000000` means unknown. These encodings remain present raw values.
+ *
+ * @section type33_ownership Ownership
+ *
+ * Release the returned array with @ref lazybiosFreeType33, or assign it to
+ * @ref lazybiosCTX::Type33 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type33
+ */
