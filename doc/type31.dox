@@ -1,0 +1,33 @@
+/**
+ * @page type31_guide Type 31: Boot Integrity Services Entry Point Guide
+ *
+ * @brief Boot Integrity Services entry-point addresses and structure validation.
+ *
+ * @section type31_array Array result
+ *
+ * @ref lazybiosGetType31 returns every Boot Integrity Services Entry Point
+ * structure and writes the number of structures to `type31_count`. SMBIOS
+ * defines this structure as optional.
+ *
+ * @section type31_entry_points Entry points
+ *
+ * `bis_entry_point_16` and `bis_entry_point_32` contain the physical addresses
+ * of the 16-bit and 32-bit Boot Integrity Services entry points. A conforming
+ * structure has a formatted length of at least 1Ch and nonzero entry-point
+ * addresses.
+ *
+ * @section type31_checksum Checksum
+ *
+ * `checksum` contains the encoded structure-level checksum. When the complete
+ * formatted structure is available, `checksum_valid` is present and is nonzero
+ * only when the sum of every formatted byte evaluates to zero modulo 256. The
+ * parser preserves structures with invalid checksums so callers can inspect
+ * their raw fields.
+ *
+ * @section type31_ownership Ownership
+ *
+ * Release the returned array with @ref lazybiosFreeType31, or assign it to
+ * @ref lazybiosCTX::Type31 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type31
+ */
