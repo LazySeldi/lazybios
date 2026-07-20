@@ -1,0 +1,36 @@
+/**
+ * @page type38_guide Type 38: IPMI Device Information Guide
+ *
+ * @brief IPMI BMC interface, addressing, and interrupt configuration.
+ *
+ * @section type38_array Array result
+ *
+ * @ref lazybiosGetType38 returns every IPMI Device Information structure and
+ * writes the number of structures to `type38_count`.
+ *
+ * @section type38_interface Interface information
+ *
+ * @ref lazybiosType38InterfaceTypeStr decodes the BMC interface type, and
+ * @ref lazybiosType38SpecificationRevisionStr formats the packed BCD IPMI
+ * specification revision. An NV storage-device address of `0xFF` indicates
+ * that no storage device is present; this encoded value is preserved as a
+ * present field.
+ *
+ * @section type38_address Address and interrupt information
+ *
+ * The least-significant bit of `base_address` selects I/O or memory-mapped
+ * addressing. @ref lazybiosType38BaseAddressTypeStr reports that selection and
+ * @ref lazybiosType38BaseAddressValue removes the selection bit while restoring
+ * the actual address bit from the modifier byte.
+ * @ref lazybiosType38RegisterSpacingStr decodes register spacing, while
+ * @ref lazybiosType38InterruptInfoStr decodes interrupt availability, polarity,
+ * and trigger mode. The modifier and interrupt-number fields are marked absent
+ * when the formatted structure does not contain their offsets.
+ *
+ * @section type38_ownership Ownership
+ *
+ * Release the returned array with @ref lazybiosFreeType38, or assign it to
+ * @ref lazybiosCTX::Type38 and use @ref lazybiosCleanup.
+ *
+ * @see @ref api_type38
+ */
