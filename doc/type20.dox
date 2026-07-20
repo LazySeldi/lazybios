@@ -1,0 +1,39 @@
+/**
+ * @page type20_guide Type 20: Memory Device Mapped Address Guide
+ *
+ * @brief Device-level address ranges, partition positions, and interleaving.
+ *
+ * @section type20_array Array result
+ *
+ * @ref lazybiosGetType20 returns one structure for each contiguous address
+ * range mapped to a Type 17 Memory Device and writes the number of structures
+ * to `type20_count`. `memory_device_handle` identifies that Type 17 structure,
+ * while `memory_array_mapped_address_handle` identifies its containing Type 19
+ * range.
+ *
+ * @section type20_address Address fields
+ *
+ * Legacy `starting_address` and `ending_address` values are expressed in KiB.
+ * The ending value identifies the last KiB in the inclusive range. When both
+ * legacy values are `0xFFFFFFFF`, the SMBIOS 2.7 extended fields contain the
+ * actual inclusive byte addresses. @ref lazybiosType20StartingAddressBytes and
+ * @ref lazybiosType20EndingAddressBytes select the applicable representation
+ * and return byte addresses.
+ *
+ * @section type20_partition Partition and interleave fields
+ *
+ * `partition_row_position` uses `0xFF` for an unknown position; zero is
+ * reserved. `interleave_position` uses zero for a non-interleaved device and
+ * `0xFF` when the position is unknown. `interleaved_data_depth` uses zero when
+ * the device is not interleaved and `0xFF` when its configuration is unknown.
+ * These encodings are present raw values rather than unavailable-field
+ * sentinels.
+ *
+ * @section type20_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType20 or assign it to @ref lazybiosCTX::Type20 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type20
+ */
