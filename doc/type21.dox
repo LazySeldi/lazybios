@@ -1,0 +1,27 @@
+/**
+ * @page type21_guide Type 21: Built-in Pointing Device Guide
+ *
+ * @brief Built-in pointing-device classification and interface information.
+ *
+ * @section type21_array Array result
+ *
+ * @ref lazybiosGetType21 returns every built-in pointing-device structure and
+ * writes the number of structures to `type21_count`. The presence of a Type 21
+ * structure describes installed hardware but does not indicate that the device
+ * is currently active.
+ *
+ * @section type21_decoding Device decoding
+ *
+ * Decode `pointing_device_type` with
+ * @ref lazybiosType21PointingDeviceTypeStr and `interface` with
+ * @ref lazybiosType21InterfaceStr. `number_of_buttons` is the reported physical
+ * button count.
+ *
+ * @section type21_ownership Ownership
+ *
+ * The returned structure array is allocated by the parser. Release it with
+ * @ref lazybiosFreeType21 or assign it to @ref lazybiosCTX::Type21 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type21
+ */
