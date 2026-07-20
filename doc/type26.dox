@@ -1,0 +1,34 @@
+/**
+ * @page type26_guide Type 26: Voltage Probe Guide
+ *
+ * @brief Voltage-probe placement, health, range, and measurement precision.
+ *
+ * @section type26_array Array result
+ *
+ * @ref lazybiosGetType26 returns every Voltage Probe structure and writes the
+ * number of structures to `type26_count`. Each description string is owned by
+ * its parsed structure.
+ *
+ * @section type26_classification Location and status
+ *
+ * `location_and_status` combines a five-bit physical location and a three-bit
+ * monitored-voltage status. Decode them independently with
+ * @ref lazybiosType26LocationStr and @ref lazybiosType26StatusStr.
+ *
+ * @section type26_measurement Measurement fields
+ *
+ * `maximum_value`, `minimum_value`, `tolerance`, and `nominal_value` are
+ * expressed in mV. `resolution` is expressed in tenths of a mV, and `accuracy`
+ * is expressed in hundredths of a percent. For every 16-bit measurement field,
+ * `0x8000` means unknown and remains a present raw value. `nominal_value` is an
+ * optional field whose availability is determined by the formatted structure
+ * length.
+ *
+ * @section type26_ownership Ownership
+ *
+ * Release the returned array and its description strings with
+ * @ref lazybiosFreeType26, or assign it to @ref lazybiosCTX::Type26 and use
+ * @ref lazybiosCleanup.
+ *
+ * @see @ref api_type26
+ */
