@@ -49,6 +49,26 @@ set(LAZYBIOS_SOURCES
         src/structures/type24.c
         src/structures/type25.c
         src/structures/type26.c
+        src/structures/type27.c
+        src/structures/type28.c
+        src/structures/type29.c
+        src/structures/type30.c
+        src/structures/type31.c
+        src/structures/type32.c
+        src/structures/type33.c
+        src/structures/type34.c
+        src/structures/type35.c
+        src/structures/type36.c
+        src/structures/type37.c
+        src/structures/type38.c
+        src/structures/type39.c
+        src/structures/type40.c
+        src/structures/type41.c
+        src/structures/type42.c
+        src/structures/type43.c
+        src/structures/type44.c
+        src/structures/type45.c
+        src/structures/type46.c
 )
 
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})

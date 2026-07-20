@@ -1029,6 +1029,66 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	lazybiosFreeType26(ctx->Type26, ctx->type26_count);
 	ctx->Type26 = NULL;
 
+	lazybiosFreeType27(ctx->Type27, ctx->type27_count);
+	ctx->Type27 = NULL;
+
+	lazybiosFreeType28(ctx->Type28, ctx->type28_count);
+	ctx->Type28 = NULL;
+
+	lazybiosFreeType29(ctx->Type29, ctx->type29_count);
+	ctx->Type29 = NULL;
+
+	lazybiosFreeType30(ctx->Type30, ctx->type30_count);
+	ctx->Type30 = NULL;
+
+	lazybiosFreeType31(ctx->Type31, ctx->type31_count);
+	ctx->Type31 = NULL;
+
+	lazybiosFreeType32(ctx->Type32, ctx->type32_count);
+	ctx->Type32 = NULL;
+
+	lazybiosFreeType33(ctx->Type33, ctx->type33_count);
+	ctx->Type33 = NULL;
+
+	lazybiosFreeType34(ctx->Type34, ctx->type34_count);
+	ctx->Type34 = NULL;
+
+	lazybiosFreeType35(ctx->Type35, ctx->type35_count);
+	ctx->Type35 = NULL;
+
+	lazybiosFreeType36(ctx->Type36, ctx->type36_count);
+	ctx->Type36 = NULL;
+
+	lazybiosFreeType37(ctx->Type37, ctx->type37_count);
+	ctx->Type37 = NULL;
+
+	lazybiosFreeType38(ctx->Type38, ctx->type38_count);
+	ctx->Type38 = NULL;
+
+	lazybiosFreeType39(ctx->Type39, ctx->type39_count);
+	ctx->Type39 = NULL;
+
+	lazybiosFreeType40(ctx->Type40, ctx->type40_count);
+	ctx->Type40 = NULL;
+
+	lazybiosFreeType41(ctx->Type41, ctx->type41_count);
+	ctx->Type41 = NULL;
+
+	lazybiosFreeType42(ctx->Type42, ctx->type42_count);
+	ctx->Type42 = NULL;
+
+	lazybiosFreeType43(ctx->Type43, ctx->type43_count);
+	ctx->Type43 = NULL;
+
+	lazybiosFreeType44(ctx->Type44, ctx->type44_count);
+	ctx->Type44 = NULL;
+
+	lazybiosFreeType45(ctx->Type45, ctx->type45_count);
+	ctx->Type45 = NULL;
+
+	lazybiosFreeType46(ctx->Type46, ctx->type46_count);
+	ctx->Type46 = NULL;
+
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);
 	free(ctx->DMIData);

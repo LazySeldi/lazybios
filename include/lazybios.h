@@ -218,6 +218,26 @@ void lazybiosPrintVer(const lazybiosCTX_t* ctx);
 #include "lazybios/type24.h"
 #include "lazybios/type25.h"
 #include "lazybios/type26.h"
+#include "lazybios/type27.h"
+#include "lazybios/type28.h"
+#include "lazybios/type29.h"
+#include "lazybios/type30.h"
+#include "lazybios/type31.h"
+#include "lazybios/type32.h"
+#include "lazybios/type33.h"
+#include "lazybios/type34.h"
+#include "lazybios/type35.h"
+#include "lazybios/type36.h"
+#include "lazybios/type37.h"
+#include "lazybios/type38.h"
+#include "lazybios/type39.h"
+#include "lazybios/type40.h"
+#include "lazybios/type41.h"
+#include "lazybios/type42.h"
+#include "lazybios/type43.h"
+#include "lazybios/type44.h"
+#include "lazybios/type45.h"
+#include "lazybios/type46.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -320,6 +340,66 @@ struct lazybiosCTX {
 
 	lazybiosType26_t* Type26;
 	size_t type26_count;
+
+	lazybiosType27_t* Type27;
+	size_t type27_count;
+
+	lazybiosType28_t* Type28;
+	size_t type28_count;
+
+	lazybiosType29_t* Type29;
+	size_t type29_count;
+
+	lazybiosType30_t* Type30;
+	size_t type30_count;
+
+	lazybiosType31_t* Type31;
+	size_t type31_count;
+
+	lazybiosType32_t* Type32;
+	size_t type32_count;
+
+	lazybiosType33_t* Type33;
+	size_t type33_count;
+
+	lazybiosType34_t* Type34;
+	size_t type34_count;
+
+	lazybiosType35_t* Type35;
+	size_t type35_count;
+
+	lazybiosType36_t* Type36;
+	size_t type36_count;
+
+	lazybiosType37_t* Type37;
+	size_t type37_count;
+
+	lazybiosType38_t* Type38;
+	size_t type38_count;
+
+	lazybiosType39_t* Type39;
+	size_t type39_count;
+
+	lazybiosType40_t* Type40;
+	size_t type40_count;
+
+	lazybiosType41_t* Type41;
+	size_t type41_count;
+
+	lazybiosType42_t* Type42;
+	size_t type42_count;
+
+	lazybiosType43_t* Type43;
+	size_t type43_count;
+
+	lazybiosType44_t* Type44;
+	size_t type44_count;
+
+	lazybiosType45_t* Type45;
+	size_t type45_count;
+
+	lazybiosType46_t* Type46;
+	size_t type46_count;
 };
 
 /**
