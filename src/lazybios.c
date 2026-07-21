@@ -733,10 +733,10 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
  * @return Pointer to the next structure, or end when no complete structure remains.
  */
 const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
-	if (p + 4 > end) return end; // header too small
+	if (!p || !end || p > end || (size_t)(end - p) < SMBIOS_HEADER_SIZE) return end;
 
 	uint8_t len = p[1];
-	if (p + len >= end) return end; // formatted section exceeds buffer
+	if (len < SMBIOS_HEADER_SIZE || (size_t)(end - p) <= len) return end;
 
 	const uint8_t* next = p + len;
 
@@ -767,29 +767,33 @@ const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
  * @return Newly allocated string, or NULL if the string is unavailable or invalid.
  */
 char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end) {
-	if (index == 0)
+	if (!p || !end || p > end || index == 0 || length < SMBIOS_HEADER_SIZE ||
+		(size_t)(end - p) <= length)
 		return NULL;
 
 	// Point to the start of the unformatted string area
 	const uint8_t* str = p + length;
+	const uint8_t* strings_end = str;
+	while (strings_end + 1 < end && (strings_end[0] != 0 || strings_end[1] != 0))
+		strings_end++;
+	if (strings_end + 1 >= end) return NULL;
 
 	// Iterate until the selected string
 	for (uint8_t i = 1; i < index; i++) {
-		while (str < end && *str != 0)
+		if (str >= strings_end || *str == 0) return NULL;
+		while (str < strings_end && *str != 0)
 			str++;
-		if (str >= end) return NULL; // out of bounds
+		if (str >= strings_end) return NULL;
 		str++; // here we skip the null terminator
 	}
+	if (str >= strings_end || *str == 0) return NULL;
 
 	// Now str points to the target string
 	const uint8_t* s = str;
 
 	// Find null terminator safely
-	while (s < end && *s != 0)
+	while (s < strings_end && *s != 0)
 		s++;
-
-	if (s >= end)
-		return NULL; // unterminated -> BIOS corruption
 
 	// Length is safe
 	size_t len = (size_t)(s - str);
