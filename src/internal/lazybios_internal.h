@@ -113,7 +113,7 @@
 #define READSTR(record, field, len, offset, p, end) do { \
 	if ((len) > (offset)) { \
 		(record)->field = DMIString((p), (len), (p)[(offset)], (end)); \
-		if ((p)[(offset)] == 0 || (record)->field != NULL) { \
+		if ((record)->field != NULL) { \
 			LAZYBIOS_MARK_PRESENT((record), field); \
 		} else { \
 			LAZYBIOS_MARK_ABSENT((record), field); \
