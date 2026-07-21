@@ -14,7 +14,7 @@
  * @ref lazybiosType38SpecificationRevisionStr formats the packed BCD IPMI
  * specification revision. An NV storage-device address of `0xFF` indicates
  * that no storage device is present; this encoded value is preserved as a
- * present field.
+ * raw value and reports @ref LAZYBIOS_FIELD_ABSENT.
  *
  * @section type38_address Address and interrupt information
  *

@@ -14,7 +14,8 @@
  * Processor manufacturer, version, ID, serial number, asset tag, and part
  * number are preserved from SMBIOS. Use @ref lazybiosType4ProcessorFamilyStr
  * with `processor_family_2` when `processor_family` is `0xFE`; otherwise use the
- * 8-bit `processor_family` value.
+ * 8-bit `processor_family` value. The extended family field requires SMBIOS
+ * 2.6 or newer.
  *
  * @section type4_socket Socket information
  *
@@ -43,6 +44,10 @@
  * L1, L2, and L3 members are SMBIOS handles referring to Type 7 structures.
  * They are not indexes in the Type 7 array. Match them against raw structure
  * handles when correlating processor and cache records.
+ * A `0xFFFF` value means that no Type 7 reference was provided and reports
+ * @ref LAZYBIOS_FIELD_ABSENT. For SMBIOS 2.3 and later, this does not prove
+ * that the processor has no cache; it only means that cache attributes are
+ * unavailable through a referenced Type 7 structure.
  *
  * @see @ref api_type4
  */

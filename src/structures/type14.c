@@ -72,6 +72,9 @@ lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_cou
 						memcpy(&current->items[i].item_handle, p + item_offset + 1, sizeof(uint16_t));
 						LAZYBIOS_MARK_PRESENT(&current->items[i], item_type);
 						LAZYBIOS_MARK_PRESENT(&current->items[i], item_handle);
+						if (current->items[i].item_handle == 0xFFFF) {
+							LAZYBIOS_MARK_ABSENT(&current->items[i], item_handle);
+						}
 					}
 				}
 				LAZYBIOS_MARK_PRESENT(current, items);

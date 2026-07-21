@@ -33,6 +33,9 @@
  * number, asset tag, part number, and firmware version are firmware-provided
  * strings. `physical_memory_array_handle` associates the device with a Type 16
  * structure; it is not an array index.
+ * A `0xFFFF` physical-array handle is absent. The error-information handle is
+ * also absent for `0xFFFE` (no error structure supplied) and `0xFFFF` (no error
+ * detected), while retaining the raw value.
  *
  * @section type17_classification Classification
  *

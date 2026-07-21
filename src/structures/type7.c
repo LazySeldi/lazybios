@@ -292,8 +292,8 @@ void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_l
 	switch (location) {
 		case 0x00: len += snprintf(buf + len, buf_len - len, "Internal, "); break;
 		case 0x01: len += snprintf(buf + len, buf_len - len, "External, "); break;
-		case 0x10: len += snprintf(buf + len, buf_len - len, "Reserved, "); break;
-		case 0x11: len += snprintf(buf + len, buf_len - len, "Unknown, "); break;
+		case 0x02: len += snprintf(buf + len, buf_len - len, "Reserved, "); break;
+		case 0x03: len += snprintf(buf + len, buf_len - len, "Unknown, "); break;
 	}
 
 	// Bit 7 Enabled/Disabled

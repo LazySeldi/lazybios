@@ -48,11 +48,20 @@
  * }
  * @endcode
  *
- * Presence is independent of the stored value. Maximum integer values and
- * specification-defined `Unknown`, `Other`, and `Not Applicable` encodings
- * remain present values. An absent numeric field contains zero and an absent
- * string or array field contains `NULL`; callers must use field status when
- * zero is also a valid encoded value.
+ * Specification-defined `Unknown`, `Other`, and reserved encodings remain
+ * present values. Encodings that explicitly mean that a value, string, or
+ * referenced structure is absent or unavailable are marked absent; their raw
+ * numeric value is preserved so callers can distinguish special cases when
+ * necessary. A zero string index and an invalid string index are absent. An
+ * absent numeric field whose bytes are missing contains zero, while an absent
+ * string or array field contains `NULL`.
+ *
+ * A referenced handle field with availability metadata reports `0xFFFF` as
+ * absent unless a type-specific definition gives it another meaning. Some
+ * error-information handles also use `0xFFFE` to state that no referenced
+ * error structure is supplied. Raw handle arrays preserve every encoded entry.
+ * Check the relevant type guide before interpreting an absent handle's
+ * preserved raw value.
  *
  * @section concepts_versions Version checks
  *

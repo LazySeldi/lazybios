@@ -68,8 +68,18 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData
 			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
 				if (len >= UUID + sizeof(Type1->uuid)) {
 					const uint8_t* uuid = p + UUID;
+					int all_zero = 1;
+					int all_ff = 1;
 					for (int i = 0; i < 16; i++) Type1->uuid[i] = uuid[i];
-					LAZYBIOS_MARK_PRESENT(Type1, uuid);
+					for (int i = 0; i < 16; i++) {
+						if (uuid[i] != 0x00) all_zero = 0;
+						if (uuid[i] != 0xFF) all_ff = 0;
+					}
+					if (all_zero || all_ff) {
+						LAZYBIOS_MARK_ABSENT(Type1, uuid);
+					} else {
+						LAZYBIOS_MARK_PRESENT(Type1, uuid);
+					}
 				} else {
 					for (int i = 0; i < 16; i++) Type1->uuid[i] = 0;
 					LAZYBIOS_MARK_ABSENT(Type1, uuid);

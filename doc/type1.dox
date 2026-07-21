@@ -22,6 +22,10 @@
  * convention. Applications that print a UUID must apply the byte-order rules
  * required by the relevant SMBIOS version.
  *
+ * An all-zero UUID means that the identifier is not present. An all-`0xFF`
+ * UUID means that it is not currently present but can be set. Both encodings
+ * are preserved in `uuid` and report @ref LAZYBIOS_FIELD_ABSENT.
+ *
  * @section type1_wakeup Wake-up event
  *
  * `wake_up_type` is present in SMBIOS 2.1 and newer. Check it with

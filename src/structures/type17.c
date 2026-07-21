@@ -162,6 +162,13 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU16(current, physical_memory_array_handle, len, PHYSICAL_MEMORY_ARRAY_HANDLE, p);
 
 				READU16(current, memory_error_information_handle, len, MEMORY_ERROR_INFORMATION_HANDLE, p);
+				if (current->physical_memory_array_handle == 0xFFFF) {
+					LAZYBIOS_MARK_ABSENT(current, physical_memory_array_handle);
+				}
+				if (current->memory_error_information_handle == 0xFFFE ||
+					current->memory_error_information_handle == 0xFFFF) {
+					LAZYBIOS_MARK_ABSENT(current, memory_error_information_handle);
+				}
 
 				READU16(current, total_width, len, TOTAL_WIDTH, p);
 

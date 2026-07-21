@@ -61,6 +61,7 @@ lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_cou
 			READU16(current, string_property_id, len, STRING_PROPERTY_ID, p);
 			READSTR(current, string_property_value, len, STRING_PROPERTY_VALUE, p, structure_end);
 			READU16(current, parent_handle, len, PARENT_HANDLE, p);
+			if (current->parent_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, parent_handle);
 
 			index++;
 		}

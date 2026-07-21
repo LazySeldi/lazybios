@@ -16,6 +16,10 @@
  * can describe the supplemental value. The value is exposed as `value_length`
  * bytes in `value` because the SMBIOS specification defines its representation
  * as the same type and size as the referenced field.
+ * A zero or invalid string index leaves the optional `string` field absent.
+ * A referenced handle of `0xFFFF` is preserved and marked absent.
+ * A valid entry can have a zero-length value; in that case `value` is `NULL`
+ * while its field status remains present.
  *
  * The parser validates the minimum six-byte entry length and the complete
  * bounds of every declared entry before returning the entry array. If any

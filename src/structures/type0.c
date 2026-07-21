@@ -56,10 +56,12 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData
 			READSTR(Type0, release_date, len, FIRMWARE_RELEASE_DATE, p, structure_end);
 
 			READU16(Type0, bios_starting_segment, len, BIOS_STARTING_SEGMENT, p);
+			if (Type0->bios_starting_segment == 0) LAZYBIOS_MARK_ABSENT(Type0, bios_starting_segment);
 
 			if (len > FIRMWARE_ROM_SIZE && p[FIRMWARE_ROM_SIZE] == 0xFF) {
 				if (lazybiosIsVersionPlus(DMIData, 3, 1) && len >= EXTENDED_FIRMWARE_ROM_SIZE + sizeof(uint16_t)) {
 					memcpy(&Type0->extended_rom_size, p + EXTENDED_FIRMWARE_ROM_SIZE, sizeof(uint16_t));
+					lazybiosType0ExtendedROMSizeU16(Type0->extended_rom_size, Type0->unit);
 					LAZYBIOS_MARK_PRESENT(Type0, extended_rom_size);
 					LAZYBIOS_MARK_PRESENT(Type0, unit);
 				} else {
@@ -82,7 +84,10 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData
 			READU64(Type0, characteristics, len, FIRMWARE_CHARACTERISTICS, p);
 
 			if (len > FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES) {
-				Type0->firmware_char_ext_bytes_count = len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES;
+				Type0->firmware_char_ext_bytes_count =
+					(size_t)(len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES) > 2
+						? 2
+						: (size_t)(len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES);
 				LAZYBIOS_MARK_PRESENT(Type0, firmware_char_ext_bytes_count);
 				Type0->firmware_char_ext_bytes = malloc(Type0->firmware_char_ext_bytes_count);
 
@@ -97,6 +102,12 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData
 				READU8(Type0, platform_minor_release, len, PLATFORM_FIRMWARE_MINOR_RELEASE, p);
 				READU8(Type0, ec_major_release, len, EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE, p);
 				READU8(Type0, ec_minor_release, len, EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE, p);
+				if (Type0->platform_major_release == 0xFF && Type0->platform_minor_release == 0xFF) {
+					LAZYBIOS_MARK_ABSENT(Type0, platform_major_release);
+					LAZYBIOS_MARK_ABSENT(Type0, platform_minor_release);
+				}
+				if (Type0->ec_major_release == 0xFF) LAZYBIOS_MARK_ABSENT(Type0, ec_major_release);
+				if (Type0->ec_minor_release == 0xFF) LAZYBIOS_MARK_ABSENT(Type0, ec_minor_release);
 			} else {
 				Type0->platform_major_release = 0;
 				Type0->platform_minor_release = 0;

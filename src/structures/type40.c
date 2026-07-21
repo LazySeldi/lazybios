@@ -99,17 +99,22 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 							uint8_t string_number = p[entry_offset + ENTRY_STRING];
 							entry->string = DMIString(p, len, string_number, structure_end);
 							entry->value_length = entry->entry_length - ENTRY_VALUE;
-							entry->value = malloc(entry->value_length);
-							if (!entry->value) {
-								lazybiosFreeType40(Type40, count);
-								return NULL;
+							if (entry->value_length > 0) {
+								entry->value = malloc(entry->value_length);
+								if (!entry->value) {
+									lazybiosFreeType40(Type40, count);
+									return NULL;
+								}
+								memcpy(entry->value, p + entry_offset + ENTRY_VALUE, entry->value_length);
 							}
-							memcpy(entry->value, p + entry_offset + ENTRY_VALUE, entry->value_length);
 
 							LAZYBIOS_MARK_PRESENT(entry, entry_length);
 							LAZYBIOS_MARK_PRESENT(entry, referenced_handle);
+							if (entry->referenced_handle == 0xFFFF) {
+								LAZYBIOS_MARK_ABSENT(entry, referenced_handle);
+							}
 							LAZYBIOS_MARK_PRESENT(entry, referenced_offset);
-							if (string_number == 0 || entry->string) {
+							if (entry->string) {
 								LAZYBIOS_MARK_PRESENT(entry, string);
 							} else {
 								LAZYBIOS_MARK_ABSENT(entry, string);

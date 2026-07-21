@@ -16,6 +16,7 @@
  * `block_length` is the encoded length of `processor_specific_data`, and
  * `processor_type` selects the architecture decoded by
  * @ref lazybiosType44ProcessorTypeStr.
+ * A referenced handle of `0xFFFF` is preserved and marked absent.
  *
  * Processor-specific formats are maintained by architecture workgroups and
  * vendors. LazyBIOS therefore exposes the validated bytes without imposing a

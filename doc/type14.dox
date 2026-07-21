@@ -14,7 +14,8 @@
  * `group_name` is the firmware-provided description of the association. Each
  * @ref lazybiosType14Item_t in `items` contains an SMBIOS structure type and
  * the handle of the associated structure. Applications can use the type and
- * handle together to locate the referenced structure.
+ * handle together to locate the referenced structure. An item handle of
+ * `0xFFFF` is preserved and marked absent.
  *
  * Type 14 does not encode an item count. The parser derives `item_count` from
  * the formatted length using `(Length - 5) / 3`. The count and array are marked

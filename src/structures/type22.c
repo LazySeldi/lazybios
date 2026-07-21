@@ -92,6 +92,17 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 				READSTR(current, sbds_device_chemistry, len, SBDS_DEVICE_CHEMISTRY, p, structure_end);
 				READU8(current, design_capacity_multiplier, len, DESIGN_CAPACITY_MULTIPLIER, p);
 				READU32(current, oem_specific, len, OEM_SPECIFIC, p);
+
+				if (len > SERIAL_NUMBER && p[SERIAL_NUMBER] != 0) {
+					LAZYBIOS_MARK_ABSENT(current, sbds_serial_number);
+				}
+				if (len > MANUFACTURE_DATE && p[MANUFACTURE_DATE] != 0) {
+					LAZYBIOS_MARK_ABSENT(current, sbds_manufacture_date);
+				}
+				if (current->field_status.device_chemistry == LAZYBIOS_FIELD_PRESENT &&
+					current->device_chemistry != 0x02) {
+					LAZYBIOS_MARK_ABSENT(current, sbds_device_chemistry);
+				}
 			} else {
 				current->sbds_serial_number = 0;
 				current->sbds_manufacture_date = 0;

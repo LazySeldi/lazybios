@@ -21,6 +21,7 @@
  * cooling device. A zero `cooling_unit_group` means that the device is not a
  * member of a redundant cooling unit. Matching nonzero group values identify
  * cooling devices in the same redundant unit.
+ * A temperature-probe handle of `0xFFFF` is preserved and marked absent.
  *
  * @section type27_speed Speed and description
  *

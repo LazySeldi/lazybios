@@ -64,6 +64,10 @@ lazybiosType20_t* lazybiosGetType20(lazybiosType20_t* Type20, size_t* type20_cou
 			READU32(current, ending_address, len, ENDING_ADDRESS, p);
 			READU16(current, memory_device_handle, len, MEMORY_DEVICE_HANDLE, p);
 			READU16(current, memory_array_mapped_address_handle, len, MEMORY_ARRAY_MAPPED_ADDRESS_HANDLE, p);
+			if (current->memory_device_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, memory_device_handle);
+			if (current->memory_array_mapped_address_handle == 0xFFFF) {
+				LAZYBIOS_MARK_ABSENT(current, memory_array_mapped_address_handle);
+			}
 			READU8(current, partition_row_position, len, PARTITION_ROW_POSITION, p);
 			READU8(current, interleave_position, len, INTERLEAVE_POSITION, p);
 			READU8(current, interleaved_data_depth, len, INTERLEAVED_DATA_DEPTH, p);

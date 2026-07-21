@@ -17,6 +17,8 @@
  * 2.2 Smart Battery, a zero manufacture-date or serial-number string index
  * selects its corresponding packed SBDS field. An `Unknown` device chemistry
  * selects `sbds_device_chemistry` when that string is supplied.
+ * The packed serial number, packed date, and SBDS chemistry fields report
+ * absent when their respective selector does not make them valid.
  *
  * @section type22_capacity Capacity, voltage, and error
  *

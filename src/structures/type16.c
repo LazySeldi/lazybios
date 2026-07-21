@@ -98,6 +98,10 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 			READU8(current, memory_error_correction, len, MEMORY_ERROR_CORRECTION, p);
 			READU32(current, maximum_capacity, len, MAXIMUM_CAPACITY, p);
 			READU16(current, memory_error_information_handle, len, MEMORY_ERROR_INFORMATION_HANDLE, p);
+			if (current->memory_error_information_handle == 0xFFFE ||
+				current->memory_error_information_handle == 0xFFFF) {
+				LAZYBIOS_MARK_ABSENT(current, memory_error_information_handle);
+			}
 			READU16(current, number_of_memory_devices, len, NUMBER_OF_MEMORY_DEVICES, p);
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 7)) {

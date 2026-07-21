@@ -39,8 +39,8 @@ static void printType0(lazybiosCTX_t* ctx) {
 			printf("Firmware Characteristics: %s\n", buf);
 		}
 
-		if (lazybiosIsVersionPlus(ctx->DMIData, 2, 4)) {
-			if (ctx->Type0->firmware_char_ext_bytes_count >= 1) {
+		if (lazybiosIsVersionPlus(ctx->DMIData, 2, 1)) {
+			if (ctx->Type0->firmware_char_ext_bytes_count >= 1 && ctx->Type0->firmware_char_ext_bytes) {
 				char buf[LAZYBIOS_DECODER_BUF_SIZE];
 				lazybiosType0CharacteristicsExtByte1Str(ctx->Type0->firmware_char_ext_bytes[0], buf, sizeof(buf));
 				printf("Firmware Characteristics Extension Bytes 1: %s\n", buf);
@@ -48,7 +48,12 @@ static void printType0(lazybiosCTX_t* ctx) {
 				printf("Firmware Characteristics Extension Bytes 1: Not Present\n");
 			}
 
-			if (ctx->Type0->firmware_char_ext_bytes_count >= 2) {
+		} else if (!compact_output) {
+			printf("Firmware Characteristics Extension Bytes 1: [SMBIOS 2.1 required]\n");
+		}
+
+		if (lazybiosIsVersionPlus(ctx->DMIData, 2, 3)) {
+			if (ctx->Type0->firmware_char_ext_bytes_count >= 2 && ctx->Type0->firmware_char_ext_bytes) {
 				char buf[LAZYBIOS_DECODER_BUF_SIZE];
 				lazybiosType0CharacteristicsExtByte2Str(ctx->Type0->firmware_char_ext_bytes[1], buf, sizeof(buf));
 				printf("Firmware Characteristics Extension Bytes 2: %s\n", buf);
@@ -56,6 +61,11 @@ static void printType0(lazybiosCTX_t* ctx) {
 				printf("Firmware Characteristics Extension Bytes 2: Not Present\n");
 			}
 
+		} else if (!compact_output) {
+			printf("Firmware Characteristics Extension Bytes 2: [SMBIOS 2.3 required]\n");
+		}
+
+		if (lazybiosIsVersionPlus(ctx->DMIData, 2, 4)) {
 			if (LAZYBIOS_FIELD_STATUS(ctx->Type0, platform_major_release) != LAZYBIOS_FIELD_PRESENT) {
 				printf("Platform Major Release: Not Present\n");
 			} else {
@@ -80,26 +90,18 @@ static void printType0(lazybiosCTX_t* ctx) {
 				printf("EC Minor Release: %hhu\n", ctx->Type0->ec_minor_release);
 			}
 		} else {
-			if (!compact_output) printf("Firmware Characteristics Extension Bytes 1: [SMBIOS 2.4 required]\n");
-			if (!compact_output) printf("Firmware Characteristics Extension Bytes 2: [SMBIOS 2.4 required]\n");
 			if (!compact_output) printf("Platform Major Release: [SMBIOS 2.4 required]\n");
 			if (!compact_output) printf("Platform Minor Release: [SMBIOS 2.4 required]\n");
 			if (!compact_output) printf("EC Major Release: [SMBIOS 2.4 required]\n");
 			if (!compact_output) printf("EC Minor Release: [SMBIOS 2.4 required]\n");
 		}
 
-		if (lazybiosIsVersionPlus(ctx->DMIData, 3, 1)) {
-			if (LAZYBIOS_FIELD_STATUS(ctx->Type0, extended_rom_size) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Extended ROM Size: Not Present\n\n");
-			} else {
-				printf("Extended ROM Size: %hu%s\n\n", lazybiosType0ExtendedROMSizeU16(ctx->Type0->extended_rom_size, ctx->Type0->unit), ctx->Type0->unit);
-			}
+		if (LAZYBIOS_FIELD_STATUS(ctx->Type0, extended_rom_size) == LAZYBIOS_FIELD_PRESENT) {
+			printf("Extended ROM Size: %hu%s\n\n", lazybiosType0ExtendedROMSizeU16(ctx->Type0->extended_rom_size, ctx->Type0->unit), ctx->Type0->unit);
+		} else if (LAZYBIOS_FIELD_STATUS(ctx->Type0, rom_size) == LAZYBIOS_FIELD_PRESENT) {
+			printf("ROM Size: %u KB\n\n", ctx->Type0->rom_size);
 		} else {
-			if (LAZYBIOS_FIELD_STATUS(ctx->Type0, rom_size) != LAZYBIOS_FIELD_PRESENT) {
-				printf("ROM Size: Not Present\n\n");
-			} else {
-				printf("ROM Size: %u KB\n\n", ctx->Type0->rom_size);
-			}
+			printf("ROM Size: Not Present\n\n");
 		}
 	} else {
 		printf("Failed to get BIOS information\n\n");
@@ -1426,12 +1428,12 @@ static void printType16(lazybiosCTX_t* ctx) {
 				}
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type16, memory_error_information_handle) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Memory Error Information Handle: Not Present\n");
-			} else if (type16->memory_error_information_handle == 0xFFFE) {
+			if (type16->memory_error_information_handle == 0xFFFE) {
 				printf("Memory Error Information Handle: Not Provided\n");
 			} else if (type16->memory_error_information_handle == 0xFFFF) {
 				printf("Memory Error Information Handle: No Error Detected\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type16, memory_error_information_handle) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Memory Error Information Handle: Not Present\n");
 			} else {
 				printf("Memory Error Information Handle: 0x%04hX\n", type16->memory_error_information_handle);
 			}
@@ -2121,28 +2123,28 @@ static void printType22(lazybiosCTX_t* ctx) {
 			}
 
 			if (lazybiosIsVersionPlus(ctx->DMIData, 2, 2)) {
-				if (LAZYBIOS_FIELD_STATUS(type22, sbds_serial_number) != LAZYBIOS_FIELD_PRESENT) {
-					printf("SBDS Serial Number: Not Present\n");
-				} else if (type22->serial_number) {
+				if (type22->serial_number) {
 					printf("SBDS Serial Number: Not Used\n");
+				} else if (LAZYBIOS_FIELD_STATUS(type22, sbds_serial_number) != LAZYBIOS_FIELD_PRESENT) {
+					printf("SBDS Serial Number: Not Present\n");
 				} else {
 					printf("SBDS Serial Number: 0x%04hX\n", type22->sbds_serial_number);
 				}
 
-				if (LAZYBIOS_FIELD_STATUS(type22, sbds_manufacture_date) != LAZYBIOS_FIELD_PRESENT) {
-					printf("SBDS Manufacture Date: Not Present\n");
-				} else if (type22->manufacture_date) {
+				if (type22->manufacture_date) {
 					printf("SBDS Manufacture Date: Not Used\n");
+				} else if (LAZYBIOS_FIELD_STATUS(type22, sbds_manufacture_date) != LAZYBIOS_FIELD_PRESENT) {
+					printf("SBDS Manufacture Date: Not Present\n");
 				} else {
 					char buf[LAZYBIOS_DECODER_BUF_SIZE];
 					lazybiosType22SBDSManufactureDateStr(type22->sbds_manufacture_date, buf, sizeof(buf));
 					printf("SBDS Manufacture Date: %s\n", buf);
 				}
 
-				if (LAZYBIOS_FIELD_STATUS(type22, sbds_device_chemistry) != LAZYBIOS_FIELD_PRESENT) {
-					printf("SBDS Device Chemistry: Not Present\n");
-				} else if (type22->device_chemistry != 0x02) {
+				if (type22->device_chemistry != 0x02) {
 					printf("SBDS Device Chemistry: Not Used\n");
+				} else if (LAZYBIOS_FIELD_STATUS(type22, sbds_device_chemistry) != LAZYBIOS_FIELD_PRESENT) {
+					printf("SBDS Device Chemistry: Not Present\n");
 				} else {
 					printf("SBDS Device Chemistry: %s\n",
 						type22->sbds_device_chemistry ? type22->sbds_device_chemistry : "Not Specified");
@@ -2909,50 +2911,50 @@ static void printType36(lazybiosCTX_t* ctx) {
 				printf("--- Management Device Threshold Data %zu ---\n", i + 1);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_non_critical) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Lower Non-critical Threshold: Not Present\n");
-			} else if (type36->lower_threshold_non_critical == 0x8000) {
+			if (type36->lower_threshold_non_critical == 0x8000) {
 				printf("Lower Non-critical Threshold: Unavailable\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_non_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Lower Non-critical Threshold: Not Present\n");
 			} else {
 				printf("Lower Non-critical Threshold: %hu\n", type36->lower_threshold_non_critical);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_non_critical) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Upper Non-critical Threshold: Not Present\n");
-			} else if (type36->upper_threshold_non_critical == 0x8000) {
+			if (type36->upper_threshold_non_critical == 0x8000) {
 				printf("Upper Non-critical Threshold: Unavailable\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_non_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Upper Non-critical Threshold: Not Present\n");
 			} else {
 				printf("Upper Non-critical Threshold: %hu\n", type36->upper_threshold_non_critical);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_critical) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Lower Critical Threshold: Not Present\n");
-			} else if (type36->lower_threshold_critical == 0x8000) {
+			if (type36->lower_threshold_critical == 0x8000) {
 				printf("Lower Critical Threshold: Unavailable\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Lower Critical Threshold: Not Present\n");
 			} else {
 				printf("Lower Critical Threshold: %hu\n", type36->lower_threshold_critical);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_critical) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Upper Critical Threshold: Not Present\n");
-			} else if (type36->upper_threshold_critical == 0x8000) {
+			if (type36->upper_threshold_critical == 0x8000) {
 				printf("Upper Critical Threshold: Unavailable\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_critical) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Upper Critical Threshold: Not Present\n");
 			} else {
 				printf("Upper Critical Threshold: %hu\n", type36->upper_threshold_critical);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_non_recoverable) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Lower Non-recoverable Threshold: Not Present\n");
-			} else if (type36->lower_threshold_non_recoverable == 0x8000) {
+			if (type36->lower_threshold_non_recoverable == 0x8000) {
 				printf("Lower Non-recoverable Threshold: Unavailable\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type36, lower_threshold_non_recoverable) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Lower Non-recoverable Threshold: Not Present\n");
 			} else {
 				printf("Lower Non-recoverable Threshold: %hu\n", type36->lower_threshold_non_recoverable);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_non_recoverable) != LAZYBIOS_FIELD_PRESENT) {
-				printf("Upper Non-recoverable Threshold: Not Present\n");
-			} else if (type36->upper_threshold_non_recoverable == 0x8000) {
+			if (type36->upper_threshold_non_recoverable == 0x8000) {
 				printf("Upper Non-recoverable Threshold: Unavailable\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type36, upper_threshold_non_recoverable) != LAZYBIOS_FIELD_PRESENT) {
+				printf("Upper Non-recoverable Threshold: Not Present\n");
 			} else {
 				printf("Upper Non-recoverable Threshold: %hu\n", type36->upper_threshold_non_recoverable);
 			}
@@ -3045,10 +3047,10 @@ static void printType38(lazybiosCTX_t* ctx) {
 				printf("I2C Target Address: 0x%02hhX\n", type38->i2c_target_address);
 			}
 
-			if (LAZYBIOS_FIELD_STATUS(type38, nv_storage_device_address) != LAZYBIOS_FIELD_PRESENT) {
-				printf("NV Storage Device Address: Not Present\n");
-			} else if (type38->nv_storage_device_address == 0xFF) {
+			if (type38->nv_storage_device_address == 0xFF) {
 				printf("NV Storage Device Address: No Storage Device\n");
+			} else if (LAZYBIOS_FIELD_STATUS(type38, nv_storage_device_address) != LAZYBIOS_FIELD_PRESENT) {
+				printf("NV Storage Device Address: Not Present\n");
 			} else {
 				printf("NV Storage Device Address: 0x%02hhX\n", type38->nv_storage_device_address);
 			}

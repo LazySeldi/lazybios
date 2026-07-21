@@ -67,6 +67,7 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 
 			READU16(current, referenced_handle, len, REFERENCED_HANDLE, p);
+			if (current->referenced_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, referenced_handle);
 			READU8(current, block_length, len, BLOCK_LENGTH, p);
 			READU8(current, processor_type, len, PROCESSOR_TYPE, p);
 

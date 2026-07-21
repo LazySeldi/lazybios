@@ -57,6 +57,9 @@ lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_cou
 			READU16(current, management_device_handle, len, MANAGEMENT_DEVICE_HANDLE, p);
 			READU16(current, component_handle, len, COMPONENT_HANDLE, p);
 			READU16(current, threshold_handle, len, THRESHOLD_HANDLE, p);
+			if (current->management_device_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, management_device_handle);
+			if (current->component_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, component_handle);
+			if (current->threshold_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, threshold_handle);
 
 			index++;
 		}

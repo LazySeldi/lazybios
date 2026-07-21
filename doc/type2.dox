@@ -15,6 +15,7 @@
  * Each entry can identify its manufacturer, product, version, serial number,
  * asset tag, and physical location. `chassis_handle` is a reference to an
  * SMBIOS Type 3 structure, not an array index in the parsed Type 3 result.
+ * A `chassis_handle` value of `0xFFFF` is preserved but marked absent.
  *
  * @section type2_features Feature flags
  *
@@ -31,6 +32,7 @@
  * the formatted structure contains the complete declared sequence. Treat the
  * handles as SMBIOS structure handles and resolve them against raw structure
  * headers when cross-structure association is required.
+ * A declared count of zero means the contained-object information is absent.
  *
  * @see @ref api_type2
  */

@@ -453,6 +453,9 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				READU16(current, l2_cache_handle, len, L2_CACHE_HANDLE, p);
 
 				READU16(current, l3_cache_handle, len, L3_CACHE_HANDLE, p);
+				if (current->l1_cache_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, l1_cache_handle);
+				if (current->l2_cache_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, l2_cache_handle);
+				if (current->l3_cache_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, l3_cache_handle);
 			} else {
 				current->l1_cache_handle = 0;
 				current->l2_cache_handle = 0;
@@ -477,13 +480,16 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				READU8(current, thread_count, len, THREAD_COUNT, p);
 
 				READU16(current, processor_characteristics, len, PROCESSOR_CHARACTERISTICS, p);
-
-				READU16(current, processor_family_2, len, PROCESSOR_FAMILY_2, p);
 			} else {
 				current->core_count = 0;
 				current->core_enabled = 0;
 				current->thread_count = 0;
 				current->processor_characteristics = 0;
+			}
+
+			if (lazybiosIsVersionPlus(DMIData, 2, 6)) {
+				READU16(current, processor_family_2, len, PROCESSOR_FAMILY_2, p);
+			} else {
 				current->processor_family_2 = 0;
 			}
 
@@ -1205,9 +1211,9 @@ const char* lazybiosType4SocketTypeStr(uint8_t type) {
 		case SOCKET_TYPE_BGA2833:
 			return "BGA2833";
 		case SOCKET_TYPE_USE_STRING:
-			return "No Valid Offset available";
+			return "Use Socket Type string";
 		default:
-			return "Unknown Prosecutor Socket Type";
+			return "Unknown Processor Socket Type";
 	}
 }
 
@@ -1220,10 +1226,12 @@ const char* lazybiosType4SocketTypeStr(uint8_t type) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
+
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (characteristics & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Unknown ");
+	if (characteristics & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Unknown, ");
 	if (characteristics & (1 << 2)) len += snprintf(buf + len, buf_len - len, "64-bit Capable, ");
 	if (characteristics & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Multi-Core, ");
 	if (characteristics & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Hardware Thread, ");
@@ -1231,7 +1239,7 @@ void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t
 	if (characteristics & (1 << 6)) len += snprintf(buf + len, buf_len - len, "Enhanced Virtualization, ");
 	if (characteristics & (1 << 7)) len += snprintf(buf + len, buf_len - len, "Power/Performance Control, ");
 	if (characteristics & (1 << 8)) len += snprintf(buf + len, buf_len - len, "128-bit Capable, ");
-	if (characteristics & (1 << 9)) len += snprintf(buf + len, buf_len - len, "Arm64 SoC ID. ");
+	if (characteristics & (1 << 9)) len += snprintf(buf + len, buf_len - len, "Arm64 SoC ID, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");

@@ -82,6 +82,9 @@ lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_cou
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU16(current, temperature_probe_handle, len, TEMPERATURE_PROBE_HANDLE, p);
+			if (current->temperature_probe_handle == 0xFFFF) {
+				LAZYBIOS_MARK_ABSENT(current, temperature_probe_handle);
+			}
 			READU8(current, device_type_and_status, len, DEVICE_TYPE_AND_STATUS, p);
 			READU8(current, cooling_unit_group, len, COOLING_UNIT_GROUP, p);
 			READU32(current, oem_defined, len, OEM_DEFINED, p);

@@ -93,6 +93,7 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 			READSTR(current, location_in_chassis, len, LOCATION_IN_CHASSIS, p, structure_end);
 
 			READU16(current, chassis_handle, len, CHASSIS_HANDLE, p);
+			if (current->chassis_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, chassis_handle);
 
 			READU8(current, board_type, len, BOARD_TYPE, p);
 
@@ -113,7 +114,7 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 					LAZYBIOS_MARK_ABSENT(current, contained_object_handles);
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, number_of_contained_object_handles) == LAZYBIOS_FIELD_PRESENT) {
-				LAZYBIOS_MARK_PRESENT(current, contained_object_handles);
+				LAZYBIOS_MARK_ABSENT(current, contained_object_handles);
 			}
 
 			index++;

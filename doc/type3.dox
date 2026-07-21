@@ -22,6 +22,9 @@
  * @ref lazybiosType3StateStr. Security status uses
  * @ref lazybiosType3SecurityStatusStr. These fields require SMBIOS 2.1 or newer
  * and otherwise report @ref LAZYBIOS_FIELD_ABSENT through their field status.
+ * A zero legacy height or power-cord count means unspecified and reports
+ * absent. Legacy height `0xFF` also reports absent because it selects the
+ * SMBIOS 3.9 rack-height field.
  *
  * @section type3_elements Contained elements
  *
@@ -31,12 +34,16 @@
  * type and can be decoded with
  * @ref lazybiosType3ContainedElementTypeStr. Preserve the declared record
  * length when advancing because later SMBIOS revisions can extend a record.
+ * A zero element count leaves the array absent and requires a zero record
+ * length. For a nonzero count, the parser requires the specification's minimum
+ * three-byte record length and the complete declared array before exposing the
+ * records or locating fields that follow them.
  *
  * @section type3_rack Rack fields
  *
  * SKU position depends on the total contained-element area. Rack type and rack
  * height follow that variable-length area and are parsed only for SMBIOS 3.9 or
- * newer.
+ * newer. Rack type zero means unspecified, so both rack fields report absent.
  *
  * @see @ref api_type3
  */

@@ -16,7 +16,8 @@
  * cooling device, Type 28 temperature probe, or Type 29 current probe.
  * `threshold_handle` references the optional Type 36 threshold data associated
  * with that component. LazyBIOS preserves these raw handles and does not resolve
- * them automatically.
+ * them automatically. Any handle encoded as `0xFFFF` reports absent because it
+ * does not identify a referenced structure.
  *
  * @section type35_ownership Ownership
  *

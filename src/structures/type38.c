@@ -67,6 +67,9 @@ lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_cou
 			READU8(current, ipmi_specification_revision, len, IPMI_SPECIFICATION_REVISION, p);
 			READU8(current, i2c_target_address, len, I2C_TARGET_ADDRESS, p);
 			READU8(current, nv_storage_device_address, len, NV_STORAGE_DEVICE_ADDRESS, p);
+			if (current->nv_storage_device_address == 0xFF) {
+				LAZYBIOS_MARK_ABSENT(current, nv_storage_device_address);
+			}
 			READU64(current, base_address, len, BASE_ADDRESS, p);
 			READU8(current, base_address_modifier_interrupt_info, len, BASE_ADDRESS_MODIFIER_INTERRUPT_INFO, p);
 			READU8(current, interrupt_number, len, INTERRUPT_NUMBER, p);

@@ -14,10 +14,17 @@
  *
  * Vendor, version, release date, starting segment, legacy ROM size, and BIOS
  * characteristics originate in the base structure. Firmware characteristics
- * extension bytes are available when the formatted structure contains them.
+ * extension byte 1 requires SMBIOS 2.1 and extension byte 2 requires SMBIOS
+ * 2.3. The extension array contains only these two defined bytes; later fixed
+ * fields are not included in its count.
  * Platform and embedded-controller release fields require SMBIOS 2.4 or newer.
  * Extended ROM size requires SMBIOS 3.1 or newer when the legacy ROM-size byte
  * selects the extended field.
+ *
+ * A platform major/minor pair of `0xFF` means that platform release reporting
+ * is unsupported. An embedded-controller release byte of `0xFF` means that
+ * the corresponding release component is unavailable. These fields retain
+ * their encoded bytes but report @ref LAZYBIOS_FIELD_ABSENT.
  *
  * @section type0_rom ROM capacity
  *
@@ -25,6 +32,10 @@
  * applies. When the legacy byte is `0xFF`, check `extended_rom_size` and use
  * @ref lazybiosType0ExtendedROMSizeU16 to separate its numeric value from the
  * MiB, GiB, or reserved unit encoding.
+ * The parser also initializes the `unit` member whenever extended ROM size is
+ * selected.
+ * A zero `bios_starting_segment` is preserved and marked absent because SMBIOS
+ * defines it as not applicable, including on UEFI systems.
  *
  * @section type0_characteristics Characteristics
  *

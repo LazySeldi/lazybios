@@ -61,6 +61,13 @@ lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_cou
 			READU16(current, lower_threshold_non_recoverable, len, LOWER_THRESHOLD_NON_RECOVERABLE, p);
 			READU16(current, upper_threshold_non_recoverable, len, UPPER_THRESHOLD_NON_RECOVERABLE, p);
 
+			if (current->lower_threshold_non_critical == 0x8000) LAZYBIOS_MARK_ABSENT(current, lower_threshold_non_critical);
+			if (current->upper_threshold_non_critical == 0x8000) LAZYBIOS_MARK_ABSENT(current, upper_threshold_non_critical);
+			if (current->lower_threshold_critical == 0x8000) LAZYBIOS_MARK_ABSENT(current, lower_threshold_critical);
+			if (current->upper_threshold_critical == 0x8000) LAZYBIOS_MARK_ABSENT(current, upper_threshold_critical);
+			if (current->lower_threshold_non_recoverable == 0x8000) LAZYBIOS_MARK_ABSENT(current, lower_threshold_non_recoverable);
+			if (current->upper_threshold_non_recoverable == 0x8000) LAZYBIOS_MARK_ABSENT(current, upper_threshold_non_recoverable);
+
 			index++;
 		}
 		p = DMINext(p, end);

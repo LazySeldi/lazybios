@@ -112,6 +112,9 @@ lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_cou
 			READU16(current, input_voltage_probe_handle, len, INPUT_VOLTAGE_PROBE_HANDLE, p);
 			READU16(current, cooling_device_handle, len, COOLING_DEVICE_HANDLE, p);
 			READU16(current, input_current_probe_handle, len, INPUT_CURRENT_PROBE_HANDLE, p);
+			if (current->input_voltage_probe_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, input_voltage_probe_handle);
+			if (current->cooling_device_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, cooling_device_handle);
+			if (current->input_current_probe_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, input_current_probe_handle);
 
 			index++;
 		}

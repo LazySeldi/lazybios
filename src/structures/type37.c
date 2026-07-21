@@ -80,6 +80,9 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 							memcpy(&current->memory_devices[i].handle, entry + 1, sizeof(uint16_t));
 							current->memory_devices[i].field_status.load = LAZYBIOS_FIELD_PRESENT;
 							current->memory_devices[i].field_status.handle = LAZYBIOS_FIELD_PRESENT;
+							if (current->memory_devices[i].handle == 0xFFFF) {
+								current->memory_devices[i].field_status.handle = LAZYBIOS_FIELD_ABSENT;
+							}
 						}
 					}
 					current->field_status.memory_devices = LAZYBIOS_FIELD_PRESENT;

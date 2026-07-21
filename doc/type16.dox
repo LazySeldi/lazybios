@@ -30,8 +30,9 @@
  *
  * `memory_error_information_handle` references a Type 18 or Type 33 error
  * record. `0xFFFE` means that the system does not provide an error-information
- * structure. `0xFFFF` means that no error was detected. These are present
- * specification values rather than unavailable-field sentinels.
+ * structure. `0xFFFF` means that no error was detected. Both values are
+ * preserved and report @ref LAZYBIOS_FIELD_ABSENT because neither references
+ * an error-information structure.
  *
  * @section type16_ownership Ownership
  *

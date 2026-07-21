@@ -60,6 +60,7 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 			READU32(current, starting_address, len, STARTING_ADDRESS, p);
 			READU32(current, ending_address, len, ENDING_ADDRESS, p);
 			READU16(current, memory_array_handle, len, MEMORY_ARRAY_HANDLE, p);
+			if (current->memory_array_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, memory_array_handle);
 			READU8(current, partition_width, len, PARTITION_WIDTH, p);
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 7)) {

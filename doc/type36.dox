@@ -17,8 +17,7 @@
  * temperature probes, or revolutions per minute for cooling devices.
  *
  * A threshold value of `0x8000` means that the threshold is unavailable. The
- * parser preserves this value and marks the field present because it was
- * supplied by the firmware.
+ * parser preserves this value and marks the field absent.
  *
  * @section type36_ownership Ownership
  *

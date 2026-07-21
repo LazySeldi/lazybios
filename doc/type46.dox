@@ -16,6 +16,7 @@
  * @ref lazybiosType46StringPropertyIDStr. SMBIOS defines identifier 1 as a
  * UTF-8 UEFI device-path string and divides the remaining identifier space
  * among future DMTF, firmware-vendor, and OEM use.
+ * A parent handle of `0xFFFF` is preserved and marked absent.
  *
  * @section type46_ownership Ownership
  *

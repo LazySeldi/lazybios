@@ -20,7 +20,8 @@
  * Each entry provides its channel load and a handle that references a Type 17
  * Memory Device structure. If the declared entry array extends beyond the
  * formatted structure, `field_status.memory_devices` remains absent and no
- * partial array is returned.
+ * partial array is returned. An entry handle of `0xFFFF` is preserved and its
+ * entry-level field status reports absent.
  *
  * @section type37_ownership Ownership
  *

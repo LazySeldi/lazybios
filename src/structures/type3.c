@@ -149,8 +149,10 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 				READU32(current, oem_defined, len, OEM_DEFINED, p);
 
 				READU8(current, height, len, HEIGHT, p);
+				if (current->height == 0 || current->height == 0xFF) LAZYBIOS_MARK_ABSENT(current, height);
 
 				READU8(current, number_of_power_cords, len, NUMBER_OF_POWER_CORDS, p);
+				if (current->number_of_power_cords == 0) LAZYBIOS_MARK_ABSENT(current, number_of_power_cords);
 
 				READU8(current, contained_element_count, len, CONTAINED_ELEMENT_COUNT, p);
 				READU8(current, contained_element_record_length, len, CONTAINED_ELEMENT_RECORD_LENGTH, p);
@@ -160,9 +162,14 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 					const size_t array_bytes = (size_t)current->contained_element_count *
 						current->contained_element_record_length;
 
-					if (array_bytes == 0) {
-						LAZYBIOS_MARK_PRESENT(current, contained_elements);
-					} else if ((size_t)len >= CONTAINED_ELEMENTS + array_bytes) {
+					const int contained_layout_valid =
+						(current->contained_element_count == 0 && current->contained_element_record_length == 0) ||
+						(current->contained_element_count > 0 && current->contained_element_record_length >= 3 &&
+						 (size_t)len >= CONTAINED_ELEMENTS + array_bytes);
+
+					if (current->contained_element_count == 0) {
+						LAZYBIOS_MARK_ABSENT(current, contained_elements);
+					} else if (contained_layout_valid) {
 						current->contained_elements = malloc(array_bytes);
 						if (current->contained_elements) {
 							memcpy(current->contained_elements, p + CONTAINED_ELEMENTS, array_bytes);
@@ -172,18 +179,22 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 						LAZYBIOS_MARK_ABSENT(current, contained_elements);
 					}
 
-					if (lazybiosIsVersionPlus(DMIData, 2, 7)) {
+					if (contained_layout_valid && lazybiosIsVersionPlus(DMIData, 2, 7)) {
 						READSTR(current, sku_number, len,
 							SKU_NUMBER(current->contained_element_count, current->contained_element_record_length), p, structure_end);
 					} else {
 						current->sku_number = NULL;
 					}
 
-					if (lazybiosIsVersionPlus(DMIData, 3, 9)) {
+					if (contained_layout_valid && lazybiosIsVersionPlus(DMIData, 3, 9)) {
 						READU8(current, rack_type, len,
 							RACK_TYPE(current->contained_element_count, current->contained_element_record_length), p);
 						READU8(current, rack_height, len,
 							RACK_HEIGHT(current->contained_element_count, current->contained_element_record_length), p);
+						if (current->rack_type == 0) {
+							LAZYBIOS_MARK_ABSENT(current, rack_type);
+							LAZYBIOS_MARK_ABSENT(current, rack_height);
+						}
 					} else {
 						current->rack_type = 0;
 						current->rack_height = 0;

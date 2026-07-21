@@ -27,7 +27,7 @@
  * Structures long enough to include the optional tail can provide handles to
  * an input voltage probe (Type 26), cooling device (Type 27), and input current
  * probe (Type 29). Each handle remains absent when its bytes are not included
- * in the formatted structure.
+ * in the formatted structure or when its encoded value is `0xFFFF`.
  *
  * @section type39_ownership Ownership
  *
