@@ -7,7 +7,9 @@
  *
  * - Linux host loading supports sysfs and a `/dev/mem` fallback.
  * - Windows host loading uses `GetSystemFirmwareTable` and a generated entry point.
- * - macOS and unknown host backends are not implemented.
+ * - macOS host loading reads `SMBIOS-EPS` and `SMBIOS` from the AppleSMBIOS
+ *   I/O Registry service using IOKit and CoreFoundation.
+ * - Unknown host backends are not implemented.
  * - File-based loaders remain independent of host backend selection.
  *
  * @section limits_types Implemented structures

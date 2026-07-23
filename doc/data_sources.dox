@@ -29,11 +29,18 @@
  * table metadata. Consumers must not treat the generated table address as a
  * physical address.
  *
- * @section sources_macos macOS and unknown platforms
+ * @section sources_macos macOS
  *
- * The backend values exist in @ref lazybiosBackend_t, but host initialization
- * is not implemented for macOS or unknown platforms. File-based parsing remains
- * available when the platform can build the library.
+ * The macOS backend locates the `AppleSMBIOS` service in the I/O Registry. It
+ * reads the raw SMBIOS entry point from the `SMBIOS-EPS` property and the DMI
+ * structure table from the `SMBIOS` property. The implementation uses IOKit
+ * and CoreFoundation and supports both the current I/O Kit main port API and
+ * the legacy API used when targeting macOS releases older than 12.0.
+ *
+ * @section sources_unknown Unknown platforms
+ *
+ * Host initialization is not implemented for unknown platforms. File-based
+ * parsing remains available when the platform can build the library.
  *
  * @section sources_separate Separate entry point and DMI files
  *

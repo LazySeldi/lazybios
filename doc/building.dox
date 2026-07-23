@@ -10,6 +10,9 @@
  * only when reading from the host; file-based parsing can be used on any build
  * platform supported by the codebase.
  *
+ * On macOS, CMake locates and links the system IOKit and CoreFoundation
+ * frameworks required by the AppleSMBIOS backend.
+ *
  * @section build_source Building from source
  *
  * @code{.sh}

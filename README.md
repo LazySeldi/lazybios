@@ -11,7 +11,7 @@
 - **Clean C API** - Simple function calls, only 3 steps to assure memory-safety.
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
-- **Cross Platform** - Currently it's supported on Windows and Linux(MacOS coming next).
+- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, and macOS.
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
@@ -19,10 +19,10 @@
 ---
 
 ## Project Status
-1. **Windows support:** Implemented using Windows API calls.  
-   **Linux support:** Fully implemented via sysfs and /dev/mem.\
-   **MacOS support:** Not implemented at all. I don't have a Mac to test this on, but I'll try to implement it.
-2. Cross-platform compatibility is a goal, but the current focus is on the Linux backend and now finally Windows backend.  
+1. **Windows support:** Implemented using Windows API calls.
+   **Linux support:** Fully implemented via sysfs and `/dev/mem`.
+   **macOS support:** Implemented using the AppleSMBIOS I/O Registry service through IOKit and CoreFoundation.
+2. Host loading is supported on Linux, Windows, and macOS. File-based parsing is available independently of the selected host backend.
 3. The library is actively under development, features and structures may change.
 
 ---
