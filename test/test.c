@@ -3737,10 +3737,11 @@ int main(int argc, const char* argv[]) {
 
 		FILE* entry = NULL;
 		FILE* dmi = NULL;
-		if (ctx->backend == LAZYBIOS_BACKEND_LINUX) {
+		if (ctx->backend != LAZYBIOS_BACKEND_UNKNOWN) {
 			entry = fopen(path_entry, "wb");
 			if (!entry) {
 				printf("Failed to open '%s': %s\n", path_entry, strerror(errno));
+				lazybiosCleanup(ctx);
 				return -1;
 			}
 
@@ -3748,6 +3749,7 @@ int main(int argc, const char* argv[]) {
 			if (!dmi) {
 				printf("Failed to open '%s': %s\n", path_dmi, strerror(errno));
 				fclose(entry);
+				lazybiosCleanup(ctx);
 				return -1;
 			}
 
@@ -3757,31 +3759,12 @@ int main(int argc, const char* argv[]) {
 			fclose(dmi);
 			printf("%s and %s dumped successfully\n", path_entry, path_dmi);
 
-		} else if (ctx->backend == LAZYBIOS_BACKEND_WINDOWS) {
-			entry = fopen(path_entry, "wb");
-			if (!entry) {
-				printf("Failed to open '%s': %s\n", path_entry, strerror(errno));
-				return -1;
-			}
-
-			dmi = fopen(path_dmi, "wb");
-			if (!dmi) {
-				printf("Failed to open '%s': %s\n", path_dmi, strerror(errno));
-				fclose(entry);
-				return -1;
-			}
-
-			fwrite(ctx->DMIData->dmi_data, 1, ctx->DMIData->dmi_len, dmi);
-			fwrite(ctx->DMIData->entry_data, 1, ctx->DMIData->entry_len, entry);
-			fclose(entry);
-			fclose(dmi);
-			printf("%s and %s dumped successfully\n", path_entry, path_dmi);
-		} else { // MacOS coming soon? I don't have a mac so I can't test. But I'll try it on VMs.
-			printf("Can't dump data. no backend found!");
+		} else {
+			printf("Backend not found, unable to dump DMI data");
+			lazybiosCleanup(ctx);
+			return -1;
 		}
-
 		lazybiosCleanup(ctx);
-		return 0;
 	}
 
 	// We initialize from custom files ONLY if specified
@@ -4207,4 +4190,4 @@ int main(int argc, const char* argv[]) {
 
 	printf("Operation completed successfully!\n");
 	return 0;
-}
+} 
