@@ -20,11 +20,11 @@ extern "C" {
  */
 
 /** @brief Complete lazybios semantic version string. */
-#define LAZYBIOS_VER "0.6.0"
+#define LAZYBIOS_VER "0.7.0"
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 0
 /** @brief Minor component of the lazybios version. */
-#define LAZYBIOS_MINOR 6
+#define LAZYBIOS_MINOR 7
 /** @brief Patch component of the lazybios version. */
 #define LAZYBIOS_PATCH 0
 /** @brief Recommended output buffer size for decoder functions. */

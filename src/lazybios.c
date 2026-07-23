@@ -10,11 +10,11 @@
 #include "lazybios_internal.h"
 #include <errno.h>
 #include <limits.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <unistd.h>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -27,7 +27,11 @@
 	#define OS_LINUX 1
 
 #elif defined(__APPLE__) && defined(__MACH__)
-#	define OS_MACOS 1
+	#include <CoreFoundation/CoreFoundation.h>
+	#include <IOKit/IOTypes.h>
+	#include <IOKit/IOKitLib.h>
+	#include <AvailabilityMacros.h> // Gonna find out which path to use depending on version
+	#define OS_MACOS 1
 
 #else
 	#define OS_UNKNOWN 1
@@ -393,6 +397,13 @@ static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
             if (entry_len < 0x1F) entry_len = 0x1F;
         }
 
+		if (entry_len < 20) {
+			lb_log("Invalid SMBIOS entry point (%zu bytes)", entry_len);
+			munmap(mapped_data, map_size);
+			close(fd);
+			return -1;
+		}
+
         ctx->DMIData->entry_len = entry_len;
         ctx->DMIData->entry_data = malloc(entry_len);
         if (!ctx->DMIData->entry_data) {
@@ -668,8 +679,76 @@ static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows
 #if defined(OS_MACOS)
 static inline int lazybiosMacOS(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
-	lb_log("MacOS backend not implemented yet");
-	return -1;
+
+	// For Macs older than 12.0 we use Master instead of Main
+	#if MAC_OS_X_VERSION_MIN_REQUIRED >= 120000
+		io_service_t service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("AppleSMBIOS"));
+	#else
+		io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("AppleSMBIOS"));
+	#endif
+
+	if (service == IO_OBJECT_NULL) {
+		lb_log("AppleSMBIOS not found\n");
+		return -1;
+	}
+
+	CFDataRef eps = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS-EPS"), kCFAllocatorDefault, 0);
+	if (!eps) {
+		lb_log("Entry point structure not found\n");
+		IOObjectRelease(service);
+		return -1;
+	}
+
+	CFDataRef dmi = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS"), kCFAllocatorDefault, 0);
+	if (!dmi) {
+		lb_log("DMI Table not found\n");
+		IOObjectRelease(service);
+		CFRelease(eps);
+		return -1;
+	}
+
+	// MacOS made this simple thankfully
+	ctx->DMIData->entry_len = CFDataGetLength(eps);
+	if (ctx->DMIData->entry_len < 20) {
+		lb_log("Invalid SMBIOS entry point (%zu bytes)", ctx->DMIData->entry_len);
+		IOObjectRelease(service);
+		CFRelease(eps);
+		CFRelease(dmi);
+		return -1;
+	}
+
+	ctx->DMIData->entry_data = malloc(ctx->DMIData->entry_len);
+	if (!ctx->DMIData->entry_data) {
+		CFRelease(eps);
+		CFRelease(dmi);
+		IOObjectRelease(service);
+		return -1;
+	}
+	memcpy(ctx->DMIData->entry_data, CFDataGetBytePtr(eps), ctx->DMIData->entry_len);
+
+
+	if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) != 0) {
+		IOObjectRelease(service);
+		CFRelease(eps);
+		CFRelease(dmi);
+		return -1;
+	}
+
+	ctx->DMIData->dmi_len = CFDataGetLength(dmi);
+	if (ctx->DMIData->dmi_len == 0) {
+		lb_log("Invalid SMBIOS table size(= 0)");
+		IOObjectRelease(service);
+		CFRelease(eps);
+		CFRelease(dmi);
+		return -1;
+	}
+	ctx->DMIData->dmi_data = malloc(ctx->DMIData->dmi_len);
+	memcpy(ctx->DMIData->dmi_data, CFDataGetBytePtr(dmi), ctx->DMIData->dmi_len);
+
+	CFRelease(eps);
+	CFRelease(dmi);
+	IOObjectRelease(service);
+	return 0;
 }
 #endif
 
