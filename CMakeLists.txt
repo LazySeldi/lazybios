@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 0.6.0
+        VERSION 0.7.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -72,6 +72,20 @@ set(LAZYBIOS_SOURCES
 )
 
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
+
+if(APPLE)
+    find_library(LAZYBIOS_IOKIT_FRAMEWORK IOKit)
+    find_library(LAZYBIOS_COREFOUNDATION_FRAMEWORK CoreFoundation)
+
+    if(NOT LAZYBIOS_IOKIT_FRAMEWORK OR NOT LAZYBIOS_COREFOUNDATION_FRAMEWORK)
+        message(FATAL_ERROR "lazybios requires the IOKit and CoreFoundation frameworks on macOS")
+    endif()
+
+    target_link_libraries(lazybios PRIVATE
+            ${LAZYBIOS_IOKIT_FRAMEWORK}
+            ${LAZYBIOS_COREFOUNDATION_FRAMEWORK}
+    )
+endif()
 
 # Logging Options
 option(LAZYBIOS_QUIET "Disable all lazybios logging" OFF)
