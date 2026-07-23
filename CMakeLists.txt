@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 0.7.0
+        VERSION 1.0.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
