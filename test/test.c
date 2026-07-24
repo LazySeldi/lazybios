@@ -2491,10 +2491,10 @@ static void printType28(lazybiosCTX_t* ctx) {
 
 			if (LAZYBIOS_FIELD_STATUS(type28, minimum_value) != LAZYBIOS_FIELD_PRESENT) {
 				printf("Minimum Value: Not Present\n");
-			} else if (type28->minimum_value == 0x8000) {
+			} else if (type28->minimum_value == INT16_MIN) {
 				printf("Minimum Value: Unknown\n");
 			} else {
-				printf("Minimum Value: %hu.%hu degrees C\n", type28->minimum_value / 10, type28->minimum_value % 10);
+				printf("Minimum Value: %.1f degrees C\n", (double)type28->minimum_value / 10.0);
 			}
 
 			if (LAZYBIOS_FIELD_STATUS(type28, resolution) != LAZYBIOS_FIELD_PRESENT) {
@@ -4208,4 +4208,4 @@ int main(int argc, const char* argv[]) {
 
 	printf("Operation completed successfully!\n");
 	return 0;
-} 
+}

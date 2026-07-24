@@ -18,11 +18,14 @@
  * @section type28_measurement Measurement fields
  *
  * `maximum_value`, `minimum_value`, `tolerance`, and `nominal_value` are
- * expressed in tenths of a degree C. `resolution` is expressed in thousandths
- * of a degree C, and `accuracy` is expressed in hundredths of a percent. For
- * every 16-bit measurement field, `0x8000` means unknown and remains a present
- * raw value. `nominal_value` is optional and its availability is determined by
- * the formatted structure length.
+ * expressed in tenths of a degree C. `minimum_value` is exposed as an
+ * `int16_t`, allowing a probe's lower readable limit to represent a temperature
+ * below zero. Its `INT16_MIN` representation is the raw SMBIOS value `0x8000`,
+ * which means unknown and is not a temperature. `resolution` is expressed in
+ * thousandths of a degree C, and `accuracy` is expressed in hundredths of a
+ * percent. For the other 16-bit measurement fields, the raw value `0x8000`
+ * likewise means unknown and remains present. `nominal_value` is optional and
+ * its availability is determined by the formatted structure length.
  *
  * @section type28_ownership Ownership
  *

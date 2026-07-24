@@ -56,7 +56,8 @@ typedef struct {
 	char* description;
 	uint8_t location_and_status;
 	uint16_t maximum_value;
-	uint16_t minimum_value;
+	/** Tenths of a degree C; `INT16_MIN` (`0x8000` on the wire) means unknown. */
+	int16_t minimum_value;
 	uint16_t resolution;
 	uint16_t tolerance;
 	uint16_t accuracy;

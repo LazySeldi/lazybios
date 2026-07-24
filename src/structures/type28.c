@@ -109,7 +109,13 @@ lazybiosType28_t* lazybiosGetType28(lazybiosType28_t* Type28, size_t* type28_cou
 			READSTR(current, description, len, DESCRIPTION, p, structure_end);
 			READU8(current, location_and_status, len, LOCATION_AND_STATUS, p);
 			READU16(current, maximum_value, len, MAXIMUM_VALUE, p);
-			READU16(current, minimum_value, len, MINIMUM_VALUE, p);
+			if ((size_t)len >= (size_t)MINIMUM_VALUE + sizeof(current->minimum_value)) {
+				memcpy(&current->minimum_value, p + MINIMUM_VALUE, sizeof(int16_t));
+				LAZYBIOS_MARK_PRESENT(current, minimum_value);
+			} else {
+				current->minimum_value = 0;
+				LAZYBIOS_MARK_ABSENT(current, minimum_value);
+			}
 			READU16(current, resolution, len, RESOLUTION, p);
 			READU16(current, tolerance, len, TOLERANCE, p);
 			READU16(current, accuracy, len, ACCURACY, p);
