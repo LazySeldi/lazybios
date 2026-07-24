@@ -1,8 +1,7 @@
 # lazybios 
 
 ### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
-
-### NO ITS NOT DEAD.
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/LazySeldi/lazybios/graphs/commit-activity)
 
 ---
 ## Features
