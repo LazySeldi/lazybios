@@ -117,27 +117,20 @@ Yet to come!😞
 <details>
 <summary>Manual Building and installing with CMake.</summary>
 
-```c
+```shell
 git clone https://github.com/LazySeldi/lazybios.git
 
 cd lazybios
 
-# Premade script
-./setup.sh build
-./setup.sh install # Optional, asks the user for the installation path
-
-# Or 
-
-# Manually building 
 mkdir build
 
 cd build
 
-cmake .. # Will default to /usr/local unless specified with cmake -DCMAKE_INSTALL_PREFIX=/usr (or your prefeered location) ..
+cmake .. # Defaults to /usr/local; use -DCMAKE_INSTALL_PREFIX=/usr to override it.
 
 make
 
-sudo make install # Optional installs to whatever location you specified in the cmake .. step
+sudo make install # Optional; installs to the configured prefix.
 ```
 </details>
 

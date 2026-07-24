@@ -12,7 +12,7 @@ OUTPUT_LANGUAGE        = English
 # Input and path handling
 INPUT                  = include \
                          src \
-                         mainpage.md \
+                         doc/mainpage.md \
                          doc \
                          CONTRIBUTING.md \
                          ISSUES.md
@@ -34,7 +34,7 @@ EXCLUDE_PATTERNS       = */test/* \
                          */doc/examples/*
 FULL_PATH_NAMES        = NO
 STRIP_FROM_PATH        = .
-USE_MDFILE_AS_MAINPAGE = mainpage.md
+USE_MDFILE_AS_MAINPAGE = doc/mainpage.md
 
 # Reusable source examples included by the Doxygen guide pages
 EXAMPLE_PATH           = doc/examples
