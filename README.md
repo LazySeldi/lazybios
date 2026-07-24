@@ -163,4 +163,4 @@ The generated documentation entry point is `docs/html/index.html`.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+[![License: LGPL v2.1](https://img.shields.io/badge/License-LGPL%20v2.1-blue.svg)](https://www.gnu.org/licenses/lgpl-2.1.html)
