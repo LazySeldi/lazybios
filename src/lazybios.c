@@ -57,6 +57,7 @@
 
 // Logging system for lazybios
 
+#ifndef LAZYBIOS_QUIET
 #ifdef __GNUC__
 __attribute__((format(printf, 2, 3)))
 #endif
@@ -68,6 +69,7 @@ static inline void lazybios_log_internal(const char* prefix, const char* fmt, ..
 	fprintf(stderr, "\n");
 	va_end(args);
 }
+#endif
 
 #ifdef LAZYBIOS_QUIET
 #	define lb_log(...) ((void)0)
