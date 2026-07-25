@@ -29,8 +29,52 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#define OS_WINDOWS 1
+
+#elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__gnu_linux__)
+#define OS_LINUX 1
+
+#elif defined(__APPLE__) && defined(__MACH__)
+#define OS_MACOS 1
+
+#elif defined(__OpenBSD__)
+#define OS_OPENBSD 1
+
+#else
+#define OS_UNKNOWN 1
+#endif
+
+// Logging system for lazybios
+
+#ifndef LAZYBIOS_QUIET
+#ifdef __GNUC__
+__attribute__((format(printf, 2, 3)))
+#endif
+static inline void lazybios_log_internal(const char* prefix, const char* fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	fprintf(stderr, "%s", prefix);
+	vfprintf(stderr, fmt, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+}
+#endif
+
+#ifdef LAZYBIOS_QUIET
+#	define lb_log(...) ((void)0)
+#	define lb_dbg(...) ((void)0)
+
+#elif defined(LAZYBIOS_DEBUG)
+#	define lb_log(...) lazybios_log_internal("[lazybios] ", __VA_ARGS__)
+#	define lb_dbg(...) lazybios_log_internal("[lazybios-dbg] ", __VA_ARGS__)
+
+#else
+#	define lb_log(...) lazybios_log_internal("[lazybios] ", __VA_ARGS__)
+#	define lb_dbg(...) ((void)0)
+#endif
 
 /**
  * @brief Appends formatted text to a decoder output buffer.
@@ -166,6 +210,15 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
  * Keeping firmware byte validation separate from the operating-system calls
  * lets the same code run under unit tests and libFuzzer on every host.
  */
+typedef struct {
+	lazybiosSMBIOSVersionTag tag;
+	size_t length;
+	int checksum_valid;
+	int intermediate_checksum_valid;
+} lazybiosEntryInspection;
+
+int lazybiosInspectEntryPoint(const uint8_t* entry_data, size_t available,
+	lazybiosEntryInspection* inspection);
 int lazybiosLoadRawBuffers(lazybiosCTX_t* ctx,
 	const uint8_t* entry_data, size_t entry_len,
 	const uint8_t* dmi_data, size_t dmi_len);
@@ -227,5 +280,21 @@ int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
 		LAZYBIOS_MARK_ABSENT((record), field); \
 	} \
 } while (0)
+
+#if defined(OS_LINUX)
+int lazybiosLinux(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_WINDOWS)
+int lazybiosWindows(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_MACOS)
+int lazybiosMacOS(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_OPENBSD)
+int lazybiosOpenBSD(lazybiosCTX_t *ctx);
+#endif
 
 #endif
