@@ -955,6 +955,13 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
     }
 
     if (memcmp(entry_buf, SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE) == 0) {
+        // The tagged union exposes the whole layout, so the buffer has to hold
+        // all of it before any field (including the length byte) is read.
+        if (buf_len < SMBIOS3_ENTRY_POINT_LENGTH) {
+            lb_log("SMBIOS 3.x buffer truncated: expected %d bytes, got %zu", SMBIOS3_ENTRY_POINT_LENGTH, buf_len);
+            return -1;
+        }
+
         uint8_t spec_length = entry_buf[SMBIOS3_LENGTH_OFFSET]; // Usually 0x18 (24)
 
         if (buf_len < spec_length) {
@@ -970,6 +977,13 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
         ctx->DMIData->entry_union.v3 = (lazybiosSMBIOS3Entry*)entry_buf;
 
     } else if (memcmp(entry_buf, SMBIOS2_ANCHOR, SMBIOS2_ANCHOR_SIZE) == 0 || memcmp(entry_buf, SMBIOS2_INTERMEDIATE_ANCHOR, SMBIOS2_INTERMEDIATE_ANCHOR_SIZE) == 0) {
+        // Both checksums and every field of the tagged union live inside the
+        // fixed 0x1F byte layout, so a shorter buffer can never be parsed.
+        if (buf_len < SMBIOS2_ENTRY_POINT_LENGTH) {
+            lb_log("SMBIOS 2.x buffer truncated: expected %d bytes, got %zu", SMBIOS2_ENTRY_POINT_LENGTH, buf_len);
+            return -1;
+        }
+
         uint8_t spec_length = entry_buf[SMBIOS2_LENGTH_OFFSET]; // Usually 0x1F (31)
 
         if (buf_len < spec_length) {
