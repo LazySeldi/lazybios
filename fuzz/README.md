@@ -1,6 +1,6 @@
 # Fuzzing lazybios
 
-Four libFuzzer targets covering the untrusted input the library consumes:
+Five libFuzzer targets covering the untrusted input the library consumes:
 the SMBIOS entry point and the DMI structure table.
 
 | Target | Covers |
