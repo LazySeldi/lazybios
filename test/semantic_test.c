@@ -35,6 +35,15 @@
 	} \
 } while (0)
 
+static void set_checksum(uint8_t* data, size_t begin, size_t end,
+	size_t checksum_offset) {
+	uint8_t sum = 0;
+	data[checksum_offset] = 0;
+	for (size_t i = begin; i < end; i++)
+		sum = (uint8_t)(sum + data[i]);
+	data[checksum_offset] = (uint8_t)(-sum);
+}
+
 static void make_entry3(uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH],
 	uint8_t major, uint8_t minor, uint8_t docrev) {
 	memset(entry, 0, SMBIOS3_ENTRY_POINT_LENGTH);
@@ -44,6 +53,26 @@ static void make_entry3(uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH],
 	entry[SMBIOS3_MINOR_OFFSET] = minor;
 	entry[SMBIOS3_DOCREV_OFFSET] = docrev;
 	entry[SMBIOS3_REVISION_OFFSET] = 1;
+	set_checksum(entry, 0, SMBIOS3_ENTRY_POINT_LENGTH,
+		SMBIOS3_CHECKSUM_OFFSET);
+}
+
+static void make_entry2(uint8_t entry[SMBIOS2_ENTRY_POINT_LENGTH],
+	uint8_t major, uint8_t minor) {
+	memset(entry, 0, SMBIOS2_ENTRY_POINT_LENGTH);
+	memcpy(entry, SMBIOS2_ANCHOR, SMBIOS2_ANCHOR_SIZE);
+	entry[SMBIOS2_LENGTH_OFFSET] = SMBIOS2_ENTRY_POINT_LENGTH;
+	entry[SMBIOS2_MAJOR_OFFSET] = major;
+	entry[SMBIOS2_MINOR_OFFSET] = minor;
+	memcpy(entry + SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+		SMBIOS2_INTERMEDIATE_ANCHOR, SMBIOS2_INTERMEDIATE_ANCHOR_SIZE);
+	entry[SMBIOS2_BCD_REVISION_OFFSET] =
+		(uint8_t)((major << 4) | (minor & 0x0F));
+	set_checksum(entry, SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+		SMBIOS2_ENTRY_POINT_LENGTH,
+		SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET);
+	set_checksum(entry, 0, SMBIOS2_ENTRY_POINT_LENGTH,
+		SMBIOS2_CHECKSUM_OFFSET);
 }
 
 static int test_entry_points(void) {
@@ -248,20 +277,48 @@ static int test_backend_transformations(void) {
 		CHECK(lazybiosCleanup(ctx) == 0);
 	}
 
-	uint8_t image[64] = {0};
+	uint8_t image[160] = {0};
 	uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH];
 	make_entry3(entry, 3, 9, 0);
-	memcpy(image + 7, entry, sizeof(entry));
+	memcpy(image + 16, entry, sizeof(entry));
 	size_t offset = 0;
 	size_t length = 0;
-	CHECK(lazybiosFindSMBIOSEntryPoint(image, sizeof(image), &offset, &length) == 0);
-	CHECK(offset == 7);
+	CHECK(lazybiosFindSMBIOSEntryPoint(
+		image, sizeof(image), &offset, &length) == 0);
+	CHECK(offset == 16);
 	CHECK(length == SMBIOS3_ENTRY_POINT_LENGTH);
+
+	/*
+	 * An aligned anchor is not sufficient: an OpenBSD VM exposed an aligned
+	 * "_SM3_" byte sequence whose declared length was 0x65 before the real
+	 * SMBIOS 2.x entry point.
+	 */
+	memset(image, 0, sizeof(image));
+	memcpy(image, SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE);
+	image[SMBIOS3_LENGTH_OFFSET] = 0x65;
+	image[SMBIOS3_MAJOR_OFFSET] = 3;
+	image[SMBIOS3_REVISION_OFFSET] = 1;
+	CHECK(lazybiosFindSMBIOSEntryPoint(
+		image, sizeof(image), &offset, &length) == -1);
+
+	uint8_t entry2[SMBIOS2_ENTRY_POINT_LENGTH];
+	make_entry2(entry2, 2, 8);
+	memcpy(image + 112, entry2, sizeof(entry2));
+	CHECK(lazybiosFindSMBIOSEntryPoint(
+		image, sizeof(image), &offset, &length) == 0);
+	CHECK(offset == 112);
+	CHECK(length == SMBIOS2_ENTRY_POINT_LENGTH);
 
 	memset(image, 0, sizeof(image));
 	memcpy(image + sizeof(image) - SMBIOS3_ANCHOR_SIZE,
 		SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE);
-	CHECK(lazybiosFindSMBIOSEntryPoint(image, sizeof(image), &offset, &length) == -1);
+	CHECK(lazybiosFindSMBIOSEntryPoint(
+		image, sizeof(image), &offset, &length) == -1);
+
+	memset(image, 0, sizeof(image));
+	memcpy(image + 144, SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE);
+	CHECK(lazybiosFindSMBIOSEntryPoint(
+		image, sizeof(image), &offset, &length) == -1);
 	return 0;
 }
 
