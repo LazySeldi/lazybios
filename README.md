@@ -147,6 +147,20 @@ The generated documentation entry point is `docs/html/index.html`.
 
 ### Heads up: When using the library you may need to read some of the current SMBIOS specification that the library uses(for example lazybios will aways use the latest specification, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
 
+## Fuzzing
+
+The library parses untrusted firmware data, so there are libFuzzer targets for
+the entry point, the structure table, both file loaders and the decoders:
+
+```shell
+cmake -B build-fuzz -DCMAKE_C_COMPILER=clang -DLAZYBIOS_BUILD_FUZZERS=ON
+cmake --build build-fuzz
+fuzz/make_corpus.sh build-fuzz/corpus
+./build-fuzz/fuzz/fuzz_dmi_table build-fuzz/corpus/dmi_table -max_total_time=60
+```
+
+- **[fuzz/README.md](fuzz/README.md)** - What each target covers and how to run it!
+
 ## Contributing:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide on how to contribute!
 
