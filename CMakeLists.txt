@@ -127,6 +127,13 @@ endif()
 add_executable(lazybios_test test/test.c)
 target_link_libraries(lazybios_test PRIVATE lazybios)
 
+# Fuzzing (Clang + libFuzzer)
+option(LAZYBIOS_BUILD_FUZZERS "Build the libFuzzer targets in fuzz/" OFF)
+
+if(LAZYBIOS_BUILD_FUZZERS)
+    add_subdirectory(fuzz)
+endif()
+
 configure_file(
         cmake-files/lazybios.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc
