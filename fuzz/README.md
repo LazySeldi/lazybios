@@ -46,6 +46,18 @@ To reproduce a crash, pass the saved input file directly:
 ./build-fuzz/fuzz/fuzz_dmi_table crash-<hash>
 ```
 
+## Regressions
+
+Inputs that once crashed the library are kept under `regressions/`, seeded into
+the corpora by `make_corpus.sh`, and replayed on demand:
+
+```sh
+fuzz/run_regressions.sh build-fuzz
+```
+
+Save the crashing input there — in the directory named after the target that
+found it — whenever a fuzz finding is fixed.
+
 ## Covering the debug-only paths
 
 The instrumented library is built with `LAZYBIOS_QUIET` so its logging does not

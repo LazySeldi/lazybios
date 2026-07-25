@@ -46,6 +46,17 @@ for dir in "$dumps"/*/; do
 	fi
 done
 
+# Inputs that used to crash the library seed the corpora too, so a plain fuzz
+# run re-checks them even without run_regressions.sh.
+for dir in "$root"/fuzz/regressions/*/; do
+	[ -d "$dir" ] || continue
+	name=$(basename "$dir")
+	for input in "$dir"*; do
+		[ -f "$input" ] || continue
+		cp "$input" "$out/$name/regression-$(basename "$input")"
+	done
+done
+
 # fuzz_decoders takes an opaque byte stream; a handful of lengths is enough.
 i=0
 while [ "$i" -lt 8 ]; do
