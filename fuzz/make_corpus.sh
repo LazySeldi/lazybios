@@ -3,12 +3,12 @@
 #
 # Builds seed corpora for the lazybios fuzz targets out of test-dumps/.
 #
-# Usage: fuzz/make_corpus.sh [output-directory]   (default: build/corpus)
+# Usage: fuzz/make_corpus.sh [output-directory]   (default: build-fuzz/corpus)
 
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-out=${1:-$root/build/corpus}
+out=${1:-$root/build-fuzz/corpus}
 
 dumps=$root/test-dumps
 if [ ! -d "$dumps" ]; then
@@ -16,7 +16,8 @@ if [ ! -d "$dumps" ]; then
 	exit 1
 fi
 
-mkdir -p "$out/dmi_table" "$out/entry_point" "$out/single_file" "$out/two_files" "$out/decoders"
+mkdir -p "$out/dmi_table" "$out/entry_point" "$out/single_file" \
+	"$out/two_files" "$out/decoders" "$out/helpers" "$out/backend_buffers"
 
 for dir in "$dumps"/*/; do
 	name=$(basename "$dir")
@@ -24,6 +25,8 @@ for dir in "$dumps"/*/; do
 	# fuzz_dmi_table consumes three selector bytes followed by the raw table.
 	if [ -f "$dir/DMI" ]; then
 		{ printf '\003\003\000'; cat "$dir/DMI"; } > "$out/dmi_table/$name"
+		cp "$dir/DMI" "$out/helpers/$name"
+		cp "$dir/DMI" "$out/backend_buffers/$name"
 	fi
 
 	if [ -f "$dir/smbios_entry_point" ]; then
