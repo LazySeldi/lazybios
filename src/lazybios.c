@@ -31,67 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <unistd.h>
 
-#if defined(_WIN32) || defined(_WIN64)
-	#include <windows.h>
-	#define OS_WINDOWS 1
-
-#elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__gnu_linux__)
-	#include <sys/mman.h>
-	#include <sys/types.h>
-	#define OS_LINUX 1
-
-#elif defined(__APPLE__) && defined(__MACH__)
-	#include <CoreFoundation/CoreFoundation.h>
-	#include <IOKit/IOTypes.h>
-	#include <IOKit/IOKitLib.h>
-	#include <AvailabilityMacros.h> // Gonna find out which path to use depending on version
-	#define OS_MACOS 1
-
-#else
-	#define OS_UNKNOWN 1
-#endif
-
-// Logging system for lazybios
-
-#ifndef LAZYBIOS_QUIET
-#ifdef __GNUC__
-__attribute__((format(printf, 2, 3)))
-#endif
-static inline void lazybios_log_internal(const char* prefix, const char* fmt, ...) {
-	va_list args;
-	va_start(args, fmt);
-	fprintf(stderr, "%s", prefix);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
-	va_end(args);
-}
-#endif
-
-#ifdef LAZYBIOS_QUIET
-#	define lb_log(...) ((void)0)
-#	define lb_dbg(...) ((void)0)
-
-#elif defined(LAZYBIOS_DEBUG)
-#	define lb_log(...) lazybios_log_internal("[lazybios] ", __VA_ARGS__)
-#	define lb_dbg(...) lazybios_log_internal("[lazybios-dbg] ", __VA_ARGS__)
-
-#else
-#	define lb_log(...) lazybios_log_internal("[lazybios] ", __VA_ARGS__)
-#	define lb_dbg(...) ((void)0)
-#endif
-
-#if defined(OS_LINUX)
-static int uint64_to_off_t(uint64_t value, off_t* out) {
-	uint64_t off_t_max = ((uint64_t)1 << (sizeof(off_t) * CHAR_BIT - 1)) - 1;
-	if (value > off_t_max) return -1;
-	*out = (off_t)value;
-	return 0;
-}
-#endif
 
 /**
  * @brief Loads SMBIOS entry point and DMI data from one merged file.
@@ -308,6 +248,8 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 		ctx->backend = LAZYBIOS_BACKEND_WINDOWS;
 	#elif defined(OS_MACOS)
 		ctx->backend = LAZYBIOS_BACKEND_MACOS;
+	#elif defined(OS_OPENBSD)
+		ctx->backend = LAZYBIOS_BACKEND_OPENBSD;
 	#else
 		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
 	#endif
@@ -315,226 +257,6 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 	return ctx;
 }
 
-#if defined(OS_LINUX)
-static inline int lazybiosDevMem(lazybiosCTX_t* ctx) {
-    if (!ctx) return -1;
-        #define SMBIOS_START 0xF0000
-        #define SMBIOS_SIZE  0x10000
-
-        int fd = open(DEV_MEM, O_RDONLY);
-        if (fd == -1) {
-            lb_log("Failed to open /dev/mem");
-            lb_dbg("Error: %s", strerror(errno));
-            return -1;
-        }
-
-        off_t base_addr = SMBIOS_START;
-        long page_size = sysconf(_SC_PAGESIZE);
-        if (page_size <= 0) {
-            lb_log("Failed to read system page size");
-            close(fd);
-            return -1;
-        }
-
-        off_t aligned_addr = (base_addr / page_size) * page_size;
-        off_t page_offset = base_addr - aligned_addr;
-        size_t page_size_unsigned = (size_t)page_size;
-        size_t page_offset_unsigned = (size_t)page_offset;
-
-        // Round map_size up to the nearest page to be safe
-        size_t map_size = SMBIOS_SIZE + page_offset_unsigned;
-        map_size = (map_size + page_size_unsigned - 1) & ~(page_size_unsigned - 1);
-
-        void *mapped_data = mmap(NULL, map_size, PROT_READ, MAP_SHARED, fd, aligned_addr);
-        if (mapped_data == MAP_FAILED) {
-            lb_log("Failed to mmap /dev/mem data");
-            lb_dbg("Error: %s", strerror(errno));
-            close(fd);
-            return -1;
-        }
-
-        unsigned char *smbios_data = (unsigned char *)mapped_data + page_offset;
-
-        size_t sig_offset = 0;
-        size_t entry_len = 0;
-        if (lazybiosFindSMBIOSEntryPoint(smbios_data, SMBIOS_SIZE,
-                &sig_offset, &entry_len) != 0) {
-            lb_log("SMBIOS/DMI signature not found in /dev/mem");
-            munmap(mapped_data, map_size);
-            close(fd);
-            return -1;
-        }
-
-        unsigned char *entry = smbios_data + sig_offset;
-
-        ctx->DMIData->entry_len = entry_len;
-        ctx->DMIData->entry_data = malloc(entry_len);
-        if (!ctx->DMIData->entry_data) {
-            lb_log("Failed to allocate entry_data");
-            munmap(mapped_data, map_size);
-            close(fd);
-            return -1;
-        }
-        memcpy(ctx->DMIData->entry_data, entry, entry_len);
-
-        if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) != 0) {
-            lb_log("Failed to parse SMBIOS entry point");
-            free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = NULL;
-            munmap(mapped_data, map_size);
-            close(fd);
-            return -1;
-        }
-
-        uint64_t table_addr = 0;
-        size_t table_len = 0;
-
-        if (ctx->DMIData->entry_tag == SMBIOS_VER_3X) {
-            table_addr = ctx->DMIData->entry_union.v3->structure_table_address;
-            table_len = ctx->DMIData->entry_union.v3->structure_table_max_size;
-        } else {
-            table_addr = ctx->DMIData->entry_union.v2->structure_table_address;
-            table_len = ctx->DMIData->entry_union.v2->structure_table_length;
-        }
-
-        munmap(mapped_data, map_size);
-
-        // From this point on, this function was not made all by me
-        off_t table_addr_off = 0;
-        if (uint64_to_off_t(table_addr, &table_addr_off) != 0) {
-            lb_log("SMBIOS table address does not fit in off_t: 0x%016lx", (unsigned long)table_addr);
-            free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = NULL;
-            close(fd);
-            return -1;
-        }
-
-        off_t table_aligned = (table_addr_off / page_size) * page_size;
-        off_t table_offset_page = table_addr_off - table_aligned;
-        size_t table_offset_unsigned = (size_t)table_offset_page;
-
-        // We'll calculate map size by rounding up to the nearest page
-        if (table_len > SIZE_MAX - table_offset_unsigned) {
-            lb_log("SMBIOS table mapping size overflow");
-            free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = NULL;
-            close(fd);
-            return -1;
-        }
-        size_t table_map_size = table_len + table_offset_unsigned;
-        table_map_size = (table_map_size + page_size_unsigned - 1) & ~(page_size_unsigned - 1);
-
-        void *mapped_table = mmap(NULL, table_map_size, PROT_READ, MAP_SHARED, fd, table_aligned);
-        if (mapped_table == MAP_FAILED) {
-            lb_log("Failed to mmap DMI/SMBIOS table at 0x%016lx", (unsigned long)table_addr);
-            lb_dbg("Error: %s", strerror(errno));
-            free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = NULL;
-            close(fd);
-            return -1;
-        }
-
-        unsigned char *table_data = (unsigned char *)mapped_table + table_offset_page;
-
-        // Store table data in context
-        ctx->DMIData->dmi_len = table_len;
-        ctx->DMIData->dmi_data = malloc(table_len);
-        if (!ctx->DMIData->dmi_data) {
-            lb_log("Failed to allocate DMI buffer (%zu bytes)", table_len);
-            munmap(mapped_table, table_map_size);
-            free(ctx->DMIData->entry_data);
-            ctx->DMIData->entry_data = NULL;
-            close(fd);
-            return -1;
-        }
-        memcpy(ctx->DMIData->dmi_data, table_data, table_len);
-
-        munmap(mapped_table, table_map_size);
-        close(fd);
-
-        return 0;
-}
-#endif
-
-#if defined(OS_WINDOWS)
-static inline int lazybiosWindows(lazybiosCTX_t* ctx) { // Help with the windows backend is appriciated, since I'm not an expert at the windows API, and it was not fully made by me.
-    if (!ctx) return -1;
-
-    // RSMB provider ID (little endian for "RSMB")
-    const DWORD sig = 0x52534D42;
-
-    DWORD size = GetSystemFirmwareTable(sig, 0, NULL, 0);
-    if (size == 0) {
-        lb_log("GetSystemFirmwareTable failed (size=0)");
-        return -1;
-    }
-
-    uint8_t* buf = malloc(size);
-    if (!buf) return -1;
-
-    DWORD got = GetSystemFirmwareTable(sig, 0, buf, size);
-    if (got != size) {
-        lb_log("SMBIOS read mismatch (%lu != %lu)", (unsigned long)got, (unsigned long)size);
-        free(buf);
-        return -1;
-    }
-
-    int result = lazybiosLoadWindowsRawSMBIOSData(ctx, buf, size);
-    free(buf);
-    return result;
-}
-#endif
-
-#if defined(OS_MACOS)
-static inline int lazybiosMacOS(lazybiosCTX_t* ctx) {
-	if (!ctx) return -1;
-
-	// For Macs older than 12.0 we use Master instead of Main
-	#if MAC_OS_X_VERSION_MIN_REQUIRED >= 120000
-		io_service_t service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("AppleSMBIOS"));
-	#else
-		io_service_t service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("AppleSMBIOS"));
-	#endif
-
-	if (service == IO_OBJECT_NULL) {
-		lb_log("AppleSMBIOS not found\n");
-		return -1;
-	}
-
-	CFTypeRef eps_property = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS-EPS"), kCFAllocatorDefault, 0);
-	if (!eps_property || CFGetTypeID(eps_property) != CFDataGetTypeID()) {
-		lb_log("Entry point structure not found\n");
-		if (eps_property) CFRelease(eps_property);
-		IOObjectRelease(service);
-		return -1;
-	}
-	CFDataRef eps = (CFDataRef)eps_property;
-
-	CFTypeRef dmi_property = IORegistryEntryCreateCFProperty(service, CFSTR("SMBIOS"), kCFAllocatorDefault, 0);
-	if (!dmi_property || CFGetTypeID(dmi_property) != CFDataGetTypeID()) {
-		lb_log("DMI Table not found\n");
-		if (dmi_property) CFRelease(dmi_property);
-		IOObjectRelease(service);
-		CFRelease(eps);
-		return -1;
-	}
-	CFDataRef dmi = (CFDataRef)dmi_property;
-
-	CFIndex entry_length = CFDataGetLength(eps);
-	CFIndex dmi_length = CFDataGetLength(dmi);
-	int result = -1;
-	if (entry_length > 0 && dmi_length > 0) {
-		result = lazybiosLoadRawBuffers(ctx,
-			CFDataGetBytePtr(eps), (size_t)entry_length,
-			CFDataGetBytePtr(dmi), (size_t)dmi_length);
-	}
-
-	CFRelease(eps);
-	CFRelease(dmi);
-	IOObjectRelease(service);
-	return result;
-}
-#endif
 
 /**
  * @brief Loads SMBIOS data using the context's selected platform backend.
@@ -546,19 +268,13 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
 
 	switch (ctx->backend) {
-		case LAZYBIOS_BACKEND_LINUX: { // Brackets since you can't declare variables inside a case without brackets, you can only do that in C23
+		case LAZYBIOS_BACKEND_LINUX:
 			#if defined(OS_LINUX)
-			FILE* f = fopen(LINUX_SYSFS_DMI_TABLE, "rb");
-			if (!f) {
-				return lazybiosDevMem(ctx);
-			}
-			fclose(f);
-			return lazybiosFile(ctx, LINUX_SYSFS_SMBIOS_ENTRY, LINUX_SYSFS_DMI_TABLE);
+			return lazybiosLinux(ctx);
 			#else
 			lb_log("Linux backend is not available in this build!");
 			return -1;
 			#endif
-		}
 
 		case LAZYBIOS_BACKEND_WINDOWS:
 			#if defined(OS_WINDOWS)
@@ -576,9 +292,18 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 			return -1;
 			#endif
 
+		case LAZYBIOS_BACKEND_OPENBSD:
+			#if defined(OS_OPENBSD)
+			return lazybiosOpenBSD(ctx);
+			#else
+			lb_log("OpenBSD backend is not available in this build");
+			return -1;
+			#endif
+
 		case LAZYBIOS_BACKEND_UNKNOWN:
 			lb_log("Unknown backend %d", ctx->backend);
 			return -1;
+
 		default:
 			lb_log("No backend found for initialization!");
 			return -1;
@@ -698,12 +423,71 @@ int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, 
 		(major == required_major && minor >= required_minor);
 }
 
-static inline int lazybiosVerifyChecksum(const uint8_t* entry_buf, size_t len) {
-    uint8_t sum = 0;
-    for (size_t i = 0; i < len; i++) {
-        sum += entry_buf[i];
-    }
-    return (sum == 0);
+static int lazybiosVerifyChecksum(const uint8_t* entry_buf, size_t len) {
+	uint8_t sum = 0;
+	for (size_t i = 0; i < len; i++)
+		sum = (uint8_t)(sum + entry_buf[i]);
+	return sum == 0;
+}
+
+int lazybiosInspectEntryPoint(
+	const uint8_t* entry_data, size_t available,
+	lazybiosEntryInspection* inspection) {
+	if (!inspection) return -1;
+
+	memset(inspection, 0, sizeof(*inspection));
+	inspection->tag = SMBIOS_VER_UNKNOWN;
+
+	if (!entry_data || available < SMBIOS2_ANCHOR_SIZE)
+		return -1;
+
+	if (available >= SMBIOS3_ANCHOR_SIZE &&
+		memcmp(entry_data, SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE) == 0) {
+		inspection->tag = SMBIOS_VER_3X;
+		inspection->length = SMBIOS3_ENTRY_POINT_LENGTH;
+		inspection->intermediate_checksum_valid = 1;
+
+		if (available < SMBIOS3_ENTRY_POINT_LENGTH)
+			return -1;
+
+		inspection->length = entry_data[SMBIOS3_LENGTH_OFFSET];
+		if (inspection->length < SMBIOS3_ENTRY_POINT_LENGTH)
+			return -1;
+		if (available < inspection->length)
+			return -1;
+
+		inspection->checksum_valid =
+			lazybiosVerifyChecksum(entry_data, inspection->length);
+		return 0;
+	}
+
+	if (memcmp(entry_data, SMBIOS2_ANCHOR, SMBIOS2_ANCHOR_SIZE) == 0) {
+		inspection->tag = SMBIOS_VER_2X;
+		inspection->length = SMBIOS2_ENTRY_POINT_LENGTH;
+
+		if (available < SMBIOS2_ENTRY_POINT_LENGTH)
+			return -1;
+
+		inspection->length = entry_data[SMBIOS2_LENGTH_OFFSET];
+		if (inspection->length < SMBIOS2_ENTRY_POINT_LENGTH)
+			return -1;
+		if (available < inspection->length)
+			return -1;
+		if (memcmp(entry_data + SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+				SMBIOS2_INTERMEDIATE_ANCHOR,
+				SMBIOS2_INTERMEDIATE_ANCHOR_SIZE) != 0)
+			return -1;
+
+		inspection->checksum_valid =
+			lazybiosVerifyChecksum(entry_data, inspection->length);
+		inspection->intermediate_checksum_valid = lazybiosVerifyChecksum(
+			entry_data + SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+			SMBIOS2_ENTRY_POINT_LENGTH -
+				SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET);
+		return 0;
+	}
+
+	return -1;
 }
 
 /**
@@ -715,79 +499,32 @@ static inline int lazybiosVerifyChecksum(const uint8_t* entry_buf, size_t len) {
  * @return 0 on success, or -1 if the entry point is invalid.
  */
 int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_len) {
-    if (!ctx || !ctx->DMIData) return -1;
-    if (!entry_buf || buf_len < 6) {
-        lb_log("Buffer too small(buf < 6) to contain an SMBIOS entry point");
-        return -1;
-    }
+	if (!ctx || !ctx->DMIData) return -1;
 
-    if (memcmp(entry_buf, SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE) == 0) {
-        // The tagged union exposes the whole layout, so the buffer has to hold
-        // all of it before any field (including the length byte) is read.
-        if (buf_len < SMBIOS3_ENTRY_POINT_LENGTH) {
-            lb_log("SMBIOS 3.x buffer truncated: expected %d bytes, got %zu", SMBIOS3_ENTRY_POINT_LENGTH, buf_len);
-            return -1;
-        }
+	lazybiosEntryInspection inspection;
+	if (lazybiosInspectEntryPoint(
+			entry_buf, buf_len, &inspection) != 0) {
+		lb_log("Invalid SMBIOS entry point");
+		return -1;
+	}
 
-        uint8_t spec_length = entry_buf[SMBIOS3_LENGTH_OFFSET]; // Usually 0x18 (24)
+	ctx->DMIData->entry_tag = inspection.tag;
+	if (inspection.tag == SMBIOS_VER_3X) {
+		if (!inspection.checksum_valid)
+			lb_dbg("Warning: SMBIOS 3.x Entry Point Checksum failed! "
+				"(Proceeding anyway)");
+		ctx->DMIData->entry_union.v3 = (lazybiosSMBIOS3Entry*)entry_buf;
+	} else {
+		if (!inspection.checksum_valid)
+			lb_dbg("Warning: SMBIOS 2.x Main Checksum failed! "
+				"(Proceeding anyway)");
+		if (!inspection.intermediate_checksum_valid)
+			lb_dbg("Warning: SMBIOS 2.x Intermediate (_DMI_) "
+				"Checksum failed! (Proceeding anyway)");
+		ctx->DMIData->entry_union.v2 = (lazybiosSMBIOS2Entry*)entry_buf;
+	}
 
-        if (spec_length < SMBIOS3_ENTRY_POINT_LENGTH) {
-            lb_log("Invalid SMBIOS 3.x entry point length: %u", (unsigned int)spec_length);
-            return -1;
-        }
-        if (buf_len < spec_length) {
-            lb_log("SMBIOS 3.x buffer truncated: expected %d bytes, got %zu", spec_length, buf_len);
-            return -1;
-        }
-
-        ctx->DMIData->entry_tag = SMBIOS_VER_3X;
-
-        if (!lazybiosVerifyChecksum(entry_buf, spec_length)) {
-            lb_dbg("Warning: SMBIOS 3.x Entry Point Checksum failed! (Proceeding anyway)");
-        }
-        ctx->DMIData->entry_union.v3 = (lazybiosSMBIOS3Entry*)entry_buf;
-
-    } else if (memcmp(entry_buf, SMBIOS2_ANCHOR, SMBIOS2_ANCHOR_SIZE) == 0) {
-        // Both checksums and every field of the tagged union live inside the
-        // fixed 0x1F byte layout, so a shorter buffer can never be parsed.
-        if (buf_len < SMBIOS2_ENTRY_POINT_LENGTH) {
-            lb_log("SMBIOS 2.x buffer truncated: expected %d bytes, got %zu", SMBIOS2_ENTRY_POINT_LENGTH, buf_len);
-            return -1;
-        }
-
-        uint8_t spec_length = entry_buf[SMBIOS2_LENGTH_OFFSET]; // Usually 0x1F (31)
-
-        if (spec_length < SMBIOS2_ENTRY_POINT_LENGTH) {
-            lb_log("Invalid SMBIOS 2.x entry point length: %u", (unsigned int)spec_length);
-            return -1;
-        }
-        if (buf_len < spec_length) {
-            lb_log("SMBIOS 2.x buffer truncated: expected %d bytes, got %zu", spec_length, buf_len);
-            return -1;
-        }
-        if (memcmp(entry_buf + SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
-                SMBIOS2_INTERMEDIATE_ANCHOR,
-                SMBIOS2_INTERMEDIATE_ANCHOR_SIZE) != 0) {
-            lb_log("SMBIOS 2.x intermediate anchor not found");
-            return -1;
-        }
-
-        ctx->DMIData->entry_tag = SMBIOS_VER_2X;
-
-        if (!lazybiosVerifyChecksum(entry_buf, 0x10)) {
-            lb_dbg("Warning: SMBIOS 2.x Main Checksum failed! (Proceeding anyway)");
-        }
-        if (!lazybiosVerifyChecksum(entry_buf + 0x10, 0x0F)) {
-            lb_dbg("Warning: SMBIOS 2.x Intermediate (_DMI_) Checksum failed! (Proceeding anyway)");
-        }
-        ctx->DMIData->entry_union.v2 = (lazybiosSMBIOS2Entry*)entry_buf;
-
-    } else {
-        lb_log("SMBIOS anchor not found");
-        lb_dbg("anchor bytes: %02X %02X %02X %02X %02X (SMBIOS 2.x uses only the first 4)", entry_buf[0], entry_buf[1], entry_buf[2], entry_buf[3], entry_buf[4]);
-        return -1;
-    }
-    return 0;
+	return 0;
 }
 
 // Counts the number of structures of a given type

@@ -72,6 +72,16 @@ set(LAZYBIOS_SOURCES
         src/structures/type46.c
 )
 
+if(WIN32)
+    list(APPEND LAZYBIOS_SOURCES src/backends/windows.c)
+elseif(APPLE)
+    list(APPEND LAZYBIOS_SOURCES src/backends/macos.c)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND LAZYBIOS_SOURCES src/backends/linux.c)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+    list(APPEND LAZYBIOS_SOURCES src/backends/openbsd.c)
+endif()
+
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
 
 if(APPLE)
