@@ -1,6 +1,6 @@
 # lazybios 
 
-### A lightweight C library for parsing SMBIOS/DMI tables on Linux systems.
+### A lightweight cross-platform C library for parsing SMBIOS/DMI tables.
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/LazySeldi/lazybios/graphs/commit-activity)
 
 ---
@@ -10,7 +10,7 @@
 - **Clean C API** - Simple function calls, only 3 steps to assure memory-safety.
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
-- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, and macOS.
+- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, and OpenBSD.
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
@@ -21,7 +21,8 @@
 1. **Windows support:** Implemented using Windows API calls.
    **Linux support:** Fully implemented via sysfs and `/dev/mem`.
    **macOS support:** Implemented using the AppleSMBIOS I/O Registry service through IOKit and CoreFoundation.
-2. Host loading is supported on Linux, Windows, and macOS. File-based parsing is available independently of the selected host backend.
+   **OpenBSD support:** Implemented through a validated legacy `/dev/mem` scan.
+2. Host loading is supported on Linux, Windows, macOS, and OpenBSD. File-based parsing is available independently of the selected host backend.
 3. The library is actively under development, features and structures may change.
 
 ---

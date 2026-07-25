@@ -50,7 +50,8 @@
  * - `fuzz_helpers`: bounded traversal, counting, partial cleanup, and
  *   unavailable backend dispatch.
  * - `fuzz_backend_buffers`: Windows RawSMBIOSData conversion, raw-buffer
- *   loading used by macOS, and legacy Linux entry-point scanning.
+ *   loading used by macOS, and legacy physical-memory entry-point scanning
+ *   used by Linux and OpenBSD.
  * - `fuzz_single_file` and `fuzz_two_files`: the two public file loaders on
  *   POSIX platforms.
  *

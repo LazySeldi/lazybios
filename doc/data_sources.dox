@@ -11,11 +11,21 @@
  * @ref lazybiosFile and @ref lazybiosSingleFile provide deterministic input
  * paths for captured tables.
  *
+ * Native host acquisition is kept in one source file per platform under
+ * `src/backends/`. The portable validation and conversion shared by those
+ * implementations remains in `src/backend.c`, while `src/lazybios.c` selects
+ * and dispatches the active backend. CMake compiles only the backend for the
+ * target platform.
+ *
  * @section sources_linux Linux
  *
  * The Linux backend reads the entry point and DMI table from sysfs. If the DMI
  * sysfs table cannot be opened, it attempts the `/dev/mem` backend. Access to
  * physical memory can require elevated operating-system permissions.
+ *
+ * The physical-memory fallback scans the legacy firmware window on 16-byte
+ * boundaries. Invalid, truncated, or checksum-failing candidates are skipped
+ * silently while the scan continues for a valid SMBIOS entry point.
  *
  * The default sysfs paths are exposed as @ref LINUX_SYSFS_SMBIOS_ENTRY and
  * @ref LINUX_SYSFS_DMI_TABLE. The physical-memory device path is exposed as
@@ -36,6 +46,18 @@
  * structure table from the `SMBIOS` property. The implementation uses IOKit
  * and CoreFoundation and supports both the current I/O Kit main port API and
  * the legacy API used when targeting macOS releases older than 12.0.
+ *
+ * @section sources_openbsd OpenBSD
+ *
+ * The OpenBSD backend reads the legacy firmware window through `/dev/mem`,
+ * using the same quiet, validated entry-point scan as the Linux physical-memory
+ * fallback. It then maps the physical structure-table address reported by the
+ * validated SMBIOS entry point. Access depends on `/dev/mem` permissions and
+ * the operating system's memory-access policy.
+ *
+ * This backend currently covers systems that publish an SMBIOS entry point in
+ * the legacy physical-memory window. It does not yet acquire an entry point
+ * supplied only through UEFI.
  *
  * @section sources_unknown Unknown platforms
  *
