@@ -39,7 +39,12 @@ int LLVMFuzzerInitialize(int* argc, char*** argv) {
 	(void)argc;
 	(void)argv;
 	/* lazybiosPrintVer() writes to stdout; keep the fuzzer output readable. */
-	if (!freopen("/dev/null", "w", stdout)) return 0;
+	#if defined(_WIN32) || defined(_WIN64)
+		const char* null_device = "NUL";
+	#else
+		const char* null_device = "/dev/null";
+	#endif
+	if (!freopen(null_device, "w", stdout)) return 0;
 	return 0;
 }
 
