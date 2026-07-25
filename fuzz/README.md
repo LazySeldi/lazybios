@@ -8,6 +8,7 @@ the SMBIOS entry point and the DMI structure table.
 | `fuzz_dmi_table` | All 47 structure parsers against an arbitrary DMI table, with the SMBIOS version driven by the input |
 | `fuzz_entry_point` | `lazybiosParseEntry`, `lazybiosIsVersionPlus`, `lazybiosPrintVer` |
 | `fuzz_single_file` | `lazybiosSingleFile` plus every parser, through the real file-loading path |
+| `fuzz_two_files` | `lazybiosFile` plus every parser — the shape a Linux sysfs host load takes |
 | `fuzz_decoders` | Every decoder helper, including the ones that format into a caller-supplied buffer |
 
 The DMI table and entry point buffers are allocated at exactly the size the
@@ -35,8 +36,8 @@ fuzz/make_corpus.sh build-fuzz/corpus
 ./build-fuzz/fuzz/fuzz_dmi_table build-fuzz/corpus/dmi_table -max_total_time=60
 ```
 
-Each target reads its seeds from the matching subdirectory:
-`dmi_table`, `entry_point`, `single_file`, `decoders`. The seeds come from
+Each target reads its seeds from the matching subdirectory: `dmi_table`,
+`entry_point`, `single_file`, `two_files`, `decoders`. The seeds come from
 `test-dumps/`, which holds real firmware tables from ~97 machines.
 
 To reproduce a crash, pass the saved input file directly:

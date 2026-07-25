@@ -61,6 +61,7 @@ set(LAZYBIOS_FUZZ_TARGETS
         fuzz_dmi_table
         fuzz_entry_point
         fuzz_single_file
+        fuzz_two_files
         fuzz_decoders
 )
 

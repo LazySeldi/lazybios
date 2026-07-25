@@ -16,7 +16,7 @@ if [ ! -d "$dumps" ]; then
 	exit 1
 fi
 
-mkdir -p "$out/dmi_table" "$out/entry_point" "$out/single_file" "$out/decoders"
+mkdir -p "$out/dmi_table" "$out/entry_point" "$out/single_file" "$out/two_files" "$out/decoders"
 
 for dir in "$dumps"/*/; do
 	name=$(basename "$dir")
@@ -35,6 +35,14 @@ for dir in "$dumps"/*/; do
 		cp "$dir/$name.bin" "$out/single_file/$name"
 	elif [ -f "$dir/smbios_entry_point" ] && [ -f "$dir/DMI" ]; then
 		cat "$dir/smbios_entry_point" "$dir/DMI" > "$out/single_file/$name"
+	fi
+
+	# fuzz_two_files splits at a leading byte holding the entry point size.
+	if [ -f "$dir/smbios_entry_point" ] && [ -f "$dir/DMI" ]; then
+		{
+			printf "$(printf '\\%03o' "$(wc -c < "$dir/smbios_entry_point")")"
+			cat "$dir/smbios_entry_point" "$dir/DMI"
+		} > "$out/two_files/$name"
 	fi
 done
 
