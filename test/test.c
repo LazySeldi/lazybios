@@ -3740,7 +3740,10 @@ int main(int argc, const char* argv[]) {
 	}
 
 	if (dump_dir) {
-		lazybiosInit(ctx);
+		if (lazybiosInit(ctx) != 0) {
+			printf("Could not initialize lazybios library!");
+			exit(-1);
+		}
 
 		char path_entry[1024];
 		char path_dmi[1024];
@@ -3783,6 +3786,7 @@ int main(int argc, const char* argv[]) {
 			return -1;
 		}
 		lazybiosCleanup(ctx);
+		return 0;
 	}
 
 	// We initialize from custom files ONLY if specified
