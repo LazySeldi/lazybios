@@ -149,17 +149,24 @@ The generated documentation entry point is `docs/html/index.html`.
 
 ## Fuzzing
 
-The library parses untrusted firmware data, so there are libFuzzer targets for
-the entry point, the structure table, both file loaders and the decoders:
+The library parses untrusted firmware data, so seven libFuzzer targets cover
+entry points, structure tables, file loaders, decoders, traversal helpers,
+cleanup paths, and platform-neutral backend transformations:
 
 ```shell
 cmake -B build-fuzz -DCMAKE_C_COMPILER=clang -DLAZYBIOS_BUILD_FUZZERS=ON
 cmake --build build-fuzz
-fuzz/make_corpus.sh build-fuzz/corpus
-./build-fuzz/fuzz/fuzz_dmi_table build-fuzz/corpus/dmi_table -max_total_time=60
+fuzz/run_all.sh build-fuzz 60 1048576
 ```
 
-- **[fuzz/README.md](fuzz/README.md)** - What each target covers and how to run it!
+Deterministic semantic tests complement fuzzing for specification errors that
+do not crash:
+
+```shell
+ctest --test-dir build --output-on-failure
+```
+
+- **[fuzz/README.md](fuzz/README.md)** - Targets, sanitizer variants, regressions, large-input campaigns, and coverage reports.
 
 ## Contributing:
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Complete guide on how to contribute!
