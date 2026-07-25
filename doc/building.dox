@@ -23,6 +23,14 @@
  * The build produces the shared `lazybios` library and the `lazybios_test`
  * inspection executable.
  *
+ * Enable and run the deterministic semantic test suite with:
+ *
+ * @code{.sh}
+ * cmake -S . -B build -DBUILD_TESTING=ON
+ * cmake --build build
+ * ctest --test-dir build --output-on-failure
+ * @endcode
+ *
  * @section build_install Installing
  *
  * @code{.sh}
@@ -59,5 +67,6 @@
  * When neither option is enabled, normal library diagnostics remain active.
  *
  * @see @ref getting_started
+ * @see @ref testing
  * @see @ref api_context
  */
