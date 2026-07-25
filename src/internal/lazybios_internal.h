@@ -160,6 +160,20 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 	} \
 } while (0)
 
+/**
+ * Internal, platform-neutral backend transformations.
+ *
+ * Keeping firmware byte validation separate from the operating-system calls
+ * lets the same code run under unit tests and libFuzzer on every host.
+ */
+int lazybiosLoadRawBuffers(lazybiosCTX_t* ctx,
+	const uint8_t* entry_data, size_t entry_len,
+	const uint8_t* dmi_data, size_t dmi_len);
+int lazybiosLoadWindowsRawSMBIOSData(lazybiosCTX_t* ctx,
+	const uint8_t* raw_data, size_t raw_len);
+int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
+	size_t* entry_offset, size_t* entry_len);
+
 #define READSTR(record, field, len, offset, p, end) do { \
 	if ((len) > (offset)) { \
 		(record)->field = DMIString((p), (len), (p)[(offset)], (end)); \
