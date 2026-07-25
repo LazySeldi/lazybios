@@ -152,6 +152,7 @@ const char* lazybiosType23BootOptionOnLimitStr(uint8_t capabilities) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType23CapabilitiesStr(uint8_t capabilities, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	snprintf(buf, buf_len, "%s, %s, Boot Option: %s, Boot Option on Limit: %s",
 		(capabilities & RESET_STATUS_MASK) ? "Reset Enabled" : "Reset Disabled",
 		(capabilities & WATCHDOG_TIMER_MASK) ? "Watchdog Timer Present" : "Watchdog Timer Not Present",

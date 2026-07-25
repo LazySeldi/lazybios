@@ -477,17 +477,18 @@ const char* lazybiosType9SlotLengthStr(uint8_t slot_length) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (characteristics & (1 << 0)) len += snprintf(buf + len, buf_len - len, "Characteristics unknown, ");
-	if (characteristics & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Provides 5.0 volts, ");
-	if (characteristics & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Provides 3.3 volts, ");
-	if (characteristics & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Opening shared with another slot, ");
-	if (characteristics & (1 << 4)) len += snprintf(buf + len, buf_len - len, "PC Card-16 supported, ");
-	if (characteristics & (1 << 5)) len += snprintf(buf + len, buf_len - len, "CardBus supported, ");
-	if (characteristics & (1 << 6)) len += snprintf(buf + len, buf_len - len, "Zoom Video supported, ");
-	if (characteristics & (1 << 7)) len += snprintf(buf + len, buf_len - len, "Modem Ring Resume supported, ");
+	if (characteristics & (1 << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Characteristics unknown, ");
+	if (characteristics & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Provides 5.0 volts, ");
+	if (characteristics & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Provides 3.3 volts, ");
+	if (characteristics & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Opening shared with another slot, ");
+	if (characteristics & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "PC Card-16 supported, ");
+	if (characteristics & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "CardBus supported, ");
+	if (characteristics & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "Zoom Video supported, ");
+	if (characteristics & (1 << 7)) lazybiosDecoderAppend(buf, buf_len, &len, "Modem Ring Resume supported, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");
@@ -505,17 +506,18 @@ void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (characteristics & (1 << 0)) len += snprintf(buf + len, buf_len - len, "PME# signal supported, ");
-	if (characteristics & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Hot-plug devices supported, ");
-	if (characteristics & (1 << 2)) len += snprintf(buf + len, buf_len - len, "SMBus signal supported, ");
-	if (characteristics & (1 << 3)) len += snprintf(buf + len, buf_len - len, "PCIe bifurcation supported, ");
-	if (characteristics & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Async/surprise removal supported, ");
-	if (characteristics & (1 << 5)) len += snprintf(buf + len, buf_len - len, "CXL 1.0 capable, ");
-	if (characteristics & (1 << 6)) len += snprintf(buf + len, buf_len - len, "CXL 2.0 capable, ");
-	if (characteristics & (1 << 7)) len += snprintf(buf + len, buf_len - len, "CXL 3.0 capable, ");
+	if (characteristics & (1 << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "PME# signal supported, ");
+	if (characteristics & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Hot-plug devices supported, ");
+	if (characteristics & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "SMBus signal supported, ");
+	if (characteristics & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "PCIe bifurcation supported, ");
+	if (characteristics & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Async/surprise removal supported, ");
+	if (characteristics & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "CXL 1.0 capable, ");
+	if (characteristics & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "CXL 2.0 capable, ");
+	if (characteristics & (1 << 7)) lazybiosDecoderAppend(buf, buf_len, &len, "CXL 3.0 capable, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");
@@ -533,6 +535,7 @@ void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (device_function_number == 0xFF) {
 		snprintf(buf, buf_len, "Not Applicable");
 		return;

@@ -124,8 +124,8 @@ void lazybiosType6CurrentMemoryTypeStr(uint16_t current_memory_type, char* buf, 
 	const char* names[] = {"Other", "Unknown", "Standard", "Fast Page Mode", "EDO", "Parity",
 		"ECC", "SIMM", "DIMM", "Burst EDO", "SDRAM"};
 	for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
-		if ((current_memory_type & (1U << i)) && len < buf_len) {
-			len += snprintf(buf + len, buf_len - len, "%s, ", names[i]);
+		if (current_memory_type & (1U << i)) {
+			lazybiosDecoderAppend(buf, buf_len, &len, "%s, ", names[i]);
 		}
 	}
 	if (len == 0) snprintf(buf, buf_len, "None");
@@ -182,9 +182,9 @@ void lazybiosType6ErrorStatusStr(uint8_t error_status, char* buf, size_t buf_len
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
-	if ((error_status & (1U << 2)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "See Event Log, ");
-	if ((error_status & (1U << 1)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Correctable Errors, ");
-	if ((error_status & (1U << 0)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Uncorrectable Errors, ");
+	if (error_status & (1U << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "See Event Log, ");
+	if (error_status & (1U << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Correctable Errors, ");
+	if (error_status & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Uncorrectable Errors, ");
 	if (len == 0) snprintf(buf, buf_len, "OK");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';

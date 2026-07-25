@@ -476,24 +476,25 @@ const char* lazybiosType17TypeStr(uint8_t memory_type) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (type_detail & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Other, ");
-	if (type_detail & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if (type_detail & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Fast-paged, ");
-	if (type_detail & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Static column, ");
-	if (type_detail & (1 << 5)) len += snprintf(buf + len, buf_len - len, "Pseudo-static, ");
-	if (type_detail & (1 << 6)) len += snprintf(buf + len, buf_len - len, "RAMBUS, ");
-	if (type_detail & (1 << 7)) len += snprintf(buf + len, buf_len - len, "Synchronous, ");
-	if (type_detail & (1 << 8)) len += snprintf(buf + len, buf_len - len, "CMOS, ");
-	if (type_detail & (1 << 9)) len += snprintf(buf + len, buf_len - len, "EDO, ");
-	if (type_detail & (1 << 10)) len += snprintf(buf + len, buf_len - len, "Window DRAM, ");
-	if (type_detail & (1 << 11)) len += snprintf(buf + len, buf_len - len, "Cache DRAM, ");
-	if (type_detail & (1 << 12)) len += snprintf(buf + len, buf_len - len, "Non-volatile, ");
-	if (type_detail & (1 << 13)) len += snprintf(buf + len, buf_len - len, "Registered (Buffered), ");
-	if (type_detail & (1 << 14)) len += snprintf(buf + len, buf_len - len, "Unbuffered (Unregistered), ");
-	if (type_detail & (1 << 15)) len += snprintf(buf + len, buf_len - len, "LRDIMM, ");
+	if (type_detail & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
+	if (type_detail & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (type_detail & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Fast-paged, ");
+	if (type_detail & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Static column, ");
+	if (type_detail & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "Pseudo-static, ");
+	if (type_detail & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "RAMBUS, ");
+	if (type_detail & (1 << 7)) lazybiosDecoderAppend(buf, buf_len, &len, "Synchronous, ");
+	if (type_detail & (1 << 8)) lazybiosDecoderAppend(buf, buf_len, &len, "CMOS, ");
+	if (type_detail & (1 << 9)) lazybiosDecoderAppend(buf, buf_len, &len, "EDO, ");
+	if (type_detail & (1 << 10)) lazybiosDecoderAppend(buf, buf_len, &len, "Window DRAM, ");
+	if (type_detail & (1 << 11)) lazybiosDecoderAppend(buf, buf_len, &len, "Cache DRAM, ");
+	if (type_detail & (1 << 12)) lazybiosDecoderAppend(buf, buf_len, &len, "Non-volatile, ");
+	if (type_detail & (1 << 13)) lazybiosDecoderAppend(buf, buf_len, &len, "Registered (Buffered), ");
+	if (type_detail & (1 << 14)) lazybiosDecoderAppend(buf, buf_len, &len, "Unbuffered (Unregistered), ");
+	if (type_detail & (1 << 15)) lazybiosDecoderAppend(buf, buf_len, &len, "LRDIMM, ");
 
 	// Remove trailing comma and space if any text was appended
 	if (len > 2) {
@@ -512,6 +513,7 @@ void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (extended_size == 0) {
 		snprintf(buf, buf_len, "Not used (Size field applies)");
 		return;
@@ -563,14 +565,15 @@ const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (memory_operating_mode_capability & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Other, ");
-	if (memory_operating_mode_capability & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if (memory_operating_mode_capability & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Volatile memory, ");
-	if (memory_operating_mode_capability & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Byte-accessible persistent memory, ");
-	if (memory_operating_mode_capability & (1 << 5)) len += snprintf(buf + len, buf_len - len, "Block-accessible persistent memory, ");
+	if (memory_operating_mode_capability & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
+	if (memory_operating_mode_capability & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (memory_operating_mode_capability & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Volatile memory, ");
+	if (memory_operating_mode_capability & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Byte-accessible persistent memory, ");
+	if (memory_operating_mode_capability & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "Block-accessible persistent memory, ");
 
 	if (len > 2) {
 		buf[len - 2] = '\0';
@@ -588,6 +591,7 @@ void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_cap
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -604,6 +608,7 @@ void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_le
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -620,6 +625,7 @@ void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (non_volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -636,6 +642,7 @@ void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, siz
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (cache_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -652,6 +659,7 @@ void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) 
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	// Bit 31 is reserved, must be set to 0.
 	// Bits 30:0 represent the speed in MT/s.
 	uint32_t speed_mts = extended_speed & 0x7FFFFFFF;
@@ -672,6 +680,7 @@ void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t b
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -688,6 +697,7 @@ void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (revision == 0xFF00) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -704,6 +714,7 @@ void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
@@ -720,6 +731,7 @@ void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) 
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	if (revision == 0xFF00) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {

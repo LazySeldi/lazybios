@@ -151,40 +151,41 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
 	// Bits 0–1 Reserved
-	if (len < buf_len && (characteristics & (1ull << 2))) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if (len < buf_len && (characteristics & (1ull << 3))) len += snprintf(buf + len, buf_len - len, "Firmware Characteristics Unsupported, ");
-	if (len < buf_len && (characteristics & (1ull << 4))) len += snprintf(buf + len, buf_len - len, "ISA Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 5))) len += snprintf(buf + len, buf_len - len, "MCA Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 6))) len += snprintf(buf + len, buf_len - len, "EISA Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 7))) len += snprintf(buf + len, buf_len - len, "PCI Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 8))) len += snprintf(buf + len, buf_len - len, "PCMCIA Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 9))) len += snprintf(buf + len, buf_len - len, "Plug and Play Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 10))) len += snprintf(buf + len, buf_len - len, "APM Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 11))) len += snprintf(buf + len, buf_len - len, "Firmware Upgradeable (Flash), ");
-	if (len < buf_len && (characteristics & (1ull << 12))) len += snprintf(buf + len, buf_len - len, "Firmware Shadowing Allowed, ");
-	if (len < buf_len && (characteristics & (1ull << 13))) len += snprintf(buf + len, buf_len - len, "VL-VESA Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 14))) len += snprintf(buf + len, buf_len - len, "ESCD Support Available, ");
-	if (len < buf_len && (characteristics & (1ull << 15))) len += snprintf(buf + len, buf_len - len, "Boot from CD Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 16))) len += snprintf(buf + len, buf_len - len, "Selectable Boot Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 17))) len += snprintf(buf + len, buf_len - len, "Firmware ROM Socketed, ");
-	if (len < buf_len && (characteristics & (1ull << 18))) len += snprintf(buf + len, buf_len - len, "Boot from PCMCIA Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 19))) len += snprintf(buf + len, buf_len - len, "EDD Specification Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 20))) len += snprintf(buf + len, buf_len - len, "Int13 NEC 9800 1.2MB Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 21))) len += snprintf(buf + len, buf_len - len, "Int13 Toshiba 1.2MB Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 22))) len += snprintf(buf + len, buf_len - len, "Int13 5.25/360KB Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 23))) len += snprintf(buf + len, buf_len - len, "Int13 5.25/1.2MB Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 24))) len += snprintf(buf + len, buf_len - len, "Int13 3.5/720KB Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 25))) len += snprintf(buf + len, buf_len - len, "Int13 3.5/2.88MB Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 26))) len += snprintf(buf + len, buf_len - len, "Int5 Print Screen Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 27))) len += snprintf(buf + len, buf_len - len, "Int9 Keyboard Services Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 28))) len += snprintf(buf + len, buf_len - len, "Int14 Serial Services Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 29))) len += snprintf(buf + len, buf_len - len, "Int17 Printer Services Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 30))) len += snprintf(buf + len, buf_len - len, "Int10 CGA/Mono Video Services Supported, ");
-	if (len < buf_len && (characteristics & (1ull << 31))) len += snprintf(buf + len, buf_len - len, "NEC PC-98 Supported, ");
+	if (characteristics & (1ull << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (characteristics & (1ull << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Firmware Characteristics Unsupported, ");
+	if (characteristics & (1ull << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "ISA Supported, ");
+	if (characteristics & (1ull << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "MCA Supported, ");
+	if (characteristics & (1ull << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "EISA Supported, ");
+	if (characteristics & (1ull << 7)) lazybiosDecoderAppend(buf, buf_len, &len, "PCI Supported, ");
+	if (characteristics & (1ull << 8)) lazybiosDecoderAppend(buf, buf_len, &len, "PCMCIA Supported, ");
+	if (characteristics & (1ull << 9)) lazybiosDecoderAppend(buf, buf_len, &len, "Plug and Play Supported, ");
+	if (characteristics & (1ull << 10)) lazybiosDecoderAppend(buf, buf_len, &len, "APM Supported, ");
+	if (characteristics & (1ull << 11)) lazybiosDecoderAppend(buf, buf_len, &len, "Firmware Upgradeable (Flash), ");
+	if (characteristics & (1ull << 12)) lazybiosDecoderAppend(buf, buf_len, &len, "Firmware Shadowing Allowed, ");
+	if (characteristics & (1ull << 13)) lazybiosDecoderAppend(buf, buf_len, &len, "VL-VESA Supported, ");
+	if (characteristics & (1ull << 14)) lazybiosDecoderAppend(buf, buf_len, &len, "ESCD Support Available, ");
+	if (characteristics & (1ull << 15)) lazybiosDecoderAppend(buf, buf_len, &len, "Boot from CD Supported, ");
+	if (characteristics & (1ull << 16)) lazybiosDecoderAppend(buf, buf_len, &len, "Selectable Boot Supported, ");
+	if (characteristics & (1ull << 17)) lazybiosDecoderAppend(buf, buf_len, &len, "Firmware ROM Socketed, ");
+	if (characteristics & (1ull << 18)) lazybiosDecoderAppend(buf, buf_len, &len, "Boot from PCMCIA Supported, ");
+	if (characteristics & (1ull << 19)) lazybiosDecoderAppend(buf, buf_len, &len, "EDD Specification Supported, ");
+	if (characteristics & (1ull << 20)) lazybiosDecoderAppend(buf, buf_len, &len, "Int13 NEC 9800 1.2MB Supported, ");
+	if (characteristics & (1ull << 21)) lazybiosDecoderAppend(buf, buf_len, &len, "Int13 Toshiba 1.2MB Supported, ");
+	if (characteristics & (1ull << 22)) lazybiosDecoderAppend(buf, buf_len, &len, "Int13 5.25/360KB Supported, ");
+	if (characteristics & (1ull << 23)) lazybiosDecoderAppend(buf, buf_len, &len, "Int13 5.25/1.2MB Supported, ");
+	if (characteristics & (1ull << 24)) lazybiosDecoderAppend(buf, buf_len, &len, "Int13 3.5/720KB Supported, ");
+	if (characteristics & (1ull << 25)) lazybiosDecoderAppend(buf, buf_len, &len, "Int13 3.5/2.88MB Supported, ");
+	if (characteristics & (1ull << 26)) lazybiosDecoderAppend(buf, buf_len, &len, "Int5 Print Screen Supported, ");
+	if (characteristics & (1ull << 27)) lazybiosDecoderAppend(buf, buf_len, &len, "Int9 Keyboard Services Supported, ");
+	if (characteristics & (1ull << 28)) lazybiosDecoderAppend(buf, buf_len, &len, "Int14 Serial Services Supported, ");
+	if (characteristics & (1ull << 29)) lazybiosDecoderAppend(buf, buf_len, &len, "Int17 Printer Services Supported, ");
+	if (characteristics & (1ull << 30)) lazybiosDecoderAppend(buf, buf_len, &len, "Int10 CGA/Mono Video Services Supported, ");
+	if (characteristics & (1ull << 31)) lazybiosDecoderAppend(buf, buf_len, &len, "NEC PC-98 Supported, ");
 
 	// Bits 32–63 are reserved, so we will skip them
 
@@ -204,17 +205,18 @@ void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (char_ext_byte_1 & (1 << 0)) len += snprintf(buf + len, buf_len - len, "ACPI supported, ");
-	if (char_ext_byte_1 & (1 << 1)) len += snprintf(buf + len, buf_len - len, "USB Legacy supported, ");
-	if (char_ext_byte_1 & (1 << 2)) len += snprintf(buf + len, buf_len - len, "AGP supported, ");
-	if (char_ext_byte_1 & (1 << 3)) len += snprintf(buf + len, buf_len - len, "I2O boot supported, ");
-	if (char_ext_byte_1 & (1 << 4)) len += snprintf(buf + len, buf_len - len, "LS-120 SuperDisk boot supported, ");
-	if (char_ext_byte_1 & (1 << 5)) len += snprintf(buf + len, buf_len - len, "ATAPI ZIP drive boot supported, ");
-	if (char_ext_byte_1 & (1 << 6)) len += snprintf(buf + len, buf_len - len, "1394 boot supported, ");
-	if (char_ext_byte_1 & (1 << 7)) len += snprintf(buf + len, buf_len - len, "Smart battery supported, ");
+	if (char_ext_byte_1 & (1 << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "ACPI supported, ");
+	if (char_ext_byte_1 & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "USB Legacy supported, ");
+	if (char_ext_byte_1 & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "AGP supported, ");
+	if (char_ext_byte_1 & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "I2O boot supported, ");
+	if (char_ext_byte_1 & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "LS-120 SuperDisk boot supported, ");
+	if (char_ext_byte_1 & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "ATAPI ZIP drive boot supported, ");
+	if (char_ext_byte_1 & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "1394 boot supported, ");
+	if (char_ext_byte_1 & (1 << 7)) lazybiosDecoderAppend(buf, buf_len, &len, "Smart battery supported, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");
@@ -232,16 +234,17 @@ void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf,
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (char_ext_byte_2 & (1 << 0)) len += snprintf(buf + len, buf_len - len, "BIOS Boot Specification supported, ");
-	if (char_ext_byte_2 & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Function key-initiated network service boot supported, ");
-	if (char_ext_byte_2 & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Targeted content distribution supported, ");
-	if (char_ext_byte_2 & (1 << 3)) len += snprintf(buf + len, buf_len - len, "UEFI Specification supported, ");
-	if (char_ext_byte_2 & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Describes a virtual machine, ");
-	if (char_ext_byte_2 & (1 << 5)) len += snprintf(buf + len, buf_len - len, "Manufacturing mode supported, ");
-	if (char_ext_byte_2 & (1 << 6)) len += snprintf(buf + len, buf_len - len, "Manufacturing mode enabled, ");
+	if (char_ext_byte_2 & (1 << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "BIOS Boot Specification supported, ");
+	if (char_ext_byte_2 & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Function key-initiated network service boot supported, ");
+	if (char_ext_byte_2 & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Targeted content distribution supported, ");
+	if (char_ext_byte_2 & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "UEFI Specification supported, ");
+	if (char_ext_byte_2 & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Describes a virtual machine, ");
+	if (char_ext_byte_2 & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "Manufacturing mode supported, ");
+	if (char_ext_byte_2 & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "Manufacturing mode enabled, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");

@@ -187,6 +187,7 @@ uint32_t lazybiosType22DesignCapacityMWh(uint16_t design_capacity, uint8_t desig
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	uint16_t year = (uint16_t)(1980 + ((sbds_manufacture_date >> 9) & 0x7F));
 	uint8_t month = (uint8_t)((sbds_manufacture_date >> 5) & 0x0F);
 	uint8_t day = (uint8_t)(sbds_manufacture_date & 0x1F);

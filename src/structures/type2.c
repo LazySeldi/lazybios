@@ -155,14 +155,15 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (feature_flags & (1 << 0)) len += snprintf(buf + len, buf_len - len, "Hosting board, ");
-	if (feature_flags & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Requires daughter board, ");
-	if (feature_flags & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Removable, ");
-	if (feature_flags & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Replaceable, ");
-	if (feature_flags & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Hot swappable, ");
+	if (feature_flags & (1 << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Hosting board, ");
+	if (feature_flags & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Requires daughter board, ");
+	if (feature_flags & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Removable, ");
+	if (feature_flags & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Replaceable, ");
+	if (feature_flags & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Hot swappable, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");

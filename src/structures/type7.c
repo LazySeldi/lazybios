@@ -170,16 +170,17 @@ uint64_t lazybiosType7CacheU16(uint16_t raw_size) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (sram_type & (1 << 0)) len += snprintf(buf + len, buf_len - len, "Other, ");
-	if (sram_type & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if (sram_type & (1 << 2)) len += snprintf(buf + len, buf_len - len, "Non-Burst, ");
-	if (sram_type & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Burst, ");
-	if (sram_type & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Pipeline Burst, ");
-	if (sram_type & (1 << 5)) len += snprintf(buf + len, buf_len - len, "Synchronous, ");
-	if (sram_type & (1 << 6)) len += snprintf(buf + len, buf_len - len, "Asynchronous, ");
+	if (sram_type & (1 << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
+	if (sram_type & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (sram_type & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "Non-Burst, ");
+	if (sram_type & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Burst, ");
+	if (sram_type & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Pipeline Burst, ");
+	if (sram_type & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "Synchronous, ");
+	if (sram_type & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "Asynchronous, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");
@@ -289,45 +290,46 @@ const char* lazybiosType7AssociativityStr(uint8_t associativity) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
 	// Bits 2:0 Cache Level (Value 0 = L1, 1 = L2, 2 = L3, etc.)
 	uint8_t level = config & 0x07;
 	if (level <= 7) {
-		len += snprintf(buf + len, buf_len - len, "L%d, ", level + 1);
+		lazybiosDecoderAppend(buf, buf_len, &len, "L%d, ", level + 1);
 	}
 
 	// Bit 3 Cache Socketed
 	if ((config >> 3) & 0x01) {
-		len += snprintf(buf + len, buf_len - len, "Socketed, ");
+		lazybiosDecoderAppend(buf, buf_len, &len, "Socketed, ");
 	} else {
-		len += snprintf(buf + len, buf_len - len, "Not Socketed, ");
+		lazybiosDecoderAppend(buf, buf_len, &len, "Not Socketed, ");
 	}
 
 	// Bits 6:5 Location
 	uint8_t location = (config >> 5) & 0x03;
 	switch (location) {
-		case 0x00: len += snprintf(buf + len, buf_len - len, "Internal, "); break;
-		case 0x01: len += snprintf(buf + len, buf_len - len, "External, "); break;
-		case 0x02: len += snprintf(buf + len, buf_len - len, "Reserved, "); break;
-		case 0x03: len += snprintf(buf + len, buf_len - len, "Unknown, "); break;
+		case 0x00: lazybiosDecoderAppend(buf, buf_len, &len, "Internal, "); break;
+		case 0x01: lazybiosDecoderAppend(buf, buf_len, &len, "External, "); break;
+		case 0x02: lazybiosDecoderAppend(buf, buf_len, &len, "Reserved, "); break;
+		case 0x03: lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, "); break;
 	}
 
 	// Bit 7 Enabled/Disabled
 	if ((config >> 7) & 0x01) {
-		len += snprintf(buf + len, buf_len - len, "Enabled, ");
+		lazybiosDecoderAppend(buf, buf_len, &len, "Enabled, ");
 	} else {
-		len += snprintf(buf + len, buf_len - len, "Disabled, ");
+		lazybiosDecoderAppend(buf, buf_len, &len, "Disabled, ");
 	}
 
 	// Bits 9:8 Operational Mode
 	uint8_t op_mode = (config >> 8) & 0x03;
 	switch (op_mode) {
-		case 0x00: len += snprintf(buf + len, buf_len - len, "Write Through, "); break;
-		case 0x01: len += snprintf(buf + len, buf_len - len, "Write Back, "); break;
-		case 0x02: len += snprintf(buf + len, buf_len - len, "Varies with Memory Address, "); break;
-		case 0x03: len += snprintf(buf + len, buf_len - len, "Unknown, "); break;
+		case 0x00: lazybiosDecoderAppend(buf, buf_len, &len, "Write Through, "); break;
+		case 0x01: lazybiosDecoderAppend(buf, buf_len, &len, "Write Back, "); break;
+		case 0x02: lazybiosDecoderAppend(buf, buf_len, &len, "Varies with Memory Address, "); break;
+		case 0x03: lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, "); break;
 	}
 
 	if (len >= 2) {

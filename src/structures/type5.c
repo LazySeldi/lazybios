@@ -178,12 +178,12 @@ void lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, si
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
-	if ((capability & (1U << 0)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Other, ");
-	if ((capability & (1U << 1)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if ((capability & (1U << 2)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "None, ");
-	if ((capability & (1U << 3)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Single-bit Error Correcting, ");
-	if ((capability & (1U << 4)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Double-bit Error Correcting, ");
-	if ((capability & (1U << 5)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Error Scrubbing, ");
+	if (capability & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
+	if (capability & (1U << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (capability & (1U << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "None, ");
+	if (capability & (1U << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Single-bit Error Correcting, ");
+	if (capability & (1U << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Double-bit Error Correcting, ");
+	if (capability & (1U << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "Error Scrubbing, ");
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';
@@ -219,11 +219,11 @@ void lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
-	if ((supported_speeds & (1U << 0)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Other, ");
-	if ((supported_speeds & (1U << 1)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if ((supported_speeds & (1U << 2)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "70 ns, ");
-	if ((supported_speeds & (1U << 3)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "60 ns, ");
-	if ((supported_speeds & (1U << 4)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "50 ns, ");
+	if (supported_speeds & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
+	if (supported_speeds & (1U << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (supported_speeds & (1U << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "70 ns, ");
+	if (supported_speeds & (1U << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "60 ns, ");
+	if (supported_speeds & (1U << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "50 ns, ");
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';
@@ -243,8 +243,8 @@ void lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char*
 	const char* names[] = {"Other", "Unknown", "Standard", "Fast Page Mode", "EDO", "Parity",
 		"ECC", "SIMM", "DIMM", "Burst EDO", "SDRAM"};
 	for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
-		if ((supported_memory_types & (1U << i)) && len < buf_len) {
-			len += snprintf(buf + len, buf_len - len, "%s, ", names[i]);
+		if (supported_memory_types & (1U << i)) {
+			lazybiosDecoderAppend(buf, buf_len, &len, "%s, ", names[i]);
 		}
 	}
 	if (len == 0) snprintf(buf, buf_len, "None");
@@ -263,9 +263,9 @@ void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* bu
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
-	if ((memory_module_voltage & (1U << 0)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "5 V, ");
-	if ((memory_module_voltage & (1U << 1)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "3.3 V, ");
-	if ((memory_module_voltage & (1U << 2)) && len < buf_len) len += snprintf(buf + len, buf_len - len, "2.9 V, ");
+	if (memory_module_voltage & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "5 V, ");
+	if (memory_module_voltage & (1U << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "3.3 V, ");
+	if (memory_module_voltage & (1U << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "2.9 V, ");
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';

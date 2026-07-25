@@ -250,127 +250,128 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
 	// Bit 7 is the Chassis lock
 	if (type & (1 << 7)) {
-		len += snprintf(buf + len, buf_len - len, "Chassis lock present, ");
+		lazybiosDecoderAppend(buf, buf_len, &len, "Chassis lock present, ");
 	}
 
 	// Bits 6:0 = chassis type
 	uint8_t chassis_type = type & 0x7F;
 	switch (chassis_type) {
 		case CHASSIS_TYPE_OTHER:
-			len += snprintf(buf + len, buf_len - len, "Other");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Other");
 			break;
 		case CHASSIS_TYPE_UNKNOWN:
-			len += snprintf(buf + len, buf_len - len, "Unknown");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Unknown");
 			break;
 		case CHASSIS_TYPE_DESKTOP:
-			len += snprintf(buf + len, buf_len - len, "Desktop");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Desktop");
 			break;
 		case CHASSIS_TYPE_LOW_PROFILE_DESKTOP:
-			len += snprintf(buf + len, buf_len - len, "Low Profile Desktop");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Low Profile Desktop");
 			break;
 		case CHASSIS_TYPE_PIZZA_BOX:
-			len += snprintf(buf + len, buf_len - len, "Pizza Box");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Pizza Box");
 			break;
 		case CHASSIS_TYPE_MINI_TOWER:
-			len += snprintf(buf + len, buf_len - len, "Mini Tower");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Mini Tower");
 			break;
 		case CHASSIS_TYPE_TOWER:
-			len += snprintf(buf + len, buf_len - len, "Tower");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Tower");
 			break;
 		case CHASSIS_TYPE_PORTABLE:
-			len += snprintf(buf + len, buf_len - len, "Portable");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Portable");
 			break;
 		case CHASSIS_TYPE_LAPTOP:
-			len += snprintf(buf + len, buf_len - len, "Laptop");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Laptop");
 			break;
 		case CHASSIS_TYPE_NOTEBOOK:
-			len += snprintf(buf + len, buf_len - len, "Notebook");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Notebook");
 			break;
 		case CHASSIS_TYPE_HAND_HELD:
-			len += snprintf(buf + len, buf_len - len, "Hand Held");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Hand Held");
 			break;
 		case CHASSIS_TYPE_DOCKING_STATION:
-			len += snprintf(buf + len, buf_len - len, "Docking Station");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Docking Station");
 			break;
 		case CHASSIS_TYPE_ALL_IN_ONE:
-			len += snprintf(buf + len, buf_len - len, "All in One");
+			lazybiosDecoderAppend(buf, buf_len, &len, "All in One");
 			break;
 		case CHASSIS_TYPE_SUB_NOTEBOOK:
-			len += snprintf(buf + len, buf_len - len, "Sub Notebook");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Sub Notebook");
 			break;
 		case CHASSIS_TYPE_SPACE_SAVING:
-			len += snprintf(buf + len, buf_len - len, "Space-saving");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Space-saving");
 			break;
 		case CHASSIS_TYPE_LUNCH_BOX:
-			len += snprintf(buf + len, buf_len - len, "Lunch Box");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Lunch Box");
 			break;
 		case CHASSIS_TYPE_MAIN_SERVER_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "Main Server Chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Main Server Chassis");
 			break;
 		case CHASSIS_TYPE_EXPANSION_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "Expansion Chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Expansion Chassis");
 			break;
 		case CHASSIS_TYPE_SUBCHASSIS:
-			len += snprintf(buf + len, buf_len - len, "SubChassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "SubChassis");
 			break;
 		case CHASSIS_TYPE_BUS_EXPANSION_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "Bus Expansion Chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Bus Expansion Chassis");
 			break;
 		case CHASSIS_TYPE_PERIPHERAL_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "Peripheral Chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Peripheral Chassis");
 			break;
 		case CHASSIS_TYPE_RAID_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "RAID Chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "RAID Chassis");
 			break;
 		case CHASSIS_TYPE_RACK_MOUNT_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "Rack Mount Chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Rack Mount Chassis");
 			break;
 		case CHASSIS_TYPE_SEALED_CASE_PC:
-			len += snprintf(buf + len, buf_len - len, "Sealed-case PC");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Sealed-case PC");
 			break;
 		case CHASSIS_TYPE_MULTI_SYSTEM_CHASSIS:
-			len += snprintf(buf + len, buf_len - len, "Multi-system chassis");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Multi-system chassis");
 			break;
 		case CHASSIS_TYPE_COMPACT_PCI:
-			len += snprintf(buf + len, buf_len - len, "Compact PCI");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Compact PCI");
 			break;
 		case CHASSIS_TYPE_ADVANCED_TCA:
-			len += snprintf(buf + len, buf_len - len, "Advanced TCA");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Advanced TCA");
 			break;
 		case CHASSIS_TYPE_BLADE:
-			len += snprintf(buf + len, buf_len - len, "Blade");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Blade");
 			break;
 		case CHASSIS_TYPE_BLADE_ENCLOSURE:
-			len += snprintf(buf + len, buf_len - len, "Blade Enclosure");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Blade Enclosure");
 			break;
 		case CHASSIS_TYPE_TABLET:
-			len += snprintf(buf + len, buf_len - len, "Tablet");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Tablet");
 			break;
 		case CHASSIS_TYPE_CONVERTIBLE:
-			len += snprintf(buf + len, buf_len - len, "Convertible");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Convertible");
 			break;
 		case CHASSIS_TYPE_DETACHABLE:
-			len += snprintf(buf + len, buf_len - len, "Detachable");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Detachable");
 			break;
 		case CHASSIS_TYPE_IOT_GATEWAY:
-			len += snprintf(buf + len, buf_len - len, "IoT Gateway");
+			lazybiosDecoderAppend(buf, buf_len, &len, "IoT Gateway");
 			break;
 		case CHASSIS_TYPE_EMBEDDED_PC:
-			len += snprintf(buf + len, buf_len - len, "Embedded PC");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Embedded PC");
 			break;
 		case CHASSIS_TYPE_MINI_PC:
-			len += snprintf(buf + len, buf_len - len, "Mini PC");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Mini PC");
 			break;
 		case CHASSIS_TYPE_STICK_PC:
-			len += snprintf(buf + len, buf_len - len, "Stick PC");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Stick PC");
 			break;
 		default:
-			len += snprintf(buf + len, buf_len - len, "Unknown Chassis Type");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Unknown Chassis Type");
 			break;
 	}
 
@@ -439,6 +440,7 @@ const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	buf[0] = '\0';
 
 	if (contained_elements & 0x80) { // MSB = 1 → SMBIOS structure type

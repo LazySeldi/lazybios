@@ -233,6 +233,7 @@ const char* lazybiosType15AccessMethodStr(uint8_t access_method) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType15LogStatusStr(uint8_t log_status, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	snprintf(buf, buf_len, "%s, %s",
 		(log_status & LOG_STATUS_VALID_MASK) ? "Valid" : "Invalid",
 		(log_status & LOG_STATUS_FULL_MASK) ? "Full" : "Not Full");

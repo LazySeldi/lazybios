@@ -1249,15 +1249,15 @@ void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (characteristics & (1 << 1)) len += snprintf(buf + len, buf_len - len, "Unknown, ");
-	if (characteristics & (1 << 2)) len += snprintf(buf + len, buf_len - len, "64-bit Capable, ");
-	if (characteristics & (1 << 3)) len += snprintf(buf + len, buf_len - len, "Multi-Core, ");
-	if (characteristics & (1 << 4)) len += snprintf(buf + len, buf_len - len, "Hardware Thread, ");
-	if (characteristics & (1 << 5)) len += snprintf(buf + len, buf_len - len, "Execute Protection, ");
-	if (characteristics & (1 << 6)) len += snprintf(buf + len, buf_len - len, "Enhanced Virtualization, ");
-	if (characteristics & (1 << 7)) len += snprintf(buf + len, buf_len - len, "Power/Performance Control, ");
-	if (characteristics & (1 << 8)) len += snprintf(buf + len, buf_len - len, "128-bit Capable, ");
-	if (characteristics & (1 << 9)) len += snprintf(buf + len, buf_len - len, "Arm64 SoC ID, ");
+	if (characteristics & (1 << 1)) lazybiosDecoderAppend(buf, buf_len, &len, "Unknown, ");
+	if (characteristics & (1 << 2)) lazybiosDecoderAppend(buf, buf_len, &len, "64-bit Capable, ");
+	if (characteristics & (1 << 3)) lazybiosDecoderAppend(buf, buf_len, &len, "Multi-Core, ");
+	if (characteristics & (1 << 4)) lazybiosDecoderAppend(buf, buf_len, &len, "Hardware Thread, ");
+	if (characteristics & (1 << 5)) lazybiosDecoderAppend(buf, buf_len, &len, "Execute Protection, ");
+	if (characteristics & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "Enhanced Virtualization, ");
+	if (characteristics & (1 << 7)) lazybiosDecoderAppend(buf, buf_len, &len, "Power/Performance Control, ");
+	if (characteristics & (1 << 8)) lazybiosDecoderAppend(buf, buf_len, &len, "128-bit Capable, ");
+	if (characteristics & (1 << 9)) lazybiosDecoderAppend(buf, buf_len, &len, "Arm64 SoC ID, ");
 
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");
@@ -1301,33 +1301,34 @@ const char* lazybiosType4TypeStr(uint8_t type) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
-	if (status & (1 << 6)) len += snprintf(buf + len, buf_len - len, "Socket Populated, ");
-	else len += snprintf(buf + len, buf_len - len, "Socket Unpopulated, ");
+	if (status & (1 << 6)) lazybiosDecoderAppend(buf, buf_len, &len, "Socket Populated, ");
+	else lazybiosDecoderAppend(buf, buf_len, &len, "Socket Unpopulated, ");
 
 	switch (status & 0x07) {
 		case 0x0:
-			len += snprintf(buf + len, buf_len - len, "Unknown");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Unknown");
 			break;
 		case 0x1:
-			len += snprintf(buf + len, buf_len - len, "CPU Enabled");
+			lazybiosDecoderAppend(buf, buf_len, &len, "CPU Enabled");
 			break;
 		case 0x2:
-			len += snprintf(buf + len, buf_len - len, "Disabled by User");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Disabled by User");
 			break;
 		case 0x3:
-			len += snprintf(buf + len, buf_len - len, "Disabled by Firmware (POST Error)");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Disabled by Firmware (POST Error)");
 			break;
 		case 0x4:
-			len += snprintf(buf + len, buf_len - len, "CPU Idle");
+			lazybiosDecoderAppend(buf, buf_len, &len, "CPU Idle");
 			break;
 		case 0x7:
-			len += snprintf(buf + len, buf_len - len, "Other");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Other");
 			break;
 		default:
-			len += snprintf(buf + len, buf_len - len, "Reserved");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Reserved");
 			break;
 	}
 }
@@ -1341,36 +1342,37 @@ void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
  * @param buf_len Capacity of buf in bytes.
  */
 void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return;
 	size_t len = 0;
 	buf[0] = '\0';
 
 	if (!(voltage & 0x80)) {
 		if (voltage & 0x7F) {
-			len += snprintf(buf + len, buf_len - len, "%u.%uV", (voltage & 0x7F) / 10, (voltage & 0x7F) % 10);
+			lazybiosDecoderAppend(buf, buf_len, &len, "%u.%uV", (voltage & 0x7F) / 10, (voltage & 0x7F) % 10);
 		} else {
-			len += snprintf(buf + len, buf_len - len, "Unknown");
+			lazybiosDecoderAppend(buf, buf_len, &len, "Unknown");
 		}
 	} else {
 		uint8_t caps = voltage & 0x0F;
 		int count = 0;
 
 		if (caps & 0x01) {
-			len += snprintf(buf + len, buf_len - len, "5V");
+			lazybiosDecoderAppend(buf, buf_len, &len, "5V");
 			count++;
 		}
 		if (caps & 0x02) {
-			if (count > 0) len += snprintf(buf + len, buf_len - len, ", ");
-			len += snprintf(buf + len, buf_len - len, "3.3V");
+			if (count > 0) lazybiosDecoderAppend(buf, buf_len, &len, ", ");
+			lazybiosDecoderAppend(buf, buf_len, &len, "3.3V");
 			count++;
 		}
 		if (caps & 0x04) {
-			if (count > 0) len += snprintf(buf + len, buf_len - len, ", ");
-			len += snprintf(buf + len, buf_len - len, "2.9V");
+			if (count > 0) lazybiosDecoderAppend(buf, buf_len, &len, ", ");
+			lazybiosDecoderAppend(buf, buf_len, &len, "2.9V");
 			count++;
 		}
 
-		if (count > 1) len += snprintf(buf + len, buf_len - len, " (Configurable)");
-		if (count == 0) len += snprintf(buf + len, buf_len - len, "Not Supported");
+		if (count > 1) lazybiosDecoderAppend(buf, buf_len, &len, " (Configurable)");
+		if (count == 0) lazybiosDecoderAppend(buf, buf_len, &len, "Not Supported");
 	}
 }
 

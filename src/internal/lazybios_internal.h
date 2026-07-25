@@ -27,8 +27,40 @@
 
 #include "lazybios.h"
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/**
+ * @brief Appends formatted text to a decoder output buffer.
+ *
+ * snprintf returns the length the output *would* have had, so accumulating its
+ * return value lets the running length run past the buffer: the next append
+ * then writes at buf + len with a wrapped-around buf_len - len. This keeps
+ * *len at the number of bytes actually written, never above buf_len - 1, so
+ * later appends and the trailing-separator trim stay inside the buffer.
+ *
+ * @param buf Output buffer, may be NULL only when buf_len is zero.
+ * @param buf_len Capacity of buf in bytes.
+ * @param len Running output length, updated in place.
+ * @param fmt printf-style format for the text to append.
+ */
+#ifdef __GNUC__
+__attribute__((format(printf, 4, 5)))
+#endif
+static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len, const char* fmt, ...) {
+	if (!buf || buf_len == 0 || *len + 1 >= buf_len) return;
+
+	size_t remaining = buf_len - *len;
+	va_list args;
+	va_start(args, fmt);
+	int written = vsnprintf(buf + *len, remaining, fmt, args);
+	va_end(args);
+
+	if (written < 0) return;
+	*len += ((size_t)written >= remaining) ? remaining - 1 : (size_t)written;
+}
 
 #define SMBIOS_TYPE_BIOS 0
 #define SMBIOS_TYPE_SYSTEM 1
