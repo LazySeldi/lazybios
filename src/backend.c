@@ -99,8 +99,7 @@ int lazybiosLoadRawBuffers(lazybiosCTX_t* ctx,
 	return 0;
 }
 
-int lazybiosLoadWindowsRawSMBIOSData(lazybiosCTX_t* ctx,
-	const uint8_t* raw_data, size_t raw_len) {
+int lazybiosLoadWindowsRawSMBIOSData(lazybiosCTX_t* ctx, const uint8_t* raw_data, size_t raw_len) {
 	if (!ctx || !raw_data || raw_len < WINDOWS_RAW_HEADER_SIZE)
 		return -1;
 
@@ -158,20 +157,21 @@ int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
 	if (!image || !entry_offset || !entry_len)
 		return -1;
 
-	for (size_t i = 0; i < image_len; i++) {
-		if (image_len - i >= SMBIOS3_ENTRY_POINT_LENGTH &&
-			memcmp(image + i, SMBIOS3_ANCHOR, SMBIOS3_ANCHOR_SIZE) == 0) {
+	size_t i = 0;
+	while (image_len - i >= SMBIOS2_ANCHOR_SIZE) {
+		lazybiosEntryInspection inspection;
+		if (lazybiosInspectEntryPoint(
+				image + i, image_len - i, &inspection) == 0 &&
+			inspection.checksum_valid &&
+			inspection.intermediate_checksum_valid) {
 			*entry_offset = i;
-			*entry_len = SMBIOS3_ENTRY_POINT_LENGTH;
+			*entry_len = inspection.length;
 			return 0;
 		}
 
-		if (image_len - i >= SMBIOS2_ENTRY_POINT_LENGTH &&
-			memcmp(image + i, SMBIOS2_ANCHOR, SMBIOS2_ANCHOR_SIZE) == 0) {
-			*entry_offset = i;
-			*entry_len = SMBIOS2_ENTRY_POINT_LENGTH;
-			return 0;
-		}
+		if (image_len - i < SMBIOS2_ANCHOR_SIZE + 16)
+			break;
+		i += 16;
 	}
 
 	return -1;
