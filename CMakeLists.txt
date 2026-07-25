@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(lazybios
-        VERSION 1.0.0
+        VERSION 1.1.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -21,6 +21,7 @@ include(GNUInstallDirs)
 
 # Library sources
 set(LAZYBIOS_SOURCES
+        src/backend.c
         src/lazybios.c
         src/structures/type0.c
         src/structures/type1.c
@@ -126,6 +127,33 @@ endif()
 
 add_executable(lazybios_test test/test.c)
 target_link_libraries(lazybios_test PRIVATE lazybios)
+
+include(CTest)
+option(LAZYBIOS_TEST_HOST_BACKEND
+        "Enable the native host-backend integration test (may require privileges)" OFF)
+
+if(BUILD_TESTING)
+    add_executable(lazybios_semantic_test test/semantic_test.c)
+    target_link_libraries(lazybios_semantic_test PRIVATE lazybios)
+    target_include_directories(lazybios_semantic_test PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/internal
+    )
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(lazybios_semantic_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    endif()
+    add_test(NAME lazybios_semantics COMMAND lazybios_semantic_test)
+
+    if(LAZYBIOS_TEST_HOST_BACKEND)
+        add_executable(lazybios_host_backend_test test/host_backend_test.c)
+        target_link_libraries(lazybios_host_backend_test PRIVATE lazybios)
+        if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+            target_compile_options(lazybios_host_backend_test PRIVATE
+                    -Wall -Wextra -Wpedantic -Werror)
+        endif()
+        add_test(NAME lazybios_host_backend COMMAND lazybios_host_backend_test)
+        set_tests_properties(lazybios_host_backend PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
+endif()
 
 # Fuzzing (Clang + libFuzzer)
 option(LAZYBIOS_BUILD_FUZZERS "Build the libFuzzer targets in fuzz/" OFF)
