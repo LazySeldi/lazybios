@@ -1,0 +1,78 @@
+/**
+ * @page testing Testing, Fuzzing, and Regressions
+ *
+ * @brief Semantic tests, libFuzzer targets, sanitizers, regressions, and source coverage.
+ *
+ * @section testing_layers Verification layers
+ *
+ * lazybios uses complementary checks:
+ *
+ * - `lazybios_semantic_test` verifies specification-derived values and public
+ *   API contracts. It catches wrong-but-memory-safe behavior such as signed
+ *   temperature interpretation.
+ * - Seven libFuzzer targets search for memory errors and undefined behavior in
+ *   entry points, DMI tables, decoders, traversal helpers, lifecycle cleanup,
+ *   file loaders, and platform-neutral backend transformations.
+ * - Saved regression inputs replay every previously fixed fuzzing crash.
+ *
+ * Fuzzing is not an oracle for SMBIOS meaning. Add a semantic test whenever a
+ * bug returns an incorrect value without triggering a sanitizer.
+ *
+ * @section testing_semantic Semantic tests
+ *
+ * @code{.sh}
+ * cmake -S . -B build -DBUILD_TESTING=ON
+ * cmake --build build
+ * ctest --test-dir build --output-on-failure
+ * @endcode
+ *
+ * @section testing_fuzz Building fuzz targets
+ *
+ * Clang and its libFuzzer runtime are required. ASan and UBSan are enabled by
+ * default.
+ *
+ * @code{.sh}
+ * cmake -S . -B build-fuzz -DCMAKE_C_COMPILER=clang \
+ *     -DLAZYBIOS_BUILD_FUZZERS=ON
+ * cmake --build build-fuzz
+ * fuzz/run_all.sh build-fuzz 60 1048576
+ * @endcode
+ *
+ * The final two arguments are seconds per target and maximum generated input
+ * size. The explicit large maximum exercises table-size and allocation
+ * arithmetic that a default small-input campaign can miss.
+ *
+ * @section testing_targets Fuzz target coverage
+ *
+ * - `fuzz_dmi_table`: every Type 0 through Type 46 getter.
+ * - `fuzz_entry_point`: entry-point parsing and version helpers.
+ * - `fuzz_decoders`: every public decoder.
+ * - `fuzz_helpers`: bounded traversal, counting, partial cleanup, and
+ *   unavailable backend dispatch.
+ * - `fuzz_backend_buffers`: Windows RawSMBIOSData conversion, raw-buffer
+ *   loading used by macOS, and legacy Linux entry-point scanning.
+ * - `fuzz_single_file` and `fuzz_two_files`: the two public file loaders on
+ *   POSIX platforms.
+ *
+ * Operating-system calls themselves are integration-tested on their native
+ * systems; fuzzing covers the byte-processing code after those calls return.
+ * Enable the optional native check with
+ * `LAZYBIOS_TEST_HOST_BACKEND=ON`. CTest reports it as skipped when the host
+ * does not expose SMBIOS data or the current account lacks access.
+ *
+ * @section testing_variants Variants and coverage
+ *
+ * Use `LAZYBIOS_FUZZ_LOGGING=ON` to retain debug-only paths, including checksum
+ * evaluation. Configure `LAZYBIOS_FUZZ_SANITIZERS=memory` for an MSan campaign.
+ * `fuzz/check_variants.sh` configures, builds, and runs the default
+ * ASan-plus-UBSan, debug-logging, and MSan matrix.
+ * Configure with an empty sanitizer list and `LAZYBIOS_FUZZ_COVERAGE=ON`, then
+ * run `fuzz/coverage.sh`, to generate an aggregate HTML source-coverage report.
+ * The report requires `llvm-profdata` and `llvm-cov` from the Clang toolchain.
+ *
+ * Full commands and crash-reproduction instructions are maintained in
+ * `fuzz/README.md`.
+ *
+ * @see @ref building
+ * @see @ref limitations
+ */
