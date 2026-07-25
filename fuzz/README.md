@@ -44,3 +44,21 @@ To reproduce a crash, pass the saved input file directly:
 ```sh
 ./build-fuzz/fuzz/fuzz_dmi_table crash-<hash>
 ```
+
+## Covering the debug-only paths
+
+The instrumented library is built with `LAZYBIOS_QUIET` so its logging does not
+bury the fuzzer's output. `lb_dbg()` then compiles to nothing, and anything
+reached only from a `lb_dbg()` argument or condition — the entry point checksum
+verification, for one — becomes dead code the fuzzer cannot enter. To cover it,
+configure with `-DLAZYBIOS_FUZZ_LOGGING=ON` and send the library's chatter
+somewhere else while keeping the sanitizer reports:
+
+```sh
+cmake -B build-fuzz-log -DCMAKE_C_COMPILER=clang -DLAZYBIOS_BUILD_FUZZERS=ON \
+      -DLAZYBIOS_FUZZ_LOGGING=ON
+cmake --build build-fuzz-log
+ASAN_OPTIONS=log_path=/tmp/asan UBSAN_OPTIONS=log_path=/tmp/ubsan \
+    ./build-fuzz-log/fuzz/fuzz_entry_point build-fuzz/corpus/entry_point \
+    -max_total_time=60 2>/dev/null
+```

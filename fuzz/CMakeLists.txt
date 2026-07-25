@@ -42,8 +42,17 @@ target_include_directories(lazybios_fuzz_lib PRIVATE
 )
 
 # The library logs to stderr on every rejected input, which would bury the
-# fuzzer's own output.
-target_compile_definitions(lazybios_fuzz_lib PRIVATE LAZYBIOS_QUIET)
+# fuzzer's own output. The catch is that lb_dbg() compiles to nothing outside a
+# debug build, so anything only reached from a lb_dbg() argument or condition
+# (the entry point checksum verification, for one) is dead code the fuzzer can
+# never enter. LAZYBIOS_FUZZ_LOGGING trades quiet output for that coverage.
+option(LAZYBIOS_FUZZ_LOGGING "Build the fuzz targets against the debug-logging library" OFF)
+
+if(LAZYBIOS_FUZZ_LOGGING)
+    target_compile_definitions(lazybios_fuzz_lib PRIVATE LAZYBIOS_DEBUG)
+else()
+    target_compile_definitions(lazybios_fuzz_lib PRIVATE LAZYBIOS_QUIET)
+endif()
 target_compile_options(lazybios_fuzz_lib PRIVATE -Wall -Wextra -Wpedantic ${LAZYBIOS_FUZZ_FLAGS})
 target_link_options(lazybios_fuzz_lib PUBLIC ${LAZYBIOS_FUZZ_LINK_FLAGS})
 set_target_properties(lazybios_fuzz_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
