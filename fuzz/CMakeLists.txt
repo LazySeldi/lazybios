@@ -10,9 +10,16 @@ endif()
 
 set(LAZYBIOS_FUZZ_SANITIZERS "address,undefined" CACHE STRING
         "Sanitizers to build the fuzz targets with (comma separated, may be empty)")
+option(LAZYBIOS_FUZZ_COVERAGE
+        "Add source-coverage instrumentation for fuzz/coverage.sh" OFF)
 
 set(LAZYBIOS_FUZZ_FLAGS -g -O1 -fno-omit-frame-pointer)
 set(LAZYBIOS_FUZZ_LINK_FLAGS "")
+
+if(LAZYBIOS_FUZZ_COVERAGE)
+    list(APPEND LAZYBIOS_FUZZ_FLAGS -fprofile-instr-generate -fcoverage-mapping)
+    list(APPEND LAZYBIOS_FUZZ_LINK_FLAGS -fprofile-instr-generate -fcoverage-mapping)
+endif()
 
 if(LAZYBIOS_FUZZ_SANITIZERS STREQUAL "")
     list(APPEND LAZYBIOS_FUZZ_FLAGS -fsanitize=fuzzer-no-link)
@@ -41,6 +48,13 @@ target_include_directories(lazybios_fuzz_lib PRIVATE
         ${PROJECT_SOURCE_DIR}/src/internal
 )
 
+if(APPLE)
+    target_link_libraries(lazybios_fuzz_lib PUBLIC
+            ${LAZYBIOS_IOKIT_FRAMEWORK}
+            ${LAZYBIOS_COREFOUNDATION_FRAMEWORK}
+    )
+endif()
+
 # The library logs to stderr on every rejected input, which would bury the
 # fuzzer's own output. The catch is that lb_dbg() compiles to nothing outside a
 # debug build, so anything only reached from a lb_dbg() argument or condition
@@ -60,15 +74,30 @@ set_target_properties(lazybios_fuzz_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set(LAZYBIOS_FUZZ_TARGETS
         fuzz_dmi_table
         fuzz_entry_point
-        fuzz_single_file
-        fuzz_two_files
         fuzz_decoders
+        fuzz_helpers
+        fuzz_backend_buffers
 )
+
+if(UNIX)
+    list(APPEND LAZYBIOS_FUZZ_TARGETS
+            fuzz_single_file
+            fuzz_two_files
+    )
+endif()
 
 foreach(target ${LAZYBIOS_FUZZ_TARGETS})
     add_executable(${target} ${target}.c)
     target_link_libraries(${target} PRIVATE lazybios_fuzz_lib)
+    target_include_directories(${target} PRIVATE
+            ${PROJECT_SOURCE_DIR}/src/internal
+    )
     target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic ${LAZYBIOS_FUZZ_FLAGS})
 endforeach()
+
+if(BUILD_TESTING AND UNIX)
+    add_test(NAME lazybios_fuzz_regressions
+            COMMAND ${PROJECT_SOURCE_DIR}/fuzz/run_regressions.sh ${PROJECT_BINARY_DIR})
+endif()
 
 message(STATUS "lazybios: fuzz targets enabled (sanitizers: '${LAZYBIOS_FUZZ_SANITIZERS}')")
