@@ -271,6 +271,7 @@ typedef enum {
 	LAZYBIOS_BACKEND_MACOS,   /**< macOS AppleSMBIOS I/O Registry backend. */
 	LAZYBIOS_BACKEND_OPENBSD, /**< OpenBSD dmesg-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
+	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
 	LAZYBIOS_BACKEND_UNKNOWN  /**< No native host backend is available. */
 } lazybiosBackend_t;
 

@@ -46,6 +46,9 @@
 #elif defined(__FreeBSD__)
 #define OS_FREEBSD 1
 
+#elif defined(__NetBSD__)
+#define OS_NETBSD 1
+
 #else
 #define OS_UNKNOWN 1
 #endif
@@ -229,6 +232,8 @@ int lazybiosLoadWindowsRawSMBIOSData(lazybiosCTX_t* ctx,
 	const uint8_t* raw_data, size_t raw_len);
 int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
 	size_t* entry_offset, size_t* entry_len);
+int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
+	size_t* entry_len, uint64_t* table_address, size_t* table_len);
 
 #define READSTR(record, field, len, offset, p, end) do { \
 	if ((len) > (offset)) { \
@@ -297,12 +302,15 @@ int lazybiosMacOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_OPENBSD)
-int lazybiosOpenBSD(lazybiosCTX_t *ctx);
+int lazybiosOpenBSD(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_FREEBSD)
-int lazybiosFreeBSD(lazybiosCTX_t *ctx);
+int lazybiosFreeBSD(lazybiosCTX_t* ctx);
 #endif
 
+#if defined(OS_NETBSD)
+int lazybiosNetBSD(lazybiosCTX_t* ctx);
+#endif
 
 #endif
