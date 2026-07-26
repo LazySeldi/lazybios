@@ -25,6 +25,7 @@
 
 #if defined(OS_LINUX)
 
+#include <ctype.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -44,9 +45,32 @@ static inline int uint64_to_off_t(uint64_t value, off_t *out) {
 	return 0;
 }
 
-static inline int lazybiosDevMem(lazybiosCTX_t *ctx) {
-	if (!ctx)
-		return -1;
+static inline uint64_t LinuxEFIAddressParser(void) { // Not tested yet, but should work theoretically
+    FILE *fp = fopen("/sys/firmware/efi/systab", "r");
+    if (!fp) return 0;
+
+    char line[256];
+    uint64_t found_addr = 0;
+    while (fgets(line, sizeof(line), fp)) {
+        if (strncmp(line, "SMBIOS3=", 8) == 0 || strncmp(line, "SMBIOS=", 7) == 0) {
+            char *p = strchr(line, '=') + 1;
+            // If 0x is present skip it(it will probably be present 99.9% of the time)
+            if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) p += 2;
+            // Verifying it's a valid hex string
+            if (isxdigit(*p)) {
+                found_addr = strtoull(p, NULL, 16);
+                fclose(fp);
+                return found_addr;
+            }
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+
+static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
+	if (!ctx) return -1;
 
 	int fd = open(DEV_MEM, O_RDONLY);
 	if (fd == -1) {
@@ -55,7 +79,13 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx) {
 		return -1;
 	}
 
-	off_t base_addr = SMBIOS_START;
+    off_t base_addr;
+    if (addr != 0) { // If we found a valid address, then we use that, if not then we use the old one
+        base_addr = addr;
+    } else {
+        base_addr = SMBIOS_START;
+    }
+
 	long page_size = sysconf(_SC_PAGESIZE);
 	if (page_size <= 0) {
 		lb_log("Failed to read system page size");
@@ -188,7 +218,7 @@ int lazybiosLinux(lazybiosCTX_t *ctx) {
 
 	FILE *dmi = fopen(LINUX_SYSFS_DMI_TABLE, "rb");
 	if (!dmi)
-		return lazybiosDevMem(ctx);
+		return lazybiosDevMem(ctx, LinuxEFIAddressParser());
 
 	fclose(dmi);
 	return lazybiosFile(ctx, LINUX_SYSFS_SMBIOS_ENTRY, LINUX_SYSFS_DMI_TABLE);

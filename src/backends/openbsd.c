@@ -46,7 +46,7 @@ static inline int uint64_to_off_t(uint64_t value, off_t *out) {
 	return 0;
 }
 
-uint64_t OpenBSDAddressParser(void) {
+static inline uint64_t OpenBSDAddressParser(void) {
     FILE *fp;
     char line[256];
     uint64_t addr = 0;
