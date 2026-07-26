@@ -22,7 +22,7 @@
  */
 
 
-#include "../internal/lazybios_internal.h"
+#include "lazybios_internal.h"
 
 #if defined(OS_OPENBSD)
 
