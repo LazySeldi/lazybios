@@ -250,6 +250,8 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 		ctx->backend = LAZYBIOS_BACKEND_MACOS;
 	#elif defined(OS_OPENBSD)
 		ctx->backend = LAZYBIOS_BACKEND_OPENBSD;
+    #elif defined(OS_FREEBSD)
+        ctx->backend = LAZYBIOS_BACKEND_FREEBSD;
 	#else
 		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
 	#endif
@@ -299,6 +301,14 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 			lb_log("OpenBSD backend is not available in this build");
 			return -1;
 			#endif
+
+	    case LAZYBIOS_BACKEND_FREEBSD:
+	        #if defined(OS_FREEBSD)
+	        return lazybiosFreeBSD(ctx);
+	        #else
+	        lb_log("FreeBSD backend is not available in this build");
+	        return -1;
+	        #endif
 
 		case LAZYBIOS_BACKEND_UNKNOWN:
 			lb_log("Unknown backend %d", ctx->backend);

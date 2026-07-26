@@ -43,6 +43,9 @@
 #elif defined(__OpenBSD__)
 #define OS_OPENBSD 1
 
+#elif defined(__FreeBSD__)
+#define OS_FREEBSD 1
+
 #else
 #define OS_UNKNOWN 1
 #endif
@@ -296,5 +299,10 @@ int lazybiosMacOS(lazybiosCTX_t* ctx);
 #if defined(OS_OPENBSD)
 int lazybiosOpenBSD(lazybiosCTX_t *ctx);
 #endif
+
+#if defined(OS_FREEBSD)
+int lazybiosFreeBSD(lazybiosCTX_t *ctx);
+#endif
+
 
 #endif

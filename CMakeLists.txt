@@ -80,6 +80,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND LAZYBIOS_SOURCES src/backends/linux.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
     list(APPEND LAZYBIOS_SOURCES src/backends/openbsd.c)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+    list(APPEND LAZYBIOS_SOURCES src/backends/freebsd.c)
 endif()
 
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
