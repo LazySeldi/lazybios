@@ -33,22 +33,65 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <errno.h>
 
 #define SMBIOS_START 0xF0000
 #define SMBIOS_SIZE 0x10000
 
 static inline int uint64_to_off_t(uint64_t value, off_t *out) {
 	uint64_t off_t_max = ((uint64_t)1 << (sizeof(off_t) * CHAR_BIT - 1)) - 1;
-	if (value > off_t_max)
-		return -1;
+	if (value > off_t_max) return -1;
 	*out = (off_t)value;
 	return 0;
 }
 
+uint64_t OpenBSDAddressParser(void) {
+    FILE *fp;
+    char line[256];
+    uint64_t addr = 0;
+    char *p, *end;
 
-static inline int lazybiosDevMem(lazybiosCTX_t *ctx) { // Out existing /dev/mem implementation already works for OpenBSD.
-	if (!ctx)
-		return -1;
+    fp = fopen("/var/run/dmesg.boot", "r");
+    if (!fp) return 0;
+
+    while (fgets(line, sizeof(line), fp)) {
+        // must contain "SMBIOS" and "@"
+        if (!strstr(line, "SMBIOS") || !(p = strstr(line, "@")))
+            continue;
+
+        p++; // we skip the @ symbol
+
+        // don't parse the optional "0x" prefix
+        if (p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) p += 2;
+
+        while (*p == ' ' || *p == '\t') p++;
+
+
+        // Must start with hex digits
+        if (!isxdigit(*p)) continue;
+
+        // Parse the address
+        errno = 0;
+        addr = strtoull(p, &end, 16);
+
+        // we validate if there's no conversion error, if at least one digit is present, if the address is in a reasonable range (1MB to 16EB) and if the next character is a whitespace of a string
+        if (errno == 0 && end > p && addr >= 0x100000 && (*end == '\0' || *end == ' ' || *end == '\n' || *end == '\r')) {
+            // Checking if it's page aligned
+            if (addr % 16 == 0) {
+                fclose(fp);
+                return addr;
+            }
+        }
+    }
+
+    fclose(fp);
+    return 0; // If we don't find anything we just return 0
+}
+
+
+static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
+	if (!ctx) return -1;
 
 	int fd = open(DEV_MEM, O_RDONLY);
 	if (fd == -1) {
@@ -57,7 +100,13 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx) { // Out existing /dev/mem 
 		return -1;
 	}
 
-	off_t base_addr = SMBIOS_START;
+	off_t base_addr;
+    if (addr != 0) { // If we found a valid address, then we use that, if not then we use the old one
+        base_addr = addr;
+    } else {
+        base_addr = SMBIOS_START;
+    }
+
 	long page_size = sysconf(_SC_PAGESIZE);
 	if (page_size <= 0) {
 		lb_log("Failed to read system page size");
@@ -185,7 +234,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx) { // Out existing /dev/mem 
 }
 
 int lazybiosOpenBSD(lazybiosCTX_t *ctx) {
-	return lazybiosDevMem(ctx);
+	return lazybiosDevMem(ctx, OpenBSDAddressParser());
 }
 
 #endif
