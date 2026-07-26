@@ -53,7 +53,7 @@ extern "C" {
 #define LINUX_SYSFS_SMBIOS_ENTRY "/sys/firmware/dmi/tables/smbios_entry_point"
 /** @brief Linux sysfs path for the DMI structure table. */
 #define LINUX_SYSFS_DMI_TABLE "/sys/firmware/dmi/tables/DMI"
-/** @brief Linux device path used for physical-memory SMBIOS access. */
+/** @brief Device path used for physical-memory SMBIOS access on Linux and BSD. */
 #define DEV_MEM "/dev/mem"
 
 /** @} */
@@ -266,12 +266,12 @@ extern "C" {
  * @ingroup api_context
  */
 typedef enum {
-	LAZYBIOS_BACKEND_LINUX,
-	LAZYBIOS_BACKEND_WINDOWS,
-	LAZYBIOS_BACKEND_MACOS,
-	LAZYBIOS_BACKEND_OPENBSD,
-    LAZYBIOS_BACKEND_FREEBSD,
-	LAZYBIOS_BACKEND_UNKNOWN
+	LAZYBIOS_BACKEND_LINUX,   /**< Linux sysfs or physical-memory backend. */
+	LAZYBIOS_BACKEND_WINDOWS, /**< Windows firmware-table API backend. */
+	LAZYBIOS_BACKEND_MACOS,   /**< macOS AppleSMBIOS I/O Registry backend. */
+	LAZYBIOS_BACKEND_OPENBSD, /**< OpenBSD dmesg-assisted physical-memory backend. */
+	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
+	LAZYBIOS_BACKEND_UNKNOWN  /**< No native host backend is available. */
 } lazybiosBackend_t;
 
 /**

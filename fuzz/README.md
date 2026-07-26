@@ -13,7 +13,7 @@ libFuzzer runtime is available.
 | `fuzz_two_files` | `lazybiosFile` plus every parser — the shape a Linux sysfs host load takes |
 | `fuzz_decoders` | Every decoder helper, including the ones that format into a caller-supplied buffer |
 | `fuzz_helpers` | `DMINext`, `DMIString`, all-type counting, partial-context cleanup, and unavailable `lazybiosInit` dispatches |
-| `fuzz_backend_buffers` | Windows `RawSMBIOSData`, raw-buffer loading used by macOS, and the legacy physical-memory entry-point scan used by Linux and OpenBSD |
+| `fuzz_backend_buffers` | Windows `RawSMBIOSData`, raw-buffer loading used by macOS, and physical-memory entry-point scanning shared by Linux, OpenBSD, and FreeBSD |
 
 The DMI table and entry point buffers are allocated at exactly the size the
 library is told they are, so an over-read of a single byte is a hard ASan
@@ -151,10 +151,11 @@ fuzz/coverage.sh build-fuzz-coverage
 The HTML report is written to
 `build-fuzz-coverage/coverage/html/index.html`.
 
-The platform-neutral parts of the Windows, macOS, Linux, and OpenBSD backends
-are fuzzed by `fuzz_backend_buffers`. Calls into `GetSystemFirmwareTable`,
-IOKit, sysfs, `/dev/mem`, `mmap`, and permission handling remain platform
-integration work. Exercise them on a native machine with:
+The platform-neutral parts of the Windows, macOS, Linux, OpenBSD, and FreeBSD
+backends are fuzzed by `fuzz_backend_buffers`. Calls into
+`GetSystemFirmwareTable`, IOKit, sysfs, EFI systab, OpenBSD dmesg, FreeBSD
+`kenv`, `/dev/mem`, `mmap`, and permission handling remain platform integration
+work. Exercise them on a native machine with:
 
 ```sh
 cmake -S . -B build-host-test -DBUILD_TESTING=ON \

@@ -51,7 +51,7 @@
  *   unavailable backend dispatch.
  * - `fuzz_backend_buffers`: Windows RawSMBIOSData conversion, raw-buffer
  *   loading used by macOS, and legacy physical-memory entry-point scanning
- *   used by Linux and OpenBSD.
+ *   shared by Linux, OpenBSD, and FreeBSD.
  * - `fuzz_single_file` and `fuzz_two_files`: the two public file loaders on
  *   POSIX platforms.
  *

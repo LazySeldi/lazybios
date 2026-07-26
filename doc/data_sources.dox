@@ -19,13 +19,18 @@
  *
  * @section sources_linux Linux
  *
- * The Linux backend reads the entry point and DMI table from sysfs. If the DMI
- * sysfs table cannot be opened, it attempts the `/dev/mem` backend. Access to
- * physical memory can require elevated operating-system permissions.
+ * The Linux backend first reads the entry point and DMI table from sysfs. If
+ * the DMI sysfs table cannot be opened, it looks in
+ * `/sys/firmware/efi/systab` for an `SMBIOS3=` or `SMBIOS=` physical address
+ * and uses that address as the start of its `/dev/mem` search. If no usable EFI
+ * address is available, the search begins at the legacy `0xF0000` firmware
+ * window.
  *
- * The physical-memory fallback scans the legacy firmware window on 16-byte
- * boundaries. Invalid, truncated, or checksum-failing candidates are skipped
- * silently while the scan continues for a valid SMBIOS entry point.
+ * The physical-memory path scans a 64 KiB region on 16-byte boundaries.
+ * Invalid, truncated, or checksum-failing candidates are skipped while the
+ * scan continues for a valid SMBIOS entry point. After validation, the backend
+ * maps the structure-table address and length reported by that entry point.
+ * Access to physical memory can require elevated operating-system permissions.
  *
  * The default sysfs paths are exposed as @ref LINUX_SYSFS_SMBIOS_ENTRY and
  * @ref LINUX_SYSFS_DMI_TABLE. The physical-memory device path is exposed as
@@ -49,15 +54,25 @@
  *
  * @section sources_openbsd OpenBSD
  *
- * The OpenBSD backend reads the legacy firmware window through `/dev/mem`,
- * using the same quiet, validated entry-point scan as the Linux physical-memory
- * fallback. It then maps the physical structure-table address reported by the
- * validated SMBIOS entry point. Access depends on `/dev/mem` permissions and
- * the operating system's memory-access policy.
+ * The OpenBSD backend looks for the SMBIOS address reported in
+ * `/var/run/dmesg.boot`. When it finds a usable address, the `/dev/mem` scan
+ * starts there; otherwise it falls back to the legacy `0xF0000` firmware
+ * window. The 64 KiB search validates candidates on 16-byte boundaries and
+ * then maps the structure-table address reported by the selected entry point.
  *
- * This backend currently covers systems that publish an SMBIOS entry point in
- * the legacy physical-memory window. It does not yet acquire an entry point
- * supplied only through UEFI.
+ * Reading `/dev/mem` depends on account privileges and the OpenBSD securelevel
+ * and memory-access policy.
+ *
+ * @section sources_freebsd FreeBSD
+ *
+ * The FreeBSD backend requests `hint.smbios.0.mem` through `kenv(2)` and uses
+ * its value as the start of the `/dev/mem` search. If the kernel environment
+ * value is unavailable or invalid, it falls back to the legacy `0xF0000`
+ * firmware window. It scans a 64 KiB region on 16-byte boundaries, validates
+ * the entry point, and maps the physical structure table described by it.
+ *
+ * Reading `/dev/mem` depends on account privileges and the FreeBSD securelevel
+ * and memory-access policy.
  *
  * @section sources_unknown Unknown platforms
  *

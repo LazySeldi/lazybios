@@ -5,12 +5,17 @@
  *
  * @section limits_platforms Platform status
  *
- * - Linux host loading supports sysfs and a `/dev/mem` fallback.
+ * - Linux host loading prefers sysfs, then searches `/dev/mem` from an address
+ *   reported by `/sys/firmware/efi/systab`, or from the legacy firmware window.
  * - Windows host loading uses `GetSystemFirmwareTable` and a generated entry point.
  * - macOS host loading reads `SMBIOS-EPS` and `SMBIOS` from the AppleSMBIOS
  *   I/O Registry service using IOKit and CoreFoundation.
- * - OpenBSD host loading scans the legacy firmware window through `/dev/mem`.
- *   SMBIOS entry points available only through UEFI are not yet supported.
+ * - OpenBSD host loading uses `/var/run/dmesg.boot` as an address hint before
+ *   falling back to the legacy `/dev/mem` firmware window.
+ * - FreeBSD host loading uses the `hint.smbios.0.mem` kernel environment value
+ *   before falling back to the legacy `/dev/mem` firmware window.
+ * - All `/dev/mem` paths remain subject to platform permissions, securelevel,
+ *   and physical-memory access policy.
  * - Unknown host backends are not implemented.
  * - File-based loaders remain independent of host backend selection.
  *
