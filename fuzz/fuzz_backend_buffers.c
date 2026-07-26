@@ -84,6 +84,16 @@ static void fuzz_raw_backend_buffers(const uint8_t* data, size_t size) {
 		: fuzz_make_entry_2x(data[1], data[2], table_len, &entry_len);
 	if (!entry) return;
 
+	size_t located_entry_len = 0;
+	size_t located_table_len = 0;
+	uint64_t table_address = 0;
+	fuzz_sink_val((uint64_t)lazybiosGetSMBIOSTableLocation(
+		entry, entry_len, &located_entry_len, &table_address,
+		&located_table_len));
+	fuzz_sink_val(located_entry_len);
+	fuzz_sink_val(table_address);
+	fuzz_sink_val(located_table_len);
+
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (ctx) {
 		if (lazybiosLoadRawBuffers(ctx, entry, entry_len, table, table_len) == 0) {
@@ -100,10 +110,17 @@ static void fuzz_raw_backend_buffers(const uint8_t* data, size_t size) {
 int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	size_t entry_offset = 0;
 	size_t entry_len = 0;
+	size_t table_len = 0;
+	uint64_t table_address = 0;
 	fuzz_sink_val((uint64_t)lazybiosFindSMBIOSEntryPoint(
 		data, size, &entry_offset, &entry_len));
 	fuzz_sink_val(entry_offset);
 	fuzz_sink_val(entry_len);
+	fuzz_sink_val((uint64_t)lazybiosGetSMBIOSTableLocation(
+		data, size, &entry_len, &table_address, &table_len));
+	fuzz_sink_val(entry_len);
+	fuzz_sink_val(table_address);
+	fuzz_sink_val(table_len);
 
 	fuzz_arbitrary_windows_buffer(data, size);
 	fuzz_wrapped_windows_buffer(data, size);

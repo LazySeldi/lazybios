@@ -30,11 +30,26 @@
 #define WINDOWS_RAW_HEADER_SIZE 8
 #define WINDOWS_RAW_LENGTH_OFFSET 4
 
+static uint16_t read_u16_le(const uint8_t data[2]) {
+	return (uint16_t)data[0] | ((uint16_t)data[1] << 8);
+}
+
 static uint32_t read_u32_le(const uint8_t data[4]) {
 	return (uint32_t)data[0] |
 		((uint32_t)data[1] << 8) |
 		((uint32_t)data[2] << 16) |
 		((uint32_t)data[3] << 24);
+}
+
+static uint64_t read_u64_le(const uint8_t data[8]) {
+	return (uint64_t)data[0] |
+		((uint64_t)data[1] << 8) |
+		((uint64_t)data[2] << 16) |
+		((uint64_t)data[3] << 24) |
+		((uint64_t)data[4] << 32) |
+		((uint64_t)data[5] << 40) |
+		((uint64_t)data[6] << 48) |
+		((uint64_t)data[7] << 56);
 }
 
 static void write_u16_le(uint8_t data[2], uint16_t value) {
@@ -175,4 +190,42 @@ int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
 	}
 
 	return -1;
+}
+
+/**
+ * Extracts the physical structure-table location from a validated entry point.
+ *
+ * This keeps firmware byte decoding independent of platform I/O so native
+ * backends can share deterministic tests and fuzz coverage.
+ */
+int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
+	size_t* entry_len, uint64_t* table_address, size_t* table_len) {
+	lazybiosEntryInspection inspection;
+
+	if (!entry_data || !entry_len || !table_address || !table_len)
+		return -1;
+	if (lazybiosInspectEntryPoint(entry_data, available, &inspection) != 0 ||
+		!inspection.checksum_valid ||
+		!inspection.intermediate_checksum_valid)
+		return -1;
+
+	if (inspection.tag == SMBIOS_VER_3X) {
+		*table_address =
+			read_u64_le(entry_data + SMBIOS3_TABLE_ADDRESS_OFFSET);
+		*table_len = (size_t)read_u32_le(
+			entry_data + SMBIOS3_TABLE_MAX_SIZE_OFFSET);
+	} else if (inspection.tag == SMBIOS_VER_2X) {
+		*table_address =
+			read_u32_le(entry_data + SMBIOS2_TABLE_ADDRESS_OFFSET);
+		*table_len =
+			read_u16_le(entry_data + SMBIOS2_TABLE_LENGTH_OFFSET);
+	} else {
+		return -1;
+	}
+
+	if (*table_address == 0 || *table_len == 0)
+		return -1;
+
+	*entry_len = inspection.length;
+	return 0;
 }

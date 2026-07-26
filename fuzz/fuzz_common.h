@@ -96,6 +96,8 @@ static inline uint8_t* fuzz_make_entry_2x(uint8_t major, uint8_t minor, size_t d
 	uint16_t table_len = (uint16_t)(dmi_len > 0xFFFF ? 0xFFFF : dmi_len);
 	e[0x16] = (uint8_t)(table_len & 0xFF);
 	e[0x17] = (uint8_t)(table_len >> 8);
+	e[0x18] = 0x00;
+	e[0x19] = 0x10;
 	e[0x1E] = (uint8_t)((major << 4) | (minor & 0x0F));
 
 	uint8_t sum = 0;
@@ -130,6 +132,8 @@ static inline uint8_t* fuzz_make_entry_3x(uint8_t major, uint8_t minor, uint8_t 
 	e[0x0D] = (uint8_t)((table_len >> 8) & 0xFF);
 	e[0x0E] = (uint8_t)((table_len >> 16) & 0xFF);
 	e[0x0F] = (uint8_t)((table_len >> 24) & 0xFF);
+	e[0x10] = 0x00;
+	e[0x11] = 0x10;
 
 	uint8_t sum = 0;
 	for (int i = 0; i < FUZZ_SMBIOS3_ENTRY_LEN; i++) sum = (uint8_t)(sum + e[i]);

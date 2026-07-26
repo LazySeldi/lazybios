@@ -231,11 +231,21 @@ static int test_numeric_decoders(void) {
 	return 0;
 }
 
+static void put_u16_le(uint8_t out[2], uint16_t value) {
+	out[0] = (uint8_t)value;
+	out[1] = (uint8_t)(value >> 8);
+}
+
 static void put_u32_le(uint8_t out[4], uint32_t value) {
 	out[0] = (uint8_t)value;
 	out[1] = (uint8_t)(value >> 8);
 	out[2] = (uint8_t)(value >> 16);
 	out[3] = (uint8_t)(value >> 24);
+}
+
+static void put_u64_le(uint8_t out[8], uint64_t value) {
+	for (size_t i = 0; i < 8; i++)
+		out[i] = (uint8_t)(value >> (i * 8));
 }
 
 static int test_backend_transformations(void) {
@@ -280,6 +290,20 @@ static int test_backend_transformations(void) {
 	uint8_t image[160] = {0};
 	uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH];
 	make_entry3(entry, 3, 9, 0);
+	size_t table_entry_len = 0;
+	size_t table_len = 0;
+	uint64_t table_address = 0;
+	CHECK(lazybiosGetSMBIOSTableLocation(entry, sizeof(entry),
+		&table_entry_len, &table_address, &table_len) == -1);
+	put_u32_le(entry + SMBIOS3_TABLE_MAX_SIZE_OFFSET, UINT32_C(0x123456));
+	put_u64_le(entry + SMBIOS3_TABLE_ADDRESS_OFFSET,
+		UINT64_C(0x1122334455667788));
+	set_checksum(entry, 0, sizeof(entry), SMBIOS3_CHECKSUM_OFFSET);
+	CHECK(lazybiosGetSMBIOSTableLocation(entry, sizeof(entry),
+		&table_entry_len, &table_address, &table_len) == 0);
+	CHECK(table_entry_len == SMBIOS3_ENTRY_POINT_LENGTH);
+	CHECK(table_address == UINT64_C(0x1122334455667788));
+	CHECK(table_len == 0x123456);
 	memcpy(image + 16, entry, sizeof(entry));
 	size_t offset = 0;
 	size_t length = 0;
@@ -303,6 +327,21 @@ static int test_backend_transformations(void) {
 
 	uint8_t entry2[SMBIOS2_ENTRY_POINT_LENGTH];
 	make_entry2(entry2, 2, 8);
+	put_u16_le(entry2 + SMBIOS2_TABLE_LENGTH_OFFSET, UINT16_C(0x3456));
+	put_u32_le(entry2 + SMBIOS2_TABLE_ADDRESS_OFFSET,
+		UINT32_C(0x89ABCDEF));
+	set_checksum(entry2, SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+		sizeof(entry2), SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET);
+	set_checksum(entry2, 0, sizeof(entry2), SMBIOS2_CHECKSUM_OFFSET);
+	CHECK(lazybiosGetSMBIOSTableLocation(entry2, sizeof(entry2),
+		&table_entry_len, &table_address, &table_len) == 0);
+	CHECK(table_entry_len == SMBIOS2_ENTRY_POINT_LENGTH);
+	CHECK(table_address == UINT32_C(0x89ABCDEF));
+	CHECK(table_len == 0x3456);
+	entry2[SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET]++;
+	CHECK(lazybiosGetSMBIOSTableLocation(entry2, sizeof(entry2),
+		&table_entry_len, &table_address, &table_len) == -1);
+	entry2[SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET]--;
 	memcpy(image + 112, entry2, sizeof(entry2));
 	CHECK(lazybiosFindSMBIOSEntryPoint(
 		image, sizeof(image), &offset, &length) == 0);

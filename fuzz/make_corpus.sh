@@ -31,6 +31,7 @@ for dir in "$dumps"/*/; do
 
 	if [ -f "$dir/smbios_entry_point" ]; then
 		cp "$dir/smbios_entry_point" "$out/entry_point/$name"
+		cp "$dir/smbios_entry_point" "$out/backend_buffers/$name-entry"
 	fi
 
 	# fuzz_single_file wants the entry point and table concatenated.
