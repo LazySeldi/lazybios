@@ -234,6 +234,8 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 }
 
 int lazybiosOpenBSD(lazybiosCTX_t *ctx) {
+    if (!ctx) return -1;
+
 	return lazybiosDevMem(ctx, OpenBSDAddressParser());
 }
 

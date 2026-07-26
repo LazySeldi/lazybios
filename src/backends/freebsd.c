@@ -59,7 +59,7 @@ static inline uint64_t FreeBSDAddressGetter(void) {
     if (endptr == value || errno == ERANGE) {  // Parsing either failed or the value was out of range
         return 0;
     }
-    
+
     return addr;
 }
 
@@ -68,7 +68,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 
 	int fd = open(DEV_MEM, O_RDONLY);
 	if (fd == -1) {
-		lb_log("Failed to open /dev/mem, consider setting kern.securelevel to -1, or checking if you have the permissions to access /dev/mem!");
+		lb_log("Failed to open /dev/mem, consider checking if you have the permissions to access /dev/mem!");
 		lb_dbg("Error: %s", strerror(errno));
 		return -1;
 	}
@@ -207,6 +207,8 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 }
 
 int lazybiosFreeBSD(lazybiosCTX_t *ctx) {
+    if (!ctx) return -1;
+
 	return lazybiosDevMem(ctx, FreeBSDAddressGetter());
 }
 

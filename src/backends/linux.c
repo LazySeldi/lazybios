@@ -213,12 +213,10 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 }
 
 int lazybiosLinux(lazybiosCTX_t *ctx) {
-	if (!ctx)
-		return -1;
+	if (!ctx) return -1;
 
 	FILE *dmi = fopen(LINUX_SYSFS_DMI_TABLE, "rb");
-	if (!dmi)
-		return lazybiosDevMem(ctx, LinuxEFIAddressParser());
+	if (!dmi) return lazybiosDevMem(ctx, LinuxEFIAddressParser());
 
 	fclose(dmi);
 	return lazybiosFile(ctx, LINUX_SYSFS_SMBIOS_ENTRY, LINUX_SYSFS_DMI_TABLE);
