@@ -18,12 +18,12 @@
 ---
 
 ## Project Status
-1. **Windows support:** Implemented using Windows API calls.
-   **Linux support:** Implemented via sysfs, EFI system-table discovery, and `/dev/mem`.
-   **macOS support:** Implemented using the AppleSMBIOS I/O Registry service through IOKit and CoreFoundation.
-   **OpenBSD support:** Implemented via `/var/run/dmesg.boot` discovery and validated `/dev/mem` access.
-   **FreeBSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access.
-   **NetBSD support:** Implemented via `machdep.smbios` and the address-based `/dev/smbios` interface, with `/dev/mem` fallbacks.
+1. **Windows support:** Implemented using Windows API calls. \
+   **Linux support:** Implemented via sysfs, EFI system-table discovery, and `/dev/mem`. \
+   **macOS support:** Implemented using the AppleSMBIOS I/O Registry service through IOKit and CoreFoundation. \
+   **OpenBSD support:** Implemented via `/var/run/dmesg.boot` discovery and validated `/dev/mem` access. \
+   **FreeBSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access. \
+   **NetBSD support:** Implemented via `machdep.smbios` and the address-based `/dev/smbios` interface, with `/dev/mem` fallbacks. \
 2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, and NetBSD. File-based parsing is available independently of the selected host backend.
 3. The library is actively under development, features and structures may change.
 
