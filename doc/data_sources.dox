@@ -74,6 +74,25 @@
  * Reading `/dev/mem` depends on account privileges and the FreeBSD securelevel
  * and memory-access policy.
  *
+ * @section sources_netbsd NetBSD
+ *
+ * The NetBSD backend obtains the physical SMBIOS entry-point address from the
+ * read-only `machdep.smbios` sysctl. It first uses that address with
+ * `/dev/smbios`, a restricted, read-only aperture into the SMBIOS entry point
+ * and structure table. `/dev/smbios` is address-based: it must be read at the
+ * physical entry-point and table offsets and is not a flat file containing the
+ * two buffers back-to-back.
+ *
+ * If `/dev/smbios` is unavailable or cannot provide the data, the backend reads
+ * the same physical addresses through `/dev/mem`. On x86, an unavailable
+ * sysctl or failed address-based read is followed by a scan of the legacy
+ * `0xF0000` firmware window. Entry-point candidates are checksum-validated
+ * before their table addresses are used.
+ *
+ * Device access remains subject to NetBSD device-node permissions and
+ * physical-memory access policy. The sysctl is an address source; it does not
+ * expose the complete SMBIOS structure table itself.
+ *
  * @section sources_unknown Unknown platforms
  *
  * Host initialization is not implemented for unknown platforms. File-based

@@ -50,12 +50,14 @@
  * - `fuzz_helpers`: bounded traversal, counting, partial cleanup, and
  *   unavailable backend dispatch.
  * - `fuzz_backend_buffers`: Windows RawSMBIOSData conversion, raw-buffer
- *   loading used by macOS, and legacy physical-memory entry-point scanning
- *   shared by Linux, OpenBSD, and FreeBSD.
+ *   loading used by macOS, physical-memory entry-point scanning shared by the
+ *   `/dev/mem` backends, and checksum-validated SMBIOS 2.x/3.x table-location
+ *   extraction used by NetBSD.
  * - `fuzz_single_file` and `fuzz_two_files`: the two public file loaders on
  *   POSIX platforms.
  *
- * Operating-system calls themselves are integration-tested on their native
+ * Operating-system calls themselves, including NetBSD's `sysctlbyname`,
+ * `/dev/smbios`, and `/dev/mem` reads, are integration-tested on their native
  * systems; fuzzing covers the byte-processing code after those calls return.
  * Enable the optional native check with
  * `LAZYBIOS_TEST_HOST_BACKEND=ON`. CTest reports it as skipped when the host

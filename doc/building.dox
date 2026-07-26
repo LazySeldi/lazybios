@@ -12,8 +12,9 @@
  *
  * On macOS, CMake locates and links the system IOKit and CoreFoundation
  * frameworks required by the AppleSMBIOS backend.
- * Linux, OpenBSD, and FreeBSD use interfaces supplied by their base systems;
- * CMake selects only the native backend source for the target operating system.
+ * Linux, OpenBSD, FreeBSD, and NetBSD use interfaces supplied by their base
+ * systems; CMake selects only the native backend source for the target
+ * operating system.
  *
  * @section build_source Building from source
  *
