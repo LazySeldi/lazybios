@@ -33,34 +33,24 @@ static void fuzz_unavailable_init(uint8_t selector) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return;
 
-	#if defined(__linux__)
-		const lazybiosBackend_t unavailable[] = {
-			LAZYBIOS_BACKEND_WINDOWS,
-			LAZYBIOS_BACKEND_MACOS,
-			LAZYBIOS_BACKEND_UNKNOWN
-		};
-	#elif defined(__APPLE__)
-		const lazybiosBackend_t unavailable[] = {
-			LAZYBIOS_BACKEND_LINUX,
-			LAZYBIOS_BACKEND_WINDOWS,
-			LAZYBIOS_BACKEND_UNKNOWN
-		};
-	#elif defined(_WIN32) || defined(_WIN64)
-		const lazybiosBackend_t unavailable[] = {
-			LAZYBIOS_BACKEND_LINUX,
-			LAZYBIOS_BACKEND_MACOS,
-			LAZYBIOS_BACKEND_UNKNOWN
-		};
-	#else
-		const lazybiosBackend_t unavailable[] = {
-			LAZYBIOS_BACKEND_LINUX,
-			LAZYBIOS_BACKEND_WINDOWS,
-			LAZYBIOS_BACKEND_MACOS,
-			LAZYBIOS_BACKEND_UNKNOWN
-		};
-	#endif
-
-	ctx->backend = unavailable[selector % (sizeof(unavailable) / sizeof(unavailable[0]))];
+	const lazybiosBackend_t backends[] = {
+		LAZYBIOS_BACKEND_LINUX,
+		LAZYBIOS_BACKEND_WINDOWS,
+		LAZYBIOS_BACKEND_MACOS,
+		LAZYBIOS_BACKEND_OPENBSD,
+		LAZYBIOS_BACKEND_FREEBSD,
+		LAZYBIOS_BACKEND_NETBSD,
+		LAZYBIOS_BACKEND_SUNOS,
+		LAZYBIOS_BACKEND_DRAGONFLY,
+		LAZYBIOS_BACKEND_UNKNOWN,
+		LAZYBIOS_BACKEND_HAIKU,
+		LAZYBIOS_BACKEND_BEOS,
+		LAZYBIOS_BACKEND_GENERIC
+	};
+	lazybiosBackend_t selected =
+		backends[selector % (sizeof(backends) / sizeof(backends[0]))];
+	if (selected == ctx->backend) selected = LAZYBIOS_BACKEND_UNKNOWN;
+	ctx->backend = selected;
 	fuzz_sink_val((uint64_t)lazybiosInit(ctx));
 	lazybiosCleanup(ctx);
 }
