@@ -17,10 +17,14 @@
  * - NetBSD host loading uses `machdep.smbios` with the address-based
  *   `/dev/smbios` aperture, then `/dev/mem`; x86 additionally retains the
  *   legacy firmware-window scan.
+ * - SunOS host loading prefers its offset-based `/dev/smbios` snapshot, then
+ *   falls back to scanning the legacy firmware window through `/dev/mem`.
  * - All `/dev/mem` paths remain subject to platform permissions, securelevel,
  *   and physical-memory access policy.
  * - Unknown host backends are not implemented.
- * - File-based loaders remain independent of host backend selection.
+ * - File-based loaders remain independent of host backend selection. Merged
+ *   files may contain either a tightly concatenated table or a valid embedded
+ *   table offset.
  *
  * @section limits_types Implemented structures
  *

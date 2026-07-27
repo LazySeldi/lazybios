@@ -10,7 +10,7 @@
 - **Clean C API** - Simple function calls, only 3 steps to assure memory-safety.
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
-- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, and NetBSD.
+- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, and SunOS.
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
@@ -24,7 +24,8 @@
    **OpenBSD support:** Implemented via `/var/run/dmesg.boot` discovery and validated `/dev/mem` access. \
    **FreeBSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access. \
    **NetBSD support:** Implemented via `machdep.smbios` and the address-based `/dev/smbios` interface, with `/dev/mem` fallbacks. \
-2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, and NetBSD. File-based parsing is available independently of the selected host backend.
+   **SunOS support:** Implemented via the offset-aware `/dev/smbios` snapshot, with a legacy `/dev/mem` fallback. \
+2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, and SunOS. File-based parsing is available independently of the selected host backend.
 3. The library is actively under development, features and structures may change.
 
 ---

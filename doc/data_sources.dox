@@ -93,6 +93,23 @@
  * physical-memory access policy. The sysctl is an address source; it does not
  * expose the complete SMBIOS structure table itself.
  *
+ * @section sources_sunos SunOS
+ *
+ * The SunOS backend first reads `/dev/smbios`. This device exposes a snapshot
+ * containing the SMBIOS entry point and structure table. Its entry point uses
+ * the structure-table address as a file-relative offset and can align the
+ * table after padding rather than placing it immediately after the declared
+ * entry-point length. The single-file loader validates that the complete
+ * advertised range fits inside the device image before using that offset.
+ *
+ * If `/dev/smbios` cannot be loaded, the backend scans the legacy `0xF0000`
+ * firmware window through `/dev/mem`. Candidates are checked on 16-byte
+ * boundaries before the physical structure-table range described by the
+ * selected entry point is mapped.
+ *
+ * Access to `/dev/smbios` or `/dev/mem` remains subject to the device-node and
+ * physical-memory permissions configured by the operating system.
+ *
  * @section sources_unknown Unknown platforms
  *
  * Host initialization is not implemented for unknown platforms. File-based
@@ -106,10 +123,14 @@
  *
  * @section sources_merged Merged file
  *
- * @ref lazybiosSingleFile expects the SMBIOS entry point at offset zero and the
- * DMI structure table immediately after it. The loader identifies whether the
- * leading entry point uses the SMBIOS 2.x or 3.x layout and uses the appropriate
- * entry-point length.
+ * @ref lazybiosSingleFile expects the SMBIOS entry point at offset zero. It
+ * accepts both a tightly concatenated entry-point-plus-table dump and an image
+ * whose entry point contains a valid file-relative table offset, including
+ * SunOS `/dev/smbios` snapshots that align the table with padding. The
+ * advertised offset and table length must describe a complete range inside the
+ * file. Otherwise, the loader treats the bytes immediately following the entry
+ * point as the table, preserving support for dumps that retain a physical
+ * firmware address.
  *
  * @section sources_failure Failure behavior
  *
