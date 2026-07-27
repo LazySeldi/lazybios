@@ -31,7 +31,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(OS_GENERIC)
+/* CMake selected the generic backend for an otherwise unknown target. */
+
+#elif defined(OS_HAIKU)
+/* CMake selected the Haiku backend. */
+
+#elif defined(OS_BEOS)
+/* CMake selected the BeOS backend. */
+
+#elif defined(_WIN32) || defined(_WIN64)
 #define OS_WINDOWS 1
 
 #elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__gnu_linux__)
@@ -55,8 +64,14 @@
 #elif defined(__DragonFly__)
 #define OS_DRAGONFLY 1
 
+#elif defined(__HAIKU__)
+#define OS_HAIKU 1
+
+#elif defined(__BEOS__) || defined(__BeOS) || defined(_BEOS)
+#define OS_BEOS 1
+
 #else
-#define OS_UNKNOWN 1
+#define OS_GENERIC 1
 #endif
 
 // Logging system for lazybios
@@ -327,7 +342,25 @@ int lazybiosSunOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_DRAGONFLY)
-int lazybiosDragonFly(lazybiosCTX_t *ctx);
+int lazybiosDragonFly(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_HAIKU)
+int lazybiosHaiku(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_BEOS)
+int lazybiosBeOS(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_GENERIC)
+int lazybiosGeneric(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC)
+int lazybiosLoadLegacyPhysicalMemory(lazybiosCTX_t* ctx,
+	const char* const* device_paths, size_t device_count,
+	const char* platform_name);
 #endif
 
 #endif

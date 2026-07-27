@@ -272,9 +272,12 @@ typedef enum {
 	LAZYBIOS_BACKEND_OPENBSD, /**< OpenBSD dmesg-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
-	LAZYBIOS_BACKEND_SUNOS,    /**< SunOS /dev/smbios snapshot with a physical-memory fallback. */
+	LAZYBIOS_BACKEND_SUNOS,    /**< SunOS (Solaris/illumos) /dev/smbios snapshot with a physical-memory fallback. */
 	LAZYBIOS_BACKEND_DRAGONFLY, /**< DragonFly BSD kenv-assisted physical-memory backend. */
-	LAZYBIOS_BACKEND_UNKNOWN  /**< No native host backend is available. */
+	LAZYBIOS_BACKEND_UNKNOWN = 8, /**< No usable host backend was selected. */
+	LAZYBIOS_BACKEND_HAIKU,     /**< Experimental Haiku legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_BEOS,      /**< Experimental BeOS legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_GENERIC    /**< Experimental generic legacy physical-memory backend. */
 } lazybiosBackend_t;
 
 /**
