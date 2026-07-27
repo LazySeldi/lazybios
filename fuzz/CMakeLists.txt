@@ -41,6 +41,12 @@ endforeach()
 
 add_library(lazybios_fuzz_lib STATIC ${LAZYBIOS_FUZZ_LIB_SOURCES})
 
+if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
+    target_compile_definitions(lazybios_fuzz_lib PRIVATE
+            ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
+    )
+endif()
+
 target_include_directories(lazybios_fuzz_lib PUBLIC
         ${PROJECT_SOURCE_DIR}/include
 )
@@ -89,6 +95,11 @@ endif()
 foreach(target ${LAZYBIOS_FUZZ_TARGETS})
     add_executable(${target} ${target}.c)
     target_link_libraries(${target} PRIVATE lazybios_fuzz_lib)
+    if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
+        target_compile_definitions(${target} PRIVATE
+                ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
+        )
+    endif()
     target_include_directories(${target} PRIVATE
             ${PROJECT_SOURCE_DIR}/src/internal
     )

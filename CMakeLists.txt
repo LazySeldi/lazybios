@@ -72,10 +72,18 @@ set(LAZYBIOS_SOURCES
         src/structures/type46.c
 )
 
+set(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS "")
+
 if(WIN32)
     list(APPEND LAZYBIOS_SOURCES src/backends/windows.c)
 elseif(APPLE)
     list(APPEND LAZYBIOS_SOURCES src/backends/macos.c)
+elseif(HAIKU)
+    list(APPEND LAZYBIOS_SOURCES src/backends/haiku.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_HAIKU=1)
+elseif(BEOS)
+    list(APPEND LAZYBIOS_SOURCES src/backends/beos.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_BEOS=1)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND LAZYBIOS_SOURCES src/backends/linux.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
@@ -88,9 +96,19 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     list(APPEND LAZYBIOS_SOURCES src/backends/sunos.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "DragonFly")
     list(APPEND LAZYBIOS_SOURCES src/backends/dragonfly.c)
+else()
+    message(WARNING "Unknown platform detected. Falling back to generic /dev/mem backend.")
+    list(APPEND LAZYBIOS_SOURCES src/backends/generic.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_GENERIC=1)
 endif()
 
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
+
+if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
+    target_compile_definitions(lazybios PRIVATE
+            ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
+    )
+endif()
 
 if(APPLE)
     find_library(LAZYBIOS_IOKIT_FRAMEWORK IOKit)
@@ -153,6 +171,11 @@ option(LAZYBIOS_TEST_HOST_BACKEND
 if(BUILD_TESTING)
     add_executable(lazybios_semantic_test test/semantic_test.c)
     target_link_libraries(lazybios_semantic_test PRIVATE lazybios)
+    if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
+        target_compile_definitions(lazybios_semantic_test PRIVATE
+                ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
+        )
+    endif()
     target_include_directories(lazybios_semantic_test PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src/internal
     )
