@@ -229,3 +229,56 @@ int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
 	*entry_len = inspection.length;
 	return 0;
 }
+
+/**
+ * Selects the structure-table range in a file containing an entry point.
+ *
+ * Most merged dumps place the table immediately after the entry point and
+ * retain its physical firmware address. Some operating-system devices instead
+ * rewrite that address into a file-relative offset and align the table. Use
+ * the embedded address only when both it and the advertised table length fit
+ * entirely inside the file; otherwise preserve the tightly concatenated
+ * layout.
+ */
+int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available,
+	size_t file_len, size_t* entry_len, size_t* table_offset,
+	size_t* table_len) {
+	lazybiosEntryInspection inspection;
+	uint64_t advertised_address;
+	size_t advertised_len;
+
+	if (!entry_data || !entry_len || !table_offset || !table_len)
+		return -1;
+	if (lazybiosInspectEntryPoint(entry_data, available, &inspection) != 0 ||
+		inspection.length >= file_len)
+		return -1;
+
+	if (inspection.tag == SMBIOS_VER_3X) {
+		advertised_address =
+			read_u64_le(entry_data + SMBIOS3_TABLE_ADDRESS_OFFSET);
+		advertised_len = (size_t)read_u32_le(
+			entry_data + SMBIOS3_TABLE_MAX_SIZE_OFFSET);
+	} else if (inspection.tag == SMBIOS_VER_2X) {
+		advertised_address =
+			read_u32_le(entry_data + SMBIOS2_TABLE_ADDRESS_OFFSET);
+		advertised_len =
+			read_u16_le(entry_data + SMBIOS2_TABLE_LENGTH_OFFSET);
+	} else {
+		return -1;
+	}
+
+	*entry_len = inspection.length;
+	*table_offset = inspection.length;
+	*table_len = file_len - inspection.length;
+
+	if (advertised_address <= SIZE_MAX) {
+		const size_t offset = (size_t)advertised_address;
+		if (offset >= inspection.length && offset < file_len &&
+			advertised_len != 0 && advertised_len <= file_len - offset) {
+			*table_offset = offset;
+			*table_len = advertised_len;
+		}
+	}
+
+	return 0;
+}
