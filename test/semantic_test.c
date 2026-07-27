@@ -361,6 +361,79 @@ static int test_backend_transformations(void) {
 	return 0;
 }
 
+static int test_single_file_layouts(void) {
+	const uint8_t table[] = {
+		127, 4, 0x34, 0x12, 0, 0
+	};
+	size_t entry_len;
+	size_t table_offset;
+	size_t table_len;
+
+	uint8_t padded2[32 + sizeof(table)] = {0};
+	make_entry2(padded2, 2, 8);
+	put_u16_le(padded2 + SMBIOS2_TABLE_LENGTH_OFFSET,
+		(uint16_t)sizeof(table));
+	put_u32_le(padded2 + SMBIOS2_TABLE_ADDRESS_OFFSET, UINT32_C(0x20));
+	set_checksum(padded2, SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+		SMBIOS2_ENTRY_POINT_LENGTH,
+		SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET);
+	set_checksum(padded2, 0, SMBIOS2_ENTRY_POINT_LENGTH,
+		SMBIOS2_CHECKSUM_OFFSET);
+	padded2[SMBIOS2_ENTRY_POINT_LENGTH] = 0xA5;
+	memcpy(padded2 + 32, table, sizeof(table));
+
+	CHECK(lazybiosGetSingleFileLayout(padded2,
+		SMBIOS2_ENTRY_POINT_LENGTH, sizeof(padded2), &entry_len,
+		&table_offset, &table_len) == 0);
+	CHECK(entry_len == SMBIOS2_ENTRY_POINT_LENGTH);
+	CHECK(table_offset == 32);
+	CHECK(table_len == sizeof(table));
+
+	lazybiosCTX_t* ctx = lazybiosCTXNew();
+	CHECK(ctx != NULL);
+	CHECK(lazybiosLoadRawBuffers(ctx, padded2, entry_len,
+		padded2 + table_offset, table_len) == 0);
+	CHECK(ctx->DMIData->dmi_len == sizeof(table));
+	CHECK(ctx->DMIData->dmi_data[0] == SMBIOS_TYPE_END);
+	CHECK(lazybiosCleanup(ctx) == 0);
+
+	uint8_t tight2[SMBIOS2_ENTRY_POINT_LENGTH + sizeof(table)] = {0};
+	make_entry2(tight2, 2, 8);
+	put_u16_le(tight2 + SMBIOS2_TABLE_LENGTH_OFFSET,
+		(uint16_t)sizeof(table));
+	put_u32_le(tight2 + SMBIOS2_TABLE_ADDRESS_OFFSET,
+		UINT32_C(0x000F1230));
+	set_checksum(tight2, SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+		SMBIOS2_ENTRY_POINT_LENGTH,
+		SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET);
+	set_checksum(tight2, 0, SMBIOS2_ENTRY_POINT_LENGTH,
+		SMBIOS2_CHECKSUM_OFFSET);
+	memcpy(tight2 + SMBIOS2_ENTRY_POINT_LENGTH, table, sizeof(table));
+
+	CHECK(lazybiosGetSingleFileLayout(tight2,
+		SMBIOS2_ENTRY_POINT_LENGTH, sizeof(tight2), &entry_len,
+		&table_offset, &table_len) == 0);
+	CHECK(table_offset == SMBIOS2_ENTRY_POINT_LENGTH);
+	CHECK(table_len == sizeof(table));
+
+	uint8_t padded3[32 + sizeof(table)] = {0};
+	make_entry3(padded3, 3, 9, 0);
+	put_u32_le(padded3 + SMBIOS3_TABLE_MAX_SIZE_OFFSET,
+		(uint32_t)sizeof(table));
+	put_u64_le(padded3 + SMBIOS3_TABLE_ADDRESS_OFFSET, UINT64_C(0x20));
+	set_checksum(padded3, 0, SMBIOS3_ENTRY_POINT_LENGTH,
+		SMBIOS3_CHECKSUM_OFFSET);
+	memcpy(padded3 + 32, table, sizeof(table));
+
+	CHECK(lazybiosGetSingleFileLayout(padded3,
+		SMBIOS3_ENTRY_POINT_LENGTH, sizeof(padded3), &entry_len,
+		&table_offset, &table_len) == 0);
+	CHECK(entry_len == SMBIOS3_ENTRY_POINT_LENGTH);
+	CHECK(table_offset == 32);
+	CHECK(table_len == sizeof(table));
+	return 0;
+}
+
 static int test_null_free_contracts(void) {
 	lazybiosFreeType0(NULL);
 	lazybiosFreeType1(NULL);
@@ -418,6 +491,7 @@ int main(void) {
 		test_type28_signed_temperature() != 0 ||
 		test_numeric_decoders() != 0 ||
 		test_backend_transformations() != 0 ||
+		test_single_file_layouts() != 0 ||
 		test_null_free_contracts() != 0)
 		return EXIT_FAILURE;
 

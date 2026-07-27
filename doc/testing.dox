@@ -20,6 +20,10 @@
  *
  * @section testing_semantic Semantic tests
  *
+ * The semantic suite includes merged-file layout regressions for tightly
+ * concatenated tables and padded SMBIOS 2.x/3.x images whose entry points
+ * advertise a file-relative table offset.
+ *
  * @code{.sh}
  * cmake -S . -B build -DBUILD_TESTING=ON
  * cmake --build build
@@ -53,13 +57,15 @@
  *   loading used by macOS, physical-memory entry-point scanning shared by the
  *   `/dev/mem` backends, and checksum-validated SMBIOS 2.x/3.x table-location
  *   extraction used by NetBSD.
- * - `fuzz_single_file` and `fuzz_two_files`: the two public file loaders on
- *   POSIX platforms.
+ * - `fuzz_single_file`: offset-aware and tightly concatenated merged files,
+ *   including entry-point sizing, padding, seeking, and short reads.
+ * - `fuzz_two_files`: the separate entry-point and table loader on POSIX
+ *   platforms.
  *
  * Operating-system calls themselves, including NetBSD's `sysctlbyname`,
- * `/dev/smbios`, and `/dev/mem` reads, are integration-tested on their native
- * systems; fuzzing covers the byte-processing code after those calls return.
- * Enable the optional native check with
+ * the NetBSD and SunOS `/dev/smbios` interfaces, and `/dev/mem` reads, are
+ * integration-tested on their native systems; fuzzing covers the
+ * byte-processing code after those calls return. Enable the optional native check with
  * `LAZYBIOS_TEST_HOST_BACKEND=ON`. CTest reports it as skipped when the host
  * does not expose SMBIOS data or the current account lacks access.
  *
