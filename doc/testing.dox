@@ -62,12 +62,13 @@
  * - `fuzz_two_files`: the separate entry-point and table loader on POSIX
  *   platforms.
  *
- * Operating-system calls themselves, including NetBSD's `sysctlbyname`,
- * the NetBSD and SunOS `/dev/smbios` interfaces, and `/dev/mem` reads, are
- * integration-tested on their native systems; fuzzing covers the
- * byte-processing code after those calls return. Enable the optional native check with
- * `LAZYBIOS_TEST_HOST_BACKEND=ON`. CTest reports it as skipped when the host
- * does not expose SMBIOS data or the current account lacks access.
+ * Operating-system calls themselves, including FreeBSD and DragonFly BSD
+ * `kenv(2)`, NetBSD's `sysctlbyname`, the NetBSD and SunOS `/dev/smbios`
+ * interfaces, and `/dev/mem` reads, are integration-tested on their native
+ * systems; fuzzing covers the byte-processing code after those calls return.
+ * Enable the optional native check with `LAZYBIOS_TEST_HOST_BACKEND=ON`. CTest
+ * reports it as skipped when the host does not expose SMBIOS data or the
+ * current account lacks access.
  *
  * @section testing_variants Variants and coverage
  *

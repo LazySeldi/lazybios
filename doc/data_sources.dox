@@ -74,6 +74,19 @@
  * Reading `/dev/mem` depends on account privileges and the FreeBSD securelevel
  * and memory-access policy.
  *
+ * @section sources_dragonfly DragonFly BSD
+ *
+ * The DragonFly BSD backend requests `hint.smbios.0.mem` through `kenv(2)` and
+ * uses the returned physical address as the start of its `/dev/mem` search. If
+ * the value is unavailable or invalid, the search starts at the legacy
+ * `0xF0000` firmware window.
+ *
+ * The backend scans a 64 KiB region on 16-byte boundaries, validates each
+ * entry-point candidate, and maps the physical structure-table address and
+ * length reported by the selected entry point. Reading `/dev/mem` remains
+ * subject to DragonFly BSD device permissions and physical-memory access
+ * policy.
+ *
  * @section sources_netbsd NetBSD
  *
  * The NetBSD backend obtains the physical SMBIOS entry-point address from the

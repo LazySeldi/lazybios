@@ -151,12 +151,13 @@ fuzz/coverage.sh build-fuzz-coverage
 The HTML report is written to
 `build-fuzz-coverage/coverage/html/index.html`.
 
-The platform-neutral parts of the Windows, macOS, Linux, OpenBSD, FreeBSD, and
-NetBSD backends are fuzzed by `fuzz_backend_buffers`. This includes NetBSD's
-checksum-validated SMBIOS 2.x/3.x table-address and table-length extraction.
-Calls into `GetSystemFirmwareTable`, IOKit, sysfs, EFI systab, OpenBSD dmesg,
-FreeBSD `kenv`, NetBSD `sysctlbyname`, `/dev/smbios`, `/dev/mem`, `mmap`, and
-permission handling remain platform integration work. Exercise them on a
+The platform-neutral parts of the Windows, macOS, Linux, OpenBSD, FreeBSD,
+NetBSD, SunOS, and DragonFly BSD backends are fuzzed by
+`fuzz_backend_buffers`. This includes NetBSD's checksum-validated SMBIOS 2.x/3.x
+table-address and table-length extraction. Calls into
+`GetSystemFirmwareTable`, IOKit, sysfs, EFI systab, OpenBSD dmesg, FreeBSD and
+DragonFly BSD `kenv`, NetBSD `sysctlbyname`, `/dev/smbios`, `/dev/mem`, `mmap`,
+and permission handling remain platform integration work. Exercise them on a
 native machine with:
 
 ```sh

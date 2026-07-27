@@ -14,6 +14,8 @@
  *   falling back to the legacy `/dev/mem` firmware window.
  * - FreeBSD host loading uses the `hint.smbios.0.mem` kernel environment value
  *   before falling back to the legacy `/dev/mem` firmware window.
+ * - DragonFly BSD host loading uses the `hint.smbios.0.mem` kernel environment
+ *   value before falling back to the legacy `/dev/mem` firmware window.
  * - NetBSD host loading uses `machdep.smbios` with the address-based
  *   `/dev/smbios` aperture, then `/dev/mem`; x86 additionally retains the
  *   legacy firmware-window scan.
