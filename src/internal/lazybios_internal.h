@@ -49,6 +49,9 @@
 #elif defined(__NetBSD__)
 #define OS_NETBSD 1
 
+#elif defined(__sun)
+#define OS_SUNOS 1
+
 #else
 #define OS_UNKNOWN 1
 #endif
@@ -234,6 +237,9 @@ int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
 	size_t* entry_offset, size_t* entry_len);
 int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
 	size_t* entry_len, uint64_t* table_address, size_t* table_len);
+int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available,
+	size_t file_len, size_t* entry_len, size_t* table_offset,
+	size_t* table_len);
 
 #define READSTR(record, field, len, offset, p, end) do { \
 	if ((len) > (offset)) { \
@@ -311,6 +317,10 @@ int lazybiosFreeBSD(lazybiosCTX_t* ctx);
 
 #if defined(OS_NETBSD)
 int lazybiosNetBSD(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_SUNOS)
+int lazybiosSunOS(lazybiosCTX_t* ctx);
 #endif
 
 #endif

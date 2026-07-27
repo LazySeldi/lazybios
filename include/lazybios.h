@@ -272,6 +272,7 @@ typedef enum {
 	LAZYBIOS_BACKEND_OPENBSD, /**< OpenBSD dmesg-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
+	LAZYBIOS_BACKEND_SUNOS,  /**< SunOS /dev/smbios snapshot with a physical-memory fallback. */
 	LAZYBIOS_BACKEND_UNKNOWN  /**< No native host backend is available. */
 } lazybiosBackend_t;
 
@@ -448,7 +449,8 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
 /**
  * @brief Loads SMBIOS entry point and DMI data from one merged file.
  * @param ctx Context that receives the loaded data.
- * @param bin_path Path to a file containing the entry point followed by the DMI table.
+ * @param bin_path Path to a file containing the entry point and DMI table,
+ * either concatenated or separated by an advertised file-relative offset.
  * @return 0 on success, or -1 on failure.
  */
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
