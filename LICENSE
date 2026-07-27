@@ -499,3 +499,13 @@ necessary.  Here is a sample; alter the names:
   Moe Ghoul, President of Vice
 
 That's all there is to it!
+
+                        --- ADDITIONAL PERMISSION ---
+
+Lazybios is licensed under LGPL-2.1-or-later, with the following exception:
+
+Any open-source project (as defined by the Open Source Initiative) that statically links
+lazybios into its own code may distribute the resulting binary under its own license,
+provided that the source code to lazybios is made available under the LGPL.
+
+This exception does not apply to proprietary software.

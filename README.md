@@ -180,4 +180,11 @@ ctest --test-dir build --output-on-failure
 
 ## License
 
-[![License: LGPL v2.1](https://img.shields.io/badge/License-LGPL%20v2.1-blue.svg)](https://www.gnu.org/licenses/lgpl-2.1.html)
+lazybios is licensed under the LGPL-2.1-or-later with a static linking exception
+for open-source projects. See the [LICENSE](LICENSE) file for details.
+
+For open-source projects: You may statically link lazybios and distribute the
+resulting binary under your own license, as long as the source code to
+lazybios (including any modifications) is made available under the LGPL.
+
+For proprietary projects: The standard LGPL terms apply.
