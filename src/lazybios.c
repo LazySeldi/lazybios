@@ -33,13 +33,6 @@
 #include <string.h>
 
 
-/**
- * @brief Loads SMBIOS entry point and DMI data from one merged file.
- *
- * @param ctx Context that receives the loaded data.
- * @param bin_path Path to a file containing the entry point followed by the DMI table.
- * @return 0 on success, or -1 on failure.
- */
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
 
@@ -256,6 +249,12 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
         ctx->backend = LAZYBIOS_BACKEND_SUNOS;
     #elif defined(OS_DRAGONFLY)
         ctx->backend = LAZYBIOS_BACKEND_DRAGONFLY;
+    #elif defined(OS_HAIKU)
+        ctx->backend = LAZYBIOS_BACKEND_HAIKU;
+    #elif defined(OS_BEOS)
+        ctx->backend = LAZYBIOS_BACKEND_BEOS;
+	#elif defined(OS_GENERIC)
+		ctx->backend = LAZYBIOS_BACKEND_GENERIC;
 	#else
 		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
 	#endif
@@ -337,9 +336,34 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 	        lb_log("DragonFly backend is not available in this build");
             return -1;
 	        #endif
+
+	    case LAZYBIOS_BACKEND_HAIKU:
+	        #if defined(OS_HAIKU)
+	        return lazybiosHaiku(ctx);
+	        #else
+	        lb_log("Haiku backend is not available in this build");
+            return -1;
+	        #endif
+
+	    case LAZYBIOS_BACKEND_BEOS:
+	        #if defined(OS_BEOS)
+	        return lazybiosBeOS(ctx);
+	        #else
+	        lb_log("BeOS backend is not available in this build");
+	        return -1;
+            #endif
+
 		case LAZYBIOS_BACKEND_UNKNOWN:
-			lb_log("Unknown backend %d", ctx->backend);
+			lb_log("No host backend was selected");
 			return -1;
+
+		case LAZYBIOS_BACKEND_GENERIC:
+			#if defined(OS_GENERIC)
+			return lazybiosGeneric(ctx);
+			#else
+			lb_log("Generic backend is not available in this build");
+			return -1;
+			#endif
 
 		default:
 			lb_log("No backend found for initialization!");
