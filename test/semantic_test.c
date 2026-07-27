@@ -434,6 +434,45 @@ static int test_single_file_layouts(void) {
 	return 0;
 }
 
+static int test_backend_enum_values(void) {
+	lazybiosCTX_t* ctx;
+
+	CHECK(LAZYBIOS_BACKEND_UNKNOWN == 8);
+	CHECK(LAZYBIOS_BACKEND_HAIKU == 9);
+	CHECK(LAZYBIOS_BACKEND_BEOS == 10);
+	CHECK(LAZYBIOS_BACKEND_GENERIC == 11);
+
+	ctx = lazybiosCTXNew();
+	CHECK(ctx != NULL);
+	#if defined(OS_LINUX)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_LINUX);
+	#elif defined(OS_WINDOWS)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_WINDOWS);
+	#elif defined(OS_MACOS)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_MACOS);
+	#elif defined(OS_OPENBSD)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_OPENBSD);
+	#elif defined(OS_FREEBSD)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_FREEBSD);
+	#elif defined(OS_NETBSD)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_NETBSD);
+	#elif defined(OS_SUNOS)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_SUNOS);
+	#elif defined(OS_DRAGONFLY)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_DRAGONFLY);
+	#elif defined(OS_HAIKU)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_HAIKU);
+	#elif defined(OS_BEOS)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_BEOS);
+	#elif defined(OS_GENERIC)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_GENERIC);
+	#else
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_UNKNOWN);
+	#endif
+	CHECK(lazybiosCleanup(ctx) == 0);
+	return 0;
+}
+
 static int test_null_free_contracts(void) {
 	lazybiosFreeType0(NULL);
 	lazybiosFreeType1(NULL);
@@ -491,6 +530,7 @@ int main(void) {
 		test_type28_signed_temperature() != 0 ||
 		test_numeric_decoders() != 0 ||
 		test_backend_transformations() != 0 ||
+		test_backend_enum_values() != 0 ||
 		test_single_file_layouts() != 0 ||
 		test_null_free_contracts() != 0)
 		return EXIT_FAILURE;
