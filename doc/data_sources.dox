@@ -10,12 +10,16 @@
  * @ref lazybiosInit. Backend selection affects only host initialization;
  * @ref lazybiosFile and @ref lazybiosSingleFile provide deterministic input
  * paths for captured tables.
+ * @ref LAZYBIOS_BACKEND_UNKNOWN remains the no-backend sentinel, while
+ * @ref LAZYBIOS_BACKEND_GENERIC identifies an active generic fallback on an
+ * otherwise unrecognized target.
  *
  * Native host acquisition is kept in one source file per platform under
- * `src/backends/`. The portable validation and conversion shared by those
- * implementations remains in `src/backend.c`, while `src/lazybios.c` selects
- * and dispatches the active backend. CMake compiles only the backend for the
- * target platform.
+ * `src/backends/`. Shared validation, conversion, and the common legacy
+ * physical-memory reader used by Haiku, BeOS, and the generic backend live in
+ * `src/backend.c`, while `src/lazybios.c` selects and dispatches the active
+ * backend. The physical-memory portion of `src/backend.c` is compiled only for
+ * those three targets.
  *
  * @section sources_linux Linux
  *
@@ -106,14 +110,15 @@
  * physical-memory access policy. The sysctl is an address source; it does not
  * expose the complete SMBIOS structure table itself.
  *
- * @section sources_sunos SunOS
+ * @section sources_sunos SunOS (Solaris/illumos)
  *
- * The SunOS backend first reads `/dev/smbios`. This device exposes a snapshot
- * containing the SMBIOS entry point and structure table. Its entry point uses
- * the structure-table address as a file-relative offset and can align the
- * table after padding rather than placing it immediately after the declared
- * entry-point length. The single-file loader validates that the complete
- * advertised range fits inside the device image before using that offset.
+ * The SunOS backend, used on Solaris and illumos systems, first reads
+ * `/dev/smbios`. This device exposes a snapshot containing the SMBIOS entry
+ * point and structure table. Its entry point uses the structure-table address
+ * as a file-relative offset and can align the table after padding rather than
+ * placing it immediately after the declared entry-point length. The
+ * single-file loader validates that the complete advertised range fits inside
+ * the device image before using that offset.
  *
  * If `/dev/smbios` cannot be loaded, the backend scans the legacy `0xF0000`
  * firmware window through `/dev/mem`. Candidates are checked on 16-byte
@@ -123,10 +128,43 @@
  * Access to `/dev/smbios` or `/dev/mem` remains subject to the device-node and
  * physical-memory permissions configured by the operating system.
  *
+ * @section sources_haiku Haiku (experimental)
+ *
+ * The Haiku backend tries `/dev/misc/mem` first and `/dev/mem` second. It
+ * searches the legacy x86 firmware window from `0xF0000` through `0xFFFFF` on
+ * 16-byte boundaries, validates the selected entry point, and then reads the
+ * physical structure-table range described by it.
+ *
+ * Physical ranges are first accessed with a page-aligned, read-only mapping.
+ * If the device cannot be mapped, the loader retries with `pread`; systems
+ * without working positional reads receive a final `lseek` plus `read`
+ * fallback. Both the entry point and table are committed to the context only
+ * after the complete pair has been read and validated.
+ *
+ * This backend currently covers only systems whose SMBIOS entry point remains
+ * discoverable in the legacy x86 window. In particular, it does not consume
+ * the SMBIOS 2.x or 3.x entry-point addresses that Haiku's kernel can receive
+ * from boot data. Physical-memory access requires the permissions enforced by
+ * Haiku's memory driver.
+ *
+ * @section sources_beos BeOS (experimental)
+ *
+ * The BeOS backend tries `/dev/misc/mem` and then `/dev/mem`. Like the Haiku
+ * backend, it scans only the legacy x86 firmware window and reads the physical
+ * table address advertised by the selected entry point. It therefore does not
+ * provide a portable acquisition path for non-x86 systems or firmware that
+ * publishes SMBIOS only through a modern firmware interface. It shares the
+ * Haiku mapping, positional-read, validation, and cleanup behavior.
+ *
  * @section sources_unknown Unknown platforms
  *
- * Host initialization is not implemented for unknown platforms. File-based
- * parsing remains available when the platform can build the library.
+ * The generic backend is selected as @ref LAZYBIOS_BACKEND_GENERIC for
+ * otherwise unrecognized, POSIX-like x86 targets that expose physical memory
+ * through `/dev/mem` or `/dev/misc/mem`. It performs the same mapping and
+ * positional-read fallbacks as the Haiku and BeOS backends. That assumption is
+ * not valid for every unknown operating system or architecture, so this
+ * fallback remains experimental. File-based parsing remains the portable
+ * option on unrecognized targets.
  *
  * @section sources_separate Separate entry point and DMI files
  *
@@ -139,11 +177,11 @@
  * @ref lazybiosSingleFile expects the SMBIOS entry point at offset zero. It
  * accepts both a tightly concatenated entry-point-plus-table dump and an image
  * whose entry point contains a valid file-relative table offset, including
- * SunOS `/dev/smbios` snapshots that align the table with padding. The
- * advertised offset and table length must describe a complete range inside the
- * file. Otherwise, the loader treats the bytes immediately following the entry
- * point as the table, preserving support for dumps that retain a physical
- * firmware address.
+ * SunOS (Solaris/illumos) `/dev/smbios` snapshots that align the table with
+ * padding. The advertised offset and table length must describe a complete
+ * range inside the file. Otherwise, the loader treats the bytes immediately
+ * following the entry point as the table, preserving support for dumps that
+ * retain a physical firmware address.
  *
  * @section sources_failure Failure behavior
  *

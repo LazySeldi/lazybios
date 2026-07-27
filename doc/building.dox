@@ -12,9 +12,14 @@
  *
  * On macOS, CMake locates and links the system IOKit and CoreFoundation
  * frameworks required by the AppleSMBIOS backend.
- * Linux, OpenBSD, FreeBSD, NetBSD, SunOS, and DragonFly BSD use interfaces
- * supplied by their base systems; CMake selects only the native backend source
- * for the target operating system.
+ * Linux, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD,
+ * Haiku, and BeOS use interfaces supplied by their base systems; CMake selects
+ * the matching backend source for the target operating system. Haiku and BeOS
+ * support is experimental. An unrecognized target selects the experimental
+ * generic `/dev/mem` source, which assumes a POSIX-like x86 environment;
+ * CMake explicitly defines the selected Haiku, BeOS, or generic platform so
+ * source selection cannot disagree with compiler-provided host macros during
+ * cross-compilation. File-based parsing is the portable alternative.
  *
  * @section build_source Building from source
  *
