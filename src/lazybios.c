@@ -41,7 +41,7 @@
  * @return 0 on success, or -1 on failure.
  */
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
-	if (!ctx) return -1;
+	if (!ctx || !ctx->DMIData || !bin_path) return -1;
 
 	FILE* binf = fopen(bin_path, "rb");
 	if (!binf) {
@@ -85,58 +85,56 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 		}
 	}
 
-	ctx->DMIData->entry_len = entry_size;
-	ctx->DMIData->entry_data = malloc(ctx->DMIData->entry_len);
-	if (!ctx->DMIData->entry_data) {
-		lb_log("Failed to allocate memory for entry_data");
-		fclose(binf);
-		return -1;
-	}
-	memcpy(ctx->DMIData->entry_data, entry_buf, ctx->DMIData->entry_len);
-
-	if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) != 0) {
-		fclose(binf);
-		return -1;
-	}
-
 	if (fseek(binf, 0, SEEK_END) != 0) {
 		lb_log("Failed to seek end of file");
 		fclose(binf);
 		return -1;
 	}
 	long file_len = ftell(binf);
-	if (file_len <= 0 || ctx->DMIData->entry_len > (size_t)LONG_MAX || file_len < (long)ctx->DMIData->entry_len) {
+	if (file_len <= 0) {
 		lb_log("Invalid file length %ld", file_len);
 		fclose(binf);
 		return -1;
 	}
 
-	ctx->DMIData->dmi_len = (size_t)(file_len - ctx->DMIData->entry_len);
-	rewind(binf);
-	if (fseek(binf, (long)ctx->DMIData->entry_len, SEEK_SET) != 0) {
+	size_t parsed_entry_len;
+	size_t table_offset;
+	size_t table_len;
+	if (lazybiosGetSingleFileLayout(entry_buf, entry_size,
+			(size_t)file_len, &parsed_entry_len, &table_offset,
+			&table_len) != 0 ||
+		table_offset > (size_t)LONG_MAX) {
+		lb_log("Invalid SMBIOS single-file layout");
+		fclose(binf);
+		return -1;
+	}
+
+	if (fseek(binf, (long)table_offset, SEEK_SET) != 0) {
 		lb_log("Failed to seek to DMI data start");
 		fclose(binf);
 		return -1;
 	}
 
-	ctx->DMIData->dmi_data = malloc(ctx->DMIData->dmi_len);
-	if (!ctx->DMIData->dmi_data) {
-		lb_log("Failed to allocate DMI buffer (%zu bytes)", ctx->DMIData->dmi_len);
+	uint8_t* table_data = malloc(table_len);
+	if (!table_data) {
+		lb_log("Failed to allocate DMI buffer (%zu bytes)", table_len);
 		fclose(binf);
 		return -1;
 	}
 
-	size_t got = fread(ctx->DMIData->dmi_data, 1, ctx->DMIData->dmi_len, binf);
+	size_t got = fread(table_data, 1, table_len, binf);
 	fclose(binf);
 
-	if (got != ctx->DMIData->dmi_len) {
-		lb_log("Short read of DMI data (%zu of %zu bytes)", got, ctx->DMIData->dmi_len);
-		free(ctx->DMIData->dmi_data);
-		ctx->DMIData->dmi_data = NULL;
+	if (got != table_len) {
+		lb_log("Short read of DMI data (%zu of %zu bytes)", got, table_len);
+		free(table_data);
 		return -1;
 	}
 
-	return 0;
+	int result = lazybiosLoadRawBuffers(ctx, entry_buf, parsed_entry_len,
+		table_data, table_len);
+	free(table_data);
+	return result;
 }
 
 /**
@@ -254,6 +252,8 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 		ctx->backend = LAZYBIOS_BACKEND_FREEBSD;
 	#elif defined(OS_NETBSD)
 		ctx->backend = LAZYBIOS_BACKEND_NETBSD;
+    #elif defined(OS_SUNOS)
+        ctx->backend = LAZYBIOS_BACKEND_SUNOS;
 	#else
 		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
 	#endif
@@ -320,6 +320,13 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 			return -1;
 			#endif
 
+	    case LAZYBIOS_BACKEND_SUNOS:
+	        #if defined(OS_SUNOS)
+	        return lazybiosSunOS(ctx);
+	        #else
+	        lb_log("SunOS backend is not available in this build");
+	        return -1;
+	        #endif
 		case LAZYBIOS_BACKEND_UNKNOWN:
 			lb_log("Unknown backend %d", ctx->backend);
 			return -1;
