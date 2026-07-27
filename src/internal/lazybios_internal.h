@@ -52,6 +52,9 @@
 #elif defined(__sun)
 #define OS_SUNOS 1
 
+#elif defined(__DragonFly__)
+#define OS_DRAGONFLY 1
+
 #else
 #define OS_UNKNOWN 1
 #endif
@@ -321,6 +324,10 @@ int lazybiosNetBSD(lazybiosCTX_t* ctx);
 
 #if defined(OS_SUNOS)
 int lazybiosSunOS(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_DRAGONFLY)
+int lazybiosDragonFly(lazybiosCTX_t *ctx);
 #endif
 
 #endif

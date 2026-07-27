@@ -254,6 +254,8 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 		ctx->backend = LAZYBIOS_BACKEND_NETBSD;
     #elif defined(OS_SUNOS)
         ctx->backend = LAZYBIOS_BACKEND_SUNOS;
+    #elif defined(OS_DRAGONFLY)
+        ctx->backend = LAZYBIOS_BACKEND_DRAGONFLY;
 	#else
 		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
 	#endif
@@ -326,6 +328,14 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 	        #else
 	        lb_log("SunOS backend is not available in this build");
 	        return -1;
+	        #endif
+
+	    case LAZYBIOS_BACKEND_DRAGONFLY:
+	        #if defined(OS_DRAGONFLY)
+	        return lazybiosDragonFly(ctx);
+	        #else
+	        lb_log("DragonFly backend is not available in this build");
+            return -1;
 	        #endif
 		case LAZYBIOS_BACKEND_UNKNOWN:
 			lb_log("Unknown backend %d", ctx->backend);

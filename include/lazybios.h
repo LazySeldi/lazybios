@@ -273,6 +273,7 @@ typedef enum {
 	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
 	LAZYBIOS_BACKEND_SUNOS,  /**< SunOS /dev/smbios snapshot with a physical-memory fallback. */
+    LAZYBIOS_BACKEND_DRAGONFLY,
 	LAZYBIOS_BACKEND_UNKNOWN  /**< No native host backend is available. */
 } lazybiosBackend_t;
 
