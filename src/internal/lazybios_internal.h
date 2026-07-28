@@ -77,7 +77,9 @@
 // Logging system for lazybios
 
 #ifndef LAZYBIOS_QUIET
-#ifdef __GNUC__
+#if defined(__MINGW32__)
+__attribute__((format(gnu_printf, 2, 3)))
+#elif defined(__GNUC__)
 __attribute__((format(printf, 2, 3)))
 #endif
 static inline void lazybios_log_internal(const char* prefix, const char* fmt, ...) {
@@ -117,7 +119,9 @@ static inline void lazybios_log_internal(const char* prefix, const char* fmt, ..
  * @param len Running output length, updated in place.
  * @param fmt printf-style format for the text to append.
  */
-#ifdef __GNUC__
+#if defined(__MINGW32__)
+__attribute__((format(gnu_printf, 4, 5)))
+#elif defined(__GNUC__)
 __attribute__((format(printf, 4, 5)))
 #endif
 static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len, const char* fmt, ...) {
