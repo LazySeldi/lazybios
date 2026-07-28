@@ -104,6 +104,14 @@ endif()
 
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
 
+if(WIN32)
+    # MinGW exports undecorated C symbols by default, while MSVC does not.
+    # Generate the export table so the same public API is available from
+    # native MSVC-built DLLs without compiler-specific annotations in every
+    # public declaration.
+    set_target_properties(lazybios PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+
 if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
     target_compile_definitions(lazybios PRIVATE
             ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
