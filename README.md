@@ -27,7 +27,7 @@
    **SunOS (Solaris/illumos) support:** Implemented via the offset-aware `/dev/smbios` snapshot, with a legacy `/dev/mem` fallback. \
    **DragonFly BSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access. \
    **Haiku support (experimental):** Scans the legacy x86 firmware window through `/dev/misc/mem` or `/dev/mem`, with positional-read fallbacks when device mapping is unavailable. \
-   **BeOS support (experimental):** Uses the same validated legacy x86 physical-memory loader and device fallbacks. \
+   **BeOS support (experimental):** Uses the same validated legacy x86 physical-memory loader and device fallbacks. 
 2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), and DragonFly BSD. The Haiku and BeOS host backends are experimental. File-based parsing is available independently of the selected host backend.
 3. The library is nearing a very stable status. Features are unlikely to change!
 
