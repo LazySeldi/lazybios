@@ -7,7 +7,7 @@
 ## Features
 
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones)
-- **Clean C API** - Simple function calls, only 3 steps to assure memory-safety.
+- **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
 - **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), and DragonFly BSD. Experimental backends are also included for Haiku and BeOS.
@@ -34,7 +34,7 @@
 ---
 
 ## About This Project
-1. Bugs may exist(but very rare, since all my releases are tested againts the SMBIOS tables in test-dumps folder), and contributions are welcome.  
+1. Bugs may exist(but very rare, since all my releases are tested against the SMBIOS tables in test-dumps folder), and contributions are welcome.  
 2. There are no arbitrary version limits: the library implements structures according to the latest DMTF SMBIOS specification.  
 3. All new structures follow the current latest [DMTF SMBIOS Specification](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf).
 
@@ -152,7 +152,7 @@ doxygen Doxyfile
 
 The generated documentation entry point is `docs/html/index.html`.
 
-### Heads up: When using the library you may need to read some of the current SMBIOS specification that the library uses(for example lazybios will aways use the latest specification, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
+### Heads up: When using the library you may need to read some of the current SMBIOS specification that the library uses(for example lazybios will always use the latest specification, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
 
 ## Fuzzing
 
