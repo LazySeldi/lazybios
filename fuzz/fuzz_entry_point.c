@@ -38,7 +38,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size);
 int LLVMFuzzerInitialize(int* argc, char*** argv) {
 	(void)argc;
 	(void)argv;
-	/* lazybiosPrintVer() writes to stdout; keep the fuzzer output readable. */
+	/* lazybiosPrintSMVer() writes to stdout; keep the fuzzer output readable. */
 	#if defined(_WIN32) || defined(_WIN64)
 		const char* null_device = "NUL";
 	#else
@@ -66,7 +66,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	ctx->DMIData->entry_len = size;
 
 	if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) == 0) {
-		lazybiosPrintVer(ctx);
+		lazybiosPrintSMVer(ctx);
 		for (uint8_t major = 0; major < 4; major++)
 			for (uint8_t minor = 0; minor < 8; minor++)
 				fuzz_sink_val((uint64_t)lazybiosIsVersionPlus(ctx->DMIData, major, minor));

@@ -150,8 +150,8 @@ static inline uint8_t* fuzz_make_entry_3x(uint8_t major, uint8_t minor, uint8_t 
  * lazybiosCleanup() releases everything.
  */
 static inline void fuzz_parse_all_types(lazybiosCTX_t* ctx) {
-	ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
-	ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
+	ctx->Type0 = lazybiosGetType0(ctx->Type0, &ctx->type0_count, ctx->DMIData);
+	ctx->Type1 = lazybiosGetType1(ctx->Type1, &ctx->type1_count, ctx->DMIData);
 	ctx->Type2 = lazybiosGetType2(ctx->Type2, &ctx->type2_count, ctx->DMIData);
 	ctx->Type3 = lazybiosGetType3(ctx->Type3, &ctx->type3_count, ctx->DMIData);
 	ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
