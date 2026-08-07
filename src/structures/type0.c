@@ -47,97 +47,104 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Parses the first SMBIOS Type 0 BIOS Information structure.
+ * @brief Parses all SMBIOS Type 0 BIOS Information structures.
  *
- * @param Type0 Existing Type 0 pointer value; it is not dereferenced or released.
+ * @param Type0 Existing Type 0 array pointer value; it is not dereferenced or released.
+ * @param type0_count Output location for the number of parsed structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 0 structure, or NULL on failure or absence.
+ * @return Newly allocated Type 0 array, or NULL on failure.
  */
-lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return NULL;
+lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData) {
+	if (type0_count) *type0_count = 0;
+	if (!type0_count || !DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
+	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BIOS);
+	size_t index = 0;
 
-	while (p + SMBIOS_HEADER_SIZE <= end) {
+	Type0 = calloc(count, sizeof(*Type0));
+	if (!Type0) return NULL;
+
+	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
 		if (type == SMBIOS_TYPE_BIOS) {
-			Type0 = calloc(1, sizeof(*Type0));
-			if (!Type0) return NULL;
+			lazybiosType0_t* current = &Type0[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 			const uint8_t* structure_end = DMINext(p, end);
 
-			READSTR(Type0, vendor, len, VENDOR, p, structure_end);
-			READSTR(Type0, version, len, FIRMWARE_VERSION, p, structure_end);
-			READSTR(Type0, release_date, len, FIRMWARE_RELEASE_DATE, p, structure_end);
+			READSTR(current, vendor, len, VENDOR, p, structure_end);
+			READSTR(current, version, len, FIRMWARE_VERSION, p, structure_end);
+			READSTR(current, release_date, len, FIRMWARE_RELEASE_DATE, p, structure_end);
 
-			READU16(Type0, bios_starting_segment, len, BIOS_STARTING_SEGMENT, p);
-			if (Type0->bios_starting_segment == 0) LAZYBIOS_MARK_ABSENT(Type0, bios_starting_segment);
+			READU16(current, bios_starting_segment, len, BIOS_STARTING_SEGMENT, p);
+			if (current->bios_starting_segment == 0) LAZYBIOS_MARK_ABSENT(current, bios_starting_segment);
 
 			if (len > FIRMWARE_ROM_SIZE && p[FIRMWARE_ROM_SIZE] == 0xFF) {
 				if (lazybiosIsVersionPlus(DMIData, 3, 1) && len >= EXTENDED_FIRMWARE_ROM_SIZE + sizeof(uint16_t)) {
-					memcpy(&Type0->extended_rom_size, p + EXTENDED_FIRMWARE_ROM_SIZE, sizeof(uint16_t));
-					lazybiosType0ExtendedROMSizeU16(Type0->extended_rom_size, Type0->unit);
-					LAZYBIOS_MARK_PRESENT(Type0, extended_rom_size);
-					LAZYBIOS_MARK_PRESENT(Type0, unit);
+					memcpy(&current->extended_rom_size, p + EXTENDED_FIRMWARE_ROM_SIZE, sizeof(uint16_t));
+					lazybiosType0ExtendedROMSizeU16(current->extended_rom_size, current->unit);
+					LAZYBIOS_MARK_PRESENT(current, extended_rom_size);
+					LAZYBIOS_MARK_PRESENT(current, unit);
 				} else {
-					Type0->extended_rom_size = 0;
-					if (lazybiosIsVersionPlus(DMIData, 3, 1)) LAZYBIOS_MARK_ABSENT(Type0, extended_rom_size);
+					current->extended_rom_size = 0;
+					if (lazybiosIsVersionPlus(DMIData, 3, 1)) LAZYBIOS_MARK_ABSENT(current, extended_rom_size);
 				}
 
-				Type0->rom_size = 0;
-				Type0->field_status.rom_size = LAZYBIOS_FIELD_ABSENT;
+				current->rom_size = 0;
+				current->field_status.rom_size = LAZYBIOS_FIELD_ABSENT;
 			} else if (len > FIRMWARE_ROM_SIZE) {
-				Type0->rom_size = (uint32_t)(p[FIRMWARE_ROM_SIZE] + 1) * 64;
-				LAZYBIOS_MARK_PRESENT(Type0, rom_size);
-				Type0->extended_rom_size = 0;
+				current->rom_size = (uint32_t)(p[FIRMWARE_ROM_SIZE] + 1) * 64;
+				LAZYBIOS_MARK_PRESENT(current, rom_size);
+				current->extended_rom_size = 0;
 			} else {
-				Type0->rom_size = 0;
-				Type0->extended_rom_size = 0;
-				LAZYBIOS_MARK_ABSENT(Type0, rom_size);
+				current->rom_size = 0;
+				current->extended_rom_size = 0;
+				LAZYBIOS_MARK_ABSENT(current, rom_size);
 			}
 
-			READU64(Type0, characteristics, len, FIRMWARE_CHARACTERISTICS, p);
+			READU64(current, characteristics, len, FIRMWARE_CHARACTERISTICS, p);
 
 			if (len > FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES) {
-				Type0->firmware_char_ext_bytes_count =
+				current->firmware_char_ext_bytes_count =
 					(size_t)(len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES) > 2
 						? 2
 						: (size_t)(len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES);
-				LAZYBIOS_MARK_PRESENT(Type0, firmware_char_ext_bytes_count);
-				Type0->firmware_char_ext_bytes = malloc(Type0->firmware_char_ext_bytes_count);
+				LAZYBIOS_MARK_PRESENT(current, firmware_char_ext_bytes_count);
+				current->firmware_char_ext_bytes = malloc(current->firmware_char_ext_bytes_count);
 
-				if (Type0->firmware_char_ext_bytes) {
-					memcpy(Type0->firmware_char_ext_bytes, p + FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES, Type0->firmware_char_ext_bytes_count);
-					LAZYBIOS_MARK_PRESENT(Type0, firmware_char_ext_bytes);
+				if (current->firmware_char_ext_bytes) {
+					memcpy(current->firmware_char_ext_bytes, p + FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES, current->firmware_char_ext_bytes_count);
+					LAZYBIOS_MARK_PRESENT(current, firmware_char_ext_bytes);
 				}
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 4)) {
-				READU8(Type0, platform_major_release, len, PLATFORM_FIRMWARE_MAJOR_RELEASE, p);
-				READU8(Type0, platform_minor_release, len, PLATFORM_FIRMWARE_MINOR_RELEASE, p);
-				READU8(Type0, ec_major_release, len, EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE, p);
-				READU8(Type0, ec_minor_release, len, EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE, p);
-				if (Type0->platform_major_release == 0xFF && Type0->platform_minor_release == 0xFF) {
-					LAZYBIOS_MARK_ABSENT(Type0, platform_major_release);
-					LAZYBIOS_MARK_ABSENT(Type0, platform_minor_release);
+				READU8(current, platform_major_release, len, PLATFORM_FIRMWARE_MAJOR_RELEASE, p);
+				READU8(current, platform_minor_release, len, PLATFORM_FIRMWARE_MINOR_RELEASE, p);
+				READU8(current, ec_major_release, len, EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE, p);
+				READU8(current, ec_minor_release, len, EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE, p);
+				if (current->platform_major_release == 0xFF && current->platform_minor_release == 0xFF) {
+					LAZYBIOS_MARK_ABSENT(current, platform_major_release);
+					LAZYBIOS_MARK_ABSENT(current, platform_minor_release);
 				}
-				if (Type0->ec_major_release == 0xFF) LAZYBIOS_MARK_ABSENT(Type0, ec_major_release);
-				if (Type0->ec_minor_release == 0xFF) LAZYBIOS_MARK_ABSENT(Type0, ec_minor_release);
+				if (current->ec_major_release == 0xFF) LAZYBIOS_MARK_ABSENT(current, ec_major_release);
+				if (current->ec_minor_release == 0xFF) LAZYBIOS_MARK_ABSENT(current, ec_minor_release);
 			} else {
-				Type0->platform_major_release = 0;
-				Type0->platform_minor_release = 0;
-				Type0->ec_major_release = 0;
-				Type0->ec_minor_release = 0;
+				current->platform_major_release = 0;
+				current->platform_minor_release = 0;
+				current->ec_major_release = 0;
+				current->ec_minor_release = 0;
 			}
 
-			return Type0;
+			index++;
 		}
 		p = DMINext(p, end);
 	}
-	return NULL;
+	*type0_count = index;
+	return Type0;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Decoders
@@ -282,16 +289,19 @@ uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 
 // Free Function
 /**
- * @brief Releases a parsed SMBIOS Type 0 structure.
+ * @brief Releases an array of parsed SMBIOS Type 0 structures.
  *
- * @param Type0 Type 0 structure to release.
+ * @param Type0 Type 0 array to release.
+ * @param type0_count Number of elements in Type0.
  */
-void lazybiosFreeType0(lazybiosType0_t* Type0) {
+void lazybiosFreeType0(lazybiosType0_t* Type0, size_t type0_count) {
 	if (!Type0) return;
 
-	free(Type0->vendor);
-	free(Type0->version);
-	free(Type0->release_date);
-	free(Type0->firmware_char_ext_bytes);
+	for (size_t i = 0; i < type0_count; i++) {
+		free(Type0[i].vendor);
+		free(Type0[i].version);
+		free(Type0[i].release_date);
+		free(Type0[i].firmware_char_ext_bytes);
+	}
 	free(Type0);
 }

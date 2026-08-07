@@ -80,12 +80,13 @@ typedef struct {
  */
 
 /**
- * @brief Parses the first SMBIOS Type 0 BIOS Information structure.
- * @param Type0 Existing Type 0 pointer value; it is not dereferenced or released.
+ * @brief Parses all SMBIOS Type 0 BIOS Information structures.
+ * @param Type0 Existing Type 0 array pointer value; it is not dereferenced or released.
+ * @param type0_count Output location for the number of parsed structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 0 structure, or NULL on failure or absence.
+ * @return Newly allocated Type 0 array, or NULL on failure.
  */
-lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, lazybiosDMI_t* DMIData);
+lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes BIOS characteristics into a readable string.
@@ -120,10 +121,11 @@ void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf,
 uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]);
 
 /**
- * @brief Releases a parsed SMBIOS Type 0 structure.
- * @param Type0 Type 0 structure to release.
+ * @brief Releases an array of parsed SMBIOS Type 0 structures.
+ * @param Type0 Type 0 array to release.
+ * @param type0_count Number of elements in Type0.
  */
-void lazybiosFreeType0(lazybiosType0_t* Type0);
+void lazybiosFreeType0(lazybiosType0_t* Type0, size_t type0_count);
 
 /** @} */
 
