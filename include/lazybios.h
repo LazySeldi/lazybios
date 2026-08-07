@@ -42,7 +42,7 @@ extern const char lazybiosVersion[];
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 1
 /** @brief Minor component of the lazybios version. */
-#define LAZYBIOS_MINOR 3
+#define LAZYBIOS_MINOR 4
 /** @brief Patch component of the lazybios version. */
 #define LAZYBIOS_PATCH 0
 /** @brief Recommended output buffer size for decoder functions. */
