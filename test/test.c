@@ -36,9 +36,9 @@ static int compact_output = 0;
 static void printType0(lazybiosCTX_t* ctx) {
 	printf("=== BIOS INFORMATION ===\n");
 
-	if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
+	if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, &ctx->type0_count, ctx->DMIData);
 
-	if (ctx->Type0) {
+	if (ctx->Type0 && ctx->type0_count > 0) {
 		printf("Vendor: %s\n", ctx->Type0->vendor ? ctx->Type0->vendor : "Not Present");
 		printf("Version: %s\n", ctx->Type0->version ? ctx->Type0->version : "Not Present");
 		printf("Release Date: %s\n", ctx->Type0->release_date ? ctx->Type0->release_date : "Not Present");
@@ -129,9 +129,9 @@ static void printType0(lazybiosCTX_t* ctx) {
 static void printType1(lazybiosCTX_t* ctx) {
 	printf("=== SYSTEM INFORMATION ===\n");
 
-	if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
+	if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, &ctx->type1_count, ctx->DMIData);
 
-	if (ctx->Type1) {
+	if (ctx->Type1 && ctx->type1_count > 0) {
 		printf("Manufacturer: %s\n", ctx->Type1->manufacturer ? ctx->Type1->manufacturer : "Not Present");
 		printf("Product name: %s\n", ctx->Type1->product_name ? ctx->Type1->product_name : "Not Present");
 		printf("Version: %s\n", ctx->Type1->version ? ctx->Type1->version : "Not Present");
@@ -3596,7 +3596,7 @@ static void printType46(lazybiosCTX_t* ctx) {
 int print_smbios_version_info(lazybiosCTX_t* ctx) {
     if (!ctx) return -1;
     printf("=== SMBIOS VERSION INFORMATION ===\n");
-    lazybiosPrintVer(ctx);
+    lazybiosPrintSMVer(ctx);
 
     if (ctx->DMIData->entry_tag == SMBIOS_VER_3X) {
         lazybiosSMBIOS3Entry* v3 = ctx->DMIData->entry_union.v3;
@@ -3669,7 +3669,7 @@ static inline void print_usage(const char* progname) {
  * @return Process exit status, with zero indicating success.
  */
 int main(int argc, const char* argv[]) {
-	printf("lazybios Version: %s\n", LAZYBIOS_VER);
+	printf("lazybios Version: %s\n", lazybiosVersion);
 	printf("=============================================\n\n");
 
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
@@ -3815,10 +3815,10 @@ int main(int argc, const char* argv[]) {
 	print_smbios_version_info(ctx);
 
 	if (print_all) {
-		if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
+		if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, &ctx->type0_count, ctx->DMIData);
 		printType0(ctx);
 
-		if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
+		if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, &ctx->type1_count, ctx->DMIData);
 		printType1(ctx);
 
 		if (!ctx->Type2) ctx->Type2 = lazybiosGetType2(ctx->Type2, &ctx->type2_count, ctx->DMIData);
@@ -3958,13 +3958,13 @@ int main(int argc, const char* argv[]) {
 	} else {
 		switch (type_to_print) {
 			case 0:
-				if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
+				if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->Type0, &ctx->type0_count, ctx->DMIData);
 
 				printType0(ctx);
 				break;
 
 			case 1:
-				if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
+				if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->Type1, &ctx->type1_count, ctx->DMIData);
 
 				printType1(ctx);
 				break;

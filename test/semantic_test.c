@@ -201,6 +201,45 @@ static int test_type28_signed_temperature(void) {
 	return 0;
 }
 
+static int test_type0_type1_counts(void) {
+	uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH];
+	make_entry3(entry, 3, 9, 0);
+
+	/* Two Type 0 records followed by two Type 1 records. */
+	uint8_t table[128] = {0};
+	size_t offset = 0;
+	for (size_t i = 0; i < 2; i++) {
+		table[offset] = SMBIOS_TYPE_BIOS;
+		table[offset + 1] = 0x1A;
+		table[offset + 0x09] = 1;
+		table[offset + 0x0A] = 0;
+		offset += 0x1A + 2;
+	}
+	for (size_t i = 0; i < 2; i++) {
+		table[offset] = SMBIOS_TYPE_SYSTEM;
+		table[offset + 1] = 0x1B;
+		table[offset + 0x18] = 0;
+		offset += 0x1B + 2;
+	}
+
+	lazybiosDMI_t dmi = {
+		.dmi_data = table,
+		.dmi_len = offset
+	};
+	lazybiosCTX_t ctx = {.DMIData = &dmi};
+	CHECK(lazybiosParseEntry(&ctx, entry, sizeof(entry)) == 0);
+
+	lazybiosType0_t* type0 = lazybiosGetType0(NULL, &ctx.type0_count, &dmi);
+	lazybiosType1_t* type1 = lazybiosGetType1(NULL, &ctx.type1_count, &dmi);
+	CHECK(type0 != NULL);
+	CHECK(type1 != NULL);
+	CHECK(ctx.type0_count == 2);
+	CHECK(ctx.type1_count == 2);
+	lazybiosFreeType0(type0, ctx.type0_count);
+	lazybiosFreeType1(type1, ctx.type1_count);
+	return 0;
+}
+
 static int test_numeric_decoders(void) {
 	CHECK(lazybiosType7CacheU16(0x0001) == 1);
 	CHECK(lazybiosType7CacheU16(0x8001) == 64);
@@ -437,10 +476,10 @@ static int test_single_file_layouts(void) {
 static int test_backend_enum_values(void) {
 	lazybiosCTX_t* ctx;
 
-	CHECK(LAZYBIOS_BACKEND_UNKNOWN == 8);
-	CHECK(LAZYBIOS_BACKEND_HAIKU == 9);
-	CHECK(LAZYBIOS_BACKEND_BEOS == 10);
-	CHECK(LAZYBIOS_BACKEND_GENERIC == 11);
+	CHECK(LAZYBIOS_BACKEND_HAIKU == 8);
+	CHECK(LAZYBIOS_BACKEND_BEOS == 9);
+	CHECK(LAZYBIOS_BACKEND_GENERIC == 10);
+	CHECK(LAZYBIOS_BACKEND_UNKNOWN == 11);
 
 	ctx = lazybiosCTXNew();
 	CHECK(ctx != NULL);
@@ -474,8 +513,8 @@ static int test_backend_enum_values(void) {
 }
 
 static int test_null_free_contracts(void) {
-	lazybiosFreeType0(NULL);
-	lazybiosFreeType1(NULL);
+	lazybiosFreeType0(NULL, 4);
+	lazybiosFreeType1(NULL, 4);
 	lazybiosFreeType2(NULL, 4);
 	lazybiosFreeType3(NULL, 4);
 	lazybiosFreeType4(NULL, 4);
@@ -528,6 +567,7 @@ int main(void) {
 	if (test_entry_points() != 0 ||
 		test_traversal_helpers() != 0 ||
 		test_type28_signed_temperature() != 0 ||
+		test_type0_type1_counts() != 0 ||
 		test_numeric_decoders() != 0 ||
 		test_backend_transformations() != 0 ||
 		test_backend_enum_values() != 0 ||
