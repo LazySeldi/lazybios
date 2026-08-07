@@ -68,12 +68,13 @@ typedef struct {
  */
 
 /**
- * @brief Parses the first SMBIOS Type 1 System Information structure.
- * @param Type1 Existing Type 1 pointer value; it is not dereferenced or released.
+ * @brief Parses all SMBIOS Type 1 System Information structures.
+ * @param Type1 Existing Type 1 array pointer value; it is not dereferenced or released.
+ * @param type1_count Output location for the number of parsed structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 1 structure, or NULL on failure or absence.
+ * @return Newly allocated Type 1 array, or NULL on failure.
  */
-lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData);
+lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS system wake-up type.
@@ -83,10 +84,11 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData
 const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type);
 
 /**
- * @brief Releases a parsed SMBIOS Type 1 structure.
- * @param Type1 Type 1 structure to release.
+ * @brief Releases an array of parsed SMBIOS Type 1 structures.
+ * @param Type1 Type 1 array to release.
+ * @param type1_count Number of elements in Type1.
  */
-void lazybiosFreeType1(lazybiosType1_t* Type1);
+void lazybiosFreeType1(lazybiosType1_t* Type1, size_t type1_count);
 
 /** @} */
 

@@ -56,71 +56,78 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Parses the first SMBIOS Type 1 System Information structure.
+ * @brief Parses all SMBIOS Type 1 System Information structures.
  *
- * @param Type1 Existing Type 1 pointer value; it is not dereferenced or released.
+ * @param Type1 Existing Type 1 array pointer value; it is not dereferenced or released.
+ * @param type1_count Output location for the number of parsed structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 1 structure, or NULL on failure or absence.
+ * @return Newly allocated Type 1 array, or NULL on failure.
  */
-lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, lazybiosDMI_t* DMIData) {
-	if (!DMIData || !DMIData->dmi_data) return NULL;
+lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData) {
+	if (type1_count) *type1_count = 0;
+	if (!type1_count || !DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
+	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM);
+	size_t index = 0;
 
-	while (p + SMBIOS_HEADER_SIZE <= end) {
+	Type1 = calloc(count, sizeof(*Type1));
+	if (!Type1) return NULL;
+
+	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
 		if (type == SMBIOS_TYPE_SYSTEM) {
-			Type1 = calloc(1, sizeof(*Type1));
-			if (!Type1) return NULL;
+			lazybiosType1_t* current = &Type1[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 			const uint8_t* structure_end = DMINext(p, end);
 
-			READSTR(Type1, manufacturer, len, MANUFACTURER, p, structure_end);
-			READSTR(Type1, product_name, len, PRODUCT_NAME, p, structure_end);
-			READSTR(Type1, version, len, VERSION, p, structure_end);
-			READSTR(Type1, serial_number, len, SERIAL_NUMBER, p, structure_end);
+			READSTR(current, manufacturer, len, MANUFACTURER, p, structure_end);
+			READSTR(current, product_name, len, PRODUCT_NAME, p, structure_end);
+			READSTR(current, version, len, VERSION, p, structure_end);
+			READSTR(current, serial_number, len, SERIAL_NUMBER, p, structure_end);
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
-				if (len >= UUID + sizeof(Type1->uuid)) {
+				if (len >= UUID + sizeof(current->uuid)) {
 					const uint8_t* uuid = p + UUID;
 					int all_zero = 1;
 					int all_ff = 1;
-					for (int i = 0; i < 16; i++) Type1->uuid[i] = uuid[i];
+					for (int i = 0; i < 16; i++) current->uuid[i] = uuid[i];
 					for (int i = 0; i < 16; i++) {
 						if (uuid[i] != 0x00) all_zero = 0;
 						if (uuid[i] != 0xFF) all_ff = 0;
 					}
 					if (all_zero || all_ff) {
-						LAZYBIOS_MARK_ABSENT(Type1, uuid);
+						LAZYBIOS_MARK_ABSENT(current, uuid);
 					} else {
-						LAZYBIOS_MARK_PRESENT(Type1, uuid);
+						LAZYBIOS_MARK_PRESENT(current, uuid);
 					}
 				} else {
-					for (int i = 0; i < 16; i++) Type1->uuid[i] = 0;
-					LAZYBIOS_MARK_ABSENT(Type1, uuid);
+					for (int i = 0; i < 16; i++) current->uuid[i] = 0;
+					LAZYBIOS_MARK_ABSENT(current, uuid);
 				}
-				READU8(Type1, wake_up_type, len, WAKE_UP_TYPE, p);
+				READU8(current, wake_up_type, len, WAKE_UP_TYPE, p);
 			} else {
-				for (int i = 0; i < 16; i++) Type1->uuid[i] = 0;
-				Type1->wake_up_type = 0;
+				for (int i = 0; i < 16; i++) current->uuid[i] = 0;
+				current->wake_up_type = 0;
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 4)) {
-				READSTR(Type1, sku_number, len, SKU_NUMBER, p, structure_end);
-				READSTR(Type1, family, len, FAMILY, p, structure_end);
+				READSTR(current, sku_number, len, SKU_NUMBER, p, structure_end);
+				READSTR(current, family, len, FAMILY, p, structure_end);
 			} else {
-				Type1->sku_number = NULL;
-				Type1->family = NULL;
+				current->sku_number = NULL;
+				current->family = NULL;
 			}
 
-			return Type1;
+			index++;
 		}
 		p = DMINext(p, end);
 	}
-	return NULL;
+	*type1_count = index;
+	return Type1;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,18 +167,21 @@ const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 
 // Free Function
 /**
- * @brief Releases a parsed SMBIOS Type 1 structure.
+ * @brief Releases an array of parsed SMBIOS Type 1 structures.
  *
- * @param Type1 Type 1 structure to release.
+ * @param Type1 Type 1 array to release.
+ * @param type1_count Number of elements in Type1.
  */
-void lazybiosFreeType1(lazybiosType1_t* Type1) {
+void lazybiosFreeType1(lazybiosType1_t* Type1, size_t type1_count) {
 	if (!Type1) return;
 
-	free(Type1->manufacturer);
-	free(Type1->product_name);
-	free(Type1->version);
-	free(Type1->serial_number);
-	free(Type1->sku_number);
-	free(Type1->family);
+	for (size_t i = 0; i < type1_count; i++) {
+		free(Type1[i].manufacturer);
+		free(Type1[i].product_name);
+		free(Type1[i].version);
+		free(Type1[i].serial_number);
+		free(Type1[i].sku_number);
+		free(Type1[i].family);
+	}
 	free(Type1);
 }
