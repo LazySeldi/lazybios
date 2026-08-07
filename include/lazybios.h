@@ -38,7 +38,7 @@ extern "C" {
  */
 
 /** @brief Complete lazybios semantic version string. */
-#define LAZYBIOS_VER "1.3.0"
+extern const char lazybiosVersion[];
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 1
 /** @brief Minor component of the lazybios version. */
@@ -195,7 +195,7 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
  * @brief Prints the parsed SMBIOS version to standard output.
  * @param ctx Context containing a parsed SMBIOS entry point.
  */
-void lazybiosPrintVer(const lazybiosCTX_t* ctx);
+void lazybiosPrintSMVer(const lazybiosCTX_t* ctx);
 
 /** @} */
 
@@ -274,10 +274,10 @@ typedef enum {
 	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
 	LAZYBIOS_BACKEND_SUNOS,    /**< SunOS (Solaris/illumos) /dev/smbios snapshot with a physical-memory fallback. */
 	LAZYBIOS_BACKEND_DRAGONFLY, /**< DragonFly BSD kenv-assisted physical-memory backend. */
-	LAZYBIOS_BACKEND_UNKNOWN = 8, /**< No usable host backend was selected. */
-	LAZYBIOS_BACKEND_HAIKU,     /**< Experimental Haiku legacy physical-memory backend. */
-	LAZYBIOS_BACKEND_BEOS,      /**< Experimental BeOS legacy physical-memory backend. */
-	LAZYBIOS_BACKEND_GENERIC    /**< Experimental generic legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_HAIKU,     /**< Haiku legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_BEOS,      /**< BeOS legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_GENERIC,   /**< Generic legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_UNKNOWN    /**< No usable host backend was selected. */
 } lazybiosBackend_t;
 
 /**
@@ -289,8 +289,10 @@ struct lazybiosCTX {
 	lazybiosDMI_t* DMIData;
 
 	lazybiosType0_t* Type0;
+	size_t type0_count;
 
 	lazybiosType1_t* Type1;
+	size_t type1_count;
 
 	lazybiosType2_t* Type2;
 	size_t type2_count;
