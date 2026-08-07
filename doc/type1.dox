@@ -3,11 +3,13 @@
  *
  * @brief System identity, UUID, wake-up event, SKU, and family interpretation.
  *
- * @section type1_selection Selection and ownership
+ * @section type1_selection Array result and ownership
  *
- * @ref lazybiosGetType1 returns the first @ref SMBIOS_TYPE_SYSTEM structure.
- * Assign it to `ctx->Type1` for context cleanup or release it with
- * @ref lazybiosFreeType1.
+ * @ref lazybiosGetType1 returns every @ref SMBIOS_TYPE_SYSTEM structure and
+ * writes the number of parsed structures to `type1_count`. Iterate the returned
+ * @ref lazybiosType1_t array using that count, and pass the same count to
+ * @ref lazybiosFreeType1. When assigned to `ctx->Type1`, the corresponding
+ * `ctx->type1_count` is used by @ref lazybiosCleanup.
  *
  * @section type1_identity Identity strings
  *

@@ -10,7 +10,7 @@ int read_host_bios(void) {
 		return -1;
 	}
 
-	ctx->Type0 = lazybiosGetType0(ctx->Type0, ctx->DMIData);
+	ctx->Type0 = lazybiosGetType0(ctx->Type0, &ctx->type0_count, ctx->DMIData);
 	if (!ctx->Type0) {
 		lazybiosCleanup(ctx);
 		return -1;
@@ -31,7 +31,7 @@ int read_dump_files(const char* entry_path, const char* dmi_path) {
 		return -1;
 	}
 
-	ctx->Type1 = lazybiosGetType1(ctx->Type1, ctx->DMIData);
+	ctx->Type1 = lazybiosGetType1(ctx->Type1, &ctx->type1_count, ctx->DMIData);
 	int result = ctx->Type1 ? 0 : -1;
 	lazybiosCleanup(ctx);
 	return result;

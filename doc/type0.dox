@@ -3,12 +3,13 @@
  *
  * @brief BIOS identity, ROM capacity, release data, and firmware capability interpretation.
  *
- * @section type0_selection Selection and ownership
+ * @section type0_selection Array result and ownership
  *
- * @ref lazybiosGetType0 returns the first @ref SMBIOS_TYPE_BIOS structure. The
- * returned @ref lazybiosType0_t and all allocated members are released by
- * @ref lazybiosFreeType0 or by @ref lazybiosCleanup after assignment to
- * `ctx->Type0`.
+ * @ref lazybiosGetType0 returns every @ref SMBIOS_TYPE_BIOS structure and writes
+ * the number of parsed structures to `type0_count`. Iterate the returned
+ * @ref lazybiosType0_t array using that count, and pass the same count to
+ * @ref lazybiosFreeType0. When assigned to `ctx->Type0`, the corresponding
+ * `ctx->type0_count` is used by @ref lazybiosCleanup.
  *
  * @section type0_versions Version-dependent data
  *

@@ -22,7 +22,7 @@
  * - SunOS (Solaris/illumos) host loading prefers its offset-based
  *   `/dev/smbios` snapshot, then falls back to scanning the legacy firmware
  *   window through `/dev/mem`.
- * - Haiku and BeOS host loading is experimental and scans only the legacy x86
+ * - Haiku and BeOS host loading scans only the legacy x86
  *   firmware window through `/dev/misc/mem` or `/dev/mem`. A failed mapping is
  *   retried with `pread`, then `lseek` and `read`.
  * - All `/dev/mem` paths remain subject to platform permissions, securelevel,

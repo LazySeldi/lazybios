@@ -128,7 +128,7 @@
  * Access to `/dev/smbios` or `/dev/mem` remains subject to the device-node and
  * physical-memory permissions configured by the operating system.
  *
- * @section sources_haiku Haiku (experimental)
+ * @section sources_haiku Haiku
  *
  * The Haiku backend tries `/dev/misc/mem` first and `/dev/mem` second. It
  * searches the legacy x86 firmware window from `0xF0000` through `0xFFFFF` on
@@ -147,7 +147,7 @@
  * from boot data. Physical-memory access requires the permissions enforced by
  * Haiku's memory driver.
  *
- * @section sources_beos BeOS (experimental)
+ * @section sources_beos BeOS
  *
  * The BeOS backend tries `/dev/misc/mem` and then `/dev/mem`. Like the Haiku
  * backend, it scans only the legacy x86 firmware window and reads the physical
@@ -163,7 +163,6 @@
  * through `/dev/mem` or `/dev/misc/mem`. It performs the same mapping and
  * positional-read fallbacks as the Haiku and BeOS backends. That assumption is
  * not valid for every unknown operating system or architecture, so this
- * fallback remains experimental. File-based parsing remains the portable
  * option on unrecognized targets.
  *
  * @section sources_separate Separate entry point and DMI files
