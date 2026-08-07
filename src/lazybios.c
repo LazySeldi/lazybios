@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+const char lazybiosVersion[] = "1.4.0";
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
@@ -622,7 +623,7 @@ size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_t
  *
  * @param ctx Context containing a parsed SMBIOS entry point.
  */
-void lazybiosPrintVer(const lazybiosCTX_t* ctx) {
+void lazybiosPrintSMVer(const lazybiosCTX_t* ctx) {
 	if (!ctx) return;
 	if (ctx->DMIData->entry_tag == SMBIOS_VER_3X) {
 		printf("SMBIOS version %d.%d.%d\n", ctx->DMIData->entry_union.v3->major_version, ctx->DMIData->entry_union.v3->minor_version, ctx->DMIData->entry_union.v3->docrev);
@@ -642,11 +643,13 @@ void lazybiosPrintVer(const lazybiosCTX_t* ctx) {
 int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
 
-	lazybiosFreeType0(ctx->Type0);
+	lazybiosFreeType0(ctx->Type0, ctx->type0_count);
 	ctx->Type0 = NULL;
+	ctx->type0_count = 0;
 
-	lazybiosFreeType1(ctx->Type1);
+	lazybiosFreeType1(ctx->Type1, ctx->type1_count);
 	ctx->Type1 = NULL;
+	ctx->type1_count = 0;
 
 	lazybiosFreeType2(ctx->Type2, ctx->type2_count);
 	ctx->Type2 = NULL;
