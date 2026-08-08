@@ -156,6 +156,12 @@
  * publishes SMBIOS only through a modern firmware interface. It shares the
  * Haiku mapping, positional-read, validation, and cleanup behavior.
  *
+ * @section sources_reactos ReactOS
+ *
+ * The ReactOS backend obtains the DMI table using the Win32 `GetSystemFirmwareTable`
+ * API. It operates similarly to the Windows backend, constructing a compatible
+ * entry point from the returned table metadata.
+ *
  * @section sources_unknown Unknown platforms
  *
  * The generic backend is selected as @ref LAZYBIOS_BACKEND_GENERIC for

@@ -10,7 +10,7 @@
 - **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup
-- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, and BeOS.
+- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
@@ -27,8 +27,9 @@
    **SunOS (Solaris/illumos) support:** Implemented via the offset-aware `/dev/smbios` snapshot, with a legacy `/dev/mem` fallback. \
    **DragonFly BSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access. \
    **Haiku support:** Scans the legacy x86 firmware window through `/dev/misc/mem` or `/dev/mem`, with positional-read fallbacks when device mapping is unavailable. \
-   **BeOS support:** Uses the same validated legacy x86 physical-memory loader and device fallbacks.
-2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, and BeOS. File-based parsing is available independently of the selected host backend.
+   **BeOS support:** Uses the same validated legacy x86 physical-memory loader and device fallbacks. \
+   **ReactOS support:** Implemented using Win32 firmware-table API calls.
+2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS. File-based parsing is available independently of the selected host backend.
 3. The library is nearing a very stable status. Features are unlikely to change!
 
 ---
