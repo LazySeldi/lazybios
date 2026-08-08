@@ -70,6 +70,9 @@
 #elif defined(__BEOS__) || defined(__BeOS) || defined(_BEOS)
 #define OS_BEOS 1
 
+#elif defined(__REACTOS__)
+#define OS_REACTOS 1
+
 #else
 #define OS_GENERIC 1
 #endif
@@ -355,6 +358,10 @@ int lazybiosHaiku(lazybiosCTX_t* ctx);
 
 #if defined(OS_BEOS)
 int lazybiosBeOS(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_REACTOS)
+int lazybiosReactOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_GENERIC)

@@ -73,7 +73,6 @@ set(LAZYBIOS_SOURCES
 )
 
 set(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS "")
-
 if(WIN32)
     list(APPEND LAZYBIOS_SOURCES src/backends/windows.c)
 elseif(APPLE)
@@ -96,6 +95,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     list(APPEND LAZYBIOS_SOURCES src/backends/sunos.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "DragonFly")
     list(APPEND LAZYBIOS_SOURCES src/backends/dragonfly.c)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "ReactOS")
+    list(APPEND LAZYBIOS_SOURCES src/backends/reactos.c)
 else()
     message(WARNING "Unknown platform detected. Falling back to generic /dev/mem backend.")
     list(APPEND LAZYBIOS_SOURCES src/backends/generic.c)

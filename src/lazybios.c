@@ -254,6 +254,8 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
         ctx->backend = LAZYBIOS_BACKEND_HAIKU;
     #elif defined(OS_BEOS)
         ctx->backend = LAZYBIOS_BACKEND_BEOS;
+    #elif defined(OS_REACTOS)
+        ctx->backend = LAZYBIOS_BACKEND_REACTOS;
 	#elif defined(OS_GENERIC)
 		ctx->backend = LAZYBIOS_BACKEND_GENERIC;
 	#else
@@ -354,6 +356,14 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 	        return -1;
             #endif
 
+	    case LAZYBIOS_BACKEND_REACTOS:
+	        #if defined(OS_REACTOS)
+	        return lazybiosReactOS(ctx);
+	        #else
+	        lb_log("ReactOS backend is not available in this build");
+	        return -1;
+	        #endif
+	        
 		case LAZYBIOS_BACKEND_UNKNOWN:
 			lb_log("No host backend was selected");
 			return -1;

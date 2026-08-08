@@ -276,6 +276,7 @@ typedef enum {
 	LAZYBIOS_BACKEND_DRAGONFLY, /**< DragonFly BSD kenv-assisted physical-memory backend. */
 	LAZYBIOS_BACKEND_HAIKU,     /**< Haiku legacy physical-memory backend. */
 	LAZYBIOS_BACKEND_BEOS,      /**< BeOS legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_REACTOS,   /**< ReactOS Win32 firmware-table API backend. */
 	LAZYBIOS_BACKEND_GENERIC,   /**< Generic legacy physical-memory backend. */
 	LAZYBIOS_BACKEND_UNKNOWN    /**< No usable host backend was selected. */
 } lazybiosBackend_t;
