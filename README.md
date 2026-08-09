@@ -106,6 +106,7 @@
 <summary>Arch Linux</summary>
 
 You can install lazybios from the AUR.
+(The AUR is currently down, can't push the latest commits)
 
 ```shell
 yay -S lib-lazybios # Or use your preferred AUR helper.
