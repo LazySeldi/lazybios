@@ -167,11 +167,18 @@ target_include_directories(lazybios PRIVATE
 )
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(lazybios PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(lazybios PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
+elseif(MSVC)
+    target_compile_options(lazybios PRIVATE /O2)
 endif()
 
 add_executable(lazybios_test test/test.c)
 target_link_libraries(lazybios_test PRIVATE lazybios)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(lazybios_test PRIVATE -O2)
+elseif(MSVC)
+    target_compile_options(lazybios_test PRIVATE /O2)
+endif()
 
 include(CTest)
 option(LAZYBIOS_TEST_HOST_BACKEND
