@@ -155,8 +155,8 @@ endif()
 option(LAZYBIOS_EXT_CJSON "Enable compiling for the lazybios CJSON extention" ON)
 
 if(LAZYBIOS_EXT_CJSON)
-    add_subdirectory(ext/JSON_OUTPUT)
-    add_executable(lazybios_json_test ext/JSON_OUTPUT/test/test_json.c)
+    add_subdirectory(ext/json)
+    add_executable(lazybios_json_test ext/json/test/test_json.c)
     target_link_libraries(lazybios_json_test PRIVATE lazybios lazybios_json)
 endif()
 
