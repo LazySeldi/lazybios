@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define LOG_AREA_LENGTH 0x04
 #define LOG_HEADER_START_OFFSET 0x06
@@ -99,7 +99,7 @@
 #define VARIABLE_DATA_FORMAT_POST_RESULTS_BITMAP 0x04
 #define VARIABLE_DATA_FORMAT_SYSTEM_MANAGEMENT_TYPE 0x05
 #define VARIABLE_DATA_FORMAT_MULTIPLE_EVENT_SYSTEM_MANAGEMENT_TYPE 0x06
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 15 System Event Log structures.
@@ -204,7 +204,7 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 	return Type15;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 15 event-log access method.
@@ -383,7 +383,7 @@ uint16_t lazybiosType15GPNVHandle(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address & 0xFFFF);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 15 structures.

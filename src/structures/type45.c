@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define FIRMWARE_COMPONENT_NAME 0x04
 #define FIRMWARE_VERSION 0x05
@@ -70,7 +70,7 @@
 #define STATE_STANDBY_OFFLINE 0x06
 #define STATE_STANDBY_SPARE 0x07
 #define STATE_UNAVAILABLE_OFFLINE 0x08
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 45 Firmware Inventory Information structures.
@@ -147,7 +147,7 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 	return Type45;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes the format of Type 45 firmware-version strings.
@@ -233,7 +233,7 @@ const char* lazybiosType45StateStr(uint8_t state) {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 45 structures.

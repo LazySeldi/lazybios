@@ -29,13 +29,13 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define DESCRIPTION 0x04
 #define MANAGEMENT_DEVICE_HANDLE 0x05
 #define COMPONENT_HANDLE 0x07
 #define THRESHOLD_HANDLE 0x09
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 35 Management Device Component structures.
@@ -87,7 +87,7 @@ lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_cou
 	return Type35;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 35 structures.

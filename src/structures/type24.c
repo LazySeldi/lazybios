@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define HARDWARE_SECURITY_SETTINGS 0x04
 
@@ -47,7 +47,7 @@
 #define SECURITY_STATUS_ENABLED 0x01
 #define SECURITY_STATUS_NOT_IMPLEMENTED 0x02
 #define SECURITY_STATUS_UNKNOWN 0x03
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 24 Hardware Security structures.
@@ -92,7 +92,7 @@ lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_cou
 	return Type24;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes the power-on password status from Type 24 settings.
@@ -179,7 +179,7 @@ const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_set
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 24 structures.

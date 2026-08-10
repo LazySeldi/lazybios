@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define POWER_UNIT_GROUP 0x04
 #define LOCATION 0x05
@@ -81,7 +81,7 @@
 #define INPUT_VOLTAGE_RANGE_SWITCHING_AUTO_SWITCH 0x04
 #define INPUT_VOLTAGE_RANGE_SWITCHING_WIDE_RANGE 0x05
 #define INPUT_VOLTAGE_RANGE_SWITCHING_NOT_APPLICABLE 0x06
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 39 System Power Supply structures.
@@ -142,7 +142,7 @@ lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_cou
 	return Type39;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes the DMTF power-supply type from Type 39 characteristics.
@@ -237,7 +237,7 @@ void lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, 
 			 (characteristics & POWER_SUPPLY_HOT_REPLACEABLE_MASK) ? "Yes" : "No");
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 39 structures.

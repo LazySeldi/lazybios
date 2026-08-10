@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define BANK_CONNECTIONS 0x05
@@ -46,7 +46,7 @@
 #define SIZE_NOT_DETERMINABLE 0x7D
 #define SIZE_INSTALLED_NOT_ENABLED 0x7E
 #define SIZE_NOT_INSTALLED 0x7F
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all obsolete SMBIOS Type 6 Memory Module Information structures.
@@ -91,7 +91,7 @@ lazybiosType6_t* lazybiosGetType6(lazybiosType6_t* Type6, size_t* type6_count, l
 	return Type6;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Formats the bank connections encoded by a Type 6 structure.
@@ -190,7 +190,7 @@ void lazybiosType6ErrorStatusStr(uint8_t error_status, char* buf, size_t buf_len
 	else buf[buf_len - 1] = '\0';
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 6 structures.

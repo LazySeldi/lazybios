@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define VENDOR_ID 0x04
 #define VENDOR_ID_LENGTH 0x04
@@ -48,7 +48,7 @@
 #define FAMILY_CONFIGURABLE_FIRMWARE_UPDATE_MASK (1ULL << 3)
 #define FAMILY_CONFIGURABLE_PLATFORM_SOFTWARE_MASK (1ULL << 4)
 #define FAMILY_CONFIGURABLE_OEM_MASK (1ULL << 5)
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 43 TPM Device structures.
@@ -109,7 +109,7 @@ lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_cou
 	return Type43;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Formats a TPM firmware revision according to its major specification version.
@@ -156,7 +156,7 @@ void lazybiosType43CharacteristicsStr(uint64_t characteristics, char* buf, size_
 			 (characteristics & FAMILY_CONFIGURABLE_OEM_MASK) ? "Yes" : "No");
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 43 structures.

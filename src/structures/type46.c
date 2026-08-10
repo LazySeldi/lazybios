@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define STRING_PROPERTY_ID 0x04
 #define STRING_PROPERTY_VALUE 0x06
@@ -40,7 +40,7 @@
 #define STRING_PROPERTY_ID_UEFI_DEVICE_PATH 0x0001
 #define STRING_PROPERTY_ID_DMTF_MAX 0x7FFF
 #define STRING_PROPERTY_ID_FIRMWARE_VENDOR_MAX 0xBFFF
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 46 String Property structures.
@@ -89,7 +89,7 @@ lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_cou
 	return Type46;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 46 string-property identifier.
@@ -105,7 +105,7 @@ const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id) {
 	return "OEM-defined";
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 46 structures.

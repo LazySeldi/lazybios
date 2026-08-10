@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define REFERENCE_DESIGNATION 0x04
 #define DEVICE_TYPE_AND_STATUS 0x05
@@ -60,7 +60,7 @@
 #define DEVICE_TYPE_EMMC 0x0E
 #define DEVICE_TYPE_NVME_CONTROLLER 0x0F
 #define DEVICE_TYPE_UFS_CONTROLLER 0x10
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 41 Onboard Devices Extended Information structures.
@@ -111,7 +111,7 @@ lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_cou
 	return Type41;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes the onboard-device type from a combined Type 41 type-and-status byte.
@@ -188,7 +188,7 @@ void lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, 
 	snprintf(buf, buf_len, "Device %hhu, Function %hhu", device, function);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 41 structures.

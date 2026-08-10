@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define CACHE_CONFIGURATION 0x05
@@ -78,7 +78,7 @@
 #define _48_WAY_SET_ASSOCIATIVE 0x0C
 #define _64_WAY_SET_ASSOCIATIVE 0x0D
 #define _20_WAY_SET_ASSOCIATIVE 0x0E
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 7 Cache Information structures.
@@ -139,7 +139,7 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 	return Type7;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 
 // Cache Size -- This is for both Maximum Cache Size and Installed Size

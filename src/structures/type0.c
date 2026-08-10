@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 #define VENDOR 0x04
 #define FIRMWARE_VERSION 0x05
 #define BIOS_STARTING_SEGMENT 0x06
@@ -44,7 +44,7 @@
 #define EMBEDDED_CONTROLLER_FIRMWARE_MAJOR_RELEASE 0x16
 #define EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE 0x17
 #define EXTENDED_FIRMWARE_ROM_SIZE 0x18
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 0 BIOS Information structures.
@@ -155,7 +155,7 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, l
 	*type0_count = index;
 	return Type0;
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 
 // Firmware Characteristics

@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define RESERVED 0x04
 #define RESERVED_SIZE 6
@@ -47,7 +47,7 @@
 #define BOOT_STATUS_SECURITY_VIOLATION 0x06
 #define BOOT_STATUS_PREVIOUSLY_REQUESTED_IMAGE 0x07
 #define BOOT_STATUS_WATCHDOG_EXPIRED 0x08
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 32 System Boot Information structures.
@@ -112,7 +112,7 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 	return Type32;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 32 system boot status code.
@@ -147,7 +147,7 @@ const char* lazybiosType32BootStatusStr(uint8_t boot_status) {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 32 structures.

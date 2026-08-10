@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define POINTING_DEVICE_TYPE 0x04
 #define INTERFACE 0x05
@@ -60,7 +60,7 @@
 #define INTERFACE_USB 0xA2
 #define INTERFACE_I2C 0xA3
 #define INTERFACE_SPI 0xA4
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 21 Built-in Pointing Device structures.
@@ -107,7 +107,7 @@ lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_cou
 	return Type21;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS built-in pointing-device type.
@@ -179,7 +179,7 @@ const char* lazybiosType21InterfaceStr(uint8_t interface) {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 21 structures.

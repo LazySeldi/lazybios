@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define TEMPERATURE_PROBE_HANDLE 0x04
 #define DEVICE_TYPE_AND_STATUS 0x06
@@ -63,7 +63,7 @@
 #define STATUS_NON_CRITICAL 0x04
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 27 Cooling Device structures.
@@ -120,7 +120,7 @@ lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_cou
 	return Type27;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes the cooling-device type from a Type 27 device-type-and-status field.
@@ -182,7 +182,7 @@ const char* lazybiosType27StatusStr(uint8_t device_type_and_status) {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 27 structures.

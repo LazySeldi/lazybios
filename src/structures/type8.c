@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define INTERNAL_REFERENCE_DESIGNATOR 0x04
 #define INTERNAL_CONNECTOR_TYPE 0x05
@@ -124,7 +124,7 @@
 #define PORT_TYPE_8251_COMPATIBLE 0xA0
 #define PORT_TYPE_8251_FIFO_COMPATIBLE 0xA1
 #define PORT_TYPE_OTHER 0xFF
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 8 Port Connector Information structures.
@@ -174,7 +174,7 @@ lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, l
 	return Type8;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 
 // Connector Type

@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define LOWER_THRESHOLD_NON_CRITICAL 0x04
 #define UPPER_THRESHOLD_NON_CRITICAL 0x06
@@ -37,7 +37,7 @@
 #define UPPER_THRESHOLD_CRITICAL 0x0A
 #define LOWER_THRESHOLD_NON_RECOVERABLE 0x0C
 #define UPPER_THRESHOLD_NON_RECOVERABLE 0x0E
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 36 Management Device Threshold Data structures.
@@ -94,7 +94,7 @@ lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_cou
 	return Type36;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 36 structures.

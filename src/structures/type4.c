@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define PROCESSOR_TYPE 0x05
@@ -407,7 +407,7 @@
 #define PROC_TYPE_DSP_PROCESSOR 0x05
 #define PROC_TYPE_VIDEO_PROCESSOR 0x06
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 4 Processor Information structures.
@@ -558,7 +558,7 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 	*type4_count = index;
 	return Type4;
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 
 // Processor Family

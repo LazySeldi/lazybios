@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define MANUFACTURER 0x04
 #define PRODUCT 0x05
@@ -61,7 +61,7 @@
 #define BOARD_TYPE_PROCESSOR_MEMORY_MODULE 0x0B
 #define BOARD_TYPE_PROCESSOR_IO_MODULE 0x0C
 #define BOARD_TYPE_INTERCONNECT_BOARD 0x0D
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 2 Baseboard Information structures.
@@ -144,7 +144,7 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 	return Type2;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 
 // Feature Flags

@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define MANUFACTURER 0x04
 #define PRODUCT_NAME 0x05
@@ -53,7 +53,7 @@
 #define WAKEUP_TYPE_POWER_SWITCH 0x06
 #define WAKEUP_TYPE_PCI_PME 0x07
 #define WAKEUP_TYPE_AC_POWER_RESTORED 0x08
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 1 System Information structures.
@@ -133,7 +133,7 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, l
 	return Type1;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 
 // Wake Up Type

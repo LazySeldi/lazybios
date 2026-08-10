@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define LOCATION 0x04
 #define USE 0x05
@@ -76,7 +76,7 @@
 #define ERROR_CORRECTION_SINGLE_BIT_ECC 0x05
 #define ERROR_CORRECTION_MULTI_BIT_ECC 0x06
 #define ERROR_CORRECTION_CRC 0x07
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 16 Physical Memory Array structures.
@@ -137,7 +137,7 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 	return Type16;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS physical memory array location.
@@ -248,7 +248,7 @@ uint64_t lazybiosType16MaximumCapacityBytes(uint32_t maximum_capacity, uint64_t 
 	return (uint64_t)maximum_capacity * 1024;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 16 structures.

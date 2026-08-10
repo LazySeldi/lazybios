@@ -29,7 +29,7 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define INSTALLABLE_LANGUAGES 0x04
 #define FLAGS 0x05
@@ -37,7 +37,7 @@
 
 // Flag Masks
 #define LANGUAGE_FORMAT_MASK 0x01
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 13 Firmware Language Information structures.
@@ -119,7 +119,7 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 	return Type13;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes the language-description format selected by the Type 13 flags.
@@ -131,7 +131,7 @@ const char* lazybiosType13LanguageFormatStr(uint8_t flags) {
 	return (flags & LANGUAGE_FORMAT_MASK) ? "Abbreviated" : "Long";
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 13 structures.

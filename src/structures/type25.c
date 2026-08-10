@@ -30,14 +30,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define NEXT_SCHEDULED_POWER_ON_MONTH 0x04
 #define NEXT_SCHEDULED_POWER_ON_DAY 0x05
 #define NEXT_SCHEDULED_POWER_ON_HOUR 0x06
 #define NEXT_SCHEDULED_POWER_ON_MINUTE 0x07
 #define NEXT_SCHEDULED_POWER_ON_SECOND 0x08
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 25 System Power Controls structures.
@@ -86,7 +86,7 @@ lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_cou
 	return Type25;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Formats the next scheduled power-on date and time.
@@ -137,7 +137,7 @@ void lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char*
 		values[0], values[1], values[2], values[3], values[4]);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 25 structures.

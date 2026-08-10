@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Defines for Readability //////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Fields
 #define INTERFACE_TYPE 0x04
 #define IPMI_SPECIFICATION_REVISION 0x05
@@ -46,7 +46,7 @@
 #define INTERFACE_TYPE_SMIC 0x02
 #define INTERFACE_TYPE_BT 0x03
 #define INTERFACE_TYPE_SSIF 0x04
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 38 IPMI Device Information structures.
@@ -100,7 +100,7 @@ lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_cou
 	return Type38;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Decoders
 /**
  * @brief Decodes an IPMI BMC interface type.
@@ -204,7 +204,7 @@ void lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t bu
 	snprintf(buf, buf_len, "%s, %s", polarity, trigger_mode);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* --- */
 // Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 38 structures.
