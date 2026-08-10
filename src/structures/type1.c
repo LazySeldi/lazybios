@@ -112,6 +112,7 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, l
 			} else {
 				for (int i = 0; i < 16; i++) current->uuid[i] = 0;
 				current->wake_up_type = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, wake_up_type);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 4)) {
@@ -119,7 +120,9 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, l
 				READSTR(current, family, len, FAMILY, p, structure_end);
 			} else {
 				current->sku_number = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, sku_number);
 				current->family = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, family);
 			}
 
 			index++;

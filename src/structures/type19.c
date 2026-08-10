@@ -86,7 +86,9 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 				READU64(current, extended_ending_address, len, EXTENDED_ENDING_ADDRESS, p);
 			} else {
 				current->extended_starting_address = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_starting_address);
 				current->extended_ending_address = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_ending_address);
 			}
 
 			index++;

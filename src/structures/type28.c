@@ -114,6 +114,7 @@ lazybiosType28_t* lazybiosGetType28(lazybiosType28_t* Type28, size_t* type28_cou
 				LAZYBIOS_MARK_PRESENT(current, minimum_value);
 			} else {
 				current->minimum_value = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, minimum_value);
 				LAZYBIOS_MARK_ABSENT(current, minimum_value);
 			}
 			READU16(current, resolution, len, RESOLUTION, p);

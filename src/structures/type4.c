@@ -476,8 +476,11 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				if (current->l3_cache_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, l3_cache_handle);
 			} else {
 				current->l1_cache_handle = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, l1_cache_handle);
 				current->l2_cache_handle = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, l2_cache_handle);
 				current->l3_cache_handle = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, l3_cache_handle);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 3)) {
@@ -488,8 +491,11 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				READSTR(current, part_number, len, PART_NUMBER, p, structure_end);
 			} else {
 				current->serial_number = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, serial_number);
 				current->asset_tag = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, asset_tag);
 				current->part_number = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, part_number);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 5)) {
@@ -500,15 +506,20 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				READU16(current, processor_characteristics, len, PROCESSOR_CHARACTERISTICS, p);
 			} else {
 				current->core_count = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, core_count);
 				current->core_enabled = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, core_enabled);
 				current->thread_count = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, thread_count);
 				current->processor_characteristics = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, processor_characteristics);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 6)) {
 				READU16(current, processor_family_2, len, PROCESSOR_FAMILY_2, p);
 			} else {
 				current->processor_family_2 = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, processor_family_2);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 0)) {
@@ -519,20 +530,25 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				READU16(current, thread_count_2, len, THREAD_COUNT_2, p);
 			} else {
 				current->core_count_2 = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, core_count_2);
 				current->core_enabled_2 = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, core_enabled_2);
 				current->thread_count_2 = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, thread_count_2);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 6)) {
 				READU16(current, thread_enabled, len, THREAD_ENABLED, p);
 			} else {
 				current->thread_enabled = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, thread_enabled);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 8)) {
 				READSTR(current, socket_type, len, SOCKET_TYPE, p, structure_end);
 			} else {
 				current->socket_type = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, socket_type);
 			}
 
 			index++;

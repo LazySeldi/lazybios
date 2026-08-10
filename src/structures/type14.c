@@ -98,7 +98,9 @@ lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_cou
 				LAZYBIOS_MARK_PRESENT(current, items);
 			} else {
 				current->item_count = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, item_count);
 				current->items = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, items);
 				LAZYBIOS_MARK_ABSENT(current, item_count);
 				LAZYBIOS_MARK_ABSENT(current, items);
 			}

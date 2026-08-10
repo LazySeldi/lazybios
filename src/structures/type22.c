@@ -123,10 +123,15 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 				}
 			} else {
 				current->sbds_serial_number = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, sbds_serial_number);
 				current->sbds_manufacture_date = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, sbds_manufacture_date);
 				current->sbds_device_chemistry = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, sbds_device_chemistry);
 				current->design_capacity_multiplier = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, design_capacity_multiplier);
 				current->oem_specific = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, oem_specific);
 			}
 
 			index++;

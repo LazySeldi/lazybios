@@ -90,18 +90,23 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, l
 					LAZYBIOS_MARK_PRESENT(current, unit);
 				} else {
 					current->extended_rom_size = 0;
+					LAZYBIOS_MARK_UNREACHABLE(current, extended_rom_size);
 					if (lazybiosIsVersionPlus(DMIData, 3, 1)) LAZYBIOS_MARK_ABSENT(current, extended_rom_size);
 				}
 
 				current->rom_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, rom_size);
 				current->field_status.rom_size = LAZYBIOS_FIELD_ABSENT;
 			} else if (len > FIRMWARE_ROM_SIZE) {
 				current->rom_size = (uint32_t)(p[FIRMWARE_ROM_SIZE] + 1) * 64;
 				LAZYBIOS_MARK_PRESENT(current, rom_size);
 				current->extended_rom_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_rom_size);
 			} else {
 				current->rom_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, rom_size);
 				current->extended_rom_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_rom_size);
 				LAZYBIOS_MARK_ABSENT(current, rom_size);
 			}
 
@@ -134,9 +139,13 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, l
 				if (current->ec_minor_release == 0xFF) LAZYBIOS_MARK_ABSENT(current, ec_minor_release);
 			} else {
 				current->platform_major_release = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, platform_major_release);
 				current->platform_minor_release = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, platform_minor_release);
 				current->ec_major_release = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, ec_major_release);
 				current->ec_minor_release = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, ec_minor_release);
 			}
 
 			index++;

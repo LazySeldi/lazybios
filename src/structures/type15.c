@@ -181,14 +181,19 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 						LAZYBIOS_MARK_PRESENT(current, supported_log_type_descriptors);
 					} else {
 						current->supported_log_type_descriptors = NULL;
+						LAZYBIOS_MARK_UNREACHABLE(current, supported_log_type_descriptors);
 						LAZYBIOS_MARK_ABSENT(current, supported_log_type_descriptors);
 					}
 				}
 			} else {
 				current->log_header_format = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, log_header_format);
 				current->number_of_supported_log_type_descriptors = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, number_of_supported_log_type_descriptors);
 				current->length_of_each_log_type_descriptor = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, length_of_each_log_type_descriptor);
 				current->supported_log_type_descriptors = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, supported_log_type_descriptors);
 			}
 
 			index++;

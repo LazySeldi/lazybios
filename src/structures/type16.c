@@ -126,6 +126,7 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 				READU64(current, extended_maximum_capacity, len, EXTENDED_MAXIMUM_CAPACITY, p);
 			} else {
 				current->extended_maximum_capacity = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_maximum_capacity);
 			}
 
 			index++;

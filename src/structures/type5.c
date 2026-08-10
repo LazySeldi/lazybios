@@ -135,6 +135,7 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 					ENABLED_ERROR_CORRECTING_CAPABILITIES(current->number_of_associated_memory_slots), p);
 			} else {
 				current->enabled_error_correcting_capabilities = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, enabled_error_correcting_capabilities);
 			}
 
 			index++;

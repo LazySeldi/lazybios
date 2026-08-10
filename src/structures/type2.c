@@ -129,6 +129,7 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 					}
 				} else {
 					current->contained_object_handles = NULL;
+					LAZYBIOS_MARK_UNREACHABLE(current, contained_object_handles);
 					LAZYBIOS_MARK_ABSENT(current, contained_object_handles);
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, number_of_contained_object_handles) == LAZYBIOS_FIELD_PRESENT) {

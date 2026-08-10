@@ -158,9 +158,13 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 				READU8(current, security_status, len, SECURITY_STATUS, p);
 			} else {
 				current->boot_up_state = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, boot_up_state);
 				current->power_supply_state = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, power_supply_state);
 				current->thermal_state = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, thermal_state);
 				current->security_status = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, security_status);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 3)) {
@@ -202,6 +206,7 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 							SKU_NUMBER(current->contained_element_count, current->contained_element_record_length), p, structure_end);
 					} else {
 						current->sku_number = NULL;
+						LAZYBIOS_MARK_UNREACHABLE(current, sku_number);
 					}
 
 					if (contained_layout_valid && lazybiosIsVersionPlus(DMIData, 3, 9)) {
@@ -215,19 +220,30 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 						}
 					} else {
 						current->rack_type = 0;
+						LAZYBIOS_MARK_UNREACHABLE(current, rack_type);
 						current->rack_height = 0;
+						LAZYBIOS_MARK_UNREACHABLE(current, rack_height);
 					}
 				}
 			} else {
 				current->oem_defined = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, oem_defined);
 				current->height = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, height);
 				current->number_of_power_cords = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, number_of_power_cords);
 				current->contained_element_count = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, contained_element_count);
 				current->contained_element_record_length = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, contained_element_record_length);
 				current->contained_elements = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, contained_elements);
 				current->sku_number = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, sku_number);
 				current->rack_type = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, rack_type);
 				current->rack_height = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, rack_height);
 			}
 
 			index++;

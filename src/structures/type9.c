@@ -221,6 +221,7 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 				READU8(current, slot_characteristics_2, len, SLOT_CHARACTERISTICS_2, p);
 			} else {
 				current->slot_characteristics_2 = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, slot_characteristics_2);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 6)) {
@@ -229,8 +230,11 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 				READU8(current, device_function_number, len, DEVICE_FUNCTION_NUMBER, p);
 			} else {
 				current->segment_group_number = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, segment_group_number);
 				current->bus_number = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, bus_number);
 				current->device_function_number = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, device_function_number);
 			}
 
 			uint8_t declared_peer_grouping_count = 0;
@@ -271,8 +275,11 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 				}
 			} else {
 				current->data_bus_width = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, data_bus_width);
 				current->peer_grouping_count = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, peer_grouping_count);
 				current->peer_groups = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, peer_groups);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 4) && peer_layout_valid) {
@@ -281,8 +288,11 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 				READU16(current, slot_pitch, len, SLOT_PITCH(declared_peer_grouping_count), p);
 			} else {
 				current->slot_information = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, slot_information);
 				current->slot_physical_width = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, slot_physical_width);
 				current->slot_pitch = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, slot_pitch);
 				if (lazybiosIsVersionPlus(DMIData, 3, 4) &&
 					LAZYBIOS_FIELD_STATUS(current, peer_grouping_count) == LAZYBIOS_FIELD_PRESENT) {
 					LAZYBIOS_MARK_ABSENT(current, slot_information);
@@ -295,6 +305,7 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 				READU8(current, slot_height, len, SLOT_HEIGHT(declared_peer_grouping_count), p);
 			} else {
 				current->slot_height = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, slot_height);
 				if (lazybiosIsVersionPlus(DMIData, 3, 5) &&
 					LAZYBIOS_FIELD_STATUS(current, peer_grouping_count) == LAZYBIOS_FIELD_PRESENT) {
 					LAZYBIOS_MARK_ABSENT(current, slot_height);

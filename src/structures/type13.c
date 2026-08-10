@@ -78,6 +78,7 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 				READU8(current, flags, len, FLAGS, p);
 			} else {
 				current->flags = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, flags);
 			}
 			READSTR(current, current_language, len, CURRENT_LANGUAGE, p, structure_end);
 			if (LAZYBIOS_FIELD_STATUS(current, current_language) == LAZYBIOS_FIELD_PRESENT &&
@@ -85,6 +86,7 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 				p[CURRENT_LANGUAGE] > current->installable_languages) {
 				free(current->current_language);
 				current->current_language = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, current_language);
 				LAZYBIOS_MARK_ABSENT(current, current_language);
 			}
 

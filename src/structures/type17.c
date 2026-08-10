@@ -206,16 +206,27 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU16(current, type_detail, len, TYPE_DETAIL, p);
 			} else {
 				current->physical_memory_array_handle = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, physical_memory_array_handle);
 				current->memory_error_information_handle = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, memory_error_information_handle);
 				current->total_width = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, total_width);
 				current->data_width = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, data_width);
 				current->size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, size);
 				current->form_factor = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, form_factor);
 				current->device_set = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, device_set);
 				current->device_locator = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, device_locator);
 				current->bank_locator = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, bank_locator);
 				current->memory_type = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, memory_type);
 				current->type_detail = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, type_detail);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 3)) {
@@ -230,16 +241,22 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READSTR(current, part_number, len, PART_NUMBER, p, structure_end);
 			} else {
 				current->speed = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, speed);
 				current->manufacturer = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, manufacturer);
 				current->serial_number = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, serial_number);
 				current->asset_tag = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, asset_tag);
 				current->part_number = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, part_number);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 6)) {
 				READU8(current, attributes, len, ATTRIBUTES, p);
 			} else {
 				current->attributes = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, attributes);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 7)) {
@@ -248,7 +265,9 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU16(current, configured_memory_speed, len, CONFIGURED_MEMORY_SPEED, p);
 			} else {
 				current->extended_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_size);
 				current->configured_memory_speed = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, configured_memory_speed);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 8)) {
@@ -259,8 +278,11 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU16(current, configured_voltage, len, CONFIGURED_VOLTAGE, p);
 			} else {
 				current->minimum_voltage = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, minimum_voltage);
 				current->maximum_voltage = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, maximum_voltage);
 				current->configured_voltage = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, configured_voltage);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 2)) {
@@ -287,16 +309,27 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU64(current, logical_size, len, LOGICAL_SIZE, p);
 			} else {
 				current->memory_technology = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, memory_technology);
 				current->memory_operating_mode_capability = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, memory_operating_mode_capability);
 				current->firmware_version = NULL;
+				LAZYBIOS_MARK_UNREACHABLE(current, firmware_version);
 				current->module_manufacturer_id = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, module_manufacturer_id);
 				current->module_product_id = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, module_product_id);
 				current->memory_subsystem_controller_manufacturer_id = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, memory_subsystem_controller_manufacturer_id);
 				current->memory_subsystem_controller_product_id = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, memory_subsystem_controller_product_id);
 				current->non_volatile_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, non_volatile_size);
 				current->volatile_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, volatile_size);
 				current->cache_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, cache_size);
 				current->logical_size = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, logical_size);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 3)) {
@@ -305,7 +338,9 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU32(current, extended_configured_memory_speed, len, EXTENDED_CONFIGURED_MEMORY_SPEED, p);
 			} else {
 				current->extended_speed = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_speed);
 				current->extended_configured_memory_speed = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, extended_configured_memory_speed);
 			}
 
 			if (lazybiosIsVersionPlus(DMIData, 3, 7)) {
@@ -318,9 +353,13 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				READU16(current, rcd_revision_number, len, RCD_REVISION_NUMBER, p);
 			} else {
 				current->pmic0_manufacturer_id = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, pmic0_manufacturer_id);
 				current->pmic0_revision_number = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, pmic0_revision_number);
 				current->rcd_manufacturer_id = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, rcd_manufacturer_id);
 				current->rcd_revision_number = 0;
+				LAZYBIOS_MARK_UNREACHABLE(current, rcd_revision_number);
 			}
 
 			index++;
