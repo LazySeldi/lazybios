@@ -146,7 +146,7 @@ elseif(LAZYBIOS_DEBUG)
     target_compile_definitions(lazybios PRIVATE LAZYBIOS_DEBUG)
 endif()
 
-option(LAZYBIOS_EXT_CJSON "Enable CJSON extension" ON)
+option(LAZYBIOS_EXT_CJSON "Enable CJSON extension" OFF)
 if(LAZYBIOS_EXT_CJSON)
     add_subdirectory(ext/json)
     add_executable(lazybios_json_test ext/json/test/test_json.c)
