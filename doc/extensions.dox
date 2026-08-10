@@ -1,0 +1,38 @@
+/**
+ * @page extensions Library Extensions
+ *
+ * @brief Optional companion libraries and output serializers for lazybios.
+ *
+ * @section ext_json JSON Serialization Extension (`ext/json`)
+ *
+ * The `lazybios_json` extension provides cJSON-based serialization for parsed
+ * SMBIOS entry points and structure tables. It converts parsed lazybios structures
+ * into structured JSON trees.
+ *
+ * @subsection ext_json_build Building with JSON Support
+ *
+ * JSON serialization requires the `libcjson` library development package.
+ * Enable the CMake option @c LAZYBIOS_EXT_CJSON when configuring the project:
+ *
+ * @code{.sh}
+ * cmake -S . -B build -DLAZYBIOS_EXT_CJSON=ON
+ * cmake --build build
+ * @endcode
+ *
+ * @subsection ext_json_api API Overview
+ *
+ * - @ref lazybiosExtJSONAddSMBIOSInfo — Serializes entry point metadata and lazybios version.
+ * - @ref lazybiosExtJSONAddType0 — Serializes Type 0 (BIOS Information) arrays.
+ * - @ref lazybiosExtJSONAddType1 — Serializes Type 1 (System Information) arrays.
+ * - @ref lazybiosExtJSONAddType2 — Serializes Type 2 (Baseboard Information) arrays.
+ * - @ref lazybiosExtJSONAddType3 — Serializes Type 3 (Chassis Information) arrays.
+ * - @ref lazybiosExtJSONAddType4 — Serializes Type 4 (Processor Information) arrays.
+ *
+ * Field status handling:
+ * - `LAZYBIOS_FIELD_PRESENT` values are serialized as native JSON strings or numbers.
+ * - `LAZYBIOS_FIELD_ABSENT` fields are serialized as JSON `null`.
+ * - `LAZYBIOS_FIELD_UNREACHABLE` fields are serialized as the sentinel string `"N/A"`
+ *   (defined by @ref LAZYBIOS_JSON_UNREACHABLE).
+ *
+ * @see @ref api_extensions
+ */

@@ -12,14 +12,18 @@
  *
  * On macOS, CMake locates and links the system IOKit and CoreFoundation
  * frameworks required by the AppleSMBIOS backend.
- * Linux, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD,
- * Haiku, and BeOS use interfaces supplied by their base systems; CMake selects
- * the matching backend source for the target operating system. Haiku and BeOS
- * An unrecognized target selects the generic `/dev/mem` source, which assumes
- * a POSIX-like x86 environment;
- * CMake explicitly defines the selected Haiku, BeOS, or generic platform so
- * source selection cannot disagree with compiler-provided host macros during
- * cross-compilation. File-based parsing is the portable alternative.
+ * Linux, Windows, ReactOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos),
+ * DragonFly BSD, Haiku, and BeOS use interfaces supplied by their base systems;
+ * CMake selects the matching backend source for the target operating system
+ * (including ReactOS via `cmake-files/reactOS.cmake`). An unrecognized target
+ * selects the generic `/dev/mem` source, which assumes a POSIX-like x86 environment.
+ *
+ * Operating system definition macros (such as `OS_LINUX`, `OS_WINDOWS`, `OS_REACTOS`,
+ * `OS_MACOS`, `OS_FREEBSD`, `OS_OPENBSD`, `OS_NETBSD`, `OS_DRAGONFLY`, `OS_SUNOS`,
+ * `OS_HAIKU`, `OS_BEOS`, and `OS_GENERIC`) are centrally managed and defined by
+ * CMake compile definitions rather than compiler-provided host preprocessor macros
+ * in internal headers, ensuring reliable cross-compilation behavior.
+ * File-based parsing is the portable alternative.
  *
  * @section build_source Building from source
  *

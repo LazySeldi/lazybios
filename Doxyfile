@@ -12,6 +12,7 @@ OUTPUT_LANGUAGE        = English
 # Input and path handling
 INPUT                  = include \
                          src \
+                         ext \
                          doc/mainpage.md \
                          doc \
                          CONTRIBUTING.md \

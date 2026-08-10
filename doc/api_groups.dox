@@ -314,3 +314,9 @@
  * @ingroup api_types
  * @brief String properties associated with parent SMBIOS structures.
  */
+
+/**
+ * @defgroup api_extensions Library Extensions
+ * @ingroup api
+ * @brief Optional extensions built on top of lazybios, such as cJSON serialization.
+ */

@@ -13,10 +13,11 @@ You should have received a copy of the GNU Lesser General Public License
 along with lazybios. If not, see <https://www.gnu.org/licenses/>.
 */
 /*
-@file lazybios_json.h
-@brief cJSON serialization API for parsed SMBIOS structures.
-@author LazySeldi
-*/
+ * @file lazybios_json.h
+ * @brief cJSON serialization API for parsed SMBIOS structures.
+ * @ingroup api_extensions
+ * @author LazySeldi
+ */
 
 #ifndef LAZYBIOS_JSON_H
 #define LAZYBIOS_JSON_H

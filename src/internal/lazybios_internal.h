@@ -179,18 +179,22 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 #define SMBIOS2_INTERMEDIATE_ANCHOR_SIZE     5
 #define SMBIOS2_FORMATTED_AREA_SIZE          5
 
+/** @brief Marks a parsed structure field as present and valid. */
 #define LAZYBIOS_MARK_PRESENT(record, field) do { \
     (record)->field_status.field = LAZYBIOS_FIELD_PRESENT; \
 } while (0)
 
+/** @brief Marks a parsed structure field as absent. */
 #define LAZYBIOS_MARK_ABSENT(record, field) do { \
     (record)->field_status.field = LAZYBIOS_FIELD_ABSENT; \
 } while (0)
 
+/** @brief Marks a parsed structure field as unreachable (structure too short for newer spec version). */
 #define LAZYBIOS_MARK_UNREACHABLE(record, field) do { \
     (record)->field_status.field = LAZYBIOS_FIELD_UNREACHABLE; \
 } while (0)
 
+/** @brief Clamps a structure length against available buffer boundaries. */
 #define LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end) do { \
 	if ((size_t)((end) - (p)) < (size_t)(len)) { \
 		(len) = (uint8_t)((end) - (p)); \
