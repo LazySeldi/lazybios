@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-# Project definition
 project(lazybios
         VERSION 1.4.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
@@ -8,18 +7,15 @@ project(lazybios
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
 )
 
-# Set C standard
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Default build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
 include(GNUInstallDirs)
 
-# Library sources
 set(LAZYBIOS_SOURCES
         src/backend.c
         src/lazybios.c
@@ -72,88 +68,85 @@ set(LAZYBIOS_SOURCES
         src/structures/type46.c
 )
 
+include(cmake-files/reactOS.cmake)
 set(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS "")
-if(WIN32)
+
+if(REACTOS OR CMAKE_SYSTEM_NAME STREQUAL "ReactOS")
+    list(APPEND LAZYBIOS_SOURCES src/backends/reactos.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_REACTOS=1)
+    set(SELECTED_BACKEND "src/backends/reactos.c")
+elseif(WIN32)
     list(APPEND LAZYBIOS_SOURCES src/backends/windows.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_WINDOWS=1)
+    set(SELECTED_BACKEND "src/backends/windows.c")
 elseif(APPLE)
     list(APPEND LAZYBIOS_SOURCES src/backends/macos.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_MACOS=1)
+    set(SELECTED_BACKEND "src/backends/macos.c")
 elseif(HAIKU)
     list(APPEND LAZYBIOS_SOURCES src/backends/haiku.c)
     list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_HAIKU=1)
+    set(SELECTED_BACKEND "src/backends/haiku.c")
 elseif(BEOS)
     list(APPEND LAZYBIOS_SOURCES src/backends/beos.c)
     list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_BEOS=1)
+    set(SELECTED_BACKEND "src/backends/beos.c")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND LAZYBIOS_SOURCES src/backends/linux.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_LINUX=1)
+    set(SELECTED_BACKEND "src/backends/linux.c")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
     list(APPEND LAZYBIOS_SOURCES src/backends/openbsd.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_OPENBSD=1)
+    set(SELECTED_BACKEND "src/backends/openbsd.c")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
     list(APPEND LAZYBIOS_SOURCES src/backends/freebsd.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_FREEBSD=1)
+    set(SELECTED_BACKEND "src/backends/freebsd.c")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
     list(APPEND LAZYBIOS_SOURCES src/backends/netbsd.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_NETBSD=1)
+    set(SELECTED_BACKEND "src/backends/netbsd.c")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
     list(APPEND LAZYBIOS_SOURCES src/backends/sunos.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_SUNOS=1)
+    set(SELECTED_BACKEND "src/backends/sunos.c")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "DragonFly")
     list(APPEND LAZYBIOS_SOURCES src/backends/dragonfly.c)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "ReactOS")
-    list(APPEND LAZYBIOS_SOURCES src/backends/reactos.c)
+    list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_DRAGONFLY=1)
+    set(SELECTED_BACKEND "src/backends/dragonfly.c")
 else()
     message(WARNING "Unknown platform detected. Falling back to generic /dev/mem backend.")
     list(APPEND LAZYBIOS_SOURCES src/backends/generic.c)
     list(APPEND LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS OS_GENERIC=1)
+    set(SELECTED_BACKEND "src/backends/generic.c")
 endif()
 
+# Library
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
+target_compile_definitions(lazybios PRIVATE ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS})
 
 if(WIN32)
-    # MinGW exports undecorated C symbols by default, while MSVC does not.
-    # Generate the export table so the same public API is available from
-    # native MSVC-built DLLs without compiler-specific annotations in every
-    # public declaration.
     set_target_properties(lazybios PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
-if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
-    target_compile_definitions(lazybios PRIVATE
-            ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
-    )
-endif()
-
 if(APPLE)
-    find_library(LAZYBIOS_IOKIT_FRAMEWORK IOKit)
-    find_library(LAZYBIOS_COREFOUNDATION_FRAMEWORK CoreFoundation)
-
-    if(NOT LAZYBIOS_IOKIT_FRAMEWORK OR NOT LAZYBIOS_COREFOUNDATION_FRAMEWORK)
-        message(FATAL_ERROR "lazybios requires the IOKit and CoreFoundation frameworks on macOS")
-    endif()
-
-    target_link_libraries(lazybios PRIVATE
-            ${LAZYBIOS_IOKIT_FRAMEWORK}
-            ${LAZYBIOS_COREFOUNDATION_FRAMEWORK}
-    )
+    find_library(IOKIT IOKit REQUIRED)
+    find_library(COREFOUNDATION CoreFoundation REQUIRED)
+    target_link_libraries(lazybios PRIVATE ${IOKIT} ${COREFOUNDATION})
 endif()
 
-# Logging Options
-option(LAZYBIOS_QUIET "Disable all lazybios logging" OFF)
-option(LAZYBIOS_DEBUG "Enable lazybios debug logging" OFF)
+# Options
+option(LAZYBIOS_QUIET "Disable logging" OFF)
+option(LAZYBIOS_DEBUG "Enable debug logging" OFF)
 
 if(LAZYBIOS_QUIET)
     target_compile_definitions(lazybios PRIVATE LAZYBIOS_QUIET)
-    message(STATUS "lazybios: Quiet mode enabled (no logging)")
-endif()
-
-if(LAZYBIOS_DEBUG)
+elseif(LAZYBIOS_DEBUG)
     target_compile_definitions(lazybios PRIVATE LAZYBIOS_DEBUG)
-    message(STATUS "lazybios: Debug mode enabled")
 endif()
 
-if(NOT LAZYBIOS_QUIET AND NOT LAZYBIOS_DEBUG)
-    message(STATUS "lazybios: Normal logging enabled")
-endif()
-
-# Extentions -- Mare extentions coming later like XML etc
-option(LAZYBIOS_EXT_CJSON "Enable compiling for the lazybios CJSON extention" ON)
-
+option(LAZYBIOS_EXT_CJSON "Enable CJSON extension" ON)
 if(LAZYBIOS_EXT_CJSON)
     add_subdirectory(ext/json)
     add_executable(lazybios_json_test ext/json/test/test_json.c)
@@ -170,143 +163,99 @@ target_include_directories(lazybios PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+target_include_directories(lazybios PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/internal)
 
-target_include_directories(lazybios PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/internal
-)
-
-if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(lazybios PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
-elseif(MSVC)
+if(MSVC)
     target_compile_options(lazybios PRIVATE /O2)
+else()
+    target_compile_options(lazybios PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
 endif()
 
 add_executable(lazybios_test test/test.c)
 target_link_libraries(lazybios_test PRIVATE lazybios)
-if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+
+if(MSVC)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(lazybios_test PRIVATE /RTC1)
+        if(LAZYBIOS_EXT_CJSON)
+            target_compile_options(lazybios_json_test PRIVATE /RTC1)
+        endif()
+    else()
+        target_compile_options(lazybios_test PRIVATE /O2)
+        if(LAZYBIOS_EXT_CJSON)
+            target_compile_options(lazybios_json_test PRIVATE /O2)
+        endif()
+    endif()
+else()
     target_compile_options(lazybios_test PRIVATE -O2)
-elseif(MSVC)
-    target_compile_options(lazybios_test PRIVATE /O2)
+    if(LAZYBIOS_EXT_CJSON)
+        target_compile_options(lazybios_json_test PRIVATE -O2)
+    endif()
 endif()
 
 include(CTest)
-option(LAZYBIOS_TEST_HOST_BACKEND
-        "Enable the native host-backend integration test (may require privileges)" OFF)
+option(LAZYBIOS_TEST_HOST_BACKEND "Enable host-backend test" OFF)
 
 if(BUILD_TESTING)
     add_executable(lazybios_semantic_test test/semantic_test.c)
     target_link_libraries(lazybios_semantic_test PRIVATE lazybios)
-    if(LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS)
-        target_compile_definitions(lazybios_semantic_test PRIVATE
-                ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS}
-        )
-    endif()
-    target_include_directories(lazybios_semantic_test PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/internal
-    )
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_definitions(lazybios_semantic_test PRIVATE ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS})
+    target_include_directories(lazybios_semantic_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/internal)
+    
+    if(NOT MSVC)
         target_compile_options(lazybios_semantic_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
     endif()
+    
     add_test(NAME lazybios_semantics COMMAND lazybios_semantic_test)
 
     if(LAZYBIOS_TEST_HOST_BACKEND)
         add_executable(lazybios_host_backend_test test/host_backend_test.c)
         target_link_libraries(lazybios_host_backend_test PRIVATE lazybios)
-        if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-            target_compile_options(lazybios_host_backend_test PRIVATE
-                    -Wall -Wextra -Wpedantic -Werror)
+        if(NOT MSVC)
+            target_compile_options(lazybios_host_backend_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()
         add_test(NAME lazybios_host_backend COMMAND lazybios_host_backend_test)
         set_tests_properties(lazybios_host_backend PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()
 
-# Fuzzing (Clang + libFuzzer)
-option(LAZYBIOS_BUILD_FUZZERS "Build the libFuzzer targets in fuzz/" OFF)
-
 if(LAZYBIOS_BUILD_FUZZERS)
     add_subdirectory(fuzz)
 endif()
 
-configure_file(
-        cmake-files/lazybios.pc.in
-        ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc
-        @ONLY
-)
+configure_file(cmake-files/lazybios.pc.in ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc @ONLY)
 
-# Installation
-install(TARGETS lazybios
-        EXPORT lazybiosTargets
+install(TARGETS lazybios EXPORT lazybiosTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
-install(DIRECTORY include/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING PATTERN "*.h"
-)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
-
-# CMake package config
 include(CMakePackageConfigHelpers)
+configure_package_config_file(cmake-files/lazybiosConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
 
-configure_package_config_file(
-        cmake-files/lazybiosConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios
-)
+install(EXPORT lazybiosTargets FILE lazybiosTargets.cmake NAMESPACE lazybios:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios)
 
-write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
+configure_file(cmake-files/cmake_uninstall.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
+add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake COMMENT "Uninstalling lazybios...")
 
-install(EXPORT lazybiosTargets
-        FILE lazybiosTargets.cmake
-        NAMESPACE lazybios::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios
-)
-
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/lazybiosConfigVersion.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/lazybios
-)
-
-# Uninstall target
-configure_file(
-        cmake-files/cmake_uninstall.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-        @ONLY
-)
-
-add_custom_target(uninstall
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-        COMMENT "Uninstalling lazybios..."
-)
-
-message(STATUS "
-lazybios ${PROJECT_VERSION} configured successfully!
-
-Installation:
-  make install      - Install to ${CMAKE_INSTALL_PREFIX}
-  make uninstall    - Remove installed files
-
-Build targets:
-  make              - Build library and test executable
-  make test         - Run tests
-
-Usage in other projects:
-  find_package(lazybios REQUIRED)
-  target_link_libraries(your_target PRIVATE lazybios::lazybios)
-
-Or with pkg-config:
-  pkg-config --cflags --libs lazybios
-
-The pkg-config file will be installed to: ${CMAKE_INSTALL_PREFIX}/pkgconfig/lazybios.pc
-")
+message(STATUS "--------------------------------------------------------------------------------")
+message(STATUS "lazybios ${PROJECT_VERSION} configured successfully!")
+message(STATUS "")
+message(STATUS "Installation Path: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Backend Selected:  ${SELECTED_BACKEND}")
+message(STATUS "")
+message(STATUS "Build targets:")
+message(STATUS "  make           - Build library, tests, and extensions")
+message(STATUS "  make test      - Run automated tests")
+message(STATUS "  make install   - Install library and headers")
+message(STATUS "  make uninstall - Uninstall library and headers")
+message(STATUS "")
+message(STATUS "Usage:")
+message(STATUS "  find_package(lazybios REQUIRED)")
+message(STATUS "  target_link_libraries(your_target PRIVATE lazybios::lazybios)")
+message(STATUS "--------------------------------------------------------------------------------")

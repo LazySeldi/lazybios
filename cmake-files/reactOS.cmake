@@ -1,0 +1,5 @@
+if(NOT DEFINED REACTOS)
+    file(WRITE "${CMAKE_BINARY_DIR}/_ros_check.c" "#ifndef __REACTOS__\n#error NO\n#endif\nint main(){}")
+    try_compile(REACTOS "${CMAKE_BINARY_DIR}/_ros_build" SOURCES "${CMAKE_BINARY_DIR}/_ros_check.c")
+    set(REACTOS ${REACTOS} CACHE BOOL "Building for ReactOS")
+endif()

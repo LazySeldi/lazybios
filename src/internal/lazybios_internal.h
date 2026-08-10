@@ -31,52 +31,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined(OS_GENERIC)
-/* CMake selected the generic backend for an otherwise unknown target. */
-
-#elif defined(OS_HAIKU)
-/* CMake selected the Haiku backend. */
-
-#elif defined(OS_BEOS)
-/* CMake selected the BeOS backend. */
-
-#elif defined(_WIN32) || defined(_WIN64)
-#define OS_WINDOWS 1
-
-#elif defined(__linux__) || defined(linux) || defined(__linux) || defined(__gnu_linux__)
-#define OS_LINUX 1
-
-#elif defined(__APPLE__) && defined(__MACH__)
-#define OS_MACOS 1
-
-#elif defined(__OpenBSD__)
-#define OS_OPENBSD 1
-
-#elif defined(__FreeBSD__)
-#define OS_FREEBSD 1
-
-#elif defined(__NetBSD__)
-#define OS_NETBSD 1
-
-#elif defined(__sun)
-#define OS_SUNOS 1
-
-#elif defined(__DragonFly__)
-#define OS_DRAGONFLY 1
-
-#elif defined(__HAIKU__)
-#define OS_HAIKU 1
-
-#elif defined(__BEOS__) || defined(__BeOS) || defined(_BEOS)
-#define OS_BEOS 1
-
-#elif defined(__REACTOS__)
-#define OS_REACTOS 1
-
-#else
-#define OS_GENERIC 1
-#endif
-
 // Logging system for lazybios
 
 #ifndef LAZYBIOS_QUIET
