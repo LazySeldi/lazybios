@@ -314,6 +314,19 @@
  * @ingroup api_types
  * @brief String properties associated with parent SMBIOS structures.
  */
+ 
+/**
+ * @defgroup api_oem OEM SMBIOS Structure APIs
+ * @ingroup api
+ * @brief Parsers, decoded structures, formatters, and cleanup functions for vendor-specific SMBIOS types.
+ */
+
+/**
+ * @defgroup api_hp_type201 HP OEM Type 201: Rack Information
+ * @ingroup api_oem
+ * @brief HP OEM specific rack naming and identity information parsing and decoding.
+ * @note Experimental and untested.
+ */
 
 /**
  * @defgroup api_extensions Library Extensions
