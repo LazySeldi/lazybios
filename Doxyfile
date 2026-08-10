@@ -117,7 +117,7 @@ ENUM_VALUES_PER_LINE   = 4
 # Structured output for Markdown conversion.
 # Doxygen parses Markdown but does not generate Markdown directly. The XML in
 # docs/xml can be converted with a Doxygen XML-to-Markdown tool such as Moxygen.
-GENERATE_XML           = YES
+GENERATE_XML           = NO
 XML_OUTPUT             = xml
 XML_PROGRAMLISTING     = YES
 
