@@ -1,17 +1,21 @@
 /*
-SPDX-License-Identifier: LGPL-2.1-or-later
-This file is part of lazybios.
-lazybios is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 2.1 of the License, or
-(at your option) any later version.
-lazybios is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Lesser General Public License for more details.
-You should have received a copy of the GNU Lesser General Public License
-along with lazybios. If not, see <https://www.gnu.org/licenses/>.
-*/
+* SPDX-License-Identifier: LGPL-2.1-or-later
+ *
+ * This file is part of lazybios.
+ *
+ * lazybios is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * lazybios is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with lazybios. If not, see <https://www.gnu.org/licenses/>.
+ */
 /*
  * @file lazybios_json.h
  * @brief cJSON serialization API for parsed SMBIOS structures.
@@ -36,6 +40,17 @@ contain (newer spec revision required) from fields that are simply absent
 (::LAZYBIOS_FIELD_ABSENT), which are written as JSON null.
 */
 #define LAZYBIOS_JSON_UNREACHABLE "N/A"
+
+/**
+@brief Note on the per-type lazybiosExtJSONAddTypeN() functions below:
+       when the corresponding structure array is NULL or @p count is 0
+       (i.e. no structures of that type were found on the system), the
+       "TypeN" key is still attached to @p root, but its value is a
+       plain JSON string describing the failure (e.g. "Failed to get
+       Memory Controller information") instead of an array of objects.
+       Callers should check the JSON type of "TypeN" (array vs string)
+       to distinguish the two cases.
+*/
 
 /**
 @brief Serialises lazybios library metadata and the parsed SMBIOS entry
@@ -98,6 +113,26 @@ void lazybiosExtJSONAddType3(const lazybiosType3_t* type3, size_t count, cJSON* 
 @param root      cJSON object to attach the resulting array to.
 */
 void lazybiosExtJSONAddType4(const lazybiosType4_t* type4, size_t count, cJSON* root);
+
+/**
+@brief Serialises an array of parsed SMBIOS Type 5 (Memory Controller
+       Information, obsolete) structures into a cJSON array and attaches
+       it to @p root under the key "Type5".
+@param type5     Pointer to the first element of a parsed Type 5 array.
+@param count     Number of elements in @p type5.
+@param root      cJSON object to attach the resulting array to.
+*/
+void lazybiosExtJSONAddType5(const lazybiosType5_t* type5, size_t count, cJSON* root);
+
+/**
+@brief Serialises an array of parsed SMBIOS Type 6 (Memory Module
+       Information, obsolete) structures into a cJSON array and attaches
+       it to @p root under the key "Type6".
+@param type6     Pointer to the first element of a parsed Type 6 array.
+@param count     Number of elements in @p type6.
+@param root      cJSON object to attach the resulting array to.
+*/
+void lazybiosExtJSONAddType6(const lazybiosType6_t* type6, size_t count, cJSON* root);
 
 #ifdef __cplusplus
 }
