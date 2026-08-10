@@ -257,6 +257,9 @@ void lazybiosPrintSMVer(const lazybiosCTX_t* ctx);
 #include "lazybios/type44.h"
 #include "lazybios/type45.h"
 #include "lazybios/type46.h"
+#if defined(LAZYBIOS_OEM_HP)
+#include "lazybios/oem/hp/hp_type201.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -430,6 +433,20 @@ struct lazybiosCTX {
 
 	lazybiosType46_t* Type46;
 	size_t type46_count;
+
+    #if defined(LAZYBIOS_OEM_HP)
+        /**
+         * @brief HP OEM Type 201 structures.
+         * @note Only available when LAZYBIOS_OEM_HP is defined.
+         * @warning Experimental and untested.
+         */
+        lazybiosOemHpType201_t* HpType201;
+        /**
+         * @brief Number of elements in HpType201.
+         * @note Only available when LAZYBIOS_OEM_HP is defined.
+         */
+        size_t hptype201_count;
+    #endif
 };
 
 /**

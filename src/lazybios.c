@@ -125,8 +125,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 		return -1;
 	}
 
-	int result = lazybiosLoadRawBuffers(ctx, entry_buf, parsed_entry_len,
-		table_data, table_len);
+	int result = lazybiosLoadRawBuffers(ctx, entry_buf, parsed_entry_len, table_data, table_len);
 	free(table_data);
 	return result;
 }
@@ -795,6 +794,12 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
 
 	lazybiosFreeType46(ctx->Type46, ctx->type46_count);
 	ctx->Type46 = NULL;
+
+#if defined(LAZYBIOS_OEM_HP)
+    lazybiosFreeOemHpType201(ctx->HpType201, ctx->hptype201_count);
+    ctx->HpType201 = NULL;
+    ctx->hptype201_count = 0;
+#endif
 
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);
