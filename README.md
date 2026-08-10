@@ -6,15 +6,16 @@
 ---
 ## Features
 
-- **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones)
+- **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones).
 - **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
+- **Library Extentions** - Currently only JSON output is implemented.
 - **Zero Dependencies** - Pure C standard library, except libc.
-- **Memory Safe** - Proper allocation and cleanup
+- **Memory Safe** - Proper allocation and cleanup.
 - **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
 - **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
-- **Architectures:** x86_64, ARM (32/64), RISC-V 64(Did run on RISC-V, but not heavily tested), and others
+- **Architectures:** x86_64, ARM (32/64), RISC-V 64(Did run on RISC-V, but not heavily tested), and others.
 ---
 
 ## Project Status
