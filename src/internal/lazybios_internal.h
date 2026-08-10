@@ -225,11 +225,16 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 #define SMBIOS2_INTERMEDIATE_ANCHOR_SIZE     5
 #define SMBIOS2_FORMATTED_AREA_SIZE          5
 
-#define LAZYBIOS_MARK_PRESENT(record, field) \
-	((record)->field_status.field = LAZYBIOS_FIELD_PRESENT)
+#define LAZYBIOS_MARK_PRESENT(record, field) do { \
+    (record)->field_status.field = LAZYBIOS_FIELD_PRESENT; \
+} while (0)
 
 #define LAZYBIOS_MARK_ABSENT(record, field) do { \
-	(record)->field_status.field = LAZYBIOS_FIELD_ABSENT; \
+    (record)->field_status.field = LAZYBIOS_FIELD_ABSENT; \
+} while (0)
+
+#define LAZYBIOS_MARK_UNREACHABLE(record, field) do { \
+    (record)->field_status.field = LAZYBIOS_FIELD_UNREACHABLE; \
 } while (0)
 
 #define LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end) do { \

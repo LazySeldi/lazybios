@@ -63,8 +63,9 @@ extern const char lazybiosVersion[];
  * @ingroup api_parsing
  */
 typedef enum {
-	LAZYBIOS_FIELD_ABSENT = 0, /**< The field is not encoded in the formatted structure. */
-	LAZYBIOS_FIELD_PRESENT     /**< The field is encoded and available to the caller. */
+    LAZYBIOS_FIELD_ABSENT = 0,   /**< The field exists in this SMBIOS version but is not populated by the vendor. */
+    LAZYBIOS_FIELD_PRESENT,      /**< The field is encoded and contains valid data. */
+    LAZYBIOS_FIELD_UNREACHABLE   /**< The field was added in a newer SMBIOS spec; structure is too short to contain it. */
 } lazybiosFieldStatus_t;
 
 /**
