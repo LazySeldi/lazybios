@@ -22,20 +22,15 @@
  * @author LazySeldi
  */
 
-//
-// Type 14 ( Group Associations )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define GROUP_NAME 0x04
 #define ITEMS 0x05
 #define ITEM_SIZE 3
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 14 Group Associations structures.
@@ -113,8 +108,6 @@ lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_cou
 	return Type14;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 14 structures.
  *

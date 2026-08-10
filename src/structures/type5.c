@@ -22,16 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 5 ( Memory Controller Information, Obsolete )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define ERROR_DETECTING_METHOD 0x04
 #define ERROR_CORRECTING_CAPABILITY 0x05
@@ -63,7 +59,6 @@
 #define INTERLEAVE_FOUR_WAY 0x05
 #define INTERLEAVE_EIGHT_WAY 0x06
 #define INTERLEAVE_SIXTEEN_WAY 0x07
-/* --- */
 
 /**
  * @brief Parses all obsolete SMBIOS Type 5 Memory Controller Information structures.
@@ -146,7 +141,6 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 	return Type5;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes a Type 5 memory-error detecting method.
@@ -272,8 +266,6 @@ void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* bu
 	else buf[buf_len - 1] = '\0';
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 5 structures.
  *

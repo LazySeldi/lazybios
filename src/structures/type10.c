@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 10 ( On Board Devices Information, Obsolete )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 #define DEVICES 0x04
 #define DEVICE_ENTRY_SIZE 2
 #define DEVICE_STATUS_MASK 0x80
@@ -46,7 +42,6 @@
 #define DEVICE_TYPE_PATA_CONTROLLER 0x08
 #define DEVICE_TYPE_SATA_CONTROLLER 0x09
 #define DEVICE_TYPE_SAS_CONTROLLER 0x0A
-/* --- */
 
 /**
  * @brief Parses all obsolete SMBIOS Type 10 On Board Devices Information structures.
@@ -112,7 +107,6 @@ lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_cou
 	return Type10;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an obsolete Type 10 onboard-device type.
@@ -146,8 +140,6 @@ const char* lazybiosType10DeviceStatusStr(uint8_t device_type_and_status) {
 	return (device_type_and_status & DEVICE_STATUS_MASK) ? "Enabled" : "Disabled";
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 10 structures.
  *

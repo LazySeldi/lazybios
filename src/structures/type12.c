@@ -22,17 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 12 ( System Configuration Options )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define COUNT 0x04
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 12 System Configuration Options structures.
@@ -98,8 +93,6 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 	return Type12;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 12 structures.
  *

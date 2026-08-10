@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 18 ( 32-Bit Memory Error Information )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define ERROR_TYPE 0x04
 #define ERROR_GRANULARITY 0x05
@@ -67,7 +63,6 @@
 #define ERROR_OPERATION_READ 0x03
 #define ERROR_OPERATION_WRITE 0x04
 #define ERROR_OPERATION_PARTIAL_WRITE 0x05
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 18 32-Bit Memory Error Information structures.
@@ -118,7 +113,6 @@ lazybiosType18_t* lazybiosGetType18(lazybiosType18_t* Type18, size_t* type18_cou
 	return Type18;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS memory-error type.
@@ -205,8 +199,6 @@ const char* lazybiosType18ErrorOperationStr(uint8_t error_operation) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 18 structures.
  *

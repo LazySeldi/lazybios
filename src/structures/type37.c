@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 37 ( Memory Channel )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define CHANNEL_TYPE 0x04
 #define MAXIMUM_CHANNEL_LOAD 0x05
@@ -43,7 +39,6 @@
 #define CHANNEL_TYPE_UNKNOWN 0x02
 #define CHANNEL_TYPE_RAMBUS 0x03
 #define CHANNEL_TYPE_SYNCLINK 0x04
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 37 Memory Channel structures.
@@ -115,7 +110,6 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 	return Type37;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 37 memory-channel type.
@@ -138,8 +132,6 @@ const char* lazybiosType37ChannelTypeStr(uint8_t channel_type) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 37 structures.
  *

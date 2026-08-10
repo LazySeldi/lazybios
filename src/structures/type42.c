@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 42 ( Management Controller Host Interface )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define INTERFACE_TYPE 0x04
 #define INTERFACE_TYPE_SPECIFIC_DATA_LENGTH 0x05
@@ -50,7 +46,6 @@
 #define PROTOCOL_TYPE_MCTP 0x03
 #define PROTOCOL_TYPE_REDFISH_OVER_IP 0x04
 #define PROTOCOL_TYPE_OEM 0xF0
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 42 Management Controller Host Interface structures.
@@ -191,7 +186,6 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 	return Type42;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 42 management-controller host-interface type.
@@ -236,8 +230,6 @@ const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 42 structures.
  *

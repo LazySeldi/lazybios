@@ -22,16 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 4 ( Processor Information )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define PROCESSOR_TYPE 0x05
@@ -407,7 +403,6 @@
 #define PROC_TYPE_DSP_PROCESSOR 0x05
 #define PROC_TYPE_VIDEO_PROCESSOR 0x06
 
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 4 Processor Information structures.
@@ -1392,7 +1387,6 @@ void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
 	}
 }
 
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 4 structures.
  *

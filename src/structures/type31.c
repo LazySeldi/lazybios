@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 31 ( Boot Integrity Services Entry Point )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define CHECKSUM 0x04
 #define RESERVED_1 0x05
@@ -40,7 +36,6 @@
 #define RESERVED_4 0x18
 
 #define TYPE31_MINIMUM_LENGTH 0x1C
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 31 Boot Integrity Services Entry Point structures.
@@ -100,8 +95,6 @@ lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_cou
 	return Type31;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 31 structures.
  *

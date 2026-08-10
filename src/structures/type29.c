@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 29 ( Electrical Current Probe )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define DESCRIPTION 0x04
 #define LOCATION_AND_STATUS 0x05
@@ -66,7 +62,6 @@
 #define STATUS_NON_CRITICAL 0x04
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 29 Electrical Current Probe structures.
@@ -120,7 +115,6 @@ lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_cou
 	return Type29;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes the physical location from a Type 29 location-and-status field.
@@ -182,8 +176,6 @@ const char* lazybiosType29StatusStr(uint8_t location_and_status) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 29 structures.
  *

@@ -22,16 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 2 ( Baseboard (or Module) Information )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define MANUFACTURER 0x04
 #define PRODUCT 0x05
@@ -61,7 +57,6 @@
 #define BOARD_TYPE_PROCESSOR_MEMORY_MODULE 0x0B
 #define BOARD_TYPE_PROCESSOR_IO_MODULE 0x0C
 #define BOARD_TYPE_INTERCONNECT_BOARD 0x0D
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 2 Baseboard Information structures.
@@ -144,7 +139,6 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 	return Type2;
 }
 
-/* --- */
 // Decoders
 
 // Feature Flags
@@ -213,7 +207,6 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 	}
 }
 
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 2 structures.
  *

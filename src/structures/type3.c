@@ -22,16 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 3 ( System Enclosure or Chassis )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define MANUFACTURER 0x04
 #define TYPE 0x05
@@ -106,7 +102,6 @@
 #define CHASSIS_SECURITY_STATUS_NONE 0x03
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT 0x04
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED 0x05
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 3 Chassis Information structures.
@@ -254,7 +249,6 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 	return Type3;
 }
 
-/* --- */
 // Decoders
 
 // Chassis Type
@@ -469,7 +463,6 @@ void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf,
 	}
 }
 
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 3 structures.
  *

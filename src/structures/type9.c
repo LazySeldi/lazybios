@@ -22,16 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 9 ( System Slots )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define SLOT_DESIGNATION 0x04
 #define SLOT_TYPE 0x05
@@ -173,7 +169,6 @@
 #define SLOT_HEIGHT_UNKNOWN 0x02
 #define SLOT_HEIGHT_FULL 0x03
 #define SLOT_HEIGHT_LOW_PROFILE 0x04
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 9 System Slots structures.
@@ -320,7 +315,6 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 	return Type9;
 }
 
-/* --- */
 // Decoders
 
 // Slot Type
@@ -575,7 +569,6 @@ const char* lazybiosType9SlotHeightStr(uint8_t slot_height) {
 	}
 }
 
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 9 structures.
  *

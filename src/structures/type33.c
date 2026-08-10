@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 33 ( 64-Bit Memory Error Information )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define ERROR_TYPE 0x04
 #define ERROR_GRANULARITY 0x05
@@ -67,7 +63,6 @@
 #define ERROR_OPERATION_READ 0x03
 #define ERROR_OPERATION_WRITE 0x04
 #define ERROR_OPERATION_PARTIAL_WRITE 0x05
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 33 64-Bit Memory Error Information structures.
@@ -118,7 +113,6 @@ lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_cou
 	return Type33;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS 64-bit memory-error type.
@@ -205,8 +199,6 @@ const char* lazybiosType33ErrorOperationStr(uint8_t error_operation) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 33 structures.
  *

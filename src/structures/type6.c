@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 6 ( Memory Module Information, Obsolete )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define BANK_CONNECTIONS 0x05
@@ -191,7 +187,6 @@ void lazybiosType6ErrorStatusStr(uint8_t error_status, char* buf, size_t buf_len
 }
 
 /* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 6 structures.
  *

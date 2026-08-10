@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 34 ( Management Device )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define DESCRIPTION 0x04
 #define DEVICE_TYPE 0x05
@@ -57,7 +53,6 @@
 #define ADDRESS_TYPE_IO_PORT 0x03
 #define ADDRESS_TYPE_MEMORY 0x04
 #define ADDRESS_TYPE_SM_BUS 0x05
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 34 Management Device structures.
@@ -106,7 +101,6 @@ lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_cou
 	return Type34;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 34 management-device type.
@@ -170,8 +164,6 @@ const char* lazybiosType34AddressTypeStr(uint8_t address_type) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 34 structures.
  *

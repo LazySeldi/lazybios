@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 44 ( Processor Additional Information )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define REFERENCED_HANDLE 0x04
 #define BLOCK_LENGTH 0x06
@@ -49,7 +45,6 @@
 #define PROCESSOR_TYPE_RISCV128 0x08
 #define PROCESSOR_TYPE_LOONGARCH32 0x09
 #define PROCESSOR_TYPE_LOONGARCH64 0x0A
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 44 Processor Additional Information structures.
@@ -111,7 +106,6 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 	return Type44;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS Type 44 processor architecture type.
@@ -148,8 +142,6 @@ const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type) {
 	}
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 44 structures.
  *

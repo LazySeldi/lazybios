@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 19 ( Memory Array Mapped Address )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define STARTING_ADDRESS 0x04
 #define ENDING_ADDRESS 0x08
@@ -40,7 +36,6 @@
 
 // Address Selection
 #define USE_EXTENDED_ADDRESS 0xFFFFFFFFU
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 19 Memory Array Mapped Address structures.
@@ -99,7 +94,6 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 	return Type19;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Converts SMBIOS Type 19 starting-address fields to a byte address.
@@ -125,8 +119,6 @@ uint64_t lazybiosType19EndingAddressBytes(uint32_t ending_address, uint64_t exte
 	return (uint64_t)ending_address * 1024 + 1023;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 19 structures.
  *

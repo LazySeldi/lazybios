@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 20 ( Memory Device Mapped Address )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define STARTING_ADDRESS 0x04
 #define ENDING_ADDRESS 0x08
@@ -43,7 +39,6 @@
 
 // Address Selection
 #define USE_EXTENDED_ADDRESS 0xFFFFFFFFU
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 20 Memory Device Mapped Address structures.
@@ -108,7 +103,6 @@ lazybiosType20_t* lazybiosGetType20(lazybiosType20_t* Type20, size_t* type20_cou
 	return Type20;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Converts SMBIOS Type 20 starting-address fields to a byte address.
@@ -134,8 +128,6 @@ uint64_t lazybiosType20EndingAddressBytes(uint32_t ending_address, uint64_t exte
 	return (uint64_t)ending_address * 1024 + 1023;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 20 structures.
  *

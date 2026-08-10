@@ -22,14 +22,10 @@
  * @author LazySeldi
  */
 
-//
-// Type 30 ( Out-of-Band Remote Access )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define MANUFACTURER_NAME 0x04
 #define CONNECTIONS 0x05
@@ -37,7 +33,6 @@
 // Connection Bits
 #define INBOUND_CONNECTION_ENABLED (1U << 0)
 #define OUTBOUND_CONNECTION_ENABLED (1U << 1)
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 30 Out-of-Band Remote Access structures.
@@ -84,7 +79,6 @@ lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_cou
 	return Type30;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes the inbound-connection state from a Type 30 connections field.
@@ -106,8 +100,6 @@ const char* lazybiosType30OutboundConnectionStr(uint8_t connections) {
 	return (connections & OUTBOUND_CONNECTION_ENABLED) ? "Enabled" : "Disabled";
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 30 structures.
  *

@@ -22,16 +22,12 @@
  * @author LazySeldi
  */
 
-//
-// Type 17 ( Memory Device )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define PHYSICAL_MEMORY_ARRAY_HANDLE 0x04
 #define MEMORY_ERROR_INFORMATION_HANDLE 0x06
@@ -141,7 +137,6 @@
 #define NVDIMM_P 0x06
 #define INTEL_OPTANE_PERSISTENT_MEMORY 0x07
 #define MRDIMM_DEPRECATED 0x08
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 17 Memory Device structures.
@@ -369,7 +364,6 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 	*type17_count = index;
 	return Type17;
 }
-/* --- */
 // Decoders
 
 // Form Factor
@@ -778,7 +772,6 @@ void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) 
 	}
 }
 
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 17 structures.
  *

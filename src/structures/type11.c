@@ -22,18 +22,13 @@
  * @author LazySeldi
  */
 
-//
-// Type 11 ( OEM Strings )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define COUNT 0x04
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 11 OEM Strings structures.
@@ -99,8 +94,6 @@ lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_cou
 	return Type11;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 11 structures.
  *

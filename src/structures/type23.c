@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 23 ( System Reset )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define CAPABILITIES 0x04
 #define RESET_COUNT 0x05
@@ -51,7 +47,6 @@
 #define BOOT_OPTION_OPERATING_SYSTEM 0x01
 #define BOOT_OPTION_SYSTEM_UTILITIES 0x02
 #define BOOT_OPTION_DO_NOT_REBOOT 0x03
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 23 System Reset structures.
@@ -100,7 +95,6 @@ lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_cou
 	return Type23;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes the watchdog boot option from Type 23 capabilities.
@@ -160,8 +154,6 @@ void lazybiosType23CapabilitiesStr(uint8_t capabilities, char* buf, size_t buf_l
 		lazybiosType23BootOptionOnLimitStr(capabilities));
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 23 structures.
  *

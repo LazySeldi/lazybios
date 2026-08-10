@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 22 ( Portable Battery )
-//
 
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-/* --- */
 // Fields
 #define LOCATION 0x04
 #define MANUFACTURER 0x05
@@ -57,7 +53,6 @@
 #define DEVICE_CHEMISTRY_LITHIUM_ION 0x06
 #define DEVICE_CHEMISTRY_ZINC_AIR 0x07
 #define DEVICE_CHEMISTRY_LITHIUM_POLYMER 0x08
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 22 Portable Battery structures.
@@ -142,7 +137,6 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 	return Type22;
 }
 
-/* --- */
 // Decoders
 /**
  * @brief Decodes an SMBIOS portable-battery chemistry value.
@@ -204,8 +198,6 @@ void lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* 
 	snprintf(buf, buf_len, "%04hu-%02hhu-%02hhu", year, month, day);
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 22 structures.
  *

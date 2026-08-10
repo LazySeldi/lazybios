@@ -22,15 +22,11 @@
  * @author LazySeldi
  */
 
-//
-// Type 40 ( Additional Information )
-//
 
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
-/* --- */
 // Fields
 #define ADDITIONAL_INFORMATION_ENTRY_COUNT 0x04
 #define ADDITIONAL_INFORMATION_ENTRIES 0x05
@@ -42,7 +38,6 @@
 #define ENTRY_STRING 0x04
 #define ENTRY_VALUE 0x05
 #define MINIMUM_ENTRY_LENGTH 0x06
-/* --- */
 
 /**
  * @brief Parses all SMBIOS Type 40 Additional Information structures.
@@ -155,8 +150,6 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 	return Type40;
 }
 
-/* --- */
-// Free Function
 /**
  * @brief Releases an array of parsed SMBIOS Type 40 structures.
  *
