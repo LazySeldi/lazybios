@@ -146,11 +146,19 @@ elseif(LAZYBIOS_DEBUG)
     target_compile_definitions(lazybios PRIVATE LAZYBIOS_DEBUG)
 endif()
 
+# EXTENTIONS
 option(LAZYBIOS_EXT_CJSON "Enable CJSON extension" OFF)
 if(LAZYBIOS_EXT_CJSON)
     add_subdirectory(ext/json)
     add_executable(lazybios_json_test ext/json/test/test_json.c)
     target_link_libraries(lazybios_json_test PRIVATE lazybios lazybios_json)
+endif()
+
+# OEM FIELDS
+option(LAZYBIOS_OEM_HP "Enable HP OEM Type support" OFF)
+if(LAZYBIOS_OEM_HP)
+    add_subdirectory(src/structures/oem)
+    add_compile_definitions(LAZYBIOS_OEM_HP)
 endif()
 
 set_target_properties(lazybios PROPERTIES
