@@ -435,16 +435,7 @@ struct lazybiosCTX {
 	size_t type46_count;
 
     #if defined(LAZYBIOS_OEM_HP)
-        /**
-         * @brief HP OEM Type 201 structures.
-         * @note Only available when LAZYBIOS_OEM_HP is defined.
-         * @warning Experimental and untested.
-         */
         lazybiosOemHpType201_t* HpType201;
-        /**
-         * @brief Number of elements in HpType201.
-         * @note Only available when LAZYBIOS_OEM_HP is defined.
-         */
         size_t hptype201_count;
     #endif
 };

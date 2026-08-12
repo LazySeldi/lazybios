@@ -8,7 +8,8 @@
 
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones).
 - **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
-- **Library Extentions** - Currently only JSON output is implemented.
+- **Library Extentions** - Currently JSON output is implemented.
+- **OEM Extensions** - Initial very experimental early support for OEM-specific structures(Only HP's type 201).
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup.
 - **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
@@ -97,6 +98,8 @@
 | 44 | Processor Additional Information |
 | 45 | Firmware Inventory Information |
 | 46 | String Property |
+| 200-255 | OEM-specific Structures |
+| 201 | HP OEM Type 201 (Rack Information) |
 
 </details>
 
@@ -154,6 +157,16 @@ doxygen Doxyfile
 ```
 
 The generated documentation entry point is `docs/html/index.html`.
+
+### Testing and Examples
+
+The library includes several test targets:
+- `lazybios_test`: The main inspection and verification tool.
+- `lazybios_oem_test`: Standalone test for OEM-specific structures (available when `LAZYBIOS_OEM_HP=ON`).
+- `lazybios_json_test`: Verification for the JSON extension (available when `LAZYBIOS_EXT_JSON=ON`).
+- `lazybios_semantic_test`: Specification-based semantic validation.
+
+It's best to review the `test/` directory for integration examples.
 
 ### Heads up: When using the library you may need to read some of the current SMBIOS specification that the library uses(for example lazybios will always use the latest specification, right now the latest is [3.9.0](https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.9.0.pdf)) Since some fields may have some quirks. It's best to review test.c for things you're stuck on.
 

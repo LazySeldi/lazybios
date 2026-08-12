@@ -12,10 +12,10 @@
  * @subsection ext_json_build Building with JSON Support
  *
  * JSON serialization requires the `libcjson` library development package.
- * Enable the CMake option @c LAZYBIOS_EXT_CJSON when configuring the project:
+ * Enable the CMake option @c LAZYBIOS_EXT_JSON when configuring the project:
  *
  * @code{.sh}
- * cmake -S . -B build -DLAZYBIOS_EXT_CJSON=ON
+ * cmake -S . -B build -DLAZYBIOS_EXT_JSON=ON
  * cmake --build build
  * @endcode
  *
@@ -27,6 +27,11 @@
  * - @ref lazybiosExtJSONAddType2 — Serializes Type 2 (Baseboard Information) arrays.
  * - @ref lazybiosExtJSONAddType3 — Serializes Type 3 (Chassis Information) arrays.
  * - @ref lazybiosExtJSONAddType4 — Serializes Type 4 (Processor Information) arrays.
+ * - @ref lazybiosExtJSONAddType5 — Serializes Type 5 (Memory Controller Information) arrays.
+ * - @ref lazybiosExtJSONAddType6 — Serializes Type 6 (Memory Module Information) arrays.
+ * - @ref lazybiosExtJSONAddType7 — Serializes Type 7 (Cache Information) arrays.
+ * - @ref lazybiosExtJSONAddType8 — Serializes Type 8 (Port Connector Information) arrays.
+ * - @ref lazybiosExtJSONAddType9 — Serializes Type 9 (System Slots) arrays.
  *
  * Field status handling:
  * - `LAZYBIOS_FIELD_PRESENT` values are serialized as native JSON strings or numbers.

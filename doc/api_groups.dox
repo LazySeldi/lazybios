@@ -34,6 +34,18 @@
  */
 
 /**
+ * @defgroup api_oem_types OEM SMBIOS Structure APIs
+ * @ingroup api_types
+ * @brief OEM-specific structure parsers, types, and cleanup functions.
+ */
+
+/**
+ * @defgroup api_hp_type201 HP OEM Type 201: Rack Information
+ * @ingroup api_oem_types
+ * @brief HP OEM specific rack naming and identity information.
+ */
+
+/**
  * @defgroup api_type0 Type 0: BIOS Information
  * @ingroup api_types
  * @brief BIOS and platform firmware information parsing and decoding.
