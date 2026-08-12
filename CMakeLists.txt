@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(lazybios
-        VERSION 1.4.0
+        VERSION 2.0.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -66,6 +66,9 @@ set(LAZYBIOS_SOURCES
         src/structures/type44.c
         src/structures/type45.c
         src/structures/type46.c
+        src/structures/oem/hp/hp_type201.c
+        src/json/cJSON.c
+        src/json/lazybios_json.c
 )
 
 include(cmake-files/reactOS.cmake)
@@ -122,7 +125,6 @@ else()
     set(SELECTED_BACKEND "src/backends/generic.c")
 endif()
 
-# Library
 add_library(lazybios SHARED ${LAZYBIOS_SOURCES})
 target_compile_definitions(lazybios PRIVATE ${LAZYBIOS_PLATFORM_COMPILE_DEFINITIONS})
 
@@ -147,12 +149,9 @@ elseif(LAZYBIOS_DEBUG)
 endif()
 
 # EXTENTIONS
-option(LAZYBIOS_EXT_JSON "Enable JSON extension" OFF)
-if(LAZYBIOS_EXT_JSON)
-    add_subdirectory(ext/json)
-    add_executable(lazybios_json_test test/test_json.c)
-    target_link_libraries(lazybios_json_test PRIVATE lazybios lazybios_json)
-endif()
+add_executable(lazybios_json_test test/test_json.c)
+target_link_libraries(lazybios_json_test PRIVATE lazybios)
+
 
 set_target_properties(lazybios PROPERTIES
         VERSION ${PROJECT_VERSION}
@@ -162,6 +161,7 @@ set_target_properties(lazybios PROPERTIES
 
 target_include_directories(lazybios PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_include_directories(lazybios PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/internal)
@@ -176,38 +176,25 @@ add_executable(lazybios_test test/test.c test/test_oem.c)
 target_compile_definitions(lazybios_test PRIVATE TEST_OEM_NO_MAIN)
 
 # OEM FIELDS
-option(LAZYBIOS_OEM_HP "Enable HP OEM Type support" OFF)
-if(LAZYBIOS_OEM_HP)
-    add_subdirectory(src/structures/oem)
-    add_compile_definitions(LAZYBIOS_OEM_HP)
-
-    target_sources(lazybios_test PRIVATE test/oem/hp/test_hp.c)
-    add_executable(lazybios_oem_test test/test_oem.c test/oem/hp/test_hp.c)
-    target_link_libraries(lazybios_oem_test PRIVATE lazybios)
-    if(NOT MSVC)
-        target_compile_options(lazybios_oem_test PRIVATE -O2)
-    endif()
-endif()
+file(GLOB HP_SOURCES "src/structures/oem/hp/*.c")
+target_sources(lazybios PRIVATE ${HP_SOURCES})
+target_sources(lazybios_test PRIVATE test/oem/hp/test_hp.c)
+add_executable(lazybios_oem_test test/test_oem.c test/oem/hp/test_hp.c)
+target_link_libraries(lazybios_oem_test PRIVATE lazybios)
 
 target_link_libraries(lazybios_test PRIVATE lazybios)
 
 if(MSVC)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_compile_options(lazybios_test PRIVATE /RTC1)
-        if(LAZYBIOS_EXT_JSON)
-            target_compile_options(lazybios_json_test PRIVATE /RTC1)
-        endif()
+        target_compile_options(lazybios_json_test PRIVATE /RTC1)
     else()
         target_compile_options(lazybios_test PRIVATE /O2)
-        if(LAZYBIOS_EXT_JSON)
-            target_compile_options(lazybios_json_test PRIVATE /O2)
-        endif()
+        target_compile_options(lazybios_json_test PRIVATE /O2)
     endif()
 else()
     target_compile_options(lazybios_test PRIVATE -O2)
-    if(LAZYBIOS_EXT_JSON)
-        target_compile_options(lazybios_json_test PRIVATE -O2)
-    endif()
+    target_compile_options(lazybios_json_test PRIVATE -O2)
 endif()
 
 include(CTest)
@@ -247,7 +234,7 @@ install(TARGETS lazybios EXPORT lazybiosTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY include/lazybios/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lazybios FILES_MATCHING PATTERN "*.h" EXCLUDE PATTERN "json/cJSON.h")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lazybios.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 include(CMakePackageConfigHelpers)
