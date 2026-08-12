@@ -23,11 +23,10 @@
  *
  * @note Experimental and untested.
  */
-#include "lazybios/oem/hp/hp_type201.h"
 #include "lazybios_internal.h"
+#include "lazybios/structures/oem/hp/hp_type201.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 // Fields
 #define RACK_NAME 0x04
