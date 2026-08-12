@@ -28,10 +28,34 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "lazybios/json/cJSON.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/** @brief Forward declaration of the top-level lazybios context. */
+typedef struct lazybiosCTX lazybiosCTX_t;
+
+/**
+ * @brief Selects the platform backend used to obtain SMBIOS data.
+ * @ingroup api_context
+ */
+typedef enum {
+	LAZYBIOS_BACKEND_LINUX,   /**< Linux sysfs or physical-memory backend. */
+	LAZYBIOS_BACKEND_WINDOWS, /**< Windows firmware-table API backend. */
+	LAZYBIOS_BACKEND_MACOS,   /**< macOS AppleSMBIOS I/O Registry backend. */
+	LAZYBIOS_BACKEND_OPENBSD, /**< OpenBSD dmesg-assisted physical-memory backend. */
+	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
+	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
+	LAZYBIOS_BACKEND_SUNOS,    /**< SunOS (Solaris/illumos) /dev/smbios snapshot with a physical-memory fallback. */
+	LAZYBIOS_BACKEND_DRAGONFLY, /**< DragonFly BSD kenv-assisted physical-memory backend. */
+	LAZYBIOS_BACKEND_HAIKU,     /**< Haiku legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_BEOS,      /**< BeOS legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_REACTOS,   /**< ReactOS Win32 firmware-table API backend. */
+	LAZYBIOS_BACKEND_GENERIC,   /**< Generic legacy physical-memory backend. */
+	LAZYBIOS_BACKEND_UNKNOWN    /**< No usable host backend was selected. */
+} lazybiosBackend_t;
 
 /** @addtogroup api_constants
  * @{
@@ -40,9 +64,9 @@ extern "C" {
 /** @brief Complete lazybios semantic version string. */
 extern const char lazybiosVersion[];
 /** @brief Major component of the lazybios version. */
-#define LAZYBIOS_MAJOR 1
+#define LAZYBIOS_MAJOR 2
 /** @brief Minor component of the lazybios version. */
-#define LAZYBIOS_MINOR 4
+#define LAZYBIOS_MINOR 0
 /** @brief Patch component of the lazybios version. */
 #define LAZYBIOS_PATCH 0
 /** @brief Recommended output buffer size for decoder functions. */
@@ -150,9 +174,6 @@ typedef struct lazybiosDMI {
  */
 int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, uint8_t required_minor);
 
-/** @brief Forward declaration of the top-level lazybios context. */
-typedef struct lazybiosCTX lazybiosCTX_t;
-
 /** @addtogroup api_parsing
  * @{
  */
@@ -196,94 +217,64 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
  * @brief Prints the parsed SMBIOS version to standard output.
  * @param ctx Context containing a parsed SMBIOS entry point.
  */
-void lazybiosPrintSMVer(const lazybiosCTX_t* ctx);
-
-/** @} */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif
-
-#if !defined(LAZYBIOS_TYPE_HEADER_ONLY) && !defined(LAZYBIOS_UMBRELLA_API_H)
-/** @brief Include guard for the complete lazybios public API. */
-#define LAZYBIOS_UMBRELLA_API_H
-
-#include "lazybios/type0.h"
-#include "lazybios/type1.h"
-#include "lazybios/type2.h"
-#include "lazybios/type3.h"
-#include "lazybios/type4.h"
-#include "lazybios/type5.h"
-#include "lazybios/type6.h"
-#include "lazybios/type7.h"
-#include "lazybios/type8.h"
-#include "lazybios/type9.h"
-#include "lazybios/type10.h"
-#include "lazybios/type11.h"
-#include "lazybios/type12.h"
-#include "lazybios/type13.h"
-#include "lazybios/type14.h"
-#include "lazybios/type15.h"
-#include "lazybios/type16.h"
-#include "lazybios/type17.h"
-#include "lazybios/type18.h"
-#include "lazybios/type19.h"
-#include "lazybios/type20.h"
-#include "lazybios/type21.h"
-#include "lazybios/type22.h"
-#include "lazybios/type23.h"
-#include "lazybios/type24.h"
-#include "lazybios/type25.h"
-#include "lazybios/type26.h"
-#include "lazybios/type27.h"
-#include "lazybios/type28.h"
-#include "lazybios/type29.h"
-#include "lazybios/type30.h"
-#include "lazybios/type31.h"
-#include "lazybios/type32.h"
-#include "lazybios/type33.h"
-#include "lazybios/type34.h"
-#include "lazybios/type35.h"
-#include "lazybios/type36.h"
-#include "lazybios/type37.h"
-#include "lazybios/type38.h"
-#include "lazybios/type39.h"
-#include "lazybios/type40.h"
-#include "lazybios/type41.h"
-#include "lazybios/type42.h"
-#include "lazybios/type43.h"
-#include "lazybios/type44.h"
-#include "lazybios/type45.h"
-#include "lazybios/type46.h"
-#if defined(LAZYBIOS_OEM_HP)
-#include "lazybios/oem/hp/hp_type201.h"
-#endif
+#ifndef LAZYBIOS_TYPE_HEADER_ONLY
+#include "lazybios/structures/type0.h"
+#include "lazybios/structures/type1.h"
+#include "lazybios/structures/type2.h"
+#include "lazybios/structures/type3.h"
+#include "lazybios/structures/type4.h"
+#include "lazybios/structures/type5.h"
+#include "lazybios/structures/type6.h"
+#include "lazybios/structures/type7.h"
+#include "lazybios/structures/type8.h"
+#include "lazybios/structures/type9.h"
+#include "lazybios/structures/type10.h"
+#include "lazybios/structures/type11.h"
+#include "lazybios/structures/type12.h"
+#include "lazybios/structures/type13.h"
+#include "lazybios/structures/type14.h"
+#include "lazybios/structures/type15.h"
+#include "lazybios/structures/type16.h"
+#include "lazybios/structures/type17.h"
+#include "lazybios/structures/type18.h"
+#include "lazybios/structures/type19.h"
+#include "lazybios/structures/type20.h"
+#include "lazybios/structures/type21.h"
+#include "lazybios/structures/type22.h"
+#include "lazybios/structures/type23.h"
+#include "lazybios/structures/type24.h"
+#include "lazybios/structures/type25.h"
+#include "lazybios/structures/type26.h"
+#include "lazybios/structures/type27.h"
+#include "lazybios/structures/type28.h"
+#include "lazybios/structures/type29.h"
+#include "lazybios/structures/type30.h"
+#include "lazybios/structures/type31.h"
+#include "lazybios/structures/type32.h"
+#include "lazybios/structures/type33.h"
+#include "lazybios/structures/type34.h"
+#include "lazybios/structures/type35.h"
+#include "lazybios/structures/type36.h"
+#include "lazybios/structures/type37.h"
+#include "lazybios/structures/type38.h"
+#include "lazybios/structures/type39.h"
+#include "lazybios/structures/type40.h"
+#include "lazybios/structures/type41.h"
+#include "lazybios/structures/type42.h"
+#include "lazybios/structures/type43.h"
+#include "lazybios/structures/type44.h"
+#include "lazybios/structures/type45.h"
+#include "lazybios/structures/type46.h"
+#include "lazybios/structures/oem/hp/hp_type201.h"
+#include "lazybios/json/lazybios_json.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @brief Selects the platform backend used to obtain SMBIOS data.
- * @ingroup api_context
- */
-typedef enum {
-	LAZYBIOS_BACKEND_LINUX,   /**< Linux sysfs or physical-memory backend. */
-	LAZYBIOS_BACKEND_WINDOWS, /**< Windows firmware-table API backend. */
-	LAZYBIOS_BACKEND_MACOS,   /**< macOS AppleSMBIOS I/O Registry backend. */
-	LAZYBIOS_BACKEND_OPENBSD, /**< OpenBSD dmesg-assisted physical-memory backend. */
-	LAZYBIOS_BACKEND_FREEBSD, /**< FreeBSD kenv-assisted physical-memory backend. */
-	LAZYBIOS_BACKEND_NETBSD,  /**< NetBSD sysctl-assisted SMBIOS device backend. */
-	LAZYBIOS_BACKEND_SUNOS,    /**< SunOS (Solaris/illumos) /dev/smbios snapshot with a physical-memory fallback. */
-	LAZYBIOS_BACKEND_DRAGONFLY, /**< DragonFly BSD kenv-assisted physical-memory backend. */
-	LAZYBIOS_BACKEND_HAIKU,     /**< Haiku legacy physical-memory backend. */
-	LAZYBIOS_BACKEND_BEOS,      /**< BeOS legacy physical-memory backend. */
-	LAZYBIOS_BACKEND_REACTOS,   /**< ReactOS Win32 firmware-table API backend. */
-	LAZYBIOS_BACKEND_GENERIC,   /**< Generic legacy physical-memory backend. */
-	LAZYBIOS_BACKEND_UNKNOWN    /**< No usable host backend was selected. */
-} lazybiosBackend_t;
 
 /**
  * @brief Top-level lazybios context containing raw and parsed SMBIOS data.
@@ -434,10 +425,9 @@ struct lazybiosCTX {
 	lazybiosType46_t* Type46;
 	size_t type46_count;
 
-    #if defined(LAZYBIOS_OEM_HP)
-        lazybiosOemHpType201_t* HpType201;
-        size_t hptype201_count;
-    #endif
+
+    lazybiosOemHpType201_t* HpType201;
+    size_t hptype201_count;
 };
 
 /**
@@ -477,6 +467,14 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
  * @return 0 on success, or -1 if ctx is NULL.
  */
 int lazybiosCleanup(lazybiosCTX_t* ctx);
+
+/**
+ * @brief Prints SMBIOS version information to stdout.
+ * @param ctx Initialized lazybios context.
+ */
+void lazybiosPrintSMVer(const lazybiosCTX_t* ctx);
+
+#endif
 
 #ifdef __cplusplus
 }
