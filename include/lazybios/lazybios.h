@@ -28,7 +28,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "lazybios/json/cJSON.h"
 
 #ifdef __cplusplus
 extern "C" {
