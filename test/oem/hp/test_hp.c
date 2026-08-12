@@ -22,12 +22,11 @@
  * @author LazySeldi
  */
 
-#include "lazybios.h"
-#include "lazybios/oem/hp/hp_type201.h"
+#include "lazybios/lazybios.h"
+#include "lazybios/structures/oem/hp/hp_type201.h"
 #include "../test_oem.h"
 #include <stdio.h>
 
-#ifdef LAZYBIOS_OEM_HP
 static void printOemHPType201(lazybiosCTX_t* ctx) {
     printf("=== Oem HP Type 201 ===\n");
 
@@ -52,4 +51,3 @@ void printOemHP(lazybiosCTX_t* ctx) {
     printOemHPType201(ctx);
     /* Add other HP types here */
 }
-#endif

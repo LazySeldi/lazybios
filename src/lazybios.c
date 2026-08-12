@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char lazybiosVersion[] = "1.4.0";
+const char lazybiosVersion[] = "2.0.0";
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
@@ -795,11 +795,9 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	lazybiosFreeType46(ctx->Type46, ctx->type46_count);
 	ctx->Type46 = NULL;
 
-#if defined(LAZYBIOS_OEM_HP)
     lazybiosFreeOemHpType201(ctx->HpType201, ctx->hptype201_count);
     ctx->HpType201 = NULL;
     ctx->hptype201_count = 0;
-#endif
 
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);

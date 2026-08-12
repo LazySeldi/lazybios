@@ -22,14 +22,12 @@
  * @author LazySeldi
  */
 
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 #include "oem/test_oem.h"
 #include <stdio.h>
 
 void printOemStructures(lazybiosCTX_t* ctx) {
-#ifdef LAZYBIOS_OEM_HP
     printOemHP(ctx);
-#endif
 
 }
 

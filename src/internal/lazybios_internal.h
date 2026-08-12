@@ -25,7 +25,7 @@
 #ifndef LAZYBIOS_INTERNAL_H
 #define LAZYBIOS_INTERNAL_H
 
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 
 #include <stdarg.h>
 #include <stdio.h>

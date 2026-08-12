@@ -17,8 +17,8 @@
  * along with lazybios. If not, see <https://www.gnu.org/licenses/>.
  */
 #include <stdio.h>
-#include "lazybios.h"
-#include "lazybios_json.h"
+#include "lazybios/lazybios.h"
+#include "lazybios/json/lazybios_json.h"
 
 int main() {
     lazybiosCTX_t *ctx = lazybiosCTXNew();

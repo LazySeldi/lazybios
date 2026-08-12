@@ -25,7 +25,7 @@
 //
 // test.c - File for testing ALL SMBIOS types we have implemented currently
 //
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

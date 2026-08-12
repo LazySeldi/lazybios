@@ -25,12 +25,8 @@
 #ifndef LAZYBIOS_TEST_OEM_H
 #define LAZYBIOS_TEST_OEM_H
 
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 
-#ifdef LAZYBIOS_OEM_HP
 void printOemHP(lazybiosCTX_t* ctx);
+
 #endif
-
-/* Add other OEM declarations here as they are implemented */
-
-#endif /* LAZYBIOS_TEST_OEM_H */

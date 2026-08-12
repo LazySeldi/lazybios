@@ -31,7 +31,7 @@
 
 #ifndef LAZYBIOS_SHARED_API_H
 #define LAZYBIOS_TYPE_HEADER_ONLY
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 #undef LAZYBIOS_TYPE_HEADER_ONLY
 #endif
 
