@@ -134,6 +134,36 @@ void lazybiosExtJSONAddType5(const lazybiosType5_t* type5, size_t count, cJSON* 
 */
 void lazybiosExtJSONAddType6(const lazybiosType6_t* type6, size_t count, cJSON* root);
 
+/**
+@brief Serialises an array of parsed SMBIOS Type 7 (Cache Information)
+       structures into a cJSON array and attaches it to @p root under
+       the key "Type7".
+@param type7     Pointer to the first element of a parsed Type 7 array.
+@param count     Number of elements in @p type7.
+@param root      cJSON object to attach the resulting array to.
+*/
+void lazybiosExtJSONAddType7(const lazybiosType7_t* type7, size_t count, cJSON* root);
+
+/**
+@brief Serialises an array of parsed SMBIOS Type 8 (Port Connector
+       Information) structures into a cJSON array and attaches it to
+       @p root under the key "Type8".
+@param type8     Pointer to the first element of a parsed Type 8 array.
+@param count     Number of elements in @p type8.
+@param root      cJSON object to attach the resulting array to.
+*/
+void lazybiosExtJSONAddType8(const lazybiosType8_t* type8, size_t count, cJSON* root);
+
+/**
+@brief Serialises an array of parsed SMBIOS Type 9 (System Slots
+       Information) structures into a cJSON array and attaches it to
+       @p root under the key "Type9".
+@param type9     Pointer to the first element of a parsed Type 9 array.
+@param count     Number of elements in @p type9.
+@param root      cJSON object to attach the resulting array to.
+*/
+void lazybiosExtJSONAddType9(const lazybiosType9_t* type9, size_t count, cJSON* root);
+
 #ifdef __cplusplus
 }
 #endif

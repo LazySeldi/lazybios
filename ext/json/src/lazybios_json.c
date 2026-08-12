@@ -953,3 +953,367 @@ void lazybiosExtJSONAddType6(const lazybiosType6_t* type6, size_t count, cJSON* 
 
     cJSON_AddItemToObject(root, "Type6", arr);
 }
+
+void lazybiosExtJSONAddType7(const lazybiosType7_t* type7, size_t count, cJSON* root) {
+    if (!root) {
+        return;
+    }
+
+    if (!type7 || !count) {
+        cJSON_AddStringToObject(root, "Type7", "Failed to get Cache information");
+        return;
+    }
+
+    cJSON* arr = cJSON_CreateArray();
+    if (!arr) {
+        return;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        const lazybiosType7_t* t = &type7[i];
+        cJSON* obj = cJSON_CreateObject();
+        if (!obj) {
+            continue;
+        }
+
+        cjson_field_str(obj, "socket_designation",
+                        LAZYBIOS_FIELD_STATUS(t, socket_designation), t->socket_designation);
+
+        if (LAZYBIOS_FIELD_STATUS(t, cache_configuration) == LAZYBIOS_FIELD_PRESENT) {
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType7CacheConfigurationStr(t->cache_configuration, buf, sizeof(buf));
+            cJSON_AddStringToObject(obj, "cache_configuration", buf);
+        } else if (LAZYBIOS_FIELD_STATUS(t, cache_configuration) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "cache_configuration", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "cache_configuration");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, maximum_cache_size_2) == LAZYBIOS_FIELD_PRESENT) {
+            uint64_t size = lazybiosType7CacheU32(t->maximum_cache_size_2);
+            cJSON_AddNumberToObject(obj, "maximum_cache_size_kb", (double)size);
+        } else if (LAZYBIOS_FIELD_STATUS(t, maximum_cache_size) == LAZYBIOS_FIELD_PRESENT) {
+            uint64_t size = lazybiosType7CacheU16(t->maximum_cache_size);
+            cJSON_AddNumberToObject(obj, "maximum_cache_size_kb", (double)size);
+        } else if (LAZYBIOS_FIELD_STATUS(t, maximum_cache_size_2) == LAZYBIOS_FIELD_UNREACHABLE &&
+                   LAZYBIOS_FIELD_STATUS(t, maximum_cache_size) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "maximum_cache_size_kb", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "maximum_cache_size_kb");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, installed_cache_size_2) == LAZYBIOS_FIELD_PRESENT) {
+            uint64_t size = lazybiosType7CacheU32(t->installed_cache_size_2);
+            cJSON_AddNumberToObject(obj, "installed_cache_size_kb", (double)size);
+        } else if (LAZYBIOS_FIELD_STATUS(t, installed_size) == LAZYBIOS_FIELD_PRESENT) {
+            uint64_t size = lazybiosType7CacheU16(t->installed_size);
+            cJSON_AddNumberToObject(obj, "installed_cache_size_kb", (double)size);
+        } else if (LAZYBIOS_FIELD_STATUS(t, installed_cache_size_2) == LAZYBIOS_FIELD_UNREACHABLE &&
+                   LAZYBIOS_FIELD_STATUS(t, installed_size) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "installed_cache_size_kb", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "installed_cache_size_kb");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, supported_sram_type) == LAZYBIOS_FIELD_PRESENT) {
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType7SRAMTypeStr(t->supported_sram_type, buf, sizeof(buf));
+            cJSON_AddStringToObject(obj, "supported_sram_type", buf);
+        } else if (LAZYBIOS_FIELD_STATUS(t, supported_sram_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "supported_sram_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "supported_sram_type");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, current_sram_type) == LAZYBIOS_FIELD_PRESENT) {
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType7SRAMTypeStr(t->current_sram_type, buf, sizeof(buf));
+            cJSON_AddStringToObject(obj, "current_sram_type", buf);
+        } else if (LAZYBIOS_FIELD_STATUS(t, current_sram_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "current_sram_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "current_sram_type");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, cache_speed) == LAZYBIOS_FIELD_PRESENT) {
+            if (t->cache_speed == 0) {
+                cJSON_AddStringToObject(obj, "cache_speed", "Unknown");
+            } else {
+                char buf[24];
+                snprintf(buf, sizeof(buf), "%hhu ns", t->cache_speed);
+                cJSON_AddStringToObject(obj, "cache_speed", buf);
+            }
+        } else if (LAZYBIOS_FIELD_STATUS(t, cache_speed) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "cache_speed", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "cache_speed");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, error_correction_type) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "error_correction_type",
+                                    lazybiosType7ErrorCorrectionTypeStr(t->error_correction_type));
+        } else if (LAZYBIOS_FIELD_STATUS(t, error_correction_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "error_correction_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "error_correction_type");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, system_cache_type) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "system_cache_type",
+                                    lazybiosType7SystemCacheTypeStr(t->system_cache_type));
+        } else if (LAZYBIOS_FIELD_STATUS(t, system_cache_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "system_cache_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "system_cache_type");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, associativity) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "associativity",
+                                    lazybiosType7AssociativityStr(t->associativity));
+        } else if (LAZYBIOS_FIELD_STATUS(t, associativity) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "associativity", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "associativity");
+        }
+
+        cJSON_AddItemToArray(arr, obj);
+    }
+
+    cJSON_AddItemToObject(root, "Type7", arr);
+}
+
+void lazybiosExtJSONAddType8(const lazybiosType8_t* type8, size_t count, cJSON* root) {
+    if (!root) {
+        return;
+    }
+
+    if (!type8 || !count) {
+        cJSON_AddStringToObject(root, "Type8", "Failed to get Port Connector information");
+        return;
+    }
+
+    cJSON* arr = cJSON_CreateArray();
+    if (!arr) {
+        return;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        const lazybiosType8_t* t = &type8[i];
+        cJSON* obj = cJSON_CreateObject();
+        if (!obj) {
+            continue;
+        }
+
+        cjson_field_str(obj, "internal_reference_designator",
+                        LAZYBIOS_FIELD_STATUS(t, internal_reference_designator),
+                        t->internal_reference_designator);
+
+        if (LAZYBIOS_FIELD_STATUS(t, internal_connector_type) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "internal_connector_type",
+                                    lazybiosType8ConnectorTypeStr(t->internal_connector_type));
+        } else if (LAZYBIOS_FIELD_STATUS(t, internal_connector_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "internal_connector_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "internal_connector_type");
+        }
+
+        cjson_field_str(obj, "external_reference_designator",
+                        LAZYBIOS_FIELD_STATUS(t, external_reference_designator),
+                        t->external_reference_designator);
+
+        if (LAZYBIOS_FIELD_STATUS(t, external_connector_type) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "external_connector_type",
+                                    lazybiosType8ConnectorTypeStr(t->external_connector_type));
+        } else if (LAZYBIOS_FIELD_STATUS(t, external_connector_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "external_connector_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "external_connector_type");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, port_type) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "port_type",
+                                    lazybiosType8PortTypeStr(t->port_type));
+        } else if (LAZYBIOS_FIELD_STATUS(t, port_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "port_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "port_type");
+        }
+
+        cJSON_AddItemToArray(arr, obj);
+    }
+
+    cJSON_AddItemToObject(root, "Type8", arr);
+}
+
+void lazybiosExtJSONAddType9(const lazybiosType9_t* type9, size_t count, cJSON* root) {
+    if (!root) {
+        return;
+    }
+
+    if (!type9 || !count) {
+        cJSON_AddStringToObject(root, "Type9", "Failed to get System Slots information");
+        return;
+    }
+
+    cJSON* arr = cJSON_CreateArray();
+    if (!arr) {
+        return;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        const lazybiosType9_t* t = &type9[i];
+        cJSON* obj = cJSON_CreateObject();
+        if (!obj) {
+            continue;
+        }
+
+        cjson_field_str(obj, "slot_designation",
+                        LAZYBIOS_FIELD_STATUS(t, slot_designation), t->slot_designation);
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_type) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "slot_type",
+                                    lazybiosType9SlotTypeStr(t->slot_type));
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_type) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_type", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_type");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_data_bus_width) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "slot_data_bus_width",
+                                    lazybiosType9SlotWidthStr(t->slot_data_bus_width));
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_data_bus_width) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_data_bus_width", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_data_bus_width");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, current_usage) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "current_usage",
+                                    lazybiosType9CurrentUsageStr(t->current_usage));
+        } else if (LAZYBIOS_FIELD_STATUS(t, current_usage) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "current_usage", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "current_usage");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_length) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "slot_length",
+                                    lazybiosType9SlotLengthStr(t->slot_length));
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_length) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_length", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_length");
+        }
+
+        cjson_field_num(obj, "slot_id", LAZYBIOS_FIELD_STATUS(t, slot_id), t->slot_id);
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_characteristics_1) == LAZYBIOS_FIELD_PRESENT) {
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType9Characteristics1Str(t->slot_characteristics_1, buf, sizeof(buf));
+            cJSON_AddStringToObject(obj, "slot_characteristics_1", buf);
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_characteristics_1) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_characteristics_1", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_characteristics_1");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_characteristics_2) == LAZYBIOS_FIELD_PRESENT) {
+            char buf[LAZYBIOS_DECODER_BUF_SIZE];
+            lazybiosType9Characteristics2Str(t->slot_characteristics_2, buf, sizeof(buf));
+            cJSON_AddStringToObject(obj, "slot_characteristics_2", buf);
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_characteristics_2) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_characteristics_2", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_characteristics_2");
+        }
+
+        cjson_field_num(obj, "segment_group_number",
+                        LAZYBIOS_FIELD_STATUS(t, segment_group_number), t->segment_group_number);
+        cjson_field_num(obj, "bus_number",
+                        LAZYBIOS_FIELD_STATUS(t, bus_number), t->bus_number);
+
+        if (LAZYBIOS_FIELD_STATUS(t, device_function_number) == LAZYBIOS_FIELD_PRESENT) {
+            char buf[16];
+            lazybiosType9DeviceFunctionStr(t->device_function_number, buf, sizeof(buf));
+            cJSON_AddStringToObject(obj, "device_function", buf);
+        } else if (LAZYBIOS_FIELD_STATUS(t, device_function_number) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "device_function", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "device_function");
+        }
+
+        cjson_field_num(obj, "data_bus_width",
+                        LAZYBIOS_FIELD_STATUS(t, data_bus_width), t->data_bus_width);
+
+        if (LAZYBIOS_FIELD_STATUS(t, peer_groups) == LAZYBIOS_FIELD_PRESENT) {
+            if (t->peer_groups && t->peer_grouping_count > 0) {
+                cJSON* groups = cJSON_CreateArray();
+                for (uint8_t j = 0; j < t->peer_grouping_count; j++) {
+                    cJSON* g = cJSON_CreateObject();
+                    cjson_field_num(g, "segment_group_number",
+                                    LAZYBIOS_FIELD_STATUS(&t->peer_groups[j], segment_group_number),
+                                    t->peer_groups[j].segment_group_number);
+                    cjson_field_num(g, "bus_number",
+                                    LAZYBIOS_FIELD_STATUS(&t->peer_groups[j], bus_number),
+                                    t->peer_groups[j].bus_number);
+                    if (LAZYBIOS_FIELD_STATUS(&t->peer_groups[j], device_function_number) == LAZYBIOS_FIELD_PRESENT) {
+                        char buf[16];
+                        lazybiosType9DeviceFunctionStr(t->peer_groups[j].device_function_number, buf, sizeof(buf));
+                        cJSON_AddStringToObject(g, "device_function", buf);
+                    } else {
+                        cjson_field_str(g, "device_function",
+                                        LAZYBIOS_FIELD_STATUS(&t->peer_groups[j], device_function_number), NULL);
+                    }
+                    cjson_field_num(g, "data_bus_width",
+                                    LAZYBIOS_FIELD_STATUS(&t->peer_groups[j], data_bus_width),
+                                    t->peer_groups[j].data_bus_width);
+                    cJSON_AddItemToArray(groups, g);
+                }
+                cJSON_AddItemToObject(obj, "peer_groups", groups);
+            }
+        } else if (LAZYBIOS_FIELD_STATUS(t, peer_groups) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "peer_groups", LAZYBIOS_JSON_UNREACHABLE);
+        } else if (LAZYBIOS_FIELD_STATUS(t, peer_groups) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddItemToObject(obj, "peer_groups", cJSON_CreateArray());
+        } else {
+            cJSON_AddNullToObject(obj, "peer_groups");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_physical_width) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "slot_physical_width",
+                                    lazybiosType9SlotWidthStr(t->slot_physical_width));
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_physical_width) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_physical_width", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_physical_width");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_pitch) == LAZYBIOS_FIELD_PRESENT) {
+            if (t->slot_pitch == 0) {
+                cJSON_AddStringToObject(obj, "slot_pitch", "Unknown");
+            } else {
+                char buf[24];
+                snprintf(buf, sizeof(buf), "%u.%02u mm", t->slot_pitch / 100, t->slot_pitch % 100);
+                cJSON_AddStringToObject(obj, "slot_pitch", buf);
+            }
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_pitch) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_pitch", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_pitch");
+        }
+
+        if (LAZYBIOS_FIELD_STATUS(t, slot_height) == LAZYBIOS_FIELD_PRESENT) {
+            cJSON_AddStringToObject(obj, "slot_height",
+                                    lazybiosType9SlotHeightStr(t->slot_height));
+        } else if (LAZYBIOS_FIELD_STATUS(t, slot_height) == LAZYBIOS_FIELD_UNREACHABLE) {
+            cJSON_AddStringToObject(obj, "slot_height", LAZYBIOS_JSON_UNREACHABLE);
+        } else {
+            cJSON_AddNullToObject(obj, "slot_height");
+        }
+
+        cJSON_AddItemToArray(arr, obj);
+    }
+
+    cJSON_AddItemToObject(root, "Type9", arr);
+}
