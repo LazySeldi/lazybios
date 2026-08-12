@@ -24,7 +24,7 @@
 #ifndef LAZYBIOS_FUZZ_COMMON_H
 #define LAZYBIOS_FUZZ_COMMON_H
 
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -197,6 +197,7 @@ static inline void fuzz_parse_all_types(lazybiosCTX_t* ctx) {
 	ctx->Type44 = lazybiosGetType44(ctx->Type44, &ctx->type44_count, ctx->DMIData);
 	ctx->Type45 = lazybiosGetType45(ctx->Type45, &ctx->type45_count, ctx->DMIData);
 	ctx->Type46 = lazybiosGetType46(ctx->Type46, &ctx->type46_count, ctx->DMIData);
+	ctx->HpType201 = lazybiosGetOemHpType201(ctx->HpType201, &ctx->hptype201_count, ctx->DMIData);
 }
 
 #endif

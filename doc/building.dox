@@ -35,20 +35,6 @@
  * The build produces the shared `lazybios` library and the `lazybios_test`
  * inspection executable.
  *
- * @subsection build_options Optional Components
- *
- * Additional functionality and extensions can be enabled during configuration:
- *
- * - `LAZYBIOS_EXT_JSON`: Enables JSON serialization support (requires `libcjson`).
- * - `LAZYBIOS_OEM_HP`: Enables HP OEM structure support.
- *
- * Example enabling all options:
- *
- * @code{.sh}
- * cmake -S . -B build -DLAZYBIOS_EXT_JSON=ON -DLAZYBIOS_OEM_HP=ON
- * cmake --build build
- * @endcode
- *
  * @subsection build_testing Testing
  *
  * Enable and run the deterministic semantic test suite with:

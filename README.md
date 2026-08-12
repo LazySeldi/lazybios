@@ -162,8 +162,8 @@ The generated documentation entry point is `docs/html/index.html`.
 
 The library includes several test targets:
 - `lazybios_test`: The main inspection and verification tool.
-- `lazybios_oem_test`: Standalone test for OEM-specific structures (available when `LAZYBIOS_OEM_HP=ON`).
-- `lazybios_json_test`: Verification for the JSON extension (available when `LAZYBIOS_EXT_JSON=ON`).
+- `lazybios_oem_test`: Standalone test for OEM-specific structures.
+- `lazybios_json_test`: Verification for the JSON support.
 - `lazybios_semantic_test`: Specification-based semantic validation.
 
 It's best to review the `test/` directory for integration examples.

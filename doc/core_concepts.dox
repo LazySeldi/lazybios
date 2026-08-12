@@ -74,7 +74,7 @@
 
  * @section concepts_headers Public headers
  *
- * Include @ref lazybios.h for the complete API. Applications that use only one
+ * Include @ref lazybios/lazybios.h for the complete API. Applications that use only one
  * parsed type can include its `lazybios/typeN.h` header directly. Every public
  * header is independently includable from C and C++.
  *

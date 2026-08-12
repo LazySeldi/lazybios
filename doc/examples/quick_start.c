@@ -1,4 +1,4 @@
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 
 //! [host-system]
 int read_host_bios(void) {

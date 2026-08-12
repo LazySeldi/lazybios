@@ -63,6 +63,7 @@ typedef enum {
 
 /** @brief Complete lazybios semantic version string. */
 extern const char lazybiosVersion[];
+
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 2
 /** @brief Minor component of the lazybios version. */

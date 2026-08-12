@@ -7,7 +7,7 @@ libFuzzer runtime is available.
 
 | Target | Covers |
 | --- | --- |
-| `fuzz_dmi_table` | All 47 structure parsers against an arbitrary DMI table, with the SMBIOS version driven by the input |
+| `fuzz_dmi_table` | All standard and HP OEM structure parsers against an arbitrary DMI table, with the SMBIOS version driven by the input |
 | `fuzz_entry_point` | `lazybiosParseEntry`, `lazybiosIsVersionPlus`, `lazybiosPrintSMVer` |
 | `fuzz_single_file` | `lazybiosSingleFile` plus every parser, including tightly concatenated tables and valid embedded table offsets |
 | `fuzz_two_files` | `lazybiosFile` plus every parser — the shape a Linux sysfs host load takes |

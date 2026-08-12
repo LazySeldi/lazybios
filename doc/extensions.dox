@@ -3,21 +3,13 @@
  *
  * @brief Optional companion libraries and output serializers for lazybios.
  *
- * @section ext_json JSON Serialization Extension (`ext/json`)
+ * @section ext_json JSON Serialization
  *
- * The `lazybios_json` extension provides cJSON-based serialization for parsed
+ * The JSON support provides cJSON-based serialization for parsed
  * SMBIOS entry points and structure tables. It converts parsed lazybios structures
  * into structured JSON trees.
  *
- * @subsection ext_json_build Building with JSON Support
- *
- * JSON serialization requires the `libcjson` library development package.
- * Enable the CMake option @c LAZYBIOS_EXT_JSON when configuring the project:
- *
- * @code{.sh}
- * cmake -S . -B build -DLAZYBIOS_EXT_JSON=ON
- * cmake --build build
- * @endcode
+ * JSON serialization is built into the library and always available.
  *
  * @subsection ext_json_api API Overview
  *
