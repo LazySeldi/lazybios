@@ -20,7 +20,7 @@
 #include "lazybios.h"
 #include "lazybios_json.h"
 
-int main () {
+int main() {
     lazybiosCTX_t *ctx = lazybiosCTXNew();
     lazybiosInit(ctx);
     cJSON *root = cJSON_CreateObject();
@@ -31,7 +31,11 @@ int main () {
     ctx->Type3 = lazybiosGetType3(ctx->Type3, &ctx->type3_count, ctx->DMIData);
     ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
     ctx->Type5 = lazybiosGetType5(ctx->Type5, &ctx->type5_count, ctx->DMIData);
-
+    ctx->Type6 = lazybiosGetType6(ctx->Type6, &ctx->type6_count, ctx->DMIData);
+    ctx->Type7 = lazybiosGetType7(ctx->Type7, &ctx->type7_count, ctx->DMIData);
+    ctx->Type8 = lazybiosGetType8(ctx->Type8, &ctx->type8_count, ctx->DMIData);
+    ctx->Type9 = lazybiosGetType9(ctx->Type9, &ctx->type9_count, ctx->DMIData);
+    
     lazybiosExtJSONAddSMBIOSInfo(ctx->DMIData, ctx->backend, root);
     lazybiosExtJSONAddType0(ctx->Type0, ctx->type0_count, root);
     lazybiosExtJSONAddType1(ctx->Type1, ctx->type1_count, root);
@@ -39,6 +43,10 @@ int main () {
     lazybiosExtJSONAddType3(ctx->Type3, ctx->type3_count, root);
     lazybiosExtJSONAddType4(ctx->Type4, ctx->type4_count, root);
     lazybiosExtJSONAddType5(ctx->Type5, ctx->type5_count, root);
+    lazybiosExtJSONAddType6(ctx->Type6, ctx->type6_count, root);
+    lazybiosExtJSONAddType7(ctx->Type7, ctx->type7_count, root);
+    lazybiosExtJSONAddType8(ctx->Type8, ctx->type8_count, root);
+    lazybiosExtJSONAddType9(ctx->Type9, ctx->type9_count, root);
 
     char *json_string = cJSON_Print(root);
     printf("%s\n", json_string);
