@@ -26,7 +26,7 @@
 #ifndef LAZYBIOS_JSON_H
 #define LAZYBIOS_JSON_H
 
-#include "lazybios.h"
+#include "lazybios/lazybios.h"
 #include "cJSON.h"
 
 #ifdef __cplusplus

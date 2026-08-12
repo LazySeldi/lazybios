@@ -22,7 +22,8 @@
 @author LazySeldi
 */
 
-#include "lazybios_json.h"
+#include "lazybios/json/lazybios_json.h"
+#include "lazybios/json/cJSON.h"
 
 #include <stdio.h>
 #include <stdint.h>
