@@ -26,7 +26,6 @@
 // test.c - File for testing ALL SMBIOS types we have implemented currently
 //
 #include "lazybios.h"
-#include "lazybios/oem/hp/hp_type201.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -3588,26 +3587,6 @@ static void printType46(lazybiosCTX_t* ctx) {
 	}
 }
 
-static void printOemHPType201(lazybiosCTX_t* ctx) {
-    printf("=== Oem HP Type 201 ===\n");
-
-    if (!ctx->HpType201) ctx->HpType201 = lazybiosGetOemHpType201(ctx->HpType201, &ctx->hptype201_count, ctx->DMIData);
-
-    if (ctx->HpType201 && ctx->hptype201_count > 0) {
-        for (size_t i = 0; i < ctx->hptype201_count; i++) {
-            lazybiosOemHpType201_t* HpType201 = &ctx->HpType201[i];
-
-            if (ctx->hptype201_count > 1) printf("--- Oem HP Type 201: %zu ---\n", i + 1);
-
-            if (LAZYBIOS_FIELD_STATUS(HpType201, rack_name) == LAZYBIOS_FIELD_PRESENT) {
-                printf("Rack Name: %s", HpType201->rack_name);
-            }
-
-        }
-    } else {
-        printf("Failed to get Oem Hp Type 201 information\n\n");
-    }
-}
 
 /**
  * @brief Prints detailed SMBIOS entry point version information.
@@ -3978,8 +3957,6 @@ int main(int argc, const char* argv[]) {
 		if (!ctx->Type46) ctx->Type46 = lazybiosGetType46(ctx->Type46, &ctx->type46_count, ctx->DMIData);
 		printType46(ctx);
 
-	    if (!ctx->HpType201) ctx->HpType201 = lazybiosGetOemHpType201(ctx->HpType201, &ctx->hptype201_count, ctx->DMIData);
-	    printOemHPType201(ctx);
 	} else {
 		switch (type_to_print) {
 			case 0:
@@ -4221,10 +4198,6 @@ int main(int argc, const char* argv[]) {
 				printType46(ctx);
 				break;
 
-		    case 201:
-		        if (!ctx->HpType201) ctx->HpType201 = lazybiosGetOemHpType201(ctx->HpType201, &ctx->hptype201_count, ctx->DMIData);
-		        printOemHPType201(ctx);
-		        break;
 
 			default:
 				fprintf(stderr, "Error: Type %d is not implemented or invalid\n", type_to_print);
