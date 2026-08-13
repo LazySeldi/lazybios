@@ -8,7 +8,7 @@
 
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones).
 - **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
-- **Library Extentions** - Currently JSON output is implemented.
+- **Library Extensions** - Built-in cJSON output supports every implemented standard SMBIOS type (0-46).
 - **OEM Extensions** - Initial very experimental early support for OEM-specific structures(Only HP's type 201).
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup.

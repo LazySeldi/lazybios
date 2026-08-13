@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with lazybios. If not, see <https://www.gnu.org/licenses/>.
  */
-/*
+/**
  * @file lazybios_json.h
  * @brief cJSON serialization API for parsed SMBIOS structures.
  * @ingroup api_extensions
@@ -32,6 +32,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/** @addtogroup api_extensions
+ * @{
+ */
 
 /**
 @brief Sentinel string written for fields with ::LAZYBIOS_FIELD_UNREACHABLE status.
@@ -533,6 +537,8 @@ void lazybiosExtJSONAddType45(const lazybiosType45_t* type45, size_t count, cJSO
 @param root      cJSON object to attach the resulting array to.
 */
 void lazybiosExtJSONAddType46(const lazybiosType46_t* type46, size_t count, cJSON* root);
+
+/** @} */
 
 #ifdef __cplusplus
 }
