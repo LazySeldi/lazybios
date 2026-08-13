@@ -5,25 +5,48 @@
  *
  * @section ext_json JSON Serialization
  *
- * The JSON support provides cJSON-based serialization for parsed
- * SMBIOS entry points and structure tables. It converts parsed lazybios structures
- * into structured JSON trees.
+ * The JSON support provides cJSON-based serialization for parsed SMBIOS entry
+ * points and structure tables. It converts parsed lazybios structures into
+ * structured JSON trees.
  *
  * JSON serialization is built into the library and always available.
  *
  * @subsection ext_json_api API Overview
  *
- * - @ref lazybiosExtJSONAddSMBIOSInfo — Serializes entry point metadata and lazybios version.
- * - @ref lazybiosExtJSONAddType0 — Serializes Type 0 (BIOS Information) arrays.
- * - @ref lazybiosExtJSONAddType1 — Serializes Type 1 (System Information) arrays.
- * - @ref lazybiosExtJSONAddType2 — Serializes Type 2 (Baseboard Information) arrays.
- * - @ref lazybiosExtJSONAddType3 — Serializes Type 3 (Chassis Information) arrays.
- * - @ref lazybiosExtJSONAddType4 — Serializes Type 4 (Processor Information) arrays.
- * - @ref lazybiosExtJSONAddType5 — Serializes Type 5 (Memory Controller Information) arrays.
- * - @ref lazybiosExtJSONAddType6 — Serializes Type 6 (Memory Module Information) arrays.
- * - @ref lazybiosExtJSONAddType7 — Serializes Type 7 (Cache Information) arrays.
- * - @ref lazybiosExtJSONAddType8 — Serializes Type 8 (Port Connector Information) arrays.
- * - @ref lazybiosExtJSONAddType9 — Serializes Type 9 (System Slots) arrays.
+ * - @ref lazybiosExtJSONAddSMBIOSInfo serializes entry-point metadata and the
+ *   lazybios version under the `smbios_info` key.
+ * - @ref lazybiosExtJSONAddType0 through @ref lazybiosExtJSONAddType46
+ *   serialize every standard SMBIOS type currently implemented by lazybios.
+ *   Each function attaches its result under the matching `TypeN` key.
+ *
+ * @subsection ext_json_types Supported structures
+ *
+ * JSON serialization supports all standard structures parsed by the library:
+ *
+ * | Types | Structures |
+ * | --- | --- |
+ * | 0-4 | BIOS, System, Baseboard, Chassis, and Processor Information |
+ * | 5-6 | Legacy Memory Controller and Memory Module Information |
+ * | 7-14 | Cache, Port Connector, System Slots, On Board Devices, OEM Strings, System Configuration Options, Firmware Language, and Group Associations |
+ * | 15-21 | System Event Log, Physical Memory Array, Memory Device, 32-Bit Memory Error, Memory Array Mapped Address, Memory Device Mapped Address, and Built-in Pointing Device |
+ * | 22-29 | Portable Battery, System Reset, Hardware Security, System Power Controls, Voltage Probe, Cooling Device, Temperature Probe, and Electrical Current Probe |
+ * | 30-39 | Out-of-Band Remote Access, Boot Integrity Services, System Boot, 64-Bit Memory Error, Management Device, Management Device Component, Management Device Threshold Data, Memory Channel, IPMI Device, and System Power Supply |
+ * | 40-46 | Additional Information, Onboard Devices Extended Information, Management Controller Host Interface, TPM Device, Processor Additional Information, Firmware Inventory Information, and String Property |
+ *
+ * The detailed function documentation in @ref lazybios_json.h covers the
+ * matching `lazybiosExtJSONAddTypeN()` function for every type.
+ *
+ * @subsection ext_json_contract Output contract
+ *
+ * Callers create and own the destination cJSON root object. Each serializer
+ * adds one child to it; call cJSON_Delete() on the root when finished. Parsed
+ * lazybios data must remain alive until the serializer returns. The serializers
+ * copy their output into cJSON, so the resulting cJSON tree remains valid after
+ * lazybiosCleanup().
+ *
+ * When an input type array is NULL or its count is zero, the corresponding
+ * `TypeN` value is a descriptive JSON string instead of an array. Consumers
+ * should therefore check whether `TypeN` is an array before iterating it.
  *
  * Field status handling:
  * - `LAZYBIOS_FIELD_PRESENT` values are serialized as native JSON strings or numbers.
