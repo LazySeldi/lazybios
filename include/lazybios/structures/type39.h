@@ -58,13 +58,13 @@ typedef struct {
  */
 typedef struct {
 	uint8_t power_unit_group;
-	char* location;
-	char* device_name;
-	char* manufacturer;
-	char* serial_number;
-	char* asset_tag_number;
-	char* model_part_number;
-	char* revision_level;
+	const char* location;
+	const char* device_name;
+	const char* manufacturer;
+	const char* serial_number;
+	const char* asset_tag_number;
+	const char* model_part_number;
+	const char* revision_level;
 	uint16_t max_power_capacity;
 	uint16_t power_supply_characteristics;
 	uint16_t input_voltage_probe_handle;

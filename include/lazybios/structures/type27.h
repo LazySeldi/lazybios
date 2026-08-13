@@ -55,7 +55,7 @@ typedef struct {
 	uint8_t cooling_unit_group;
 	uint32_t oem_defined;
 	uint16_t nominal_speed;
-	char* description;
+	const char* description;
 	lazybiosType27FieldStatus_t field_status;
 } lazybiosType27_t;
 

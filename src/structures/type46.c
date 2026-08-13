@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 46 String Property.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -37,14 +35,6 @@
 #define STRING_PROPERTY_ID_DMTF_MAX 0x7FFF
 #define STRING_PROPERTY_ID_FIRMWARE_VENDOR_MAX 0xBFFF
 
-/**
- * @brief Parses all SMBIOS Type 46 String Property structures.
- *
- * @param Type46 Existing Type 46 array pointer value; it is not dereferenced or released.
- * @param type46_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 46 array, or NULL on failure.
- */
 lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -84,13 +74,6 @@ lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_cou
 	return Type46;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 46 string-property identifier.
- *
- * @param string_property_id Raw string-property identifier.
- * @return Static string describing the property or its allocation range.
- */
 const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id) {
 	if (string_property_id == STRING_PROPERTY_ID_RESERVED) return "Reserved";
 	if (string_property_id == STRING_PROPERTY_ID_UEFI_DEVICE_PATH) return "UEFI Device Path";
@@ -99,17 +82,9 @@ const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id) {
 	return "OEM-defined";
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 46 structures.
- *
- * @param Type46 Type 46 array to release.
- * @param type46_count Number of elements in Type46.
- */
 void lazybiosFreeType46(lazybiosType46_t* Type46, size_t type46_count) {
-	if (!Type46) return;
+    (void)type46_count;
+    if (!Type46) return;
 
-	for (size_t i = 0; i < type46_count; i++) {
-		free(Type46[i].string_property_value);
-	}
-	free(Type46);
+    free(Type46);
 }

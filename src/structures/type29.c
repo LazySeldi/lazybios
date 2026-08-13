@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 29 Electrical Current Probe.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -63,14 +61,6 @@
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
 
-/**
- * @brief Parses all SMBIOS Type 29 Electrical Current Probe structures.
- *
- * @param Type29 Existing Type 29 array pointer value; it is not dereferenced or released.
- * @param type29_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 29 array, or NULL on failure.
- */
 lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -115,13 +105,6 @@ lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_cou
 	return Type29;
 }
 
-// Decoders
-/**
- * @brief Decodes the physical location from a Type 29 location-and-status field.
- *
- * @param location_and_status Raw Type 29 location-and-status byte.
- * @return Static string describing the current-probe location.
- */
 const char* lazybiosType29LocationStr(uint8_t location_and_status) {
 	switch (location_and_status & LOCATION_MASK) {
 		case LOCATION_OTHER:
@@ -151,12 +134,6 @@ const char* lazybiosType29LocationStr(uint8_t location_and_status) {
 	}
 }
 
-/**
- * @brief Decodes the monitored-current status from a Type 29 location-and-status field.
- *
- * @param location_and_status Raw Type 29 location-and-status byte.
- * @return Static string describing the monitored-current status.
- */
 const char* lazybiosType29StatusStr(uint8_t location_and_status) {
 	switch ((location_and_status & STATUS_MASK) >> STATUS_SHIFT) {
 		case STATUS_OTHER:
@@ -176,17 +153,9 @@ const char* lazybiosType29StatusStr(uint8_t location_and_status) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 29 structures.
- *
- * @param Type29 Type 29 array to release.
- * @param type29_count Number of elements in Type29.
- */
 void lazybiosFreeType29(lazybiosType29_t* Type29, size_t type29_count) {
-	if (!Type29) return;
+    (void)type29_count;
+    if (!Type29) return;
 
-	for (size_t i = 0; i < type29_count; i++) {
-		free(Type29[i].description);
-	}
-	free(Type29);
+    free(Type29);
 }

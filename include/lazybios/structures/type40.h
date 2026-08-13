@@ -52,7 +52,7 @@ typedef struct {
 	uint8_t entry_length;
 	uint16_t referenced_handle;
 	uint8_t referenced_offset;
-	char* string;
+	const char* string;
 	size_t value_length;
 	uint8_t* value;
 	lazybiosType40EntryFieldStatus_t field_status;

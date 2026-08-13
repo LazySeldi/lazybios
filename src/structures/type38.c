@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 38 IPMI Device Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,14 +41,6 @@
 #define INTERFACE_TYPE_BT 0x03
 #define INTERFACE_TYPE_SSIF 0x04
 
-/**
- * @brief Parses all SMBIOS Type 38 IPMI Device Information structures.
- *
- * @param Type38 Existing Type 38 array pointer value; it is not dereferenced or released.
- * @param type38_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 38 array, or NULL on failure.
- */
 lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -95,13 +85,6 @@ lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_cou
 	return Type38;
 }
 
-// Decoders
-/**
- * @brief Decodes an IPMI BMC interface type.
- *
- * @param interface_type Raw Type 38 interface-type value.
- * @return Static string describing the BMC interface type.
- */
 const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type) {
 	switch (interface_type) {
 		case INTERFACE_TYPE_UNKNOWN:
@@ -119,13 +102,6 @@ const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type) {
 	}
 }
 
-/**
- * @brief Formats the BCD-encoded IPMI specification revision.
- *
- * @param revision Raw BCD-encoded specification revision.
- * @param buf Output buffer that receives the formatted revision.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 
@@ -138,33 +114,14 @@ void lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t 
 	}
 }
 
-/**
- * @brief Decodes the address space selected by a Type 38 base address.
- *
- * @param base_address Raw Type 38 base-address field.
- * @return Static string describing the selected address space.
- */
 const char* lazybiosType38BaseAddressTypeStr(uint64_t base_address) {
 	return (base_address & 1ULL) ? "I/O" : "Memory-mapped";
 }
 
-/**
- * @brief Reconstructs the effective BMC base address.
- *
- * @param base_address Raw Type 38 base-address field.
- * @param modifier Raw base-address-modifier and interrupt-information byte.
- * @return Base address with the address-space flag removed and address bit zero restored.
- */
 uint64_t lazybiosType38BaseAddressValue(uint64_t base_address, uint8_t modifier) {
 	return (base_address & ~1ULL) | ((uint64_t)(modifier >> 4) & 1ULL);
 }
 
-/**
- * @brief Decodes the IPMI interface register spacing.
- *
- * @param modifier Raw base-address-modifier and interrupt-information byte.
- * @return Static string describing the register spacing.
- */
 const char* lazybiosType38RegisterSpacingStr(uint8_t modifier) {
 	switch ((modifier >> 6) & 0x03) {
 		case 0:
@@ -178,13 +135,6 @@ const char* lazybiosType38RegisterSpacingStr(uint8_t modifier) {
 	}
 }
 
-/**
- * @brief Decodes Type 38 interrupt availability, polarity, and trigger mode.
- *
- * @param interrupt_info Raw base-address-modifier and interrupt-information byte.
- * @param buf Output buffer that receives the decoded interrupt information.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 
@@ -198,13 +148,9 @@ void lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t bu
 	snprintf(buf, buf_len, "%s, %s", polarity, trigger_mode);
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 38 structures.
- *
- * @param Type38 Type 38 array to release.
- * @param type38_count Number of elements in Type38.
- */
 void lazybiosFreeType38(lazybiosType38_t* Type38, size_t type38_count) {
-	(void)type38_count;
-	free(Type38);
+    (void)type38_count;
+    if (!Type38) return;
+
+    free(Type38);
 }

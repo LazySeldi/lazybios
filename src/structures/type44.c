@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 44 Processor Additional Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -46,14 +44,6 @@
 #define PROCESSOR_TYPE_LOONGARCH32 0x09
 #define PROCESSOR_TYPE_LOONGARCH64 0x0A
 
-/**
- * @brief Parses all SMBIOS Type 44 Processor Additional Information structures.
- *
- * @param Type44 Existing Type 44 array pointer value; it is not dereferenced or released.
- * @param type44_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 44 array, or NULL on failure.
- */
 lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -90,7 +80,7 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 				if (current->block_length > 0) {
 					current->processor_specific_data = malloc(current->block_length);
 					if (!current->processor_specific_data) {
-						lazybiosFreeType44(Type44, count);
+						lazybiosFreeType44(Type44, *type44_count);
 						return NULL;
 					}
 					memcpy(current->processor_specific_data, p + PROCESSOR_SPECIFIC_DATA, current->block_length);
@@ -106,13 +96,6 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 	return Type44;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 44 processor architecture type.
- *
- * @param processor_type Raw processor architecture type value.
- * @return Static string describing the processor architecture.
- */
 const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type) {
 	switch (processor_type) {
 		case PROCESSOR_TYPE_RESERVED:
@@ -142,17 +125,10 @@ const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 44 structures.
- *
- * @param Type44 Type 44 array to release.
- * @param type44_count Number of elements in Type44.
- */
 void lazybiosFreeType44(lazybiosType44_t* Type44, size_t type44_count) {
-	if (!Type44) return;
+    if (!Type44) return;
 
-	for (size_t i = 0; i < type44_count; i++) {
-		free(Type44[i].processor_specific_data);
-	}
-	free(Type44);
+	for (size_t i = 0; i < type44_count; i++) free(Type44[i].processor_specific_data);
+
+    free(Type44);
 }

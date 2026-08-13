@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 13 Firmware Language Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -34,14 +32,6 @@
 // Flag Masks
 #define LANGUAGE_FORMAT_MASK 0x01
 
-/**
- * @brief Parses all SMBIOS Type 13 Firmware Language Information structures.
- *
- * @param Type13 Existing Type 13 array pointer value; it is not dereferenced or released.
- * @param type13_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 13 array, or NULL on failure.
- */
 lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -79,7 +69,6 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 			if (LAZYBIOS_FIELD_STATUS(current, current_language) == LAZYBIOS_FIELD_PRESENT &&
 				LAZYBIOS_FIELD_STATUS(current, installable_languages) == LAZYBIOS_FIELD_PRESENT &&
 				p[CURRENT_LANGUAGE] > current->installable_languages) {
-				free(current->current_language);
 				current->current_language = NULL;
 				LAZYBIOS_MARK_UNREACHABLE(current, current_language);
 				LAZYBIOS_MARK_ABSENT(current, current_language);
@@ -93,13 +82,12 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 					for (size_t i = 0; i < current->installable_languages; i++) {
 						current->languages[i] = DMIString(p, len, (uint8_t)(i + 1), structure_end);
 						if (!current->languages[i] || current->languages[i][0] == '\0') {
-							free(current->languages[i]);
 							current->languages[i] = NULL;
 							LAZYBIOS_MARK_ABSENT(current, languages);
 						}
 					}
 				} else {
-					lazybiosFreeType13(Type13, count);
+					lazybiosFreeType13(Type13, *type13_count);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, installable_languages) == LAZYBIOS_FIELD_PRESENT) {
@@ -114,35 +102,14 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 	return Type13;
 }
 
-// Decoders
-/**
- * @brief Decodes the language-description format selected by the Type 13 flags.
- *
- * @param flags Raw SMBIOS Type 13 flags byte.
- * @return Static string describing the language-description format.
- */
 const char* lazybiosType13LanguageFormatStr(uint8_t flags) {
 	return (flags & LANGUAGE_FORMAT_MASK) ? "Abbreviated" : "Long";
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 13 structures.
- *
- * @param Type13 Type 13 array to release.
- * @param type13_count Number of elements in Type13.
- */
 void lazybiosFreeType13(lazybiosType13_t* Type13, size_t type13_count) {
-	if (!Type13) return;
+    if (!Type13) return;
 
-	for (size_t i = 0; i < type13_count; i++) {
-		if (Type13[i].languages) {
-			for (size_t j = 0; j < Type13[i].installable_languages; j++) {
-				free(Type13[i].languages[j]);
-			}
-		}
-		free(Type13[i].languages);
-		free(Type13[i].current_language);
-	}
-
-	free(Type13);
+    for (size_t i = 0; i < type13_count; i++) free(Type13[i].languages);
+    
+    free(Type13);
 }

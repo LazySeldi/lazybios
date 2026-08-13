@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 9 System Slots.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +47,6 @@
 #define SLOT_PITCH(peer_count) (0x15 + ((peer_count) * PEER_GROUP_SIZE))
 #define SLOT_HEIGHT(peer_count) (0x17 + ((peer_count) * PEER_GROUP_SIZE))
 
-// Decoders
 
 // Slot Type
 #define SLOT_TYPE_OTHER 0x01
@@ -170,14 +167,6 @@
 #define SLOT_HEIGHT_FULL 0x03
 #define SLOT_HEIGHT_LOW_PROFILE 0x04
 
-/**
- * @brief Parses all SMBIOS Type 9 System Slots structures.
- *
- * @param Type9 Existing Type 9 array pointer value; it is not dereferenced or released.
- * @param type9_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 9 array, or NULL on failure.
- */
 lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -259,7 +248,7 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 							}
 							LAZYBIOS_MARK_PRESENT(current, peer_groups);
 						} else {
-							lazybiosFreeType9(Type9, count);
+							lazybiosFreeType9(Type9, *type9_count);
 							return NULL;
 						}
 					} else if (!peer_layout_valid) {
@@ -315,15 +304,8 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 	return Type9;
 }
 
-// Decoders
 
 // Slot Type
-/**
- * @brief Decodes an SMBIOS system-slot type.
- *
- * @param slot_type Raw SMBIOS slot type value.
- * @return Static string describing the slot type.
- */
 const char* lazybiosType9SlotTypeStr(uint8_t slot_type) {
 	switch (slot_type) {
 		case SLOT_TYPE_OTHER: return "Other";
@@ -410,12 +392,6 @@ const char* lazybiosType9SlotTypeStr(uint8_t slot_type) {
 }
 
 // Slot Data Bus Width and Slot Physical Width
-/**
- * @brief Decodes an SMBIOS system-slot width.
- *
- * @param width Raw slot data-bus, peer data-bus, or physical-width value.
- * @return Static string describing the slot width.
- */
 const char* lazybiosType9SlotWidthStr(uint8_t width) {
 	switch (width) {
 		case SLOT_WIDTH_OTHER: return "Other";
@@ -437,12 +413,6 @@ const char* lazybiosType9SlotWidthStr(uint8_t width) {
 }
 
 // Current Usage
-/**
- * @brief Decodes an SMBIOS system-slot current-usage value.
- *
- * @param current_usage Raw SMBIOS current-usage value.
- * @return Static string describing the current usage.
- */
 const char* lazybiosType9CurrentUsageStr(uint8_t current_usage) {
 	switch (current_usage) {
 		case SLOT_USAGE_OTHER: return "Other";
@@ -455,12 +425,6 @@ const char* lazybiosType9CurrentUsageStr(uint8_t current_usage) {
 }
 
 // Slot Length
-/**
- * @brief Decodes an SMBIOS system-slot length.
- *
- * @param slot_length Raw SMBIOS slot-length value.
- * @return Static string describing the slot length.
- */
 const char* lazybiosType9SlotLengthStr(uint8_t slot_length) {
 	switch (slot_length) {
 		case SLOT_LENGTH_OTHER: return "Other";
@@ -474,13 +438,6 @@ const char* lazybiosType9SlotLengthStr(uint8_t slot_length) {
 }
 
 // Slot Characteristics 1
-/**
- * @brief Decodes SMBIOS system-slot characteristics byte 1.
- *
- * @param characteristics Raw SMBIOS slot characteristics byte 1.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -503,13 +460,6 @@ void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t
 }
 
 // Slot Characteristics 2
-/**
- * @brief Decodes SMBIOS system-slot characteristics byte 2.
- *
- * @param characteristics Raw SMBIOS slot characteristics byte 2.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -532,13 +482,6 @@ void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t
 }
 
 // Device/Function Number
-/**
- * @brief Decodes an SMBIOS PCI device/function number field.
- *
- * @param device_function_number Raw packed device/function number value.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (device_function_number == 0xFF) {
@@ -552,12 +495,6 @@ void lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, s
 }
 
 // Slot Height
-/**
- * @brief Decodes an SMBIOS system-slot height.
- *
- * @param slot_height Raw SMBIOS slot-height value.
- * @return Static string describing the slot height.
- */
 const char* lazybiosType9SlotHeightStr(uint8_t slot_height) {
 	switch (slot_height) {
 		case SLOT_HEIGHT_NOT_APPLICABLE: return "Not applicable";
@@ -569,19 +506,10 @@ const char* lazybiosType9SlotHeightStr(uint8_t slot_height) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 9 structures.
- *
- * @param Type9 Type 9 array to release.
- * @param type9_count Number of elements in Type9.
- */
 void lazybiosFreeType9(lazybiosType9_t* Type9, size_t type9_count) {
-	if (!Type9) return;
+    if (!Type9) return;
 
-	for (size_t i = 0; i < type9_count; i++) {
-		free(Type9[i].slot_designation);
-		free(Type9[i].peer_groups);
-	}
+    for (size_t i = 0; i < type9_count; i++) free(Type9[i].peer_groups);
 
-	free(Type9);
+    free(Type9);
 }

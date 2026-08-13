@@ -46,7 +46,7 @@ typedef struct {
  * @ingroup api_type30
  */
 typedef struct {
-	char* manufacturer_name;
+	const char* manufacturer_name;
 	uint8_t connections;
 	lazybiosType30FieldStatus_t field_status;
 } lazybiosType30_t;

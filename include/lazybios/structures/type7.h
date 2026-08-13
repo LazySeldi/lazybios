@@ -56,7 +56,7 @@ typedef struct {
  * @ingroup api_type7
  */
 typedef struct {
-	char* socket_designation;
+	const char* socket_designation;
 	uint16_t cache_configuration;
 	uint16_t maximum_cache_size;
 	uint16_t installed_size;

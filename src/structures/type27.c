@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 27 Cooling Device.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -60,14 +58,6 @@
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
 
-/**
- * @brief Parses all SMBIOS Type 27 Cooling Device structures.
- *
- * @param Type27 Existing Type 27 array pointer value; it is not dereferenced or released.
- * @param type27_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 27 array, or NULL on failure.
- */
 lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -115,13 +105,6 @@ lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_cou
 	return Type27;
 }
 
-// Decoders
-/**
- * @brief Decodes the cooling-device type from a Type 27 device-type-and-status field.
- *
- * @param device_type_and_status Raw Type 27 device-type-and-status byte.
- * @return Static string describing the cooling-device type.
- */
 const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status) {
 	switch (device_type_and_status & DEVICE_TYPE_MASK) {
 		case DEVICE_TYPE_OTHER:
@@ -151,12 +134,6 @@ const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status) {
 	}
 }
 
-/**
- * @brief Decodes the cooling-device status from a Type 27 device-type-and-status field.
- *
- * @param device_type_and_status Raw Type 27 device-type-and-status byte.
- * @return Static string describing the cooling-device status.
- */
 const char* lazybiosType27StatusStr(uint8_t device_type_and_status) {
 	switch ((device_type_and_status & STATUS_MASK) >> STATUS_SHIFT) {
 		case STATUS_OTHER:
@@ -176,17 +153,9 @@ const char* lazybiosType27StatusStr(uint8_t device_type_and_status) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 27 structures.
- *
- * @param Type27 Type 27 array to release.
- * @param type27_count Number of elements in Type27.
- */
 void lazybiosFreeType27(lazybiosType27_t* Type27, size_t type27_count) {
-	if (!Type27) return;
+    (void)type27_count;
+    if (!Type27) return;
 
-	for (size_t i = 0; i < type27_count; i++) {
-		free(Type27[i].description);
-	}
-	free(Type27);
+    free(Type27);
 }

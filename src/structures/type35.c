@@ -21,8 +21,6 @@
  * @brief Implements parsing for SMBIOS Type 35 Management Device Component.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -32,14 +30,6 @@
 #define COMPONENT_HANDLE 0x07
 #define THRESHOLD_HANDLE 0x09
 
-/**
- * @brief Parses all SMBIOS Type 35 Management Device Component structures.
- *
- * @param Type35 Existing Type 35 array pointer value; it is not dereferenced or released.
- * @param type35_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 35 array, or NULL on failure.
- */
 lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -82,17 +72,9 @@ lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_cou
 	return Type35;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 35 structures.
- *
- * @param Type35 Type 35 array to release.
- * @param type35_count Number of elements in Type35.
- */
 void lazybiosFreeType35(lazybiosType35_t* Type35, size_t type35_count) {
-	if (!Type35) return;
+    (void)type35_count;
+    if (!Type35) return;
 
-	for (size_t i = 0; i < type35_count; i++) {
-		free(Type35[i].description);
-	}
-	free(Type35);
+    free(Type35);
 }

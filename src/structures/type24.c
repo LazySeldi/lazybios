@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 24 Hardware Security.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -44,14 +42,6 @@
 #define SECURITY_STATUS_NOT_IMPLEMENTED 0x02
 #define SECURITY_STATUS_UNKNOWN 0x03
 
-/**
- * @brief Parses all SMBIOS Type 24 Hardware Security structures.
- *
- * @param Type24 Existing Type 24 array pointer value; it is not dereferenced or released.
- * @param type24_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 24 array, or NULL on failure.
- */
 lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -87,13 +77,6 @@ lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_cou
 	return Type24;
 }
 
-// Decoders
-/**
- * @brief Decodes the power-on password status from Type 24 settings.
- *
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the power-on password status.
- */
 const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_settings) {
 	switch ((hardware_security_settings & POWER_ON_PASSWORD_STATUS_MASK) >> POWER_ON_PASSWORD_STATUS_SHIFT) {
 		case SECURITY_STATUS_DISABLED:
@@ -109,12 +92,6 @@ const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_set
 	}
 }
 
-/**
- * @brief Decodes the keyboard password status from Type 24 settings.
- *
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the keyboard password status.
- */
 const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_settings) {
 	switch ((hardware_security_settings & KEYBOARD_PASSWORD_STATUS_MASK) >> KEYBOARD_PASSWORD_STATUS_SHIFT) {
 		case SECURITY_STATUS_DISABLED:
@@ -130,12 +107,6 @@ const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_se
 	}
 }
 
-/**
- * @brief Decodes the administrator password status from Type 24 settings.
- *
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the administrator password status.
- */
 const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_security_settings) {
 	switch ((hardware_security_settings & ADMINISTRATOR_PASSWORD_STATUS_MASK) >>
 		ADMINISTRATOR_PASSWORD_STATUS_SHIFT) {
@@ -152,12 +123,6 @@ const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_securi
 	}
 }
 
-/**
- * @brief Decodes the front-panel reset status from Type 24 settings.
- *
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the front-panel reset status.
- */
 const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_settings) {
 	switch (hardware_security_settings & FRONT_PANEL_RESET_STATUS_MASK) {
 		case SECURITY_STATUS_DISABLED:
@@ -173,13 +138,9 @@ const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_set
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 24 structures.
- *
- * @param Type24 Type 24 array to release.
- * @param type24_count Number of elements in Type24.
- */
 void lazybiosFreeType24(lazybiosType24_t* Type24, size_t type24_count) {
-	(void)type24_count;
-	free(Type24);
+    (void)type24_count;
+    if (!Type24) return;
+
+    free(Type24);
 }

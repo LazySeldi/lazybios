@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 22 Portable Battery.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,14 +52,6 @@
 #define DEVICE_CHEMISTRY_ZINC_AIR 0x07
 #define DEVICE_CHEMISTRY_LITHIUM_POLYMER 0x08
 
-/**
- * @brief Parses all SMBIOS Type 22 Portable Battery structures.
- *
- * @param Type22 Existing Type 22 array pointer value; it is not dereferenced or released.
- * @param type22_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 22 array, or NULL on failure.
- */
 lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -137,13 +127,6 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 	return Type22;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS portable-battery chemistry value.
- *
- * @param device_chemistry Raw portable-battery chemistry value.
- * @return Static string describing the chemistry.
- */
 const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry) {
 	switch (device_chemistry) {
 		case DEVICE_CHEMISTRY_OTHER:
@@ -167,24 +150,10 @@ const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry) {
 	}
 }
 
-/**
- * @brief Calculates the effective portable-battery design capacity.
- *
- * @param design_capacity Raw design capacity in mWh.
- * @param design_capacity_multiplier SMBIOS 2.2 multiplication factor, or 1 when unavailable.
- * @return Effective design capacity in mWh.
- */
 uint32_t lazybiosType22DesignCapacityMWh(uint16_t design_capacity, uint8_t design_capacity_multiplier) {
 	return (uint32_t)design_capacity * design_capacity_multiplier;
 }
 
-/**
- * @brief Formats an SMBIOS Smart Battery Data Specification manufacture date.
- *
- * @param sbds_manufacture_date Raw packed SBDS manufacture date.
- * @param buf Output buffer that receives the formatted date.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	uint16_t year = (uint16_t)(1980 + ((sbds_manufacture_date >> 9) & 0x7F));
@@ -198,23 +167,9 @@ void lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* 
 	snprintf(buf, buf_len, "%04hu-%02hhu-%02hhu", year, month, day);
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 22 structures.
- *
- * @param Type22 Type 22 array to release.
- * @param type22_count Number of elements in Type22.
- */
 void lazybiosFreeType22(lazybiosType22_t* Type22, size_t type22_count) {
-	if (!Type22) return;
+    (void)type22_count;
+    if (!Type22) return;
 
-	for (size_t i = 0; i < type22_count; i++) {
-		free(Type22[i].location);
-		free(Type22[i].manufacturer);
-		free(Type22[i].manufacture_date);
-		free(Type22[i].serial_number);
-		free(Type22[i].device_name);
-		free(Type22[i].sbds_version_number);
-		free(Type22[i].sbds_device_chemistry);
-	}
-	free(Type22);
+    free(Type22);
 }

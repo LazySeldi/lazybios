@@ -47,7 +47,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t option_count;
-	char** options;
+	const char** options;
 	lazybiosType12FieldStatus_t field_status;
 } lazybiosType12_t;
 

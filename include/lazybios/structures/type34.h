@@ -48,7 +48,7 @@ typedef struct {
  * @ingroup api_type34
  */
 typedef struct {
-	char* description;
+	const char* description;
 	uint8_t device_type;
 	uint32_t address;
 	uint8_t address_type;

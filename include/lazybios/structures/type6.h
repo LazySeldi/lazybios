@@ -51,7 +51,7 @@ typedef struct {
  * @ingroup api_type6
  */
 typedef struct {
-	char* socket_designation;
+	const char* socket_designation;
 	uint8_t bank_connections;
 	uint8_t current_speed;
 	uint16_t current_memory_type;

@@ -57,14 +57,14 @@ typedef struct {
  * @ingroup api_type45
  */
 typedef struct {
-	char* firmware_component_name;
-	char* firmware_version;
+	const char* firmware_component_name;
+	const char* firmware_version;
 	uint8_t version_format;
-	char* firmware_id;
+	const char* firmware_id;
 	uint8_t firmware_id_format;
-	char* release_date;
-	char* manufacturer;
-	char* lowest_supported_firmware_version;
+	const char* release_date;
+	const char* manufacturer;
+	const char* lowest_supported_firmware_version;
 	uint64_t image_size;
 	uint16_t characteristics;
 	uint8_t state;

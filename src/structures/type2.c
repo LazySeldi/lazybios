@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 2 Baseboard Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +39,6 @@
 #define NUMBER_OF_CONTAINED_OBJECT_HANDLES 0x0E
 #define CONTAINED_OBJECT_HANDLES 0x0F
 
-// Decoders
 
 // Board Type
 #define BOARD_TYPE_UNKNOWN 0x01
@@ -58,14 +55,6 @@
 #define BOARD_TYPE_PROCESSOR_IO_MODULE 0x0C
 #define BOARD_TYPE_INTERCONNECT_BOARD 0x0D
 
-/**
- * @brief Parses all SMBIOS Type 2 Baseboard Information structures.
- *
- * @param Type2 Existing Type 2 array pointer value; it is not dereferenced or released.
- * @param type2_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 2 array, or NULL on failure.
- */
 lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -139,16 +128,7 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 	return Type2;
 }
 
-// Decoders
-
 // Feature Flags
-/**
- * @brief Decodes SMBIOS baseboard feature flags into a readable string.
- *
- * @param feature_flags Raw SMBIOS baseboard feature flags.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -168,12 +148,6 @@ void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_l
 }
 
 // Board Type
-/**
- * @brief Decodes an SMBIOS baseboard type.
- *
- * @param board_type Raw SMBIOS baseboard type value.
- * @return Static string describing the baseboard type.
- */
 const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 	switch (board_type) {
 		case BOARD_TYPE_UNKNOWN:
@@ -207,24 +181,9 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 2 structures.
- *
- * @param Type2 Type 2 array to release.
- * @param type2_count Number of elements in Type2.
- */
 void lazybiosFreeType2(lazybiosType2_t* Type2, size_t type2_count) {
 	if (!Type2) return;
+	for (size_t i = 0; i < type2_count; i++) free(Type2[i].contained_object_handles);
 
-	for (size_t i = 0; i < type2_count; i++) {
-		free(Type2[i].manufacturer);
-		free(Type2[i].product);
-		free(Type2[i].version);
-		free(Type2[i].serial_number);
-		free(Type2[i].asset_tag);
-		free(Type2[i].location_in_chassis);
-		free(Type2[i].contained_object_handles);
-	}
-
-	free(Type2);
+    free(Type2);
 }

@@ -21,8 +21,6 @@
  * @brief Implements parsing for SMBIOS Type 40 Additional Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -39,14 +37,6 @@
 #define ENTRY_VALUE 0x05
 #define MINIMUM_ENTRY_LENGTH 0x06
 
-/**
- * @brief Parses all SMBIOS Type 40 Additional Information structures.
- *
- * @param Type40 Existing Type 40 array pointer value; it is not dereferenced or released.
- * @param type40_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 40 array, or NULL on failure.
- */
 lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -98,7 +88,7 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 						current->additional_information_entries = calloc(
 							current->additional_information_entry_count, sizeof(lazybiosType40Entry_t));
 						if (!current->additional_information_entries) {
-							lazybiosFreeType40(Type40, count);
+							lazybiosFreeType40(Type40, *type40_count);
 							return NULL;
 						}
 
@@ -115,7 +105,7 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 							if (entry->value_length > 0) {
 								entry->value = malloc(entry->value_length);
 								if (!entry->value) {
-									lazybiosFreeType40(Type40, count);
+									lazybiosFreeType40(Type40, *type40_count);
 									return NULL;
 								}
 								memcpy(entry->value, p + entry_offset + ENTRY_VALUE, entry->value_length);
@@ -150,19 +140,12 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 	return Type40;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 40 structures.
- *
- * @param Type40 Type 40 array to release.
- * @param type40_count Number of elements in Type40.
- */
 void lazybiosFreeType40(lazybiosType40_t* Type40, size_t type40_count) {
 	if (!Type40) return;
 
 	for (size_t i = 0; i < type40_count; i++) {
 		if (Type40[i].additional_information_entries) {
 			for (size_t j = 0; j < Type40[i].additional_information_entry_count; j++) {
-				free(Type40[i].additional_information_entries[j].string);
 				free(Type40[i].additional_information_entries[j].value);
 			}
 		}

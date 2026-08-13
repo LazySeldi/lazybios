@@ -62,11 +62,11 @@ typedef struct {
  * @ingroup api_type3
  */
 typedef struct {
-	char* manufacturer;
+	const char* manufacturer;
 	uint8_t type;
-	char* version;
-	char* serial_number;
-	char* asset_tag;
+	const char* version;
+	const char* serial_number;
+	const char* asset_tag;
 	uint8_t boot_up_state;
 	uint8_t power_supply_state;
 	uint8_t thermal_state;
@@ -77,7 +77,7 @@ typedef struct {
 	uint8_t contained_element_count;
 	uint8_t contained_element_record_length;
 	uint8_t* contained_elements;
-	char* sku_number;
+	const char* sku_number;
 	uint8_t rack_type;
 	uint8_t rack_height;
 	lazybiosType3FieldStatus_t field_status;

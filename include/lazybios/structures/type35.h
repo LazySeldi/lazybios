@@ -48,7 +48,7 @@ typedef struct {
  * @ingroup api_type35
  */
 typedef struct {
-	char* description;
+	const char* description;
 	uint16_t management_device_handle;
 	uint16_t component_handle;
 	uint16_t threshold_handle;

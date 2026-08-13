@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 21 Built-in Pointing Device.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -57,14 +55,6 @@
 #define INTERFACE_I2C 0xA3
 #define INTERFACE_SPI 0xA4
 
-/**
- * @brief Parses all SMBIOS Type 21 Built-in Pointing Device structures.
- *
- * @param Type21 Existing Type 21 array pointer value; it is not dereferenced or released.
- * @param type21_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 21 array, or NULL on failure.
- */
 lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -102,13 +92,6 @@ lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_cou
 	return Type21;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS built-in pointing-device type.
- *
- * @param pointing_device_type Raw pointing-device type value.
- * @return Static string describing the pointing-device type.
- */
 const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type) {
 	switch (pointing_device_type) {
 		case POINTING_DEVICE_OTHER:
@@ -134,12 +117,6 @@ const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type) {
 	}
 }
 
-/**
- * @brief Decodes an SMBIOS built-in pointing-device interface.
- *
- * @param interface Raw pointing-device interface value.
- * @return Static string describing the interface.
- */
 const char* lazybiosType21InterfaceStr(uint8_t interface) {
 	switch (interface) {
 		case INTERFACE_OTHER:
@@ -173,13 +150,9 @@ const char* lazybiosType21InterfaceStr(uint8_t interface) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 21 structures.
- *
- * @param Type21 Type 21 array to release.
- * @param type21_count Number of elements in Type21.
- */
 void lazybiosFreeType21(lazybiosType21_t* Type21, size_t type21_count) {
-	(void)type21_count;
-	free(Type21);
+    (void)type21_count;
+    if (!Type21) return;
+
+    free(Type21);
 }

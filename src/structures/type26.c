@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 26 Voltage Probe.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -63,14 +61,6 @@
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
 
-/**
- * @brief Parses all SMBIOS Type 26 Voltage Probe structures.
- *
- * @param Type26 Existing Type 26 array pointer value; it is not dereferenced or released.
- * @param type26_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 26 array, or NULL on failure.
- */
 lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -115,13 +105,6 @@ lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_cou
 	return Type26;
 }
 
-// Decoders
-/**
- * @brief Decodes the physical location from a Type 26 location-and-status field.
- *
- * @param location_and_status Raw Type 26 location-and-status byte.
- * @return Static string describing the voltage-probe location.
- */
 const char* lazybiosType26LocationStr(uint8_t location_and_status) {
 	switch (location_and_status & LOCATION_MASK) {
 		case LOCATION_OTHER:
@@ -151,12 +134,6 @@ const char* lazybiosType26LocationStr(uint8_t location_and_status) {
 	}
 }
 
-/**
- * @brief Decodes the monitored-voltage status from a Type 26 location-and-status field.
- *
- * @param location_and_status Raw Type 26 location-and-status byte.
- * @return Static string describing the monitored-voltage status.
- */
 const char* lazybiosType26StatusStr(uint8_t location_and_status) {
 	switch ((location_and_status & STATUS_MASK) >> STATUS_SHIFT) {
 		case STATUS_OTHER:
@@ -176,17 +153,9 @@ const char* lazybiosType26StatusStr(uint8_t location_and_status) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 26 structures.
- *
- * @param Type26 Type 26 array to release.
- * @param type26_count Number of elements in Type26.
- */
 void lazybiosFreeType26(lazybiosType26_t* Type26, size_t type26_count) {
-	if (!Type26) return;
+    (void)type26_count;
+    if (!Type26) return;
 
-	for (size_t i = 0; i < type26_count; i++) {
-		free(Type26[i].description);
-	}
-	free(Type26);
+    free(Type26);
 }

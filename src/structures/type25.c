@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 25 System Power Controls.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,14 +32,6 @@
 #define NEXT_SCHEDULED_POWER_ON_MINUTE 0x07
 #define NEXT_SCHEDULED_POWER_ON_SECOND 0x08
 
-/**
- * @brief Parses all SMBIOS Type 25 System Power Controls structures.
- *
- * @param Type25 Existing Type 25 array pointer value; it is not dereferenced or released.
- * @param type25_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 25 array, or NULL on failure.
- */
 lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -81,14 +71,6 @@ lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_cou
 	return Type25;
 }
 
-// Decoders
-/**
- * @brief Formats the next scheduled power-on date and time.
- *
- * @param Type25 Parsed Type 25 structure containing BCD date and time fields.
- * @param buf Output buffer that receives the formatted schedule.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (!Type25) {
@@ -131,13 +113,9 @@ void lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char*
 		values[0], values[1], values[2], values[3], values[4]);
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 25 structures.
- *
- * @param Type25 Type 25 array to release.
- * @param type25_count Number of elements in Type25.
- */
 void lazybiosFreeType25(lazybiosType25_t* Type25, size_t type25_count) {
-	(void)type25_count;
-	free(Type25);
+    (void)type25_count;
+    if (!Type25) return;
+
+    free(Type25);
 }

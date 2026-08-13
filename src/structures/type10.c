@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for obsolete SMBIOS Type 10 On Board Devices Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -43,14 +41,6 @@
 #define DEVICE_TYPE_SATA_CONTROLLER 0x09
 #define DEVICE_TYPE_SAS_CONTROLLER 0x0A
 
-/**
- * @brief Parses all obsolete SMBIOS Type 10 On Board Devices Information structures.
- *
- * @param Type10 Existing Type 10 array pointer value; it is not dereferenced or released.
- * @param type10_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 10 array, or NULL on failure.
- */
 lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 	const uint8_t* p = DMIData->dmi_data;
@@ -78,7 +68,7 @@ lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_cou
 				if (current->device_count > 0) {
 					current->devices = calloc(current->device_count, sizeof(lazybiosType10Device_t));
 					if (!current->devices) {
-						lazybiosFreeType10(Type10, count);
+						lazybiosFreeType10(Type10, *type10_count);
 						return NULL;
 					}
 					for (size_t i = 0; i < current->device_count; i++) {
@@ -107,13 +97,6 @@ lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_cou
 	return Type10;
 }
 
-// Decoders
-/**
- * @brief Decodes an obsolete Type 10 onboard-device type.
- *
- * @param device_type_and_status Raw combined device-type and status byte.
- * @return Static string describing the onboard-device type.
- */
 const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status) {
 	switch (device_type_and_status & DEVICE_TYPE_MASK) {
 		case DEVICE_TYPE_OTHER: return "Other";
@@ -130,26 +113,13 @@ const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status) {
 	}
 }
 
-/**
- * @brief Decodes an obsolete Type 10 onboard-device status.
- *
- * @param device_type_and_status Raw combined device-type and status byte.
- * @return Static string describing whether the device is enabled.
- */
 const char* lazybiosType10DeviceStatusStr(uint8_t device_type_and_status) {
 	return (device_type_and_status & DEVICE_STATUS_MASK) ? "Enabled" : "Disabled";
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 10 structures.
- *
- * @param Type10 Type 10 array to release.
- * @param type10_count Number of elements in Type10.
- */
 void lazybiosFreeType10(lazybiosType10_t* Type10, size_t type10_count) {
 	if (!Type10) return;
 	for (size_t i = 0; i < type10_count; i++) {
-		for (size_t j = 0; j < Type10[i].device_count; j++) free(Type10[i].devices[j].description);
 		free(Type10[i].devices);
 	}
 	free(Type10);

@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 39 System Power Supply.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,14 +76,6 @@
 #define INPUT_VOLTAGE_RANGE_SWITCHING_WIDE_RANGE 0x05
 #define INPUT_VOLTAGE_RANGE_SWITCHING_NOT_APPLICABLE 0x06
 
-/**
- * @brief Parses all SMBIOS Type 39 System Power Supply structures.
- *
- * @param Type39 Existing Type 39 array pointer value; it is not dereferenced or released.
- * @param type39_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 39 array, or NULL on failure.
- */
 lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -137,13 +127,6 @@ lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_cou
 	return Type39;
 }
 
-// Decoders
-/**
- * @brief Decodes the DMTF power-supply type from Type 39 characteristics.
- *
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @return Static string describing the power-supply type.
- */
 const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics) {
 	switch ((characteristics & POWER_SUPPLY_TYPE_MASK) >> POWER_SUPPLY_TYPE_SHIFT) {
 		case POWER_SUPPLY_TYPE_OTHER:
@@ -167,12 +150,6 @@ const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics) {
 	}
 }
 
-/**
- * @brief Decodes the power-supply status from Type 39 characteristics.
- *
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @return Static string describing the power-supply status.
- */
 const char* lazybiosType39StatusStr(uint16_t characteristics) {
 	switch ((characteristics & POWER_SUPPLY_STATUS_MASK) >> POWER_SUPPLY_STATUS_SHIFT) {
 		case POWER_SUPPLY_STATUS_OTHER:
@@ -190,12 +167,6 @@ const char* lazybiosType39StatusStr(uint16_t characteristics) {
 	}
 }
 
-/**
- * @brief Decodes input-voltage range switching from Type 39 characteristics.
- *
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @return Static string describing the input-voltage range switching method.
- */
 const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics) {
 	switch ((characteristics & INPUT_VOLTAGE_RANGE_SWITCHING_MASK) >> INPUT_VOLTAGE_RANGE_SWITCHING_SHIFT) {
 		case INPUT_VOLTAGE_RANGE_SWITCHING_OTHER:
@@ -215,13 +186,6 @@ const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics
 	}
 }
 
-/**
- * @brief Formats the unplugged, present, and hot-replaceable characteristic flags.
- *
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @param buf Output buffer that receives the decoded flags.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 
@@ -231,23 +195,9 @@ void lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, 
 			 (characteristics & POWER_SUPPLY_HOT_REPLACEABLE_MASK) ? "Yes" : "No");
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 39 structures.
- *
- * @param Type39 Type 39 array to release.
- * @param type39_count Number of elements in Type39.
- */
 void lazybiosFreeType39(lazybiosType39_t* Type39, size_t type39_count) {
-	if (!Type39) return;
+    (void)type39_count;
+    if (!Type39) return;
 
-	for (size_t i = 0; i < type39_count; i++) {
-		free(Type39[i].location);
-		free(Type39[i].device_name);
-		free(Type39[i].manufacturer);
-		free(Type39[i].serial_number);
-		free(Type39[i].asset_tag_number);
-		free(Type39[i].model_part_number);
-		free(Type39[i].revision_level);
-	}
-	free(Type39);
+    free(Type39);
 }

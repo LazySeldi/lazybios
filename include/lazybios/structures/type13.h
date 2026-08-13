@@ -50,8 +50,8 @@ typedef struct {
 typedef struct {
 	uint8_t installable_languages;
 	uint8_t flags;
-	char** languages;
-	char* current_language;
+	const char** languages;
+	const char* current_language;
 	lazybiosType13FieldStatus_t field_status;
 } lazybiosType13_t;
 

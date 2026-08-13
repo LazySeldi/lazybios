@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 41 Onboard Devices Extended Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,14 +55,6 @@
 #define DEVICE_TYPE_NVME_CONTROLLER 0x0F
 #define DEVICE_TYPE_UFS_CONTROLLER 0x10
 
-/**
- * @brief Parses all SMBIOS Type 41 Onboard Devices Extended Information structures.
- *
- * @param Type41 Existing Type 41 array pointer value; it is not dereferenced or released.
- * @param type41_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 41 array, or NULL on failure.
- */
 lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -106,13 +96,6 @@ lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_cou
 	return Type41;
 }
 
-// Decoders
-/**
- * @brief Decodes the onboard-device type from a combined Type 41 type-and-status byte.
- *
- * @param device_type_and_status Raw Type 41 device-type and status byte.
- * @return Static string describing the onboard-device type.
- */
 const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status) {
 	switch (device_type_and_status & DEVICE_TYPE_MASK) {
 		case DEVICE_TYPE_OTHER:
@@ -152,23 +135,10 @@ const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status) {
 	}
 }
 
-/**
- * @brief Decodes the enabled status from a combined Type 41 type-and-status byte.
- *
- * @param device_type_and_status Raw Type 41 device-type and status byte.
- * @return Static string describing whether the onboard device is enabled.
- */
 const char* lazybiosType41DeviceStatusStr(uint8_t device_type_and_status) {
 	return (device_type_and_status & DEVICE_STATUS_MASK) ? "Enabled" : "Disabled";
 }
 
-/**
- * @brief Formats an SMBIOS Type 41 packed PCI device/function number.
- *
- * @param device_function_number Raw packed device/function number value.
- * @param buf Output buffer that receives the decoded value.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 
@@ -182,17 +152,9 @@ void lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, 
 	snprintf(buf, buf_len, "Device %hhu, Function %hhu", device, function);
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 41 structures.
- *
- * @param Type41 Type 41 array to release.
- * @param type41_count Number of elements in Type41.
- */
 void lazybiosFreeType41(lazybiosType41_t* Type41, size_t type41_count) {
-	if (!Type41) return;
+    (void)type41_count;
+    if (!Type41) return;
 
-	for (size_t i = 0; i < type41_count; i++) {
-		free(Type41[i].reference_designation);
-	}
-	free(Type41);
+    free(Type41);
 }

@@ -72,12 +72,12 @@ typedef struct {
  * @ingroup api_type4
  */
 typedef struct {
-	char* socket_designation;
+	const char* socket_designation;
 	uint8_t processor_type;
 	uint8_t processor_family;
-	char* processor_manufacturer;
+	const char* processor_manufacturer;
 	uint64_t processor_id;
-	char* processor_version;
+	const char* processor_version;
 	uint8_t voltage;
 	uint16_t external_clock;
 	uint16_t max_speed;
@@ -87,9 +87,9 @@ typedef struct {
 	uint16_t l1_cache_handle;
 	uint16_t l2_cache_handle;
 	uint16_t l3_cache_handle;
-	char* serial_number;
-	char* asset_tag;
-	char* part_number;
+	const char* serial_number;
+	const char* asset_tag;
+	const char* part_number;
 	uint8_t core_count;
 	uint8_t core_enabled;
 	uint8_t thread_count;
@@ -99,7 +99,7 @@ typedef struct {
 	uint16_t core_enabled_2;
 	uint16_t thread_count_2;
 	uint16_t thread_enabled;
-	char* socket_type;
+	const char* socket_type;
 	lazybiosType4FieldStatus_t field_status;
 } lazybiosType4_t;
 

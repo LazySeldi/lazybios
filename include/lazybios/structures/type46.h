@@ -48,7 +48,7 @@ typedef struct {
  */
 typedef struct {
 	uint16_t string_property_id;
-	char* string_property_value;
+	const char* string_property_value;
 	uint16_t parent_handle;
 	lazybiosType46FieldStatus_t field_status;
 } lazybiosType46_t;

@@ -59,19 +59,19 @@ typedef struct {
  * @ingroup api_type22
  */
 typedef struct {
-	char* location;
-	char* manufacturer;
-	char* manufacture_date;
-	char* serial_number;
-	char* device_name;
+	const char* location;
+	const char* manufacturer;
+	const char* manufacture_date;
+	const char* serial_number;
+	const char* device_name;
 	uint8_t device_chemistry;
 	uint16_t design_capacity;
 	uint16_t design_voltage;
-	char* sbds_version_number;
+	const char* sbds_version_number;
 	uint8_t maximum_error;
 	uint16_t sbds_serial_number;
 	uint16_t sbds_manufacture_date;
-	char* sbds_device_chemistry;
+	const char* sbds_device_chemistry;
 	uint8_t design_capacity_multiplier;
 	uint32_t oem_specific;
 	lazybiosType22FieldStatus_t field_status;

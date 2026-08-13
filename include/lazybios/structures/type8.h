@@ -49,9 +49,9 @@ typedef struct {
  * @ingroup api_type8
  */
 typedef struct {
-	char* internal_reference_designator;
+	const char* internal_reference_designator;
 	uint8_t internal_connector_type;
-	char* external_reference_designator;
+	const char* external_reference_designator;
 	uint8_t external_connector_type;
 	uint8_t port_type;
 	lazybiosType8FieldStatus_t field_status;

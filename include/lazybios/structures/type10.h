@@ -47,7 +47,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t device_type_and_status;
-	char* description;
+	const char* description;
 	lazybiosType10DeviceFieldStatus_t field_status;
 } lazybiosType10Device_t;
 

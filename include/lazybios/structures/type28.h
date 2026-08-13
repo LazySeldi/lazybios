@@ -53,7 +53,7 @@ typedef struct {
  * @ingroup api_type28
  */
 typedef struct {
-	char* description;
+	const char* description;
 	uint8_t location_and_status;
 	uint16_t maximum_value;
 	/** Tenths of a degree C; `INT16_MIN` (`0x8000` on the wire) means unknown. */

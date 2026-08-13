@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for obsolete SMBIOS Type 5 Memory Controller Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,14 +58,6 @@
 #define INTERLEAVE_EIGHT_WAY 0x06
 #define INTERLEAVE_SIXTEEN_WAY 0x07
 
-/**
- * @brief Parses all obsolete SMBIOS Type 5 Memory Controller Information structures.
- *
- * @param Type5 Existing Type 5 array pointer value; it is not dereferenced or released.
- * @param type5_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 5 array, or NULL on failure.
- */
 lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -110,7 +100,7 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 						current->memory_module_configuration_handles =
 							calloc(current->number_of_associated_memory_slots, sizeof(uint16_t));
 						if (!current->memory_module_configuration_handles) {
-							lazybiosFreeType5(Type5, count);
+							lazybiosFreeType5(Type5, *type5_count);
 							return NULL;
 						}
 						for (size_t i = 0; i < current->number_of_associated_memory_slots; i++) {
@@ -141,13 +131,6 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 	return Type5;
 }
 
-// Decoders
-/**
- * @brief Decodes a Type 5 memory-error detecting method.
- *
- * @param error_detecting_method Raw error-detecting method value.
- * @return Static string describing the method.
- */
 const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method) {
 	switch (error_detecting_method) {
 		case ERROR_DETECTING_OTHER: return "Other";
@@ -162,13 +145,6 @@ const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method)
 	}
 }
 
-/**
- * @brief Decodes a Type 5 error-correcting capability bit field.
- *
- * @param capability Raw supported or enabled error-correcting capability byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -184,12 +160,6 @@ void lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, si
 	else buf[buf_len - 1] = '\0';
 }
 
-/**
- * @brief Decodes a Type 5 memory-interleave value.
- *
- * @param interleave Raw supported or current interleave value.
- * @return Static string describing the interleave configuration.
- */
 const char* lazybiosType5InterleaveStr(uint8_t interleave) {
 	switch (interleave) {
 		case INTERLEAVE_OTHER: return "Other";
@@ -203,13 +173,6 @@ const char* lazybiosType5InterleaveStr(uint8_t interleave) {
 	}
 }
 
-/**
- * @brief Decodes the Type 5 supported-memory-speed bit field.
- *
- * @param supported_speeds Raw supported-memory-speed bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -224,13 +187,6 @@ void lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_
 	else buf[buf_len - 1] = '\0';
 }
 
-/**
- * @brief Decodes the Type 5 supported-memory-type bit field.
- *
- * @param supported_memory_types Raw supported-memory-type bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -247,13 +203,6 @@ void lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char*
 	else buf[buf_len - 1] = '\0';
 }
 
-/**
- * @brief Decodes the Type 5 memory-module voltage bit field.
- *
- * @param memory_module_voltage Raw memory-module voltage bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -266,14 +215,9 @@ void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* bu
 	else buf[buf_len - 1] = '\0';
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 5 structures.
- *
- * @param Type5 Type 5 array to release.
- * @param type5_count Number of elements in Type5.
- */
 void lazybiosFreeType5(lazybiosType5_t* Type5, size_t type5_count) {
 	if (!Type5) return;
 	for (size_t i = 0; i < type5_count; i++) free(Type5[i].memory_module_configuration_handles);
+
 	free(Type5);
 }

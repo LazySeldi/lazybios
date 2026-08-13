@@ -55,13 +55,13 @@ typedef struct {
  * @ingroup api_type2
  */
 typedef struct {
-	char* manufacturer;
-	char* product;
-	char* version;
-	char* serial_number;
-	char* asset_tag;
+	const char* manufacturer;
+	const char* product;
+	const char* version;
+	const char* serial_number;
+	const char* asset_tag;
 	uint8_t feature_flags;
-	char* location_in_chassis;
+	const char* location_in_chassis;
 	uint16_t chassis_handle;
 	uint8_t board_type;
 	uint8_t number_of_contained_object_handles;

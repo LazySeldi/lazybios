@@ -47,7 +47,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t string_count;
-	char** strings;
+	const char** strings;
 	lazybiosType11FieldStatus_t field_status;
 } lazybiosType11_t;
 

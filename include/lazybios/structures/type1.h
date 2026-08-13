@@ -52,14 +52,14 @@ typedef struct {
  * @ingroup api_type1
  */
 typedef struct {
-	char* manufacturer;
-	char* product_name;
-	char* version;
-	char* serial_number;
+	const char* manufacturer;
+	const char* product_name;
+	const char* version;
+	const char* serial_number;
 	uint8_t uuid[16];
 	uint8_t wake_up_type;
-	char* sku_number;
-	char* family;
+	const char* sku_number;
+	const char* family;
 	lazybiosType1FieldStatus_t field_status;
 } lazybiosType1_t;
 

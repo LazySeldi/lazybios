@@ -21,8 +21,6 @@
  * @brief Implements parsing for SMBIOS Type 14 Group Associations.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -32,14 +30,6 @@
 #define ITEMS 0x05
 #define ITEM_SIZE 3
 
-/**
- * @brief Parses all SMBIOS Type 14 Group Associations structures.
- *
- * @param Type14 Existing Type 14 array pointer value; it is not dereferenced or released.
- * @param type14_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 14 array, or NULL on failure.
- */
 lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -75,7 +65,7 @@ lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_cou
 				if (current->item_count > 0) {
 					current->items = calloc(current->item_count, sizeof(lazybiosType14Item_t));
 					if (!current->items) {
-						lazybiosFreeType14(Type14, count);
+						lazybiosFreeType14(Type14, *type14_count);
 						return NULL;
 					}
 
@@ -108,19 +98,10 @@ lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_cou
 	return Type14;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 14 structures.
- *
- * @param Type14 Type 14 array to release.
- * @param type14_count Number of elements in Type14.
- */
 void lazybiosFreeType14(lazybiosType14_t* Type14, size_t type14_count) {
-	if (!Type14) return;
+    if (!Type14) return;
 
-	for (size_t i = 0; i < type14_count; i++) {
-		free(Type14[i].group_name);
-		free(Type14[i].items);
-	}
+    for (size_t i = 0; i < type14_count; i++) free(Type14[i].items);
 
-	free(Type14);
+    free(Type14);
 }

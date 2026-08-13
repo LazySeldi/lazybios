@@ -57,7 +57,7 @@ typedef struct {
 	uint8_t minor_spec_version;
 	uint32_t firmware_version_1;
 	uint32_t firmware_version_2;
-	char* description;
+	const char* description;
 	uint64_t characteristics;
 	uint32_t oem_defined;
 	lazybiosType43FieldStatus_t field_status;

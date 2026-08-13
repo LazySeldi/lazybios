@@ -21,8 +21,6 @@
  * @brief Implements parsing for SMBIOS Type 36 Management Device Threshold Data.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -34,14 +32,6 @@
 #define LOWER_THRESHOLD_NON_RECOVERABLE 0x0C
 #define UPPER_THRESHOLD_NON_RECOVERABLE 0x0E
 
-/**
- * @brief Parses all SMBIOS Type 36 Management Device Threshold Data structures.
- *
- * @param Type36 Existing Type 36 array pointer value; it is not dereferenced or released.
- * @param type36_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 36 array, or NULL on failure.
- */
 lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -89,13 +79,9 @@ lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_cou
 	return Type36;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 36 structures.
- *
- * @param Type36 Type 36 array to release.
- * @param type36_count Number of elements in Type36.
- */
 void lazybiosFreeType36(lazybiosType36_t* Type36, size_t type36_count) {
-	(void)type36_count;
-	free(Type36);
+    (void)type36_count;
+    if (!Type36) return;
+
+    free(Type36);
 }

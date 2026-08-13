@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 15 System Event Log Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,14 +94,6 @@
 #define VARIABLE_DATA_FORMAT_SYSTEM_MANAGEMENT_TYPE 0x05
 #define VARIABLE_DATA_FORMAT_MULTIPLE_EVENT_SYSTEM_MANAGEMENT_TYPE 0x06
 
-/**
- * @brief Parses all SMBIOS Type 15 System Event Log structures.
- *
- * @param Type15 Existing Type 15 array pointer value; it is not dereferenced or released.
- * @param type15_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 15 array, or NULL on failure.
- */
 lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -158,7 +148,7 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 							current->number_of_supported_log_type_descriptors,
 							sizeof(lazybiosType15LogTypeDescriptor_t));
 						if (!current->supported_log_type_descriptors) {
-							lazybiosFreeType15(Type15, count);
+							lazybiosFreeType15(Type15, *type15_count);
 							return NULL;
 						}
 
@@ -199,13 +189,6 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 	return Type15;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 15 event-log access method.
- *
- * @param access_method Raw event-log access method value.
- * @return Static string describing the access method.
- */
 const char* lazybiosType15AccessMethodStr(uint8_t access_method) {
 	switch (access_method) {
 		case ACCESS_METHOD_INDEXED_IO_8BIT:
@@ -224,13 +207,6 @@ const char* lazybiosType15AccessMethodStr(uint8_t access_method) {
 	}
 }
 
-/**
- * @brief Decodes the SMBIOS Type 15 event-log status bit field.
- *
- * @param log_status Raw event-log status byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType15LogStatusStr(uint8_t log_status, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	snprintf(buf, buf_len, "%s, %s",
@@ -238,12 +214,6 @@ void lazybiosType15LogStatusStr(uint8_t log_status, char* buf, size_t buf_len) {
 		(log_status & LOG_STATUS_FULL_MASK) ? "Full" : "Not Full");
 }
 
-/**
- * @brief Decodes an SMBIOS Type 15 event-log header format.
- *
- * @param log_header_format Raw event-log header format value.
- * @return Static string describing the header format.
- */
 const char* lazybiosType15LogHeaderFormatStr(uint8_t log_header_format) {
 	switch (log_header_format) {
 		case LOG_HEADER_FORMAT_NONE:
@@ -256,12 +226,6 @@ const char* lazybiosType15LogHeaderFormatStr(uint8_t log_header_format) {
 	}
 }
 
-/**
- * @brief Decodes an SMBIOS event-log type.
- *
- * @param log_type Raw event-log type value.
- * @return Static string describing the event type.
- */
 const char* lazybiosType15LogTypeStr(uint8_t log_type) {
 	switch (log_type) {
 		case LOG_TYPE_RESERVED:
@@ -319,12 +283,6 @@ const char* lazybiosType15LogTypeStr(uint8_t log_type) {
 	}
 }
 
-/**
- * @brief Decodes an SMBIOS event-log variable-data format type.
- *
- * @param format_type Raw variable-data format type value.
- * @return Static string describing the variable-data format.
- */
 const char* lazybiosType15VariableDataFormatTypeStr(uint8_t format_type) {
 	switch (format_type) {
 		case VARIABLE_DATA_FORMAT_NONE:
@@ -347,48 +305,24 @@ const char* lazybiosType15VariableDataFormatTypeStr(uint8_t format_type) {
 	}
 }
 
-/**
- * @brief Extracts the indexed-I/O index address from an access-method address.
- *
- * @param access_method_address Raw SMBIOS Type 15 access-method address.
- * @return 16-bit indexed-I/O index address.
- */
 uint16_t lazybiosType15IndexAddress(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address & 0xFFFF);
 }
 
-/**
- * @brief Extracts the indexed-I/O data address from an access-method address.
- *
- * @param access_method_address Raw SMBIOS Type 15 access-method address.
- * @return 16-bit indexed-I/O data address.
- */
 uint16_t lazybiosType15DataAddress(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address >> 16);
 }
 
-/**
- * @brief Extracts the GPNV handle from an access-method address.
- *
- * @param access_method_address Raw SMBIOS Type 15 access-method address.
- * @return 16-bit GPNV handle.
- */
 uint16_t lazybiosType15GPNVHandle(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address & 0xFFFF);
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 15 structures.
- *
- * @param Type15 Type 15 array to release.
- * @param type15_count Number of elements in Type15.
- */
 void lazybiosFreeType15(lazybiosType15_t* Type15, size_t type15_count) {
-	if (!Type15) return;
+    if (!Type15) return;
 
-	for (size_t i = 0; i < type15_count; i++) {
-		free(Type15[i].supported_log_type_descriptors);
-	}
+    for (size_t i = 0; i < type15_count; i++) {
+        free(Type15[i].supported_log_type_descriptors);
+    }
 
-	free(Type15);
+    free(Type15);
 }

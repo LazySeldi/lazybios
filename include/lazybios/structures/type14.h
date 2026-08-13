@@ -63,7 +63,7 @@ typedef struct {
  * @ingroup api_type14
  */
 typedef struct {
-	char* group_name;
+	const char* group_name;
 	size_t item_count;
 	lazybiosType14Item_t* items;
 	lazybiosType14FieldStatus_t field_status;

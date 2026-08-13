@@ -21,22 +21,12 @@
  * @brief Implements parsing for SMBIOS Type 12 System Configuration Options.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
 // Fields
 #define COUNT 0x04
 
-/**
- * @brief Parses all SMBIOS Type 12 System Configuration Options structures.
- *
- * @param Type12 Existing Type 12 array pointer value; it is not dereferenced or released.
- * @param type12_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 12 array, or NULL on failure.
- */
 lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -72,13 +62,12 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 					for (size_t i = 0; i < current->option_count; i++) {
 						current->options[i] = DMIString(p, len, (uint8_t)(i + 1), structure_end);
 						if (!current->options[i] || current->options[i][0] == '\0') {
-							free(current->options[i]);
 							current->options[i] = NULL;
 							LAZYBIOS_MARK_ABSENT(current, options);
 						}
 					}
 				} else {
-					lazybiosFreeType12(Type12, count);
+					lazybiosFreeType12(Type12, *type12_count);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, option_count) == LAZYBIOS_FIELD_PRESENT) {
@@ -93,23 +82,9 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 	return Type12;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 12 structures.
- *
- * @param Type12 Type 12 array to release.
- * @param type12_count Number of elements in Type12.
- */
 void lazybiosFreeType12(lazybiosType12_t* Type12, size_t type12_count) {
-	if (!Type12) return;
+    (void)type12_count;
+    if (!Type12) return;
 
-	for (size_t i = 0; i < type12_count; i++) {
-		if (Type12[i].options) {
-			for (size_t j = 0; j < Type12[i].option_count; j++) {
-				free(Type12[i].options[j]);
-			}
-		}
-		free(Type12[i].options);
-	}
-
-	free(Type12);
+    free(Type12);
 }

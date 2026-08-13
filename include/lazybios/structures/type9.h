@@ -82,7 +82,7 @@ typedef struct {
  * @ingroup api_type9
  */
 typedef struct {
-	char* slot_designation;
+	const char* slot_designation;
 	uint8_t slot_type;
 	uint8_t slot_data_bus_width;
 	uint8_t current_usage;

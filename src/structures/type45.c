@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 45 Firmware Inventory Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,14 +65,6 @@
 #define STATE_STANDBY_SPARE 0x07
 #define STATE_UNAVAILABLE_OFFLINE 0x08
 
-/**
- * @brief Parses all SMBIOS Type 45 Firmware Inventory Information structures.
- *
- * @param Type45 Existing Type 45 array pointer value; it is not dereferenced or released.
- * @param type45_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 45 array, or NULL on failure.
- */
 lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -122,11 +112,11 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 					if (current->number_of_associated_components > 0) {
 						current->associated_component_handles = malloc(associated_handles_size);
 						if (!current->associated_component_handles) {
-							lazybiosFreeType45(Type45, count);
+							lazybiosFreeType45(Type45, *type45_count);
 							return NULL;
 						}
 						memcpy(current->associated_component_handles, p + ASSOCIATED_COMPONENT_HANDLES,
-							   associated_handles_size);
+							associated_handles_size);
 					}
 					LAZYBIOS_MARK_PRESENT(current, associated_component_handles);
 				} else {
@@ -142,13 +132,6 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 	return Type45;
 }
 
-// Decoders
-/**
- * @brief Decodes the format of Type 45 firmware-version strings.
- *
- * @param version_format Raw firmware-version format value.
- * @return Static string describing the version format.
- */
 const char* lazybiosType45VersionFormatStr(uint8_t version_format) {
 	switch (version_format) {
 		case VERSION_FORMAT_FREE_FORM:
@@ -165,12 +148,6 @@ const char* lazybiosType45VersionFormatStr(uint8_t version_format) {
 	}
 }
 
-/**
- * @brief Decodes the format of a Type 45 firmware ID string.
- *
- * @param firmware_id_format Raw firmware-ID format value.
- * @return Static string describing the firmware-ID format.
- */
 const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format) {
 	switch (firmware_id_format) {
 		case FIRMWARE_ID_FORMAT_FREE_FORM:
@@ -183,13 +160,6 @@ const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format) {
 	}
 }
 
-/**
- * @brief Formats the Type 45 updatable and write-protected characteristic flags.
- *
- * @param characteristics Raw Type 45 characteristics word.
- * @param buf Output buffer that receives the decoded flags.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType45CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 
@@ -198,12 +168,6 @@ void lazybiosType45CharacteristicsStr(uint16_t characteristics, char* buf, size_
 			 (characteristics & CHARACTERISTICS_WRITE_PROTECTED_MASK) ? "Yes" : "No");
 }
 
-/**
- * @brief Decodes the operational state of a Type 45 firmware component.
- *
- * @param state Raw firmware inventory state value.
- * @return Static string describing the firmware state.
- */
 const char* lazybiosType45StateStr(uint8_t state) {
 	switch (state) {
 		case STATE_OTHER:
@@ -227,23 +191,9 @@ const char* lazybiosType45StateStr(uint8_t state) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 45 structures.
- *
- * @param Type45 Type 45 array to release.
- * @param type45_count Number of elements in Type45.
- */
 void lazybiosFreeType45(lazybiosType45_t* Type45, size_t type45_count) {
 	if (!Type45) return;
+	for (size_t i = 0; i < type45_count; i++) free(Type45[i].associated_component_handles);
 
-	for (size_t i = 0; i < type45_count; i++) {
-		free(Type45[i].firmware_component_name);
-		free(Type45[i].firmware_version);
-		free(Type45[i].firmware_id);
-		free(Type45[i].release_date);
-		free(Type45[i].manufacturer);
-		free(Type45[i].lowest_supported_firmware_version);
-		free(Type45[i].associated_component_handles);
-	}
-	free(Type45);
+    free(Type45);
 }

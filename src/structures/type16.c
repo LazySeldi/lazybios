@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 16 Physical Memory Array Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -73,14 +71,6 @@
 #define ERROR_CORRECTION_MULTI_BIT_ECC 0x06
 #define ERROR_CORRECTION_CRC 0x07
 
-/**
- * @brief Parses all SMBIOS Type 16 Physical Memory Array structures.
- *
- * @param Type16 Existing Type 16 array pointer value; it is not dereferenced or released.
- * @param type16_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 16 array, or NULL on failure.
- */
 lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -132,13 +122,6 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 	return Type16;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS physical memory array location.
- *
- * @param location Raw SMBIOS memory-array location value.
- * @return Static string describing the location.
- */
 const char* lazybiosType16LocationStr(uint8_t location) {
 	switch (location) {
 		case LOCATION_OTHER:
@@ -176,12 +159,6 @@ const char* lazybiosType16LocationStr(uint8_t location) {
 	}
 }
 
-/**
- * @brief Decodes the function of an SMBIOS physical memory array.
- *
- * @param use Raw SMBIOS memory-array use value.
- * @return Static string describing the array function.
- */
 const char* lazybiosType16UseStr(uint8_t use) {
 	switch (use) {
 		case USE_OTHER:
@@ -203,12 +180,6 @@ const char* lazybiosType16UseStr(uint8_t use) {
 	}
 }
 
-/**
- * @brief Decodes an SMBIOS physical memory array error-correction method.
- *
- * @param memory_error_correction Raw SMBIOS error-correction value.
- * @return Static string describing the error-correction method.
- */
 const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correction) {
 	switch (memory_error_correction) {
 		case ERROR_CORRECTION_OTHER:
@@ -230,25 +201,14 @@ const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correcti
 	}
 }
 
-/**
- * @brief Converts SMBIOS Type 16 maximum-capacity fields to bytes.
- *
- * @param maximum_capacity Raw 32-bit maximum capacity in KiB.
- * @param extended_maximum_capacity Raw extended maximum capacity in bytes.
- * @return Maximum array capacity in bytes.
- */
 uint64_t lazybiosType16MaximumCapacityBytes(uint32_t maximum_capacity, uint64_t extended_maximum_capacity) {
 	if (maximum_capacity == USE_EXTENDED_MAXIMUM_CAPACITY) return extended_maximum_capacity;
 	return (uint64_t)maximum_capacity * 1024;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 16 structures.
- *
- * @param Type16 Type 16 array to release.
- * @param type16_count Number of elements in Type16.
- */
 void lazybiosFreeType16(lazybiosType16_t* Type16, size_t type16_count) {
-	(void)type16_count;
-	free(Type16);
+    (void)type16_count;
+    if (!Type16) return;
+
+    free(Type16);
 }

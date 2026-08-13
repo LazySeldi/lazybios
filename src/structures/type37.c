@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 37 Memory Channel.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -40,14 +38,6 @@
 #define CHANNEL_TYPE_RAMBUS 0x03
 #define CHANNEL_TYPE_SYNCLINK 0x04
 
-/**
- * @brief Parses all SMBIOS Type 37 Memory Channel structures.
- *
- * @param Type37 Existing Type 37 array pointer value; it is not dereferenced or released.
- * @param type37_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 37 array, or NULL on failure.
- */
 lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -110,13 +100,6 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 	return Type37;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 37 memory-channel type.
- *
- * @param channel_type Raw memory-channel type value.
- * @return Static string describing the channel type.
- */
 const char* lazybiosType37ChannelTypeStr(uint8_t channel_type) {
 	switch (channel_type) {
 		case CHANNEL_TYPE_OTHER:
@@ -132,17 +115,10 @@ const char* lazybiosType37ChannelTypeStr(uint8_t channel_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 37 structures.
- *
- * @param Type37 Type 37 array to release.
- * @param type37_count Number of elements in Type37.
- */
 void lazybiosFreeType37(lazybiosType37_t* Type37, size_t type37_count) {
-	if (!Type37) return;
+    if (!Type37) return;
 
-	for (size_t i = 0; i < type37_count; i++) {
-		free(Type37[i].memory_devices);
-	}
-	free(Type37);
+    for (size_t i = 0; i < type37_count; i++) free(Type37[i].memory_devices);
+
+    free(Type37);
 }

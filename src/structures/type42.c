@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 42 Management Controller Host Interface.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -47,14 +45,6 @@
 #define PROTOCOL_TYPE_REDFISH_OVER_IP 0x04
 #define PROTOCOL_TYPE_OEM 0xF0
 
-/**
- * @brief Parses all SMBIOS Type 42 Management Controller Host Interface structures.
- *
- * @param Type42 Existing Type 42 array pointer value; it is not dereferenced or released.
- * @param type42_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 42 array, or NULL on failure.
- */
 lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -95,7 +85,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 						if (current->interface_type_specific_data_size > 0) {
 							current->interface_type_specific_data = malloc(current->interface_type_specific_data_size);
 							if (!current->interface_type_specific_data) {
-								lazybiosFreeType42(Type42, count);
+								lazybiosFreeType42(Type42, *type42_count);
 								return NULL;
 							}
 							memcpy(current->interface_type_specific_data, p + INTERFACE_TYPE_SPECIFIC_DATA,
@@ -130,7 +120,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 									current->protocol_records = calloc(current->number_of_protocol_records,
 																	   sizeof(lazybiosType42ProtocolRecord_t));
 									if (!current->protocol_records) {
-										lazybiosFreeType42(Type42, count);
+										lazybiosFreeType42(Type42, *type42_count);
 										return NULL;
 									}
 
@@ -143,7 +133,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 											protocol->protocol_type_specific_data = malloc(
 												protocol->protocol_type_specific_data_length);
 											if (!protocol->protocol_type_specific_data) {
-												lazybiosFreeType42(Type42, count);
+												lazybiosFreeType42(Type42, *type42_count);
 												return NULL;
 											}
 											memcpy(protocol->protocol_type_specific_data, p + protocol_offset + 2,
@@ -170,7 +160,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 				current->interface_type_specific_data_size = PRE_3_2_OEM_DATA_LENGTH;
 				current->interface_type_specific_data = malloc(current->interface_type_specific_data_size);
 				if (!current->interface_type_specific_data) {
-					lazybiosFreeType42(Type42, count);
+					lazybiosFreeType42(Type42, *type42_count);
 					return NULL;
 				}
 				memcpy(current->interface_type_specific_data, p + INTERFACE_TYPE_SPECIFIC_DATA_LENGTH,
@@ -186,13 +176,6 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 	return Type42;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 42 management-controller host-interface type.
- *
- * @param interface_type Raw management-controller host-interface type value.
- * @return Static string describing the interface type.
- */
 const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type) {
 	if (interface_type <= INTERFACE_TYPE_MCTP_MAX) return "MCTP Host Interface";
 
@@ -206,12 +189,6 @@ const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type) {
 	}
 }
 
-/**
- * @brief Decodes an SMBIOS Type 42 management-controller protocol type.
- *
- * @param protocol_type Raw management-controller protocol type value.
- * @return Static string describing the protocol type.
- */
 const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type) {
 	switch (protocol_type) {
 		case PROTOCOL_TYPE_RESERVED_0:
@@ -230,12 +207,6 @@ const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 42 structures.
- *
- * @param Type42 Type 42 array to release.
- * @param type42_count Number of elements in Type42.
- */
 void lazybiosFreeType42(lazybiosType42_t* Type42, size_t type42_count) {
 	if (!Type42) return;
 

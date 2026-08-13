@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 17 Memory Device Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +67,6 @@
 #define RCD_MANUFACTURER_ID 0x60
 #define RCD_REVISION_NUMBER 0x62
 
-// Decoders
 
 // Form Factor
 #define FF_OTHER 0x01
@@ -138,14 +135,6 @@
 #define INTEL_OPTANE_PERSISTENT_MEMORY 0x07
 #define MRDIMM_DEPRECATED 0x08
 
-/**
- * @brief Parses all SMBIOS Type 17 Memory Device structures.
- *
- * @param Type17 Existing Type 17 array pointer value; it is not dereferenced or released.
- * @param type17_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 17 array, or NULL on failure.
- */
 lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -364,15 +353,8 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 	*type17_count = index;
 	return Type17;
 }
-// Decoders
 
 // Form Factor
-/**
- * @brief Decodes an SMBIOS memory-device form factor.
- *
- * @param form_factor Raw SMBIOS form-factor value.
- * @return Static string describing the form factor.
- */
 const char* lazybiosType17FormFactorStr(uint8_t form_factor) {
 	switch (form_factor) {
 		case FF_OTHER:
@@ -419,12 +401,6 @@ const char* lazybiosType17FormFactorStr(uint8_t form_factor) {
 }
 
 // Memory Type
-/**
- * @brief Decodes an SMBIOS memory type.
- *
- * @param memory_type Raw SMBIOS memory type value.
- * @return Static string describing the memory type.
- */
 const char* lazybiosType17TypeStr(uint8_t memory_type) {
 	switch (memory_type) {
 		case MT_OTHER:
@@ -501,13 +477,6 @@ const char* lazybiosType17TypeStr(uint8_t memory_type) {
 }
 
 // Type Detail
-/**
- * @brief Decodes SMBIOS memory type-detail flags.
- *
- * @param type_detail Raw SMBIOS memory type-detail bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -538,13 +507,6 @@ void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len
 }
 
 // Extended Size
-/**
- * @brief Formats an SMBIOS extended memory-device size.
- *
- * @param extended_size Raw SMBIOS extended size value.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (extended_size == 0) {
@@ -560,12 +522,6 @@ void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf
 }
 
 // Memory Technology
-/**
- * @brief Decodes an SMBIOS memory technology value.
- *
- * @param memory_technology Raw SMBIOS memory technology value.
- * @return Static string describing the memory technology.
- */
 const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
 	switch (memory_technology) {
 		case MTECH_OTHER:
@@ -590,13 +546,6 @@ const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
 }
 
 // Memory Operating Mode Capability
-/**
- * @brief Decodes memory operating-mode capability flags.
- *
- * @param memory_operating_mode_capability Raw SMBIOS capability bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -616,13 +565,6 @@ void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_cap
 }
 
 // Module Manufacturers IDs
-/**
- * @brief Formats a memory module manufacturer or product identifier.
- *
- * @param id Raw SMBIOS identifier value.
- * @param buf Output buffer that receives the formatted identifier.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (id == 0x0000) {
@@ -633,13 +575,6 @@ void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_le
 }
 
 // Volatile Size
-/**
- * @brief Formats the volatile capacity of a memory device.
- *
- * @param volatile_size Volatile capacity in bytes.
- * @param buf Output buffer that receives the formatted size.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
@@ -650,13 +585,6 @@ void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf
 }
 
 // Non-Volatile Size
-/**
- * @brief Formats the non-volatile capacity of a memory device.
- *
- * @param non_volatile_size Non-volatile capacity in bytes.
- * @param buf Output buffer that receives the formatted size.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (non_volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
@@ -667,13 +595,6 @@ void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, siz
 }
 
 // Cache Size
-/**
- * @brief Formats the cache capacity of a memory device.
- *
- * @param cache_size Cache capacity in bytes.
- * @param buf Output buffer that receives the formatted size.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (cache_size == 0xFFFFFFFFFFFFFFFFULL) {
@@ -684,13 +605,6 @@ void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) 
 }
 
 // Extended Speed
-/**
- * @brief Formats an SMBIOS extended memory speed.
- *
- * @param extended_speed Raw extended speed value in MT/s.
- * @param buf Output buffer that receives the formatted speed.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	// Bit 31 is reserved, must be set to 0.
@@ -705,13 +619,6 @@ void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t b
 }
 
 // PMIC0 Manufacturer ID
-/**
- * @brief Formats a PMIC0 manufacturer identifier.
- *
- * @param id Raw SMBIOS PMIC0 manufacturer identifier.
- * @param buf Output buffer that receives the formatted identifier.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (id == 0x0000) {
@@ -722,13 +629,6 @@ void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len
 }
 
 // PMIC0 Revision
-/**
- * @brief Formats a PMIC0 revision number.
- *
- * @param revision Raw SMBIOS PMIC0 revision value.
- * @param buf Output buffer that receives the formatted revision.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (revision == 0xFF00) {
@@ -739,13 +639,6 @@ void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len
 }
 
 // RCD Manufacturer ID
-/**
- * @brief Formats a register clock driver manufacturer identifier.
- *
- * @param id Raw SMBIOS RCD manufacturer identifier.
- * @param buf Output buffer that receives the formatted identifier.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (id == 0x0000) {
@@ -756,13 +649,6 @@ void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) 
 }
 
 // RCD Revision Number
-/**
- * @brief Formats a register clock driver revision number.
- *
- * @param revision Raw SMBIOS RCD revision value.
- * @param buf Output buffer that receives the formatted revision.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	if (revision == 0xFF00) {
@@ -772,23 +658,9 @@ void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) 
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 17 structures.
- *
- * @param Type17 Type 17 array to release.
- * @param type17_count Number of elements in Type17.
- */
 void lazybiosFreeType17(lazybiosType17_t* Type17, size_t type17_count) {
-	if (!Type17) return;
+    (void)type17_count;
+    if (!Type17) return;
 
-	for (size_t i = 0; i < type17_count; i++) {
-		free(Type17[i].device_locator);
-		free(Type17[i].bank_locator);
-		free(Type17[i].manufacturer);
-		free(Type17[i].serial_number);
-		free(Type17[i].asset_tag);
-		free(Type17[i].part_number);
-		free(Type17[i].firmware_version);
-	}
-	free(Type17);
+    free(Type17);
 }

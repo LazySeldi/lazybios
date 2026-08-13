@@ -21,8 +21,6 @@
  * @brief Implements parsing for SMBIOS Type 31 Boot Integrity Services Entry Point.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -37,14 +35,6 @@
 
 #define TYPE31_MINIMUM_LENGTH 0x1C
 
-/**
- * @brief Parses all SMBIOS Type 31 Boot Integrity Services Entry Point structures.
- *
- * @param Type31 Existing Type 31 array pointer value; it is not dereferenced or released.
- * @param type31_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 31 array, or NULL on failure.
- */
 lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -95,13 +85,9 @@ lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_cou
 	return Type31;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 31 structures.
- *
- * @param Type31 Type 31 array to release.
- * @param type31_count Number of elements in Type31.
- */
 void lazybiosFreeType31(lazybiosType31_t* Type31, size_t type31_count) {
-	(void)type31_count;
-	free(Type31);
+    (void)type31_count;
+    if (!Type31) return;
+
+    free(Type31);
 }

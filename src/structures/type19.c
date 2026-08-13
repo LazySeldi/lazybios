@@ -21,8 +21,6 @@
  * @brief Implements parsing for SMBIOS Type 19 Memory Array Mapped Address.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -37,14 +35,6 @@
 // Address Selection
 #define USE_EXTENDED_ADDRESS 0xFFFFFFFFU
 
-/**
- * @brief Parses all SMBIOS Type 19 Memory Array Mapped Address structures.
- *
- * @param Type19 Existing Type 19 array pointer value; it is not dereferenced or released.
- * @param type19_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 19 array, or NULL on failure.
- */
 lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -94,38 +84,19 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 	return Type19;
 }
 
-// Decoders
-/**
- * @brief Converts SMBIOS Type 19 starting-address fields to a byte address.
- *
- * @param starting_address Raw 32-bit starting address in KiB.
- * @param extended_starting_address Raw extended starting address in bytes.
- * @return Effective starting address in bytes.
- */
 uint64_t lazybiosType19StartingAddressBytes(uint32_t starting_address, uint64_t extended_starting_address) {
 	if (starting_address == USE_EXTENDED_ADDRESS) return extended_starting_address;
 	return (uint64_t)starting_address * 1024;
 }
 
-/**
- * @brief Converts SMBIOS Type 19 ending-address fields to an inclusive byte address.
- *
- * @param ending_address Raw 32-bit ending address identifying the last KiB.
- * @param extended_ending_address Raw extended inclusive ending address in bytes.
- * @return Effective inclusive ending address in bytes.
- */
 uint64_t lazybiosType19EndingAddressBytes(uint32_t ending_address, uint64_t extended_ending_address) {
 	if (ending_address == USE_EXTENDED_ADDRESS) return extended_ending_address;
 	return (uint64_t)ending_address * 1024 + 1023;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 19 structures.
- *
- * @param Type19 Type 19 array to release.
- * @param type19_count Number of elements in Type19.
- */
 void lazybiosFreeType19(lazybiosType19_t* Type19, size_t type19_count) {
-	(void)type19_count;
-	free(Type19);
+    (void)type19_count;
+    if (!Type19) return;
+
+    free(Type19);
 }

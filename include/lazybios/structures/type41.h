@@ -50,7 +50,7 @@ typedef struct {
  * @ingroup api_type41
  */
 typedef struct {
-	char* reference_designation;
+	const char* reference_designation;
 	uint8_t device_type_and_status;
 	uint8_t device_type_instance;
 	uint16_t segment_group_number;

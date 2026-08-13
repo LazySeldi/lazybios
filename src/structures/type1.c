@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 1 System Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +35,6 @@
 #define SKU_NUMBER 0x19
 #define FAMILY 0x1A
 
-// Decoders
 
 // Wake Up Type
 #define WAKEUP_TYPE_RESERVED 0x00
@@ -50,14 +47,6 @@
 #define WAKEUP_TYPE_PCI_PME 0x07
 #define WAKEUP_TYPE_AC_POWER_RESTORED 0x08
 
-/**
- * @brief Parses all SMBIOS Type 1 System Information structures.
- *
- * @param Type1 Existing Type 1 array pointer value; it is not dereferenced or released.
- * @param type1_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 1 array, or NULL on failure.
- */
 lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData) {
 	if (type1_count) *type1_count = 0;
 	if (!type1_count || !DMIData || !DMIData->dmi_data) return NULL;
@@ -128,15 +117,8 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, l
 	return Type1;
 }
 
-// Decoders
 
 // Wake Up Type
-/**
- * @brief Decodes an SMBIOS system wake-up type.
- *
- * @param wake_up_type Raw SMBIOS wake-up type value.
- * @return Static string describing the wake-up type.
- */
 const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 	switch (wake_up_type) {
 		case WAKEUP_TYPE_RESERVED:
@@ -162,22 +144,9 @@ const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 1 structures.
- *
- * @param Type1 Type 1 array to release.
- * @param type1_count Number of elements in Type1.
- */
 void lazybiosFreeType1(lazybiosType1_t* Type1, size_t type1_count) {
-	if (!Type1) return;
+    (void)type1_count;
+    if (!Type1) return;
 
-	for (size_t i = 0; i < type1_count; i++) {
-		free(Type1[i].manufacturer);
-		free(Type1[i].product_name);
-		free(Type1[i].version);
-		free(Type1[i].serial_number);
-		free(Type1[i].sku_number);
-		free(Type1[i].family);
-	}
-	free(Type1);
+    free(Type1);
 }

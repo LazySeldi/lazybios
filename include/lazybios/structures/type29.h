@@ -53,7 +53,7 @@ typedef struct {
  * @ingroup api_type29
  */
 typedef struct {
-	char* description;
+	const char* description;
 	uint8_t location_and_status;
 	uint16_t maximum_value;
 	uint16_t minimum_value;

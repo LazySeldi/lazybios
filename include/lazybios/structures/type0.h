@@ -58,9 +58,9 @@ typedef struct {
  * @ingroup api_type0
  */
 typedef struct {
-	char* vendor;
-	char* version;
-	char* release_date;
+	const char* vendor;
+	const char* version;
+	const char* release_date;
 	uint16_t bios_starting_segment;
 	uint32_t rom_size;
 	uint64_t characteristics;

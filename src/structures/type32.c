@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 32 System Boot Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -44,14 +42,6 @@
 #define BOOT_STATUS_PREVIOUSLY_REQUESTED_IMAGE 0x07
 #define BOOT_STATUS_WATCHDOG_EXPIRED 0x08
 
-/**
- * @brief Parses all SMBIOS Type 32 System Boot Information structures.
- *
- * @param Type32 Existing Type 32 array pointer value; it is not dereferenced or released.
- * @param type32_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 32 array, or NULL on failure.
- */
 lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -91,7 +81,7 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 				if (current->additional_data_size > 0) {
 					current->additional_data = malloc(current->additional_data_size);
 					if (!current->additional_data) {
-						lazybiosFreeType32(Type32, count);
+						lazybiosFreeType32(Type32, *type32_count);
 						return NULL;
 					}
 					memcpy(current->additional_data, p + ADDITIONAL_DATA, current->additional_data_size);
@@ -107,13 +97,8 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 	return Type32;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 32 system boot status code.
- *
- * @param boot_status Raw system boot status code.
- * @return Static string describing the system boot status.
- */
+
+// Boot Status
 const char* lazybiosType32BootStatusStr(uint8_t boot_status) {
 	switch (boot_status) {
 		case BOOT_STATUS_NO_ERRORS:
@@ -141,17 +126,10 @@ const char* lazybiosType32BootStatusStr(uint8_t boot_status) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 32 structures.
- *
- * @param Type32 Type 32 array to release.
- * @param type32_count Number of elements in Type32.
- */
 void lazybiosFreeType32(lazybiosType32_t* Type32, size_t type32_count) {
-	if (!Type32) return;
+    if (!Type32) return;
 
-	for (size_t i = 0; i < type32_count; i++) {
-		free(Type32[i].additional_data);
-	}
-	free(Type32);
+	for (size_t i = 0; i < type32_count; i++) free(Type32[i].additional_data);
+
+    free(Type32);
 }

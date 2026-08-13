@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 8 Port Connector Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +32,6 @@
 #define EXTERNAL_CONNECTOR_TYPE 0x07
 #define PORT_TYPE 0x08
 
-// Decoders
 
 // Connector Type
 #define CONNECTOR_TYPE_NONE 0x00
@@ -121,14 +118,6 @@
 #define PORT_TYPE_8251_FIFO_COMPATIBLE 0xA1
 #define PORT_TYPE_OTHER 0xFF
 
-/**
- * @brief Parses all SMBIOS Type 8 Port Connector Information structures.
- *
- * @param Type8 Existing Type 8 array pointer value; it is not dereferenced or released.
- * @param type8_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 8 array, or NULL on failure.
- */
 lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -169,15 +158,8 @@ lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, l
 	return Type8;
 }
 
-// Decoders
 
 // Connector Type
-/**
- * @brief Decodes an SMBIOS port connector type.
- *
- * @param connector_type Raw SMBIOS internal or external connector type value.
- * @return Static string describing the connector type.
- */
 const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type) {
 	switch (connector_type) {
 		case CONNECTOR_TYPE_NONE:
@@ -270,12 +252,6 @@ const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type) {
 }
 
 // Port Type
-/**
- * @brief Decodes an SMBIOS port type.
- *
- * @param port_type Raw SMBIOS port type value.
- * @return Static string describing the port type.
- */
 const char* lazybiosType8PortTypeStr(uint8_t port_type) {
 	switch (port_type) {
 		case PORT_TYPE_NONE:
@@ -361,19 +337,9 @@ const char* lazybiosType8PortTypeStr(uint8_t port_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 8 structures.
- *
- * @param Type8 Type 8 array to release.
- * @param type8_count Number of elements in Type8.
- */
 void lazybiosFreeType8(lazybiosType8_t* Type8, size_t type8_count) {
-	if (!Type8) return;
+    (void)type8_count;
+    if (!Type8) return;
 
-	for (size_t i = 0; i < type8_count; i++) {
-		free(Type8[i].internal_reference_designator);
-		free(Type8[i].external_reference_designator);
-	}
-
-	free(Type8);
+    free(Type8);
 }

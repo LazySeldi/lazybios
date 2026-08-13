@@ -21,23 +21,12 @@
  * @brief Implements parsing for SMBIOS Type 11 OEM Strings.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
-#include <string.h>
 
 // Fields
 #define COUNT 0x04
 
-/**
- * @brief Parses all SMBIOS Type 11 OEM Strings structures.
- *
- * @param Type11 Existing Type 11 array pointer value; it is not dereferenced or released.
- * @param type11_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 11 array, or NULL on failure.
- */
 lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -73,13 +62,12 @@ lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_cou
 					for (size_t i = 0; i < current->string_count; i++) {
 						current->strings[i] = DMIString(p, len, (uint8_t)(i + 1), structure_end);
 						if (!current->strings[i] || current->strings[i][0] == '\0') {
-							free(current->strings[i]);
 							current->strings[i] = NULL;
 							LAZYBIOS_MARK_ABSENT(current, strings);
 						}
 					}
 				} else {
-					lazybiosFreeType11(Type11, count);
+					lazybiosFreeType11(Type11, *type11_count);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, string_count) == LAZYBIOS_FIELD_PRESENT) {
@@ -94,21 +82,12 @@ lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_cou
 	return Type11;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 11 structures.
- *
- * @param Type11 Type 11 array to release.
- * @param type11_count Number of elements in Type11.
- */
 void lazybiosFreeType11(lazybiosType11_t* Type11, size_t type11_count) {
-	if (!Type11) return;
+    if (!Type11) return;
 
-	for (size_t i = 0; i < type11_count; i++) {
-		for (size_t j = 0; j < Type11[i].string_count; j++) {
-			free(Type11[i].strings[j]);
-		}
-		free(Type11[i].strings);
-	}
+    for (size_t i = 0; i < type11_count; i++) {
+        free(Type11[i].strings);
+    }
 
-	free(Type11);
+    free(Type11);
 }

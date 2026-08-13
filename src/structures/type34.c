@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 34 Management Device.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
@@ -54,14 +52,6 @@
 #define ADDRESS_TYPE_MEMORY 0x04
 #define ADDRESS_TYPE_SM_BUS 0x05
 
-/**
- * @brief Parses all SMBIOS Type 34 Management Device structures.
- *
- * @param Type34 Existing Type 34 array pointer value; it is not dereferenced or released.
- * @param type34_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 34 array, or NULL on failure.
- */
 lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_count, lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
 
@@ -101,13 +91,6 @@ lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_cou
 	return Type34;
 }
 
-// Decoders
-/**
- * @brief Decodes an SMBIOS Type 34 management-device type.
- *
- * @param device_type Raw management-device type value.
- * @return Static string describing the management-device type.
- */
 const char* lazybiosType34DeviceTypeStr(uint8_t device_type) {
 	switch (device_type) {
 		case DEVICE_TYPE_OTHER:
@@ -141,12 +124,6 @@ const char* lazybiosType34DeviceTypeStr(uint8_t device_type) {
 	}
 }
 
-/**
- * @brief Decodes an SMBIOS Type 34 management-device address type.
- *
- * @param address_type Raw management-device address-type value.
- * @return Static string describing the address type.
- */
 const char* lazybiosType34AddressTypeStr(uint8_t address_type) {
 	switch (address_type) {
 		case ADDRESS_TYPE_OTHER:
@@ -164,17 +141,9 @@ const char* lazybiosType34AddressTypeStr(uint8_t address_type) {
 	}
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 34 structures.
- *
- * @param Type34 Type 34 array to release.
- * @param type34_count Number of elements in Type34.
- */
 void lazybiosFreeType34(lazybiosType34_t* Type34, size_t type34_count) {
-	if (!Type34) return;
+    (void)type34_count;
+    if (!Type34) return;
 
-	for (size_t i = 0; i < type34_count; i++) {
-		free(Type34[i].description);
-	}
-	free(Type34);
+    free(Type34);
 }
