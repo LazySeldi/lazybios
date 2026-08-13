@@ -85,7 +85,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 						if (current->interface_type_specific_data_size > 0) {
 							current->interface_type_specific_data = malloc(current->interface_type_specific_data_size);
 							if (!current->interface_type_specific_data) {
-								lazybiosFreeType42(Type42, *type42_count);
+								lazybiosFreeType42(Type42, index + 1);
 								return NULL;
 							}
 							memcpy(current->interface_type_specific_data, p + INTERFACE_TYPE_SPECIFIC_DATA,
@@ -120,7 +120,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 									current->protocol_records = calloc(current->number_of_protocol_records,
 																	   sizeof(lazybiosType42ProtocolRecord_t));
 									if (!current->protocol_records) {
-										lazybiosFreeType42(Type42, *type42_count);
+										lazybiosFreeType42(Type42, index + 1);
 										return NULL;
 									}
 
@@ -133,7 +133,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 											protocol->protocol_type_specific_data = malloc(
 												protocol->protocol_type_specific_data_length);
 											if (!protocol->protocol_type_specific_data) {
-												lazybiosFreeType42(Type42, *type42_count);
+											lazybiosFreeType42(Type42, index + 1);
 												return NULL;
 											}
 											memcpy(protocol->protocol_type_specific_data, p + protocol_offset + 2,
@@ -160,7 +160,7 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 				current->interface_type_specific_data_size = PRE_3_2_OEM_DATA_LENGTH;
 				current->interface_type_specific_data = malloc(current->interface_type_specific_data_size);
 				if (!current->interface_type_specific_data) {
-					lazybiosFreeType42(Type42, *type42_count);
+					lazybiosFreeType42(Type42, index + 1);
 					return NULL;
 				}
 				memcpy(current->interface_type_specific_data, p + INTERFACE_TYPE_SPECIFIC_DATA_LENGTH,

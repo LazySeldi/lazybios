@@ -68,7 +68,7 @@ lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_cou
 				if (current->device_count > 0) {
 					current->devices = calloc(current->device_count, sizeof(lazybiosType10Device_t));
 					if (!current->devices) {
-						lazybiosFreeType10(Type10, *type10_count);
+						lazybiosFreeType10(Type10, index + 1);
 						return NULL;
 					}
 					for (size_t i = 0; i < current->device_count; i++) {

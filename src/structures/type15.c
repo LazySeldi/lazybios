@@ -148,7 +148,7 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 							current->number_of_supported_log_type_descriptors,
 							sizeof(lazybiosType15LogTypeDescriptor_t));
 						if (!current->supported_log_type_descriptors) {
-							lazybiosFreeType15(Type15, *type15_count);
+							lazybiosFreeType15(Type15, index + 1);
 							return NULL;
 						}
 

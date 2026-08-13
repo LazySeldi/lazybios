@@ -80,7 +80,7 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 				if (current->block_length > 0) {
 					current->processor_specific_data = malloc(current->block_length);
 					if (!current->processor_specific_data) {
-						lazybiosFreeType44(Type44, *type44_count);
+						lazybiosFreeType44(Type44, index + 1);
 						return NULL;
 					}
 					memcpy(current->processor_specific_data, p + PROCESSOR_SPECIFIC_DATA, current->block_length);

@@ -56,7 +56,7 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 			READU8(current, option_count, len, COUNT, p);
 
 			if (LAZYBIOS_FIELD_STATUS(current, option_count) == LAZYBIOS_FIELD_PRESENT && current->option_count > 0) {
-				current->options = calloc(current->option_count, sizeof(char*));
+				current->options = calloc(current->option_count, sizeof(*current->options));
 				if (current->options) {
 					LAZYBIOS_MARK_PRESENT(current, options);
 					for (size_t i = 0; i < current->option_count; i++) {
@@ -67,7 +67,7 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 						}
 					}
 				} else {
-					lazybiosFreeType12(Type12, *type12_count);
+					lazybiosFreeType12(Type12, index + 1);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, option_count) == LAZYBIOS_FIELD_PRESENT) {
@@ -83,8 +83,9 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 }
 
 void lazybiosFreeType12(lazybiosType12_t* Type12, size_t type12_count) {
-    (void)type12_count;
     if (!Type12) return;
+
+    for (size_t i = 0; i < type12_count; i++) free(Type12[i].options);
 
     free(Type12);
 }

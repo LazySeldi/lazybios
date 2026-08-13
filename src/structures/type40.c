@@ -88,7 +88,7 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 						current->additional_information_entries = calloc(
 							current->additional_information_entry_count, sizeof(lazybiosType40Entry_t));
 						if (!current->additional_information_entries) {
-							lazybiosFreeType40(Type40, *type40_count);
+							lazybiosFreeType40(Type40, index + 1);
 							return NULL;
 						}
 
@@ -105,7 +105,7 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 							if (entry->value_length > 0) {
 								entry->value = malloc(entry->value_length);
 								if (!entry->value) {
-									lazybiosFreeType40(Type40, *type40_count);
+									lazybiosFreeType40(Type40, index + 1);
 									return NULL;
 								}
 								memcpy(entry->value, p + entry_offset + ENTRY_VALUE, entry->value_length);

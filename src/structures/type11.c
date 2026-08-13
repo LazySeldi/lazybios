@@ -56,7 +56,7 @@ lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_cou
 			READU8(current, string_count, len, COUNT, p);
 
 			if (LAZYBIOS_FIELD_STATUS(current, string_count) == LAZYBIOS_FIELD_PRESENT && current->string_count > 0) {
-				current->strings = calloc(current->string_count, sizeof(char*));
+				current->strings = calloc(current->string_count, sizeof(*current->strings));
 				if (current->strings) {
 					LAZYBIOS_MARK_PRESENT(current, strings);
 					for (size_t i = 0; i < current->string_count; i++) {
@@ -67,7 +67,7 @@ lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_cou
 						}
 					}
 				} else {
-					lazybiosFreeType11(Type11, *type11_count);
+					lazybiosFreeType11(Type11, index + 1);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, string_count) == LAZYBIOS_FIELD_PRESENT) {

@@ -81,7 +81,7 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 				if (current->additional_data_size > 0) {
 					current->additional_data = malloc(current->additional_data_size);
 					if (!current->additional_data) {
-						lazybiosFreeType32(Type32, *type32_count);
+						lazybiosFreeType32(Type32, index + 1);
 						return NULL;
 					}
 					memcpy(current->additional_data, p + ADDITIONAL_DATA, current->additional_data_size);

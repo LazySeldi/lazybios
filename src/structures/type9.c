@@ -248,7 +248,7 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 							}
 							LAZYBIOS_MARK_PRESENT(current, peer_groups);
 						} else {
-							lazybiosFreeType9(Type9, *type9_count);
+							lazybiosFreeType9(Type9, index + 1);
 							return NULL;
 						}
 					} else if (!peer_layout_valid) {

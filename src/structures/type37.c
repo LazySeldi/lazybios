@@ -73,7 +73,7 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 					if (current->memory_device_count > 0) {
 						current->memory_devices = calloc(current->memory_device_count, sizeof(lazybiosType37MemoryDevice_t));
 						if (!current->memory_devices) {
-							lazybiosFreeType37(Type37, count);
+							lazybiosFreeType37(Type37, index + 1);
 							return NULL;
 						}
 

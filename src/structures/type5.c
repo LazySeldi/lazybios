@@ -100,7 +100,7 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 						current->memory_module_configuration_handles =
 							calloc(current->number_of_associated_memory_slots, sizeof(uint16_t));
 						if (!current->memory_module_configuration_handles) {
-							lazybiosFreeType5(Type5, *type5_count);
+							lazybiosFreeType5(Type5, index + 1);
 							return NULL;
 						}
 						for (size_t i = 0; i < current->number_of_associated_memory_slots; i++) {

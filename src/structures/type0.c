@@ -21,8 +21,6 @@
  * @brief Implements parsing and decoding for SMBIOS Type 0 BIOS Information.
  * @author LazySeldi
  */
-
-
 #include "lazybios_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,14 +39,6 @@
 #define EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE 0x17
 #define EXTENDED_FIRMWARE_ROM_SIZE 0x18
 
-/**
- * @brief Parses all SMBIOS Type 0 BIOS Information structures.
- *
- * @param Type0 Existing Type 0 array pointer value; it is not dereferenced or released.
- * @param type0_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 0 array, or NULL on failure.
- */
 lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData) {
 	if (type0_count) *type0_count = 0;
 	if (!type0_count || !DMIData || !DMIData->dmi_data) return NULL;
@@ -114,9 +104,9 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, l
 						: (size_t)(len - FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES);
 				LAZYBIOS_MARK_PRESENT(current, firmware_char_ext_bytes_count);
 				current->firmware_char_ext_bytes = malloc(current->firmware_char_ext_bytes_count);
-
 				if (current->firmware_char_ext_bytes) {
-					memcpy(current->firmware_char_ext_bytes, p + FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES, current->firmware_char_ext_bytes_count);
+					memcpy(current->firmware_char_ext_bytes, p + FIRMWARE_CHARACTERISTICS_EXTENSION_BYTES,
+						current->firmware_char_ext_bytes_count);
 					LAZYBIOS_MARK_PRESENT(current, firmware_char_ext_bytes);
 				}
 			}
@@ -150,16 +140,8 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, l
 	*type0_count = index;
 	return Type0;
 }
-// Decoders
 
 // Firmware Characteristics
-/**
- * @brief Decodes BIOS characteristics into a readable string.
- *
- * @param characteristics SMBIOS BIOS characteristics bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -207,13 +189,6 @@ void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t
 }
 
 // Firmware Characteristics Extension Byte 1
-/**
- * @brief Decodes BIOS characteristics extension byte 1.
- *
- * @param char_ext_byte_1 SMBIOS characteristics extension byte 1.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -236,13 +211,6 @@ void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf,
 }
 
 // Firmware Characteristics Extension Byte 2
-/**
- * @brief Decodes BIOS characteristics extension byte 2.
- *
- * @param char_ext_byte_2 SMBIOS characteristics extension byte 2.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
 void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return;
 	size_t len = 0;
@@ -264,13 +232,6 @@ void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf,
 }
 
 // Firmware Extended ROM Size
-/**
- * @brief Extracts the size and unit from an extended BIOS ROM size field.
- *
- * @param raw Raw SMBIOS extended ROM size value.
- * @param unit Output array that receives "MiB", "GiB", or "RES".
- * @return Size portion of the extended ROM size field.
- */
 uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 	uint16_t unit_bits = (raw >> 14) & 0x03;
 	uint16_t size_bits = raw & 0x3FFF;
@@ -290,20 +251,11 @@ uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 	return size_bits;
 }
 
-/**
- * @brief Releases an array of parsed SMBIOS Type 0 structures.
- *
- * @param Type0 Type 0 array to release.
- * @param type0_count Number of elements in Type0.
- */
-void lazybiosFreeType0(lazybiosType0_t* Type0, size_t type0_count) {
-	if (!Type0) return;
 
-	for (size_t i = 0; i < type0_count; i++) {
-		free(Type0[i].vendor);
-		free(Type0[i].version);
-		free(Type0[i].release_date);
-		free(Type0[i].firmware_char_ext_bytes);
-	}
-	free(Type0);
+void lazybiosFreeType0(lazybiosType0_t* Type0, size_t type0_count) {
+    if (!Type0) return;
+
+	for (size_t i = 0; i < type0_count; i++) free(Type0[i].firmware_char_ext_bytes);
+
+    free(Type0);
 }

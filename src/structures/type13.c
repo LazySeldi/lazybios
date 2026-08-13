@@ -76,7 +76,7 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 
 			if (LAZYBIOS_FIELD_STATUS(current, installable_languages) == LAZYBIOS_FIELD_PRESENT &&
 				current->installable_languages > 0) {
-				current->languages = calloc(current->installable_languages, sizeof(char*));
+				current->languages = calloc(current->installable_languages, sizeof(*current->languages));
 				if (current->languages) {
 					LAZYBIOS_MARK_PRESENT(current, languages);
 					for (size_t i = 0; i < current->installable_languages; i++) {
@@ -87,7 +87,7 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 						}
 					}
 				} else {
-					lazybiosFreeType13(Type13, *type13_count);
+					lazybiosFreeType13(Type13, index + 1);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, installable_languages) == LAZYBIOS_FIELD_PRESENT) {

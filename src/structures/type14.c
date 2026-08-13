@@ -65,7 +65,7 @@ lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_cou
 				if (current->item_count > 0) {
 					current->items = calloc(current->item_count, sizeof(lazybiosType14Item_t));
 					if (!current->items) {
-						lazybiosFreeType14(Type14, *type14_count);
+						lazybiosFreeType14(Type14, index + 1);
 						return NULL;
 					}
 

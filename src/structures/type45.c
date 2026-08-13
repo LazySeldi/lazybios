@@ -112,7 +112,7 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 					if (current->number_of_associated_components > 0) {
 						current->associated_component_handles = malloc(associated_handles_size);
 						if (!current->associated_component_handles) {
-							lazybiosFreeType45(Type45, *type45_count);
+							lazybiosFreeType45(Type45, index + 1);
 							return NULL;
 						}
 						memcpy(current->associated_component_handles, p + ASSOCIATED_COMPONENT_HANDLES,
