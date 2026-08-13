@@ -26,7 +26,6 @@
 /** @brief Include guard for definitions shared by all lazybios public headers. */
 #define LAZYBIOS_SHARED_API_H
 
-#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -66,7 +65,7 @@ extern const char lazybiosVersion[];
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 2
 /** @brief Minor component of the lazybios version. */
-#define LAZYBIOS_MINOR 0
+#define LAZYBIOS_MINOR 1
 /** @brief Patch component of the lazybios version. */
 #define LAZYBIOS_PATCH 0
 /** @brief Recommended output buffer size for decoder functions. */

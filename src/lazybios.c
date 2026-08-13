@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char lazybiosVersion[] = "2.0.0";
+const char lazybiosVersion[] = "2.1.0";
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
