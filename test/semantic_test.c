@@ -118,12 +118,10 @@ static int test_traversal_helpers(void) {
 	};
 	const uint8_t* end = structure + sizeof(structure);
 
-	char* first = DMIString(structure, 4, 1, end);
-	char* second = DMIString(structure, 4, 2, end);
+	const char* first = DMIString(structure, 4, 1, end);
+	const char* second = DMIString(structure, 4, 2, end);
 	CHECK(first && strcmp(first, "one") == 0);
 	CHECK(second && strcmp(second, "two") == 0);
-	free(first);
-	free(second);
 
 	CHECK(DMIString(structure, 4, 0, end) == NULL);
 	CHECK(DMIString(structure, 4, 3, end) == NULL);

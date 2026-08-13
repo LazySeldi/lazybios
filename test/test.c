@@ -323,7 +323,7 @@ static void printType3(lazybiosCTX_t* ctx) {
 					printf("Contained Elements (%hhu):\n", type3->contained_element_count);
 
 					for (uint8_t element_index = 0; element_index < type3->contained_element_count; element_index++) {
-						uint8_t* record = type3->contained_elements +
+						const uint8_t* record = type3->contained_elements +
 							element_index * type3->contained_element_record_length;
 
 						uint8_t type_byte = record[0];
