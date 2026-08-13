@@ -71,9 +71,8 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	if (p <= end && (next < p || next > end))
 		abort();
 
-	char* string = DMIString(p, data[2], data[0], end);
+	const char* string = DMIString(p, data[2], data[0], end);
 	fuzz_sink_str(string);
-	free(string);
 
 	lazybiosDMI_t dmi = {
 		.dmi_data = bytes,

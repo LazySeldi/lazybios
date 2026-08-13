@@ -24,7 +24,7 @@
 #ifndef LAZYBIOS_FUZZ_COMMON_H
 #define LAZYBIOS_FUZZ_COMMON_H
 
-#include "lazybios/lazybios.h"
+#include "lazybios_internal.h"
 
 #include <stddef.h>
 #include <stdint.h>
