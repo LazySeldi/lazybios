@@ -21,10 +21,6 @@
  * @brief Implements context management, data loading, and core SMBIOS parsing.
  * @author LazySeldi
  */
-
-//
-// lazybios.c - Core library functions
-//
 #include "lazybios_internal.h"
 #include <errno.h>
 #include <limits.h>
@@ -32,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char lazybiosVersion[] = "2.1.0";
+const char lazybiosVersion[] = "2.0.0";
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
@@ -130,14 +126,6 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	return result;
 }
 
-/**
- * @brief Loads an SMBIOS entry point and DMI table from separate files.
- *
- * @param ctx Context that receives the loaded data.
- * @param entry_path Path to the raw SMBIOS entry point file.
- * @param dmi_path Path to the raw DMI structure table file.
- * @return 0 on success, or -1 on failure.
- */
 int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path) {
 	if (!ctx) return -1;
 
@@ -215,14 +203,6 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
 	return 0;
 }
 
-// ===== Context Management =====
-/**
- * @brief Allocates and initializes a lazybios context.
- *
- * The selected backend is derived from the target platform.
- *
- * @return Newly allocated context, or NULL if allocation fails.
- */
 lazybiosCTX_t* lazybiosCTXNew(void) {
 	lazybiosCTX_t* ctx = calloc(1, sizeof(*ctx));
 	if (!ctx) return NULL;
@@ -265,12 +245,6 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 }
 
 
-/**
- * @brief Loads SMBIOS data using the context's selected platform backend.
- *
- * @param ctx Context that receives the raw entry point and DMI table data.
- * @return 0 on success, or -1 on failure.
- */
 int lazybiosInit(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
 
@@ -381,16 +355,6 @@ int lazybiosInit(lazybiosCTX_t* ctx) {
 	}
 }
 
-// ===== Core DMI Parsing Helpers =====
-
-// DMINext finds the next structure in the DMI table
-/**
- * @brief Locates the next SMBIOS structure in a DMI table.
- *
- * @param p Start of the current SMBIOS structure.
- * @param end One-past-the-end address of the DMI table buffer.
- * @return Pointer to the next structure, or end when no complete structure remains.
- */
 const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
 	if (!p || !end || p > end || (size_t)(end - p) < SMBIOS_HEADER_SIZE) return end;
 
@@ -407,7 +371,7 @@ const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
 	}
 
 	// Skip double-null terminator
-	if (next + 2 <= end)
+	if (next + 2 <= end) 
 		next += 2;
 	else
 		next = end;
@@ -415,17 +379,7 @@ const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
 	return next;
 }
 
-// Retrieves a string from the DMI table
-/**
- * @brief Copies a string from an SMBIOS structure's string-set.
- *
- * @param p Start of the SMBIOS structure.
- * @param length Length of the structure's formatted section.
- * @param index One-based index of the requested string.
- * @param end One-past-the-end address of the DMI table buffer.
- * @return Newly allocated string, or NULL if the string is unavailable or invalid.
- */
-char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end) {
+const char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end) {
 	if (!p || !end || p > end || index == 0 || length < SMBIOS_HEADER_SIZE ||
 		(size_t)(end - p) <= length)
 		return NULL;
@@ -447,33 +401,9 @@ char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* 
 	}
 	if (str >= strings_end || *str == 0) return NULL;
 
-	// Now str points to the target string
-	const uint8_t* s = str;
-
-	// Find null terminator safely
-	while (s < strings_end && *s != 0)
-		s++;
-
-	// Length is safe
-	size_t len = (size_t)(s - str);
-
-	char* copy = malloc(len + 1);
-	if (!copy) return NULL;
-
-	memcpy(copy, str, len);
-	copy[len] = '\0';
-	return copy;
+    return (const char*)str;
 }
 
-/**
- * @brief Tests whether the parsed SMBIOS version meets a minimum version.
- *
- * @param DMIData Raw DMI table container with a parsed SMBIOS entry point.
- * @param required_major Required SMBIOS major version.
- * @param required_minor Required SMBIOS minor version.
- * @return Nonzero when the parsed version is equal to or newer than the required version; otherwise zero.
- * @ingroup api_entry
- */
 int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, uint8_t required_minor) {
 	uint8_t major;
 	uint8_t minor;
@@ -490,8 +420,7 @@ int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, 
 		return 0;
 	}
 
-	return major > required_major ||
-		(major == required_major && minor >= required_minor);
+	return major > required_major || (major == required_major && minor >= required_minor);
 }
 
 static int lazybiosVerifyChecksum(const uint8_t* entry_buf, size_t len) {
@@ -501,9 +430,7 @@ static int lazybiosVerifyChecksum(const uint8_t* entry_buf, size_t len) {
 	return sum == 0;
 }
 
-int lazybiosInspectEntryPoint(
-	const uint8_t* entry_data, size_t available,
-	lazybiosEntryInspection* inspection) {
+int lazybiosInspectEntryPoint(const uint8_t* entry_data, size_t available, lazybiosEntryInspection* inspection) {
 	if (!inspection) return -1;
 
 	memset(inspection, 0, sizeof(*inspection));
@@ -561,14 +488,6 @@ int lazybiosInspectEntryPoint(
 	return -1;
 }
 
-/**
- * @brief Validates and identifies an SMBIOS entry point.
- *
- * @param ctx Context whose entry tag and tagged union are updated.
- * @param entry_buf Buffer containing an SMBIOS 2.x or 3.x entry point.
- * @param buf_len Length of entry_buf in bytes.
- * @return 0 on success, or -1 if the entry point is invalid.
- */
 int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_len) {
 	if (!ctx || !ctx->DMIData) return -1;
 
@@ -598,14 +517,6 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
 	return 0;
 }
 
-// Counts the number of structures of a given type
-/**
- * @brief Counts SMBIOS structures having a specified type identifier.
- *
- * @param DMIData Raw DMI table container to inspect.
- * @param target_type SMBIOS structure type identifier to count.
- * @return Number of matching structures in the table.
- */
 size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type) {
 	if (!DMIData || !DMIData->dmi_data) return 0;
 
@@ -626,12 +537,6 @@ size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_t
 	return count;
 }
 
-// Small Helper
-/**
- * @brief Prints the parsed SMBIOS version to standard output.
- *
- * @param ctx Context containing a parsed SMBIOS entry point.
- */
 void lazybiosPrintSMVer(const lazybiosCTX_t* ctx) {
 	if (!ctx) return;
 	if (ctx->DMIData->entry_tag == SMBIOS_VER_3X) {
@@ -643,12 +548,6 @@ void lazybiosPrintSMVer(const lazybiosCTX_t* ctx) {
 	}
 }
 
-/**
- * @brief Releases a context and all SMBIOS data owned by it.
- *
- * @param ctx Context to release.
- * @return 0 on success, or -1 if ctx is NULL.
- */
 int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
 
