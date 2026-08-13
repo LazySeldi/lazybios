@@ -66,7 +66,7 @@ extern const char lazybiosVersion[];
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 2
 /** @brief Minor component of the lazybios version. */
-#define LAZYBIOS_MINOR 1
+#define LAZYBIOS_MINOR 0
 /** @brief Patch component of the lazybios version. */
 #define LAZYBIOS_PATCH 0
 /** @brief Recommended output buffer size for decoder functions. */
@@ -173,45 +173,6 @@ typedef struct lazybiosDMI {
  * @ingroup api_entry
  */
 int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, uint8_t required_minor);
-
-/** @addtogroup api_parsing
- * @{
- */
-
-/**
- * @brief Copies a string from an SMBIOS structure's string-set.
- * @param p Start of the SMBIOS structure.
- * @param length Length of the structure's formatted section.
- * @param index One-based index of the requested string.
- * @param end One-past-the-end address of the DMI table buffer.
- * @return Newly allocated string, or NULL if the string is unavailable or invalid.
- */
-char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end);
-
-/**
- * @brief Locates the next SMBIOS structure in a DMI table.
- * @param p Start of the current SMBIOS structure.
- * @param end One-past-the-end address of the DMI table buffer.
- * @return Pointer to the next structure, or end when no complete structure remains.
- */
-const uint8_t* DMINext(const uint8_t* p, const uint8_t* end);
-
-/**
- * @brief Counts SMBIOS structures having a specified type identifier.
- * @param DMIData Raw DMI table container to inspect.
- * @param target_type SMBIOS structure type identifier to count.
- * @return Number of matching structures in the table.
- */
-size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type);
-
-/**
- * @brief Validates and identifies an SMBIOS entry point.
- * @param ctx Context whose entry tag and tagged union are updated.
- * @param entry_buf Buffer containing an SMBIOS 2.x or 3.x entry point.
- * @param buf_len Length of entry_buf in bytes.
- * @return 0 on success, or -1 if the entry point is invalid.
- */
-int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_len);
 
 /**
  * @brief Prints the parsed SMBIOS version to standard output.

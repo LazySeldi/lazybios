@@ -214,20 +214,54 @@ typedef struct {
 	int intermediate_checksum_valid;
 } lazybiosEntryInspection;
 
-int lazybiosInspectEntryPoint(const uint8_t* entry_data, size_t available,
-	lazybiosEntryInspection* inspection);
-int lazybiosLoadRawBuffers(lazybiosCTX_t* ctx,
-	const uint8_t* entry_data, size_t entry_len,
-	const uint8_t* dmi_data, size_t dmi_len);
-int lazybiosLoadWindowsRawSMBIOSData(lazybiosCTX_t* ctx,
-	const uint8_t* raw_data, size_t raw_len);
-int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
-	size_t* entry_offset, size_t* entry_len);
-int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
-	size_t* entry_len, uint64_t* table_address, size_t* table_len);
-int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available,
-	size_t file_len, size_t* entry_len, size_t* table_offset,
-	size_t* table_len);
+/** @brief Inspects and validates an SMBIOS 2.x or 3.x entry point. */
+int lazybiosInspectEntryPoint(const uint8_t* entry_data, size_t available, lazybiosEntryInspection* inspection);
+/** @brief Copies validated raw entry-point and DMI-table buffers into a context. */
+int lazybiosLoadRawBuffers(lazybiosCTX_t* ctx, const uint8_t* entry_data, size_t entry_len, const uint8_t* dmi_data, size_t dmi_len);
+/** @brief Loads the Windows raw SMBIOS table format into a context. */
+int lazybiosLoadWindowsRawSMBIOSData(lazybiosCTX_t* ctx, const uint8_t* raw_data, size_t raw_len);
+/** @brief Finds a valid SMBIOS entry point within a memory image. */
+int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len, size_t* entry_offset, size_t* entry_len);
+/** @brief Extracts an SMBIOS table address and length from an entry point. */
+int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available, size_t* entry_len, uint64_t* table_address, size_t* table_len);
+/** @brief Determines the entry-point and table layout in a combined dump file. */
+int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available, size_t file_len, size_t* entry_len, size_t* table_offset, size_t* table_len);
+
+/**
+ * @brief Copies a string from an SMBIOS structure's string-set.
+ * @param p Start of the SMBIOS structure.
+ * @param length Length of the structure's formatted section.
+ * @param index One-based index of the requested string.
+ * @param end One-past-the-end address of the DMI table buffer.
+ * @return Pointer to a string in the DMI table, or NULL if the string is unavailable or invalid.
+ */
+const char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end);
+
+/**
+ * @brief Locates the next SMBIOS structure in a DMI table.
+ * @param p Start of the current SMBIOS structure.
+ * @param end One-past-the-end address of the DMI table buffer.
+ * @return Pointer to the next structure, or end when no complete structure remains.
+ */
+const uint8_t* DMINext(const uint8_t* p, const uint8_t* end);
+
+/**
+ * @brief Counts SMBIOS structures having a specified type identifier.
+ * @param DMIData Raw DMI table container to inspect.
+ * @param target_type SMBIOS structure type identifier to count.
+ * @return Number of matching structures in the table.
+ */
+size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type);
+
+/**
+ * @brief Validates and identifies an SMBIOS entry point.
+ * @param ctx Context whose entry tag and tagged union are updated.
+ * @param entry_buf Buffer containing an SMBIOS 2.x or 3.x entry point.
+ * @param buf_len Length of entry_buf in bytes.
+ * @return 0 on success, or -1 if the entry point is invalid.
+ */
+int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_len);
+
 
 #define READSTR(record, field, len, offset, p, end) do { \
 	if ((len) > (offset)) { \
@@ -284,54 +318,67 @@ int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available,
 } while (0)
 
 #if defined(OS_LINUX)
+/** @brief Loads SMBIOS data through the Linux backend. */
 int lazybiosLinux(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_WINDOWS)
+/** @brief Loads SMBIOS data through the Windows backend. */
 int lazybiosWindows(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_MACOS)
+/** @brief Loads SMBIOS data through the macOS backend. */
 int lazybiosMacOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_OPENBSD)
+/** @brief Loads SMBIOS data through the OpenBSD backend. */
 int lazybiosOpenBSD(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_FREEBSD)
+/** @brief Loads SMBIOS data through the FreeBSD backend. */
 int lazybiosFreeBSD(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_NETBSD)
+/** @brief Loads SMBIOS data through the NetBSD backend. */
 int lazybiosNetBSD(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_SUNOS)
+/** @brief Loads SMBIOS data through the SunOS backend. */
 int lazybiosSunOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_DRAGONFLY)
+/** @brief Loads SMBIOS data through the DragonFly BSD backend. */
 int lazybiosDragonFly(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_HAIKU)
+/** @brief Loads SMBIOS data through the Haiku backend. */
 int lazybiosHaiku(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_BEOS)
+/** @brief Loads SMBIOS data through the BeOS backend. */
 int lazybiosBeOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_REACTOS)
+/** @brief Loads SMBIOS data through the ReactOS backend. */
 int lazybiosReactOS(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_GENERIC)
+/** @brief Loads SMBIOS data through the generic legacy backend. */
 int lazybiosGeneric(lazybiosCTX_t* ctx);
 #endif
 
 #if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC)
+/** @brief Loads an SMBIOS table from a legacy physical-memory device. */
 int lazybiosLoadLegacyPhysicalMemory(lazybiosCTX_t* ctx,
 	const char* const* device_paths, size_t device_count,
 	const char* platform_name);
