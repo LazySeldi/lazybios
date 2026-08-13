@@ -51,7 +51,7 @@ typedef struct {
  * @note Experimental and untested.
  */
 typedef struct {
-	char* rack_name;
+	const char* rack_name;
 	lazybiosOemHpType201FieldStatus_t field_status;
 } lazybiosOemHpType201_t;
 

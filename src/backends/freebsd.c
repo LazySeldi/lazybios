@@ -20,7 +20,6 @@
  * @file freebsd.c
  * @brief Implements native SMBIOS loading on FreeBSD.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_FREEBSD)

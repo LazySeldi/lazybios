@@ -21,7 +21,7 @@
  * @brief Optional native integration check for lazybiosInit().
  */
 
-#include "lazybios.h"
+#include "lazybios_internal.h"
 
 #include <stdint.h>
 #include <stdio.h>

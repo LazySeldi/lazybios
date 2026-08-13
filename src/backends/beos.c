@@ -20,7 +20,6 @@
  * @file beos.c
  * @brief Implements native SMBIOS loading on BeOS.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_BEOS)

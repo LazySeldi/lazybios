@@ -20,7 +20,6 @@
  * @file reactos.c
  * @brief Implements native SMBIOS loading on ReactOS.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_REACTOS)

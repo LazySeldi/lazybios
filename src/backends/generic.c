@@ -20,7 +20,6 @@
  * @file generic.c
  * @brief Implements legacy SMBIOS loading on compatible unknown systems.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_GENERIC)

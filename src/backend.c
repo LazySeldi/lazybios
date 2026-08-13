@@ -20,7 +20,6 @@
  * @file backend.c
  * @brief Shared validation, conversion, and physical-memory backend helpers.
  */
-
 #if (defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC) || \
 	defined(__HAIKU__) || defined(__BEOS__) || defined(__BeOS) || defined(_BEOS)) && \
 	!defined(_POSIX_C_SOURCE)
@@ -206,12 +205,6 @@ int lazybiosFindSMBIOSEntryPoint(const uint8_t* image, size_t image_len,
 	return -1;
 }
 
-/**
- * Extracts the physical structure-table location from a validated entry point.
- *
- * This keeps firmware byte decoding independent of platform I/O so native
- * backends can share deterministic tests and fuzz coverage.
- */
 int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
 	size_t* entry_len, uint64_t* table_address, size_t* table_len) {
 	lazybiosEntryInspection inspection;
@@ -244,16 +237,6 @@ int lazybiosGetSMBIOSTableLocation(const uint8_t* entry_data, size_t available,
 	return 0;
 }
 
-/**
- * Selects the structure-table range in a file containing an entry point.
- *
- * Most merged dumps place the table immediately after the entry point and
- * retain its physical firmware address. Some operating-system devices instead
- * rewrite that address into a file-relative offset and align the table. Use
- * the embedded address only when both it and the advertised table length fit
- * entirely inside the file; otherwise preserve the tightly concatenated
- * layout.
- */
 int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available,
 	size_t file_len, size_t* entry_len, size_t* table_offset,
 	size_t* table_len) {

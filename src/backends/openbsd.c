@@ -20,8 +20,6 @@
  * @file openbsd.c
  * @brief Implements native SMBIOS loading on OpenBSD.
  */
-
-
 #include "lazybios_internal.h"
 
 #if defined(OS_OPENBSD)

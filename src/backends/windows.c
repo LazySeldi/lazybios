@@ -20,7 +20,6 @@
  * @file windows.c
  * @brief Implements native SMBIOS loading on Windows.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_WINDOWS)

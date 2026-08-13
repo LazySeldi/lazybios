@@ -20,7 +20,6 @@
  * @file linux.c
  * @brief Implements native SMBIOS loading on Linux.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_LINUX)

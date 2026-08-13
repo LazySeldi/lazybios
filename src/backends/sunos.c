@@ -20,7 +20,6 @@
  * @file sunos.c
  * @brief Implements native SMBIOS loading on SunOS (Solaris/illumos).
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_SUNOS)

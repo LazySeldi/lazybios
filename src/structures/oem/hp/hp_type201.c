@@ -32,14 +32,6 @@
 #define RACK_NAME 0x04
 #define HP201_OFFSET_ENCLOSURE_NAME     0x05
 
-/**
- * @brief Parses all HP OEM SMBIOS Type 201 Information structures.
- *
- * @param HPType201 Existing HP Type 201 array pointer value.
- * @param hp_type201_count Output location for the number of parsed structures.
- * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated HP Type 201 array, or NULL on failure.
- */
 lazybiosOemHpType201_t* lazybiosGetOemHpType201(lazybiosOemHpType201_t* HPType201, size_t* hp_type201_count, lazybiosDMI_t* DMIData) {
 	if (hp_type201_count) *hp_type201_count = 0;
 	if (!hp_type201_count || !DMIData || !DMIData->dmi_data) return NULL;
@@ -73,16 +65,9 @@ lazybiosOemHpType201_t* lazybiosGetOemHpType201(lazybiosOemHpType201_t* HPType20
 
 
 
-/**
- * @brief Releases an array of parsed HP OEM SMBIOS Type 201 structures.
- *
- * @param HPType201 HP Type 201 array to release.
- * @param hp_type201_count Number of elements in HPType201.
- */
 void lazybiosFreeOemHpType201(lazybiosOemHpType201_t* HPType201, size_t hp_type201_count) {
-	if (!HPType201) return;
-	for (size_t i = 0; i < hp_type201_count; i++) {
-		free(HPType201[i].rack_name);
-	}
+	(void)hp_type201_count;
+    if (!HPType201) return;
+
 	free(HPType201);
 }

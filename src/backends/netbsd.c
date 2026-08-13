@@ -20,7 +20,6 @@
  * @file netbsd.c
  * @brief Implements native SMBIOS loading on NetBSD.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_NETBSD)

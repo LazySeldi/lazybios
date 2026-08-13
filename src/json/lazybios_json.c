@@ -830,9 +830,9 @@ void lazybiosExtJSONAddType5(const lazybiosType5_t* type5, size_t count, cJSON* 
                 t->memory_module_configuration_handles && t->number_of_associated_memory_slots > 0) {
             cJSON* handles = cJSON_CreateArray();
             if (handles) {
-                for (size_t j = 0; j < t->number_of_associated_memory_slots; j++) {
-                    cJSON_AddItemToArray(handles,
-                        cJSON_CreateNumber(t->memory_module_configuration_handles[j]));
+				for (size_t j = 0; j < t->number_of_associated_memory_slots; j++) {
+					cJSON_AddItemToArray(handles,
+						cJSON_CreateNumber(t->memory_module_configuration_handles[j]));
                 }
                 cJSON_AddItemToObject(obj, "memory_module_configuration_handles", handles);
             }
@@ -3184,7 +3184,8 @@ void lazybiosExtJSONAddType45(const lazybiosType45_t* type45, size_t count, cJSO
         if (LAZYBIOS_FIELD_STATUS(t, associated_component_handles) == LAZYBIOS_FIELD_PRESENT && t->associated_component_handles) {
             cJSON* handles_arr = cJSON_CreateArray();
             for (uint8_t j = 0; j < t->number_of_associated_components; j++) {
-                cJSON_AddItemToArray(handles_arr, cJSON_CreateNumber(t->associated_component_handles[j]));
+                cJSON_AddItemToArray(handles_arr,
+                    cJSON_CreateNumber(t->associated_component_handles[j]));
             }
             cJSON_AddItemToObject(obj, "associated_component_handles", handles_arr);
         }

@@ -20,7 +20,6 @@
  * @file dragonfly.c
  * @brief Implements native SMBIOS loading on DragonFly.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_DRAGONFLY)

@@ -20,7 +20,6 @@
  * @file macos.c
  * @brief Implements native SMBIOS loading on macOS.
  */
-
 #include "lazybios_internal.h"
 
 #if defined(OS_MACOS)
