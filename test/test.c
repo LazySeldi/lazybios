@@ -22,9 +22,6 @@
  * @author LazySeldi
  */
 
-//
-// test.c - File for testing ALL SMBIOS types we have implemented currently
-//
 #include "lazybios/lazybios.h"
 #include <errno.h>
 #include <stdio.h>

@@ -152,7 +152,6 @@ endif()
 add_executable(lazybios_json_test test/test_json.c)
 target_link_libraries(lazybios_json_test PRIVATE lazybios)
 
-
 set_target_properties(lazybios PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
