@@ -89,7 +89,7 @@
  * @section concepts_traversal Low-level traversal
  *
  * @ref DMINext advances over a formatted structure and its trailing string-set.
- * @ref DMIString copies a one-based string entry into newly allocated storage.
+ * @ref DMIString returns a pointer to a one-based string entry in the DMI table.
  * @ref lazybiosCountStructsByType counts matching structures before array
  * allocation. These helpers operate on bounded raw buffers; pass the exact end
  * of the DMI allocation.

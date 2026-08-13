@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(lazybios
-        VERSION 2.1.0
+        VERSION 2.0.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -214,6 +214,7 @@ if(BUILD_TESTING)
     if(LAZYBIOS_TEST_HOST_BACKEND)
         add_executable(lazybios_host_backend_test test/host_backend_test.c)
         target_link_libraries(lazybios_host_backend_test PRIVATE lazybios)
+        target_include_directories(lazybios_host_backend_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/internal)
         if(NOT MSVC)
             target_compile_options(lazybios_host_backend_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()

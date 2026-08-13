@@ -56,7 +56,8 @@
  *
  * @section limits_lifetime Lifetime boundaries
  *
- * Pointers returned by getters and @ref DMIString are allocated. Pointers in
+ * Pointers returned by getters are allocated. Pointers returned by @ref DMIString
+ * refer to the context-owned DMI table. Pointers in
  * the entry union refer to context-owned entry data. Static strings returned by
  * enum decoders must not be freed. See @ref core_concepts for the complete
  * ownership model.
