@@ -66,7 +66,7 @@ set(LAZYBIOS_SOURCES
         src/structures/type44.c
         src/structures/type45.c
         src/structures/type46.c
-        src/structures/oem/hp/hp_type201.c
+        src/structures/oem/hp/hp_type204.c
         src/json/cJSON.c
         src/json/lazybios_json.c
 )
