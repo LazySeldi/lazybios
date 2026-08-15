@@ -14,6 +14,10 @@ INPUT                  = include \
                          src/internal \
                          doc/mainpage.md \
                          doc \
+                         doc/structures \
+                         doc/structures/oem/ \
+                         doc/structures/oem/hp \
+                         doc/structures/oem/dell \
                          CONTRIBUTING.md \
                          ISSUES.md
 FILE_PATTERNS          = *.h \
