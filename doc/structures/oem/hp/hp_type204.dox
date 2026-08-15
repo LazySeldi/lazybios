@@ -1,0 +1,41 @@
+/**
+ * @page hp_type204_guide HP OEM Type 204: Rack and Enclosure Information Guide
+ *
+ * @brief Access HP OEM rack, enclosure, and bay information.
+ *
+ * @note Experimental: this HP OEM type has not been tested with real hardware
+ * dumps.
+ *
+ * @section hp_type204_selection Array result and ownership
+ *
+ * @ref lazybiosGetOemHpType204 returns every HP OEM Type 204 structure and
+ * writes the number of parsed structures to `hptype204_count`. Iterate the
+ * returned @ref lazybiosOemHpType204_t array using that count, and pass the
+ * same count to @ref lazybiosFreeOemHpType204. When assigned to
+ * `ctx->HpType204`, @ref lazybiosCleanup releases the array using
+ * `ctx->hptype204_count`.
+ *
+ * @section hp_type204_fields Fields
+ *
+ * Type 204 exposes the following optional fields:
+ * - `rack_name`
+ * - `enclosure_name`, `enclosure_model`, and `enclosure_serial`
+ * - `enclosure_bays`
+ * - `server_bay`
+ * - `bays_filled`
+ *
+ * Check the corresponding `field_status` member before using each field.
+ *
+ * @see @ref api_hp_type204
+ */
+
+/**
+ * @var lazybiosOemHpType204_t* lazybiosCTX::HpType204
+ * @brief HP OEM Type 204 structures.
+ * @warning Experimental and untested.
+ */
+
+/**
+ * @var size_t lazybiosCTX::hptype204_count
+ * @brief Number of elements in HpType204.
+ */

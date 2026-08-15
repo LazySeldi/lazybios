@@ -1,0 +1,30 @@
+/**
+ * @page dell_type177_guide Dell OEM Type 177: ACPI WMI Support Guide
+ *
+ * @brief Access and interpret Dell's OEM ACPI WMI support flag.
+ *
+ * @section dell_type177_selection Array result and ownership
+ *
+ * @ref lazybiosGetOemDellType177 returns every Dell OEM Type 177 structure and
+ * writes the number of parsed structures to `delltype177_count`. Iterate the
+ * returned @ref lazybiosOemDellType177_t array using that count, and pass the
+ * same count to @ref lazybiosFreeOemDellType177.
+ *
+ * @section dell_type177_fields Fields
+ *
+ * - `acpi_wmi_supported`: `"Yes"` when the Type 177 flags report ACPI WMI
+ *   support; otherwise `"No"`. Check `field_status.acpi_wmi_supported` before
+ *   treating the value as present.
+ *
+ * @see @ref api_dell_type177
+ */
+
+/**
+ * @var lazybiosOemDellType177_t* lazybiosCTX::DellType177
+ * @brief Dell OEM Type 177 structures.
+ */
+
+/**
+ * @var size_t lazybiosCTX::delltype177_count
+ * @brief Number of elements in DellType177.
+ */

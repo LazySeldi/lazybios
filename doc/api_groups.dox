@@ -40,9 +40,15 @@
  */
 
 /**
- * @defgroup api_hp_type201 HP OEM Type 201: Rack Information
+ * @defgroup api_dell_type177 Dell OEM Type 177: ACPI WMI Support
  * @ingroup api_oem_types
- * @brief HP OEM specific rack naming and identity information.
+ * @brief Dell OEM ACPI Windows Management Instrumentation support information.
+ */
+
+/**
+ * @defgroup api_hp_type204 HP OEM Type 204: Rack and Enclosure Information
+ * @ingroup api_oem_types
+ * @brief HP OEM rack and enclosure naming, identity, and bay information.
  */
 
 /**
@@ -328,18 +334,6 @@
  */
  
 /**
- * @defgroup api_oem OEM SMBIOS Structure APIs
- * @ingroup api
- * @brief Parsers, decoded structures, formatters, and cleanup functions for vendor-specific SMBIOS types.
- */
-
-/**
- * @defgroup api_hp_type201 HP OEM Type 201: Rack Information
- * @ingroup api_oem
- * @brief HP OEM specific rack naming and identity information parsing and decoding.
- * @note Experimental and untested.
- */
-
 /**
  * @defgroup api_extensions Library Extensions
  * @ingroup api
