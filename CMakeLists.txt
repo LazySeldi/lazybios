@@ -67,6 +67,7 @@ set(LAZYBIOS_SOURCES
         src/structures/type45.c
         src/structures/type46.c
         src/structures/oem/hp/hp_type204.c
+        src/structures/oem/dell/dell_type177.c
         src/json/cJSON.c
         src/json/lazybios_json.c
 )
@@ -175,10 +176,11 @@ add_executable(lazybios_test test/test.c test/test_oem.c)
 target_compile_definitions(lazybios_test PRIVATE TEST_OEM_NO_MAIN)
 
 # OEM FIELDS
-file(GLOB HP_SOURCES "src/structures/oem/hp/*.c")
-target_sources(lazybios PRIVATE ${HP_SOURCES})
-target_sources(lazybios_test PRIVATE test/oem/hp/test_hp.c)
-add_executable(lazybios_oem_test test/test_oem.c test/oem/hp/test_hp.c)
+file(GLOB OEM_SOURCES "src/structures/oem/*/*.c")
+target_sources(lazybios PRIVATE ${OEM_SOURCES})
+file(GLOB OEM_TEST_SOURCES "test/oem/*/*.c")
+target_sources(lazybios_test PRIVATE ${OEM_TEST_SOURCES})
+add_executable(lazybios_oem_test test/test_oem.c ${OEM_TEST_SOURCES})
 target_link_libraries(lazybios_oem_test PRIVATE lazybios)
 
 target_link_libraries(lazybios_test PRIVATE lazybios)

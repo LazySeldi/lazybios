@@ -230,6 +230,7 @@ int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, 
 #include "lazybios/structures/type44.h"
 #include "lazybios/structures/type45.h"
 #include "lazybios/structures/type46.h"
+#include "lazybios/structures/oem/dell/dell_type177.h"
 #include "lazybios/structures/oem/hp/hp_type204.h"
 #include "lazybios/json/lazybios_json.h"
 
@@ -386,8 +387,14 @@ struct lazybiosCTX {
 	lazybiosType46_t* Type46;
 	size_t type46_count;
 
+    // DELL
+    lazybiosOemDellType177_t* DellType177;
+    size_t delltype177_count;
+
+    // HP
     lazybiosOemHpType204_t* HpType204;
     size_t hptype204_count;
+
 };
 
 /**
