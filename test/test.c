@@ -3737,12 +3737,28 @@ int main(int argc, const char* argv[]) {
 		}
 	}
 
-	if (dump_dir) {
-		if (lazybiosInit(ctx) != 0) {
-			printf("Could not initialize lazybios library!");
-			exit(-1);
-		}
+    // We initialize from custom files ONLY if specified
+    if (entry_file && dmi_file) {
+        if (lazybiosFile(ctx, entry_file, dmi_file) != 0) {
+            fprintf(stderr, "Failed to initialize lazybios from files\n");
+            lazybiosCleanup(ctx);
+            return -1;
+        }
+    } else if (single_file) {
+        if (lazybiosSingleFile(ctx, single_file) != 0) {
+            fprintf(stderr, "Failed to initialize lazybios from single file\n");
+            lazybiosCleanup(ctx);
+            return -1;
+        }
+    } else {
+        if (lazybiosInit(ctx) != 0) {
+            fprintf(stderr, "Failed to initialize lazybios library\n");
+            lazybiosCleanup(ctx);
+            return -1;
+        }
+    }
 
+	if (dump_dir) {
 		char path_entry[1024];
 		char path_dmi[1024];
 
@@ -3785,27 +3801,6 @@ int main(int argc, const char* argv[]) {
 		}
 		lazybiosCleanup(ctx);
 		return 0;
-	}
-
-	// We initialize from custom files ONLY if specified
-	if (entry_file && dmi_file) {
-		if (lazybiosFile(ctx, entry_file, dmi_file) != 0) {
-			fprintf(stderr, "Failed to initialize lazybios from files\n");
-			lazybiosCleanup(ctx);
-			return -1;
-		}
-	} else if (single_file) {
-		if (lazybiosSingleFile(ctx, single_file) != 0) {
-			fprintf(stderr, "Failed to initialize lazybios from single file\n");
-			lazybiosCleanup(ctx);
-			return -1;
-		}
-	} else {
-		if (lazybiosInit(ctx) != 0) {
-			fprintf(stderr, "Failed to initialize lazybios library\n");
-			lazybiosCleanup(ctx);
-			return -1;
-		}
 	}
 
 	printf("Library initialized successfully!\n\n");
