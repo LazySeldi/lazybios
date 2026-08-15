@@ -27,6 +27,7 @@
 
 #include "lazybios/lazybios.h"
 
+void printOemDell(lazybiosCTX_t* ctx);
 void printOemHP(lazybiosCTX_t* ctx);
 
 #endif

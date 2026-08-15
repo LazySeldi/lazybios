@@ -23,31 +23,30 @@
  */
 
 #include "lazybios/lazybios.h"
-#include "lazybios/structures/oem/hp/hp_type201.h"
+#include "lazybios/structures/oem/hp/hp_type204.h"
 #include "../test_oem.h"
 #include <stdio.h>
 
-static void printOemHPType201(lazybiosCTX_t* ctx) {
-    printf("=== Oem HP Type 201 ===\n");
+static void printOemHPType204(lazybiosCTX_t* ctx) {
+    printf("=== Oem HP Type 204 ===\n");
 
-    if (!ctx->HpType201) ctx->HpType201 = lazybiosGetOemHpType201(ctx->HpType201, &ctx->hptype201_count, ctx->DMIData);
+    if (!ctx->HpType204) ctx->HpType204 = lazybiosGetOemHpType204(ctx->HpType204, &ctx->hptype204_count, ctx->DMIData);
 
-    if (ctx->HpType201 && ctx->hptype201_count > 0) {
-        for (size_t i = 0; i < ctx->hptype201_count; i++) {
-            lazybiosOemHpType201_t* HpType201 = &ctx->HpType201[i];
+    if (ctx->HpType204 && ctx->hptype204_count > 0) {
+        for (size_t i = 0; i < ctx->hptype204_count; i++) {
+            lazybiosOemHpType204_t* HpType204 = &ctx->HpType204[i];
 
-            if (ctx->hptype201_count > 1) printf("--- Oem HP Type 201: %zu ---\n", i + 1);
+            if (ctx->hptype204_count > 1) printf("--- Oem HP Type 204: %zu ---\n", i + 1);
 
-            if (LAZYBIOS_FIELD_STATUS(HpType201, rack_name) == LAZYBIOS_FIELD_PRESENT) {
-                printf("Rack Name: %s\n", HpType201->rack_name);
+            if (LAZYBIOS_FIELD_STATUS(HpType204, rack_name) == LAZYBIOS_FIELD_PRESENT) {
+                printf("Rack Name: %s\n", HpType204->rack_name);
             }
         }
     } else {
-        printf("Failed to get Oem Hp Type 201 information\n\n");
+        printf("Failed to get Oem Hp Type 204 information\n\n");
     }
 }
 
 void printOemHP(lazybiosCTX_t* ctx) {
-    printOemHPType201(ctx);
-    /* Add other HP types here */
+    printOemHPType204(ctx);
 }
