@@ -74,18 +74,18 @@ typedef struct {
 /**
  * @brief Parses all HP OEM SMBIOS Type 204 Information structures.
  * @param HPType204 Existing HP Type 204 array pointer value.
- * @param hp_type204_count Output location for the number of parsed structures.
+ * @param hptype204_count Output location for the number of parsed structures.
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated HP Type 204 array, or NULL on failure.
  */
-lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType204, size_t* hp_type204_count, lazybiosDMI_t* DMIData);
+lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType204, size_t* hptype204_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Releases an array of parsed HP OEM SMBIOS Type 204 structures.
  * @param HPType204 HP Type 204 array to release.
- * @param hp_type204_count Number of elements in HPType204.
+ * @param hptype204_count Number of elements in HPType204.
  */
-void lazybiosFreeOemHpType204(lazybiosOemHpType204_t* HPType204, size_t hp_type204_count);
+void lazybiosFreeOemHpType204(lazybiosOemHpType204_t* HPType204, size_t hptype204_count);
 
 /** @} */
 

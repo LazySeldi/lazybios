@@ -37,9 +37,9 @@
 #define SERVER_BAY 0x08
 #define BAYS_FILLED 0x09
 
-lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType204, size_t* hp_type204_count, lazybiosDMI_t* DMIData) {
-	if (hp_type204_count) *hp_type204_count = 0;
-	if (!hp_type204_count || !DMIData || !DMIData->dmi_data) return NULL;
+lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType204, size_t* hptype204_count, lazybiosDMI_t* DMIData) {
+	if (hptype204_count) *hptype204_count = 0;
+	if (!hptype204_count || !DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -71,12 +71,12 @@ lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType20
 		}
 		p = DMINext(p, end);
 	}
-	*hp_type204_count = index;
+	*hptype204_count = index;
 	return HPType204;
 }
 
-void lazybiosFreeOemHpType204(lazybiosOemHpType204_t* HPType204, size_t hp_type204_count) {
-	(void)hp_type204_count;
+void lazybiosFreeOemHpType204(lazybiosOemHpType204_t* HPType204, size_t hptype204_count) {
+	(void)hptype204_count;
     if (!HPType204) return;
 
 	free(HPType204);
