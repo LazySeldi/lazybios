@@ -131,7 +131,7 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
 
 	FILE* entry = fopen(entry_path, "rb");
 	if (!entry) {
-		lb_log("failed to open %s: %s", entry_path, strerror(errno));
+		lb_log("Failed to open %s: %s", entry_path, strerror(errno));
 		return -1;
 	}
 
