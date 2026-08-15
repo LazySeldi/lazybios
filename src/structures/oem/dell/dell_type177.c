@@ -56,7 +56,7 @@ lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DE
 		    }
 
 		    current->acpi_wmi_supported = (flags & (1ULL << 1)) ? "Yes" : "No";
-		    if (flags * (1ULL << 1)) {
+		    if (flags & (1ULL << 1)) {
 		        current->acpi_wmi_supported = "Yes";
 		        LAZYBIOS_MARK_PRESENT(current, acpi_wmi_supported);
 		    } else {

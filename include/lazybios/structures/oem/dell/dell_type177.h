@@ -36,8 +36,7 @@ extern "C" {
 #endif
 
 /** @brief Availability metadata for DELL OEM SMBIOS Type 177 fields. */
-typedef struct {
-
+typedef struct {3
     lazybiosFieldStatus_t acpi_wmi_supported;
 } lazybiosOemDellType177FieldStatus_t;
 
