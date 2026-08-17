@@ -1,0 +1,40 @@
+/**
+ * @page oem_type_guides OEM SMBIOS Type Guides
+ *
+ * @brief A practical guide to the vendor-specific SMBIOS structures supported by lazybios.
+ *
+ * OEM structure numbers and layouts are defined by their vendors rather than
+ * the DMTF SMBIOS specification. These guides describe the OEM records that
+ * lazybios currently recognizes and provide their ownership and interpretation
+ * rules. Standard DMTF-defined records are documented separately in
+ * @ref type_guides.
+ *
+ * @section oem_type_workflow Suggested workflow
+ *
+ * 1. Start with the relevant supported-type entry below to confirm the vendor
+ *    and structure number.
+ * 2. Call that type's getter with the raw @ref lazybiosDMI_t table.
+ * 3. Check the returned count and each field's `field_status` before using a
+ *    parsed value.
+ * 4. Release the returned array with the matching type-specific free function.
+ *
+ * @section oem_type_supported Supported OEM types
+ *
+ * - Dell Type 177 — @ref dell_type177_guide "Dell BIOS Flags"
+ * - Dell Type 212 — @ref dell_type212_guide "Dell Indexed I/O Access"
+ * - HP Type 204 — @ref hp_type204_guide "HPE ProLiant System/Rack Locator"
+ *
+ * @section oem_type_reference Reference and attribution
+ *
+ * The OEM layouts in lazybios use the
+ * <a href="https://www.nongnu.org/dmidecode/">dmidecode</a> documentation as
+ * a reference. No dmidecode source code is incorporated into lazybios.
+ *
+ * @section oem_type_individual_guides Individual guides
+ *
+ * @subpage dell_type177_guide
+ *
+ * @subpage dell_type212_guide
+ *
+ * @subpage hp_type204_guide
+ */

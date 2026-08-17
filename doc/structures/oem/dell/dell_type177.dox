@@ -1,7 +1,7 @@
 /**
- * @page dell_type177_guide Dell OEM Type 177: ACPI WMI Support Guide
+ * @page dell_type177_guide Dell OEM Type 177: Dell BIOS Flags Guide
  *
- * @brief Access and interpret Dell's OEM ACPI WMI support flag.
+ * @brief Access and interpret Dell BIOS Flags information.
  *
  * @section dell_type177_selection Array result and ownership
  *

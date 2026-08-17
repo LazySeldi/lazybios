@@ -9,7 +9,7 @@
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones).
 - **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
 - **Library Extensions** - Built-in cJSON output supports every implemented standard SMBIOS type (0-46).
-- **OEM Extensions** - Initial experimental support for HP Type 204 and Dell Type 177 OEM-specific structures.
+- **OEM Extensions** - Initial experimental support for HP Type 204 and Dell Types 177 and 212 OEM-specific structures(More coming soon).
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup.
 - **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
@@ -99,8 +99,9 @@
 | 45 | Firmware Inventory Information |
 | 46 | String Property |
 | 128-255 | OEM-specific Structures |
-| 177 | Dell OEM Type 177 (ACPI WMI Support) |
-| 204 | HP OEM Type 204 (Rack and Enclosure Information) |
+| 177 | Dell BIOS Flags |
+| 204 | HPE ProLiant System/Rack Locator |
+| 212 | Dell Indexed I/O Access |
 
 </details>
 

@@ -1,7 +1,7 @@
 /**
- * @page hp_type204_guide HP OEM Type 204: Rack and Enclosure Information Guide
+ * @page hp_type204_guide HP OEM Type 204: HPE ProLiant System/Rack Locator Guide
  *
- * @brief Access HP OEM rack, enclosure, and bay information.
+ * @brief Access HPE ProLiant System/Rack Locator information.
  *
  * @note Experimental: this HP OEM type has not been tested with real hardware
  * dumps.

@@ -1,12 +1,12 @@
 /**
- * @page type_guides SMBIOS Type Guides
+ * @page type_guides Standard SMBIOS Type Guides
  *
- * @brief Interpretation and ownership guidance for each implemented SMBIOS structure type.
+ * @brief Interpretation and ownership guidance for standard SMBIOS types.
  *
  * Function signatures, structure members, macros, and return contracts are
  * generated directly from the public header under @ref api_types. These guides
  * focus on selection rules, version-dependent fields, and raw-value
- * interpretation.
+ * interpretation. For vendor-specific records, see @ref oem_type_guides.
  *
  * @subpage type0_guide
  *
@@ -101,8 +101,4 @@
  * @subpage type45_guide
  *
  * @subpage type46_guide
- *
- * @subpage dell_type177_guide
- *
- * @subpage hp_type204_guide
  */

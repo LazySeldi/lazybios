@@ -35,20 +35,31 @@
 
 /**
  * @defgroup api_oem_types OEM SMBIOS Structure APIs
- * @ingroup api_types
+ * @ingroup api
  * @brief OEM-specific structure parsers, types, and cleanup functions.
+ *
+ * OEM structure layouts are implemented using the dmidecode documentation as
+ * a reference. No dmidecode source code is incorporated into lazybios.
+ *
+ * @see <a href="https://www.nongnu.org/dmidecode/">dmidecode</a>
  */
 
 /**
- * @defgroup api_dell_type177 Dell OEM Type 177: ACPI WMI Support
+ * @defgroup api_dell_type177 Dell OEM Type 177: Dell BIOS Flags
  * @ingroup api_oem_types
- * @brief Dell OEM ACPI Windows Management Instrumentation support information.
+ * @brief Dell BIOS Flags information.
  */
 
 /**
- * @defgroup api_hp_type204 HP OEM Type 204: Rack and Enclosure Information
+ * @defgroup api_dell_type212 Dell OEM Type 212: Dell Indexed I/O Access
  * @ingroup api_oem_types
- * @brief HP OEM rack and enclosure naming, identity, and bay information.
+ * @brief Dell Indexed I/O Access ports, checksum settings, and token records.
+ */
+
+/**
+ * @defgroup api_hp_type204 HP OEM Type 204: HPE ProLiant System/Rack Locator
+ * @ingroup api_oem_types
+ * @brief HPE ProLiant System/Rack Locator information.
  */
 
 /**
@@ -333,7 +344,6 @@
  * @brief String properties associated with parent SMBIOS structures.
  */
  
-/**
 /**
  * @defgroup api_extensions Library Extensions
  * @ingroup api

@@ -1,0 +1,38 @@
+/**
+ * @page dell_type212_guide Dell OEM Type 212: Dell Indexed I/O Access Guide
+ *
+ * @brief Access Dell Indexed I/O Access ports, checksum settings, and token records.
+ *
+ * @section dell_type212_selection Array result and ownership
+ *
+ * @ref lazybiosGetOemDellType212 returns every Dell OEM Type 212 structure and
+ * writes the number of parsed structures to `delltype212_count`. Iterate the
+ * returned @ref lazybiosOemDellType212_t array using that count, and pass the
+ * same count to @ref lazybiosFreeOemDellType212.
+ *
+ * @section dell_type212_fields Fields
+ *
+ * - `index_port` and `data_port`: I/O port addresses used to access the token
+ *   data.
+ * - `checksum_type`: The checksum algorithm used for the declared index range:
+ *   word, byte, CRC, or negative word checksum.
+ * - `start_index`, `end_index`, and `value_index`: The token checksum range and
+ *   check-value index.
+ * - `tokens`: A variable-length array of token records. Each record contains a
+ *   `token_id`, `location`, `and_mask`, and `or_mask`.
+ *
+ * Check the corresponding `field_status` member before using each optional
+ * fixed field or the token array. Iterate `tokens` using `token_count`.
+ *
+ * @see @ref api_dell_type212
+ */
+
+/**
+ * @var lazybiosOemDellType212_t* lazybiosCTX::DellType212
+ * @brief Dell OEM Type 212 structures.
+ */
+
+/**
+ * @var size_t lazybiosCTX::delltype212_count
+ * @brief Number of elements in DellType212.
+ */
