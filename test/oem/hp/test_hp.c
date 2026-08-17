@@ -27,8 +27,8 @@
 #include "../test_oem.h"
 #include <stdio.h>
 
-static void printOemHPType204(lazybiosCTX_t* ctx) {
-    printf("=== Oem HP Type 204 ===\n");
+static inline void printOemHPType204(lazybiosCTX_t* ctx) {
+    printf("\n=== Oem HP Type 204 ===\n");
 
     if (!ctx->HpType204) ctx->HpType204 = lazybiosGetOemHpType204(ctx->HpType204, &ctx->hptype204_count, ctx->DMIData);
 
