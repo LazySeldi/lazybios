@@ -68,6 +68,7 @@ set(LAZYBIOS_SOURCES
         src/structures/type46.c
         src/structures/oem/hp/hp_type204.c
         src/structures/oem/dell/dell_type177.c
+        src/structures/oem/dell/dell_type212.c
         src/json/cJSON.c
         src/json/lazybios_json.c
 )
