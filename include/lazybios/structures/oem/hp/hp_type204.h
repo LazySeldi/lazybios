@@ -18,7 +18,7 @@
  */
 /**
  * @file hp_type204.h
- * @brief Public API for HP OEM SMBIOS Type 204 Information.
+ * @brief Public API for HPE ProLiant System/Rack Locator (HP OEM SMBIOS Type 204).
  * @author LazySeldi
  *
  * @note Experimental: This HP OEM type is newly added and has not been tested
@@ -51,7 +51,7 @@ typedef struct {
 } lazybiosOemHpType204FieldStatus_t;
 
 /**
- * @brief Parsed HP OEM SMBIOS Type 204 Information.
+ * @brief Parsed HPE ProLiant System/Rack Locator information.
  * @ingroup api_hp_type204
  *
  * @note Experimental and untested.

@@ -43,18 +43,17 @@ lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType20
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
-	const size_t count = lazybiosCountStructsByType(DMIData, 204);
+	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_HP_TYPE204);
 	size_t index = 0;
 
 	HPType204 = calloc(count, sizeof(*HPType204));
 	if (!HPType204) return NULL;
 
-
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
-		if (type == 204) {
+		if (type == SMBIOS_OEM_HP_TYPE204) {
 			lazybiosOemHpType204_t* current = &HPType204[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 			const uint8_t* structure_end = DMINext(p, end);

@@ -18,7 +18,7 @@
  */
 /**
  * @file dell_type177.h
- * @brief Public API for DELL OEM SMBIOS Type 177 Information.
+ * @brief Public API for Dell BIOS Flags (Dell OEM SMBIOS Type 177).
  * @author LazySeldi
  */
 
@@ -41,7 +41,7 @@ typedef struct {
 } lazybiosOemDellType177FieldStatus_t;
 
 /**
- * @brief Parsed DELL OEM SMBIOS Type 177 Information.
+ * @brief Parsed Dell BIOS Flags information.
  * @ingroup api_dell_type177
  */
 typedef struct {

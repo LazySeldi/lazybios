@@ -143,6 +143,15 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 #define SMBIOS_TYPE_STRING_PROPERTY 46
 #define SMBIOS_TYPE_END 127
 
+// HP
+#define SMBIOS_OEM_HP_TYPE204  204
+
+
+// DELL
+#define SMBIOS_OEM_DELL_TYPE177 177
+#define SMBIOS_OEM_DELL_TYPE212 212
+
+
 #define SMBIOS3_ANCHOR                 "_SM3_"
 #define SMBIOS3_ANCHOR_OFFSET          0x00
 #define SMBIOS3_CHECKSUM_OFFSET        0x05

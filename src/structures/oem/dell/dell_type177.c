@@ -26,13 +26,15 @@
 #include "lazybios/structures/oem/dell/dell_type177.h"
 #include <stdlib.h>
 
+#define ACPI_WMI_SUPPORTED 0x04
+
 lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DELLType177, size_t* delltype177_count, lazybiosDMI_t* DMIData) {
 	if (delltype177_count) *delltype177_count = 0;
 	if (!delltype177_count || !DMIData || !DMIData->dmi_data) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
-	const size_t count = lazybiosCountStructsByType(DMIData, 177);
+	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_DELL_TYPE177);
 	size_t index = 0;
 
 	DELLType177 = calloc(count, sizeof(*DELLType177));
@@ -42,8 +44,7 @@ lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DE
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
-
-		if (type == 177) {
+		if (type == SMBIOS_OEM_DELL_TYPE177) {
 			lazybiosOemDellType177_t* current = &DELLType177[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 			const uint8_t* structure_end = DMINext(p, end);
@@ -52,7 +53,7 @@ lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DE
 		    // Read the 64-bit flags from offset 0x04
 		    uint64_t flags = 0;
 		    if (len >= 0x0C) {
-		        memcpy(&flags, p + 0x04, sizeof(flags));
+		        memcpy(&flags, p + ACPI_WMI_SUPPORTED, sizeof(flags));
 		    }
 
 		    current->acpi_wmi_supported = (flags & (1ULL << 1)) ? "Yes" : "No";
