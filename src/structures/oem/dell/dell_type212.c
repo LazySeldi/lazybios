@@ -97,17 +97,18 @@ lazybiosOemDellType212_t *lazybiosGetOemDellType212 (lazybiosOemDellType212_t *D
 
             // Tokens (5 bytes each)
             if (len > TOKENS_START_OFFSET) {
-                size_t token_bytes = len - TOKENS_START_OFFSET;
-                current->token_count = token_bytes / TOKEN_SIZE;
-                const uint8_t* null_token = p + TOKENS_START_OFFSET + ((current->token_count - 1) * TOKEN_SIZE);
-
-                // if last token is a terminator, we skip it
-                if (null_token[0] == TOKEN_TERMINATOR_BYTE0 && null_token[1] == TOKEN_TERMINATOR_BYTE1 && null_token[2] == TOKEN_TERMINATOR_BYTE2 && null_token[3] == TOKEN_TERMINATOR_BYTE3 && null_token[4] == TOKEN_TERMINATOR_BYTE4) {
-                    current->token_count = current->token_count - 1;
-                }
 
                 if (current->token_count > 0) {
+                    size_t token_bytes = len - TOKENS_START_OFFSET;
+                    current->token_count = token_bytes / TOKEN_SIZE;
+                    const uint8_t* null_token = p + TOKENS_START_OFFSET + ((current->token_count - 1) * TOKEN_SIZE);
+
+                    // if last token is a terminator, we skip it
+                    if (null_token[0] == TOKEN_TERMINATOR_BYTE0 && null_token[1] == TOKEN_TERMINATOR_BYTE1 && null_token[2] == TOKEN_TERMINATOR_BYTE2
+                        && null_token[3] == TOKEN_TERMINATOR_BYTE3 && null_token[4] == TOKEN_TERMINATOR_BYTE4) current->token_count -= 1;
+
                     current->tokens = calloc(current->token_count, sizeof(lazybiosOemDellType212Token_t));
+
                     if (current->tokens) {
                         for (size_t i = 0; i < current->token_count; i++) {
                             const uint8_t *t = p + TOKENS_START_OFFSET + (i * TOKEN_SIZE);
