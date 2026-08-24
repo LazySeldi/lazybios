@@ -742,6 +742,14 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
     lazybiosFreeOemHpType204(ctx->HpType204, ctx->hptype204_count);
     ctx->HpType204 = NULL;
     ctx->hptype204_count = 0;
+    
+    lazybiosFreeOemDellType177(ctx->DellType177, ctx->delltype177_count);
+    ctx->DellType177 = NULL;
+    ctx->delltype177_count = 0;
+    
+    lazybiosFreeOemDellType212(ctx->DellType212, ctx->delltype212_count);
+    ctx->DellType212 = NULL;
+    ctx->delltype212_count = 0;
 
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);
