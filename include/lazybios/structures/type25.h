@@ -68,7 +68,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 25 array, or NULL on failure.
  */
-lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Formats the next scheduled power-on date and time.

@@ -70,7 +70,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 19 array, or NULL on failure.
  */
-lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Converts SMBIOS Type 19 starting-address fields to a byte address.

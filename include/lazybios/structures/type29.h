@@ -76,7 +76,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 29 array, or NULL on failure.
  */
-lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the physical location from a Type 29 location-and-status field.

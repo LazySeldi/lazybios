@@ -78,7 +78,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 10 array, or NULL on failure.
  */
-lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an obsolete Type 10 onboard-device type.

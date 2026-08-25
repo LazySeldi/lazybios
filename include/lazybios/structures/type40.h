@@ -85,7 +85,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 40 array, or NULL on failure.
  */
-lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Releases an array of parsed SMBIOS Type 40 structures.

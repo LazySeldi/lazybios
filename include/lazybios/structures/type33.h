@@ -72,7 +72,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 33 array, or NULL on failure.
  */
-lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS 64-bit memory-error type.

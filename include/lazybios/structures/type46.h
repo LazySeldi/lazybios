@@ -64,7 +64,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 46 array, or NULL on failure.
  */
-lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS Type 46 string-property identifier.

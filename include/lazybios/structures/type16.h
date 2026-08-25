@@ -72,7 +72,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 16 array, or NULL on failure.
  */
-lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS physical memory array location.

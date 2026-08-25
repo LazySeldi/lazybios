@@ -108,7 +108,7 @@ typedef struct {
  */
 
 /** @brief Parses all Type 9 structures. */
-lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, lazybiosDMI_t* DMIData);
 /** @brief Decodes a system-slot type. */
 const char* lazybiosType9SlotTypeStr(uint8_t slot_type);
 /** @brief Decodes a system-slot width. */

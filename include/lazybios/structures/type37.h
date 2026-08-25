@@ -82,7 +82,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 37 array, or NULL on failure.
  */
-lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS Type 37 memory-channel type.

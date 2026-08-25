@@ -130,7 +130,7 @@ typedef struct {
  */
 
 /** @brief Parses all Type 17 structures. */
-lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData);
 /** @brief Decodes a memory-device form factor. */
 const char* lazybiosType17FormFactorStr(uint8_t form_factor);
 /** @brief Decodes a memory type. */

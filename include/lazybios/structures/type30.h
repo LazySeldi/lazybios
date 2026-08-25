@@ -62,7 +62,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 30 array, or NULL on failure.
  */
-lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the inbound-connection state from a Type 30 connections field.

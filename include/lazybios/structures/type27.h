@@ -70,7 +70,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 27 array, or NULL on failure.
  */
-lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the cooling-device type from a Type 27 device-type-and-status field.

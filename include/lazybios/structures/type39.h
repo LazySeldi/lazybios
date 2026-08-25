@@ -84,7 +84,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 39 array, or NULL on failure.
  */
-lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the DMTF power-supply type from Type 39 characteristics.

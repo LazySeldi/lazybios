@@ -72,7 +72,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 6 array, or NULL on failure.
  */
-lazybiosType6_t* lazybiosGetType6(lazybiosType6_t* Type6, size_t* type6_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType6_t* lazybiosGetType6(lazybiosType6_t* Type6, size_t* type6_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Formats the bank connections encoded by a Type 6 structure.

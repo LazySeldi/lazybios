@@ -64,7 +64,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 21 array, or NULL on failure.
  */
-lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS built-in pointing-device type.

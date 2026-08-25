@@ -86,7 +86,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 0 array, or NULL on failure.
  */
-lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes BIOS characteristics into a readable string.

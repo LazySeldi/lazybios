@@ -80,7 +80,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 5 array, or NULL on failure.
  */
-lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes a Type 5 memory-error detecting method.

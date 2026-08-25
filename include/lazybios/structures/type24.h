@@ -60,7 +60,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 24 array, or NULL on failure.
  */
-lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the power-on password status from Type 24 settings.

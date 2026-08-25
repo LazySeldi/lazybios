@@ -66,7 +66,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 44 array, or NULL on failure.
  */
-lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS Type 44 processor architecture type.

@@ -74,7 +74,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 43 array, or NULL on failure.
  */
-lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Formats a TPM firmware revision according to its major specification version.

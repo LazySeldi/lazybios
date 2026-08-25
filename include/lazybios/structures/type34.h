@@ -66,7 +66,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 34 array, or NULL on failure.
  */
-lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS Type 34 management-device type.

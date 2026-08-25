@@ -88,7 +88,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 22 array, or NULL on failure.
  */
-lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS portable-battery chemistry value.

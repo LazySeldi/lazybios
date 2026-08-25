@@ -99,6 +99,35 @@ typedef enum {
  */
 #define LAZYBIOS_FIELD_STATUS(structure, field) ((structure)->field_status.field)
 
+/*
+ * Compiler feature detection.
+ *
+ * Clang normally predefines __GNUC__, so the second test looks redundant, but
+ * clang-cl emulates the MSVC predefines instead while still accepting GNU
+ * attributes; without it that configuration would fall through to the SAL
+ * branch below.
+ */
+#if defined(__GNUC__) || defined(__clang__)
+/**
+ * @brief Marks a function whose return value must not be discarded.
+ *
+ * The getters return a newly allocated array and the loaders return a status
+ * code, so dropping either result leaks memory or hides a failed load.
+ */
+#  define LAZYBIOS_WARN_UNUSED __attribute__((warn_unused_result))
+#elif defined(_MSC_VER)
+#  include <sal.h>
+/**
+ * @brief Marks a function whose return value must not be discarded.
+ *
+ * Only used by the /analyze flag in the msvc compiler, because microsoft
+ */
+#  define LAZYBIOS_WARN_UNUSED _Check_return_
+#else
+/** @brief Expands to nothing on compilers without a return-value check. */
+#  define LAZYBIOS_WARN_UNUSED
+#endif
+
 /**
  * @brief Raw SMBIOS 2.x entry point layout.
  * @ingroup api_entry
@@ -232,6 +261,7 @@ int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, 
 #include "lazybios/structures/type46.h"
 #include "lazybios/structures/oem/dell/dell_type177.h"
 #include "lazybios/structures/oem/dell/dell_type212.h"
+#include "lazybios/structures/oem/dell/dell_type218.h"
 #include "lazybios/structures/oem/hp/hp_type204.h"
 #include "lazybios/json/lazybios_json.h"
 
@@ -395,6 +425,9 @@ struct lazybiosCTX {
     lazybiosOemDellType212_t* DellType212;
     size_t delltype212_count;
 
+    lazybiosOemDellType218_t* DellType218;
+    size_t delltype218_count;
+
     // HP
     lazybiosOemHpType204_t* HpType204;
     size_t hptype204_count;
@@ -405,14 +438,14 @@ struct lazybiosCTX {
  * @brief Allocates and initializes a lazybios context.
  * @return Newly allocated context, or NULL if allocation fails.
  */
-lazybiosCTX_t* lazybiosCTXNew(void);
+LAZYBIOS_WARN_UNUSED lazybiosCTX_t* lazybiosCTXNew(void);
 
 /**
  * @brief Loads SMBIOS data using the context's selected platform backend.
  * @param ctx Context that receives the raw entry point and DMI table data.
  * @return 0 on success, or -1 on failure.
  */
-int lazybiosInit(lazybiosCTX_t* ctx);
+LAZYBIOS_WARN_UNUSED int lazybiosInit(lazybiosCTX_t* ctx);
 
 /**
  * @brief Loads an SMBIOS entry point and DMI table from separate files.
@@ -421,7 +454,7 @@ int lazybiosInit(lazybiosCTX_t* ctx);
  * @param dmi_path Path to the raw DMI structure table file.
  * @return 0 on success, or -1 on failure.
  */
-int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path);
+LAZYBIOS_WARN_UNUSED int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path);
 
 /**
  * @brief Loads SMBIOS entry point and DMI data from one merged file.
@@ -430,7 +463,7 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
  * either concatenated or separated by an advertised file-relative offset.
  * @return 0 on success, or -1 on failure.
  */
-int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
+LAZYBIOS_WARN_UNUSED int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
 
 /**
  * @brief Releases a context and all SMBIOS data owned by it.

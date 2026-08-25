@@ -80,7 +80,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 14 array, or NULL on failure.
  */
-lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Releases an array of parsed SMBIOS Type 14 structures.

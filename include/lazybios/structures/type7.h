@@ -82,7 +82,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 7 array, or NULL on failure.
  */
-lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData);
 
 /** @brief Converts a 16-bit SMBIOS cache size field to kibibytes. */
 uint64_t lazybiosType7CacheU16(uint16_t raw_size);

@@ -66,7 +66,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 13 array, or NULL on failure.
  */
-lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the language-description format selected by the Type 13 flags.

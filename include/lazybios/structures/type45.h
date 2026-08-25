@@ -84,7 +84,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 45 array, or NULL on failure.
  */
-lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the format of Type 45 firmware-version strings.

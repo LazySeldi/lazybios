@@ -87,7 +87,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 42 array, or NULL on failure.
  */
-lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS Type 42 management-controller host-interface type.

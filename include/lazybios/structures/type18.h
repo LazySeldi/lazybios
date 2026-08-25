@@ -72,7 +72,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 18 array, or NULL on failure.
  */
-lazybiosType18_t* lazybiosGetType18(lazybiosType18_t* Type18, size_t* type18_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType18_t* lazybiosGetType18(lazybiosType18_t* Type18, size_t* type18_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS memory-error type.

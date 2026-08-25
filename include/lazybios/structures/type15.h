@@ -96,7 +96,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 15 array, or NULL on failure.
  */
-lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS Type 15 event-log access method.

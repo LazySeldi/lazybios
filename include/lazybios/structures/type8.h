@@ -62,7 +62,7 @@ typedef struct {
  */
 
 /** @brief Parses all Type 8 structures. */
-lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, lazybiosDMI_t* DMIData);
 /** @brief Decodes a port connector type. */
 const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type);
 /** @brief Decodes a port type. */

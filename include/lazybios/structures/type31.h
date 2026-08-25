@@ -74,7 +74,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 31 array, or NULL on failure.
  */
-lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Releases an array of parsed SMBIOS Type 31 structures.

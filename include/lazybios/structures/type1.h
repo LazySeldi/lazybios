@@ -74,7 +74,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 1 array, or NULL on failure.
  */
-lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an SMBIOS system wake-up type.

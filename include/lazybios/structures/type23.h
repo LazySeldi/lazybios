@@ -68,7 +68,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 23 array, or NULL on failure.
  */
-lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes the watchdog boot option from Type 23 capabilities.

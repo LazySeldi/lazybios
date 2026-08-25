@@ -72,7 +72,7 @@ typedef struct {
  * @param DMIData Raw DMI table container to parse.
  * @return Newly allocated Type 38 array, or NULL on failure.
  */
-lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_count, lazybiosDMI_t* DMIData);
 
 /**
  * @brief Decodes an IPMI BMC interface type.
