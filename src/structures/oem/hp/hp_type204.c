@@ -37,25 +37,34 @@
 #define SERVER_BAY 0x08
 #define BAYS_FILLED 0x09
 
-lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType204, size_t* hptype204_count, lazybiosDMI_t* DMIData) {
-	if (hptype204_count) *hptype204_count = 0;
-	if (!hptype204_count || !DMIData || !DMIData->dmi_data) return NULL;
+lazybiosOemHpType204Array_t* lazybiosGetOemHpType204(const lazybiosDMI_t* DMIData) {
+	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosOemHpType204Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_HP_TYPE204);
 	size_t index = 0;
 
-	HPType204 = calloc(count, sizeof(*HPType204));
-	if (!HPType204) return NULL;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
+	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
 		if (type == SMBIOS_OEM_HP_TYPE204) {
-			lazybiosOemHpType204_t* current = &HPType204[index];
+			lazybiosOemHpType204_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, rack_name, len, RACK_NAME, p, structure_end);
@@ -70,13 +79,14 @@ lazybiosOemHpType204_t* lazybiosGetOemHpType204(lazybiosOemHpType204_t* HPType20
 		}
 		p = DMINext(p, end);
 	}
-	*hptype204_count = index;
-	return HPType204;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeOemHpType204(lazybiosOemHpType204_t* HPType204, size_t hptype204_count) {
-	(void)hptype204_count;
-    if (!HPType204) return;
+void lazybiosFreeOemHpType204(lazybiosOemHpType204Array_t* HpType204) {
+	    if (!HpType204) return;
 
-	free(HPType204);
+	free(HpType204->entries);
+
+	free(HpType204);
 }

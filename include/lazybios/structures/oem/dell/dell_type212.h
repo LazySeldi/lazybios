@@ -48,6 +48,13 @@ typedef struct {
     lazybiosFieldStatus_t tokens;
 } lazybiosOemDellType212FieldStatus_t;
 
+/**
+ * @brief Decoded forms of the Dell Type 212 encoded fields.
+ */
+typedef struct {
+    const char* checksum_type;
+} lazybiosOemDellType212Decoded_t;
+
 typedef struct {
     uint16_t token_id;
     uint8_t  location;
@@ -60,36 +67,46 @@ typedef struct {
  * @ingroup api_dell_type212
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
     uint16_t index_port;
     uint16_t data_port;
-    const char* checksum_type;
+    uint8_t checksum_type;
     uint8_t start_index;
     uint8_t end_index;
     uint8_t value_index;
     lazybiosOemDellType212Token_t* tokens;
     size_t token_count;
+    lazybiosOemDellType212Decoded_t decoded;
     lazybiosOemDellType212FieldStatus_t field_status;
 } lazybiosOemDellType212_t;
+
+/**
+ * @brief A parsed set of Dell OEM Type 212 structures.
+ * @ingroup api_dell_type212
+ */
+typedef struct {
+	lazybiosOemDellType212_t* entries;
+	size_t count;
+} lazybiosOemDellType212Array_t;
 
 /** @addtogroup api_dell_type212
  * @{
  */
 
 /**
- * @brief Parses all DELL OEM SMBIOS Type 212 Information structures.
- * @param DELLType212 Existing DELL Type 212 array pointer value.
- * @param delltype212_count Output location for the number of parsed structures.
+ * @brief Parses all Dell OEM SMBIOS Type 212 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated DELL Type 212 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no such structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-lazybiosOemDellType212_t* lazybiosGetOemDellType212(lazybiosOemDellType212_t* DELLType212, size_t* delltype212_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosOemDellType212Array_t* lazybiosGetOemDellType212(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed DELL OEM SMBIOS Type 212 structures.
- * @param DELLType212 DELL Type 212 array to release.
- * @param delltype212_count Number of elements in DELLType212.
+ * @brief Releases a parsed set of Dell OEM Type 212 structures.
+ * @param DellType212 Set to release; may be NULL.
  */
-void lazybiosFreeOemDellType212(lazybiosOemDellType212_t* DELLType212, size_t delltype212_count);
+void lazybiosFreeOemDellType212(lazybiosOemDellType212Array_t* DellType212);
 
 /** @} */
 

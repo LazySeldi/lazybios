@@ -26,42 +26,58 @@
 #include "lazybios/structures/oem/dell/dell_type177.h"
 #include <stdlib.h>
 
-#define ACPI_WMI_SUPPORTED 0x04
+#define BIOS_FLAGS 0x04
+#define ACPI_WMI_SUPPORTED_BIT 1
 
-lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DELLType177, size_t* delltype177_count, lazybiosDMI_t* DMIData) {
-	if (delltype177_count) *delltype177_count = 0;
-	if (!delltype177_count || !DMIData || !DMIData->dmi_data) return NULL;
+lazybiosOemDellType177Array_t* lazybiosGetOemDellType177(const lazybiosDMI_t* DMIData) {
+	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosOemDellType177Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_DELL_TYPE177);
 	size_t index = 0;
 
-	DELLType177 = calloc(count, sizeof(*DELLType177));
-	if (!DELLType177) return NULL;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
+	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
 		if (type == SMBIOS_OEM_DELL_TYPE177) {
-			lazybiosOemDellType177_t* current = &DELLType177[index];
+			lazybiosOemDellType177_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 		    (void)structure_end;
 
-		    // Read the 64-bit flags from offset 0x04
-		    uint64_t flags = 0;
+		    // The 64-bit flags word at 0x04 is kept raw; the bit of interest is decoded.
 		    if (len >= 0x0C) {
-		        memcpy(&flags, p + ACPI_WMI_SUPPORTED, sizeof(flags));
+		        memcpy(&current->bios_flags, p + BIOS_FLAGS, sizeof(current->bios_flags));
+		        LAZYBIOS_MARK_PRESENT(current, bios_flags);
+		    } else {
+		        current->bios_flags = 0;
+		        LAZYBIOS_MARK_ABSENT(current, bios_flags);
 		    }
 
-		    current->acpi_wmi_supported = (flags & (1ULL << 1)) ? "Yes" : "No";
-		    if (flags & (1ULL << 1)) {
-		        current->acpi_wmi_supported = "Yes";
+		    /*
+		     * "No" is a real answer, not a missing field, so both outcomes are
+		     * present whenever the flags word itself was readable.
+		     */
+		    current->decoded.acpi_wmi_supported =
+		        (current->bios_flags & (1ULL << ACPI_WMI_SUPPORTED_BIT)) ? "Yes" : "No";
+		    if (LAZYBIOS_FIELD_STATUS(current, bios_flags) == LAZYBIOS_FIELD_PRESENT) {
 		        LAZYBIOS_MARK_PRESENT(current, acpi_wmi_supported);
 		    } else {
-		        current->acpi_wmi_supported = "No";
 		        LAZYBIOS_MARK_ABSENT(current, acpi_wmi_supported);
 		    }
 
@@ -69,13 +85,14 @@ lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DE
 		}
 		p = DMINext(p, end);
 	}
-	*delltype177_count = index;
-	return DELLType177;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeOemDellType177(lazybiosOemDellType177_t* DELLType177, size_t delltype177_count) {
-	(void)delltype177_count;
-    if (!DELLType177) return;
+void lazybiosFreeOemDellType177(lazybiosOemDellType177Array_t* DellType177) {
+	    if (!DellType177) return;
 
-	free(DELLType177);
+	free(DellType177->entries);
+
+	free(DellType177);
 }

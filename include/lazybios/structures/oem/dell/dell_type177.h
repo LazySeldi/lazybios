@@ -37,38 +37,55 @@ extern "C" {
 
 /** @brief Availability metadata for DELL OEM SMBIOS Type 177 fields. */
 typedef struct {
+    lazybiosFieldStatus_t bios_flags;
     lazybiosFieldStatus_t acpi_wmi_supported;
 } lazybiosOemDellType177FieldStatus_t;
+
+/**
+ * @brief Decoded forms of the Dell Type 177 encoded fields.
+ */
+typedef struct {
+    const char* acpi_wmi_supported;
+} lazybiosOemDellType177Decoded_t;
 
 /**
  * @brief Parsed Dell BIOS Flags information.
  * @ingroup api_dell_type177
  */
 typedef struct {
-
-    const char* acpi_wmi_supported; //  Yes | No
+	uint16_t handle;
+	uint8_t length;
+	uint64_t bios_flags;
+	lazybiosOemDellType177Decoded_t decoded;
 	lazybiosOemDellType177FieldStatus_t field_status;
 } lazybiosOemDellType177_t;
+
+/**
+ * @brief A parsed set of Dell OEM Type 177 structures.
+ * @ingroup api_dell_type177
+ */
+typedef struct {
+	lazybiosOemDellType177_t* entries;
+	size_t count;
+} lazybiosOemDellType177Array_t;
 
 /** @addtogroup api_dell_type177
  * @{
  */
 
 /**
- * @brief Parses all DELL OEM SMBIOS Type 177 Information structures.
- * @param DELLType177 Existing DELL Type 177 array pointer value.
- * @param delltype177_count Output location for the number of parsed structures.
+ * @brief Parses all Dell OEM SMBIOS Type 177 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated DELL Type 177 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no such structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-lazybiosOemDellType177_t* lazybiosGetOemDellType177(lazybiosOemDellType177_t* DELLType177, size_t* delltype177_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosOemDellType177Array_t* lazybiosGetOemDellType177(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed DELL OEM SMBIOS Type 177 structures.
- * @param DELLType177 DELL Type 177 array to release.
- * @param delltype177_count Number of elements in DELLType177.
+ * @brief Releases a parsed set of Dell OEM Type 177 structures.
+ * @param DellType177 Set to release; may be NULL.
  */
-void lazybiosFreeOemDellType177(lazybiosOemDellType177_t* DELLType177, size_t delltype177_count);
+void lazybiosFreeOemDellType177(lazybiosOemDellType177Array_t* DellType177);
 
 /** @} */
 
