@@ -18,12 +18,11 @@
  */
 /**
  * @file lazybios.h
- * @brief Public umbrella API for reading and decoding SMBIOS/DMI data.
+ * @brief Public API for lazybios. Include this and nothing else.
  * @author LazySeldi
  */
 
 #ifndef LAZYBIOS_SHARED_API_H
-/** @brief Include guard for definitions shared by all lazybios public headers. */
 #define LAZYBIOS_SHARED_API_H
 
 #include <stdint.h>
@@ -64,22 +63,11 @@ typedef enum {
 extern const char lazybiosVersion[];
 
 /** @brief Major component of the lazybios version. */
-#define LAZYBIOS_MAJOR 2
+#define LAZYBIOS_MAJOR 3
 /** @brief Minor component of the lazybios version. */
 #define LAZYBIOS_MINOR 0
 /** @brief Patch component of the lazybios version. */
 #define LAZYBIOS_PATCH 0
-/** @brief Recommended output buffer size for decoder functions. */
-#define LAZYBIOS_DECODER_BUF_SIZE 256
-/** @brief Size of the formatted header shared by SMBIOS structures. */
-#define SMBIOS_HEADER_SIZE 4
-/** @brief Linux sysfs path for the SMBIOS entry point. */
-#define LINUX_SYSFS_SMBIOS_ENTRY "/sys/firmware/dmi/tables/smbios_entry_point"
-/** @brief Linux sysfs path for the DMI structure table. */
-#define LINUX_SYSFS_DMI_TABLE "/sys/firmware/dmi/tables/DMI"
-/** @brief Device path used for physical-memory SMBIOS access on Linux and BSD. */
-#define DEV_MEM "/dev/mem"
-
 /** @} */
 
 /**
@@ -90,7 +78,17 @@ typedef enum {
     LAZYBIOS_FIELD_ABSENT = 0,   /**< The field exists in this SMBIOS version but is not populated by the vendor. */
     LAZYBIOS_FIELD_PRESENT,      /**< The field is encoded and contains valid data. */
     LAZYBIOS_FIELD_UNREACHABLE   /**< The field was added in a newer SMBIOS spec; structure is too short to contain it. */
-} lazybiosFieldStatus_t;
+} lazybiosFieldStatusValue_t;
+
+/**
+ * @brief Storage for one field's availability.
+ *
+ * Holds a ::lazybiosFieldStatusValue_t. C99 cannot give an enum a one-byte
+ * underlying type, and status metadata is roughly half the size of a parsed
+ * structure, so the value is stored as a byte and compared against the
+ * enumerators directly.
+ */
+typedef uint8_t lazybiosFieldStatus_t;
 
 /**
  * @brief Returns the status associated with a parsed structure field.
@@ -203,10 +201,6 @@ typedef struct lazybiosDMI {
  */
 int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, uint8_t required_minor);
 
-/**
- * @brief Prints the parsed SMBIOS version to standard output.
- * @param ctx Context containing a parsed SMBIOS entry point.
- */
 #ifdef __cplusplus
 }
 #endif
@@ -264,10 +258,41 @@ int lazybiosIsVersionPlus(const lazybiosDMI_t* DMIData, uint8_t required_major, 
 #include "lazybios/structures/oem/dell/dell_type218.h"
 #include "lazybios/structures/oem/hp/hp_type204.h"
 #include "lazybios/json/lazybios_json.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief Dell OEM structures held by a context.
+ * @ingroup api_oem_types
+ */
+typedef struct {
+	lazybiosOemDellType177Array_t* Type177;
+	lazybiosOemDellType212Array_t* Type212;
+	lazybiosOemDellType218Array_t* Type218;
+} lazybiosOemDell_t;
+
+/**
+ * @brief HP OEM structures held by a context.
+ * @ingroup api_oem_types
+ */
+typedef struct {
+	lazybiosOemHpType204Array_t* Type204;
+} lazybiosOemHp_t;
+
+/**
+ * @brief Vendor-specific structures held by a context.
+ * @ingroup api_oem_types
+ *
+ * The vendor members are allocated by @ref lazybiosCTXNew and are never NULL.
+ * Only the per-type members inside them are NULL until parsed.
+ */
+typedef struct {
+	lazybiosOemDell_t* dell;
+	lazybiosOemHp_t*   hp;
+} lazybiosOem_t;
 
 /**
  * @brief Top-level lazybios context containing raw and parsed SMBIOS data.
@@ -277,160 +302,55 @@ struct lazybiosCTX {
 	lazybiosBackend_t backend;
 	lazybiosDMI_t* DMIData;
 
-	lazybiosType0_t* Type0;
-	size_t type0_count;
+	lazybiosType0Array_t* Type0;
+	lazybiosType1Array_t* Type1;
+	lazybiosType2Array_t* Type2;
+	lazybiosType3Array_t* Type3;
+	lazybiosType4Array_t* Type4;
+	lazybiosType5Array_t* Type5;
+	lazybiosType6Array_t* Type6;
+	lazybiosType7Array_t* Type7;
+	lazybiosType8Array_t* Type8;
+	lazybiosType9Array_t* Type9;
+	lazybiosType10Array_t* Type10;
+	lazybiosType11Array_t* Type11;
+	lazybiosType12Array_t* Type12;
+	lazybiosType13Array_t* Type13;
+	lazybiosType14Array_t* Type14;
+	lazybiosType15Array_t* Type15;
+	lazybiosType16Array_t* Type16;
+	lazybiosType17Array_t* Type17;
+	lazybiosType18Array_t* Type18;
+	lazybiosType19Array_t* Type19;
+	lazybiosType20Array_t* Type20;
+	lazybiosType21Array_t* Type21;
+	lazybiosType22Array_t* Type22;
+	lazybiosType23Array_t* Type23;
+	lazybiosType24Array_t* Type24;
+	lazybiosType25Array_t* Type25;
+	lazybiosType26Array_t* Type26;
+	lazybiosType27Array_t* Type27;
+	lazybiosType28Array_t* Type28;
+	lazybiosType29Array_t* Type29;
+	lazybiosType30Array_t* Type30;
+	lazybiosType31Array_t* Type31;
+	lazybiosType32Array_t* Type32;
+	lazybiosType33Array_t* Type33;
+	lazybiosType34Array_t* Type34;
+	lazybiosType35Array_t* Type35;
+	lazybiosType36Array_t* Type36;
+	lazybiosType37Array_t* Type37;
+	lazybiosType38Array_t* Type38;
+	lazybiosType39Array_t* Type39;
+	lazybiosType40Array_t* Type40;
+	lazybiosType41Array_t* Type41;
+	lazybiosType42Array_t* Type42;
+	lazybiosType43Array_t* Type43;
+	lazybiosType44Array_t* Type44;
+	lazybiosType45Array_t* Type45;
+	lazybiosType46Array_t* Type46;
 
-	lazybiosType1_t* Type1;
-	size_t type1_count;
-
-	lazybiosType2_t* Type2;
-	size_t type2_count;
-
-	lazybiosType3_t* Type3;
-	size_t type3_count;
-
-	lazybiosType4_t* Type4;
-	size_t type4_count;
-
-	lazybiosType5_t* Type5;
-	size_t type5_count;
-
-	lazybiosType6_t* Type6;
-	size_t type6_count;
-
-	lazybiosType7_t* Type7;
-	size_t type7_count;
-
-	lazybiosType8_t* Type8;
-	size_t type8_count;
-
-	lazybiosType9_t* Type9;
-	size_t type9_count;
-
-	lazybiosType10_t* Type10;
-	size_t type10_count;
-
-	lazybiosType11_t* Type11;
-	size_t type11_count;
-
-	lazybiosType12_t* Type12;
-	size_t type12_count;
-
-	lazybiosType13_t* Type13;
-	size_t type13_count;
-
-	lazybiosType14_t* Type14;
-	size_t type14_count;
-
-	lazybiosType15_t* Type15;
-	size_t type15_count;
-
-	lazybiosType16_t* Type16;
-	size_t type16_count;
-
-	lazybiosType17_t* Type17;
-	size_t type17_count;
-
-	lazybiosType18_t* Type18;
-	size_t type18_count;
-
-	lazybiosType19_t* Type19;
-	size_t type19_count;
-
-	lazybiosType20_t* Type20;
-	size_t type20_count;
-
-	lazybiosType21_t* Type21;
-	size_t type21_count;
-
-	lazybiosType22_t* Type22;
-	size_t type22_count;
-
-	lazybiosType23_t* Type23;
-	size_t type23_count;
-
-	lazybiosType24_t* Type24;
-	size_t type24_count;
-
-	lazybiosType25_t* Type25;
-	size_t type25_count;
-
-	lazybiosType26_t* Type26;
-	size_t type26_count;
-
-	lazybiosType27_t* Type27;
-	size_t type27_count;
-
-	lazybiosType28_t* Type28;
-	size_t type28_count;
-
-	lazybiosType29_t* Type29;
-	size_t type29_count;
-
-	lazybiosType30_t* Type30;
-	size_t type30_count;
-
-	lazybiosType31_t* Type31;
-	size_t type31_count;
-
-	lazybiosType32_t* Type32;
-	size_t type32_count;
-
-	lazybiosType33_t* Type33;
-	size_t type33_count;
-
-	lazybiosType34_t* Type34;
-	size_t type34_count;
-
-	lazybiosType35_t* Type35;
-	size_t type35_count;
-
-	lazybiosType36_t* Type36;
-	size_t type36_count;
-
-	lazybiosType37_t* Type37;
-	size_t type37_count;
-
-	lazybiosType38_t* Type38;
-	size_t type38_count;
-
-	lazybiosType39_t* Type39;
-	size_t type39_count;
-
-	lazybiosType40_t* Type40;
-	size_t type40_count;
-
-	lazybiosType41_t* Type41;
-	size_t type41_count;
-
-	lazybiosType42_t* Type42;
-	size_t type42_count;
-
-	lazybiosType43_t* Type43;
-	size_t type43_count;
-
-	lazybiosType44_t* Type44;
-	size_t type44_count;
-
-	lazybiosType45_t* Type45;
-	size_t type45_count;
-
-	lazybiosType46_t* Type46;
-	size_t type46_count;
-
-    // DELL
-    lazybiosOemDellType177_t* DellType177;
-    size_t delltype177_count;
-
-    lazybiosOemDellType212_t* DellType212;
-    size_t delltype212_count;
-
-    lazybiosOemDellType218_t* DellType218;
-    size_t delltype218_count;
-
-    // HP
-    lazybiosOemHpType204_t* HpType204;
-    size_t hptype204_count;
+	lazybiosOem_t* oem;
 
 };
 
@@ -466,19 +386,24 @@ LAZYBIOS_WARN_UNUSED int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path
 LAZYBIOS_WARN_UNUSED int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
 
 /**
+ * @brief Parses every implemented structure type into the context.
+ *
+ * Types already present in @p ctx are left untouched, so calling this more than
+ * once does not strand an earlier result set. A type the table does not contain
+ * still yields a valid empty set; a type whose parse fails is left NULL, so
+ * check each member before use as usual.
+ *
+ * @param ctx Context holding loaded SMBIOS data.
+ * @return 0 on success, or -1 if the context holds no usable DMI table.
+ */
+LAZYBIOS_WARN_UNUSED int lazybiosParseAll(lazybiosCTX_t* ctx);
+
+/**
  * @brief Releases a context and all SMBIOS data owned by it.
  * @param ctx Context to release.
  * @return 0 on success, or -1 if ctx is NULL.
  */
 int lazybiosCleanup(lazybiosCTX_t* ctx);
-
-/**
- * @brief Prints SMBIOS version information to stdout.
- * @param ctx Initialized lazybios context.
- */
-void lazybiosPrintSMVer(const lazybiosCTX_t* ctx);
-
-#endif
 
 #ifdef __cplusplus
 }
