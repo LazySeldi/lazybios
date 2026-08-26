@@ -3,12 +3,18 @@
  *
  * @brief Baseboard jumper and switch configuration strings and their ownership rules.
  *
- * @section type12_array Array result
  *
- * @ref lazybiosGetType12 returns every
- * @ref SMBIOS_TYPE_SYSTEM_CONFIGURATION_OPTIONS structure and writes the
- * number of structures to `type12_count`. Pass the same count to
- * @ref lazybiosFreeType12 when cleanup is performed directly.
+ * @section type12_selection Result set and ownership
+ *
+ * @ref lazybiosGetType12 returns a @ref lazybiosType12Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType12, or assign it to `ctx->Type12` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type12_options Configuration strings
  *
@@ -20,6 +26,7 @@
  * The Count field is an unrestricted SMBIOS BYTE. Determine its availability
  * with @ref LAZYBIOS_FIELD_STATUS instead of comparing its value with a
  * sentinel. A present count of zero represents an empty option collection.
+ *
  *
  * @section type12_ownership Ownership
  *

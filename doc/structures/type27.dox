@@ -3,17 +3,29 @@
  *
  * @brief Cooling-device classification, health, redundancy, and speed information.
  *
- * @section type27_array Array result
  *
- * @ref lazybiosGetType27 returns every Cooling Device structure and writes the
- * number of structures to `type27_count`. Each available description string is
- * owned by its parsed structure.
+ * @section type27_selection Result set and ownership
+ *
+ * @ref lazybiosGetType27 returns a @ref lazybiosType27Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType27, or assign it to `ctx->Type27` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`device_type`, `status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type27_classification Device type and status
  *
  * `device_type_and_status` combines a five-bit cooling-device type and a
  * three-bit device status. Decode them independently with
- * @ref lazybiosType27DeviceTypeStr and @ref lazybiosType27StatusStr.
+ * `decoded.device_type` and `decoded.status`.
+ *
  *
  * @section type27_relationships Relationships and redundancy
  *
@@ -23,12 +35,14 @@
  * cooling devices in the same redundant unit.
  * A temperature-probe handle of `0xFFFF` is preserved and marked absent.
  *
+ *
  * @section type27_speed Speed and description
  *
  * `nominal_speed` is expressed in revolutions per minute. The raw value
  * `0x8000` means that the speed is unknown or that the device does not rotate.
  * The description field is available in SMBIOS 2.7 and newer when the formatted
  * structure is at least 0Fh bytes long.
+ *
  *
  * @section type27_ownership Ownership
  *

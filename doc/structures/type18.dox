@@ -3,18 +3,29 @@
  *
  * @brief Memory error classification, operation, syndrome, address, and resolution.
  *
- * @section type18_array Array result
  *
- * @ref lazybiosGetType18 returns every
- * @ref SMBIOS_TYPE_32BIT_MEMORY_ERROR_INFORMATION structure and writes the
- * number of structures to `type18_count`. A Type 16 Physical Memory Array can
- * reference one of these records through its error-information handle.
+ * @section type18_selection Result set and ownership
+ *
+ * @ref lazybiosGetType18 returns a @ref lazybiosType18Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType18, or assign it to `ctx->Type18` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`error_granularity`, `error_operation`, `error_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type18_classification Error classification
  *
  * Decode `error_type`, `error_granularity`, and `error_operation` with
- * @ref lazybiosType18ErrorTypeStr, @ref lazybiosType18ErrorGranularityStr, and
- * @ref lazybiosType18ErrorOperationStr.
+ * `decoded.error_type`, `decoded.error_granularity`, and
+ * `decoded.error_operation`.
+ *
  *
  * @section type18_numeric Syndrome and address fields
  *
@@ -24,6 +35,7 @@
  * device. `error_resolution` gives the byte range within which the error can be
  * located. The value `0x80000000` means unknown for both addresses and the
  * resolution. All of these special encodings remain present raw values.
+ *
  *
  * @section type18_ownership Ownership
  *

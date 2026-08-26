@@ -3,19 +3,31 @@
  *
  * @brief Remote-access facility identity and connection policy information.
  *
- * @section type30_array Array result
  *
- * @ref lazybiosGetType30 returns every Out-of-Band Remote Access structure and
- * writes the number of structures to `type30_count`. Each manufacturer string
- * is owned by its parsed structure.
+ * @section type30_selection Result set and ownership
+ *
+ * @ref lazybiosGetType30 returns a @ref lazybiosType30Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType30, or assign it to `ctx->Type30` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`inbound_connection`, `outbound_connection`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type30_connections Connection policy
  *
  * Bit 0 of `connections` identifies whether the facility accepts inbound
  * remote-management connections. Bit 1 identifies whether the facility can
  * initiate outbound connections to an alert-management facility. Decode the
- * states with @ref lazybiosType30InboundConnectionStr and
- * @ref lazybiosType30OutboundConnectionStr. Bits 7 through 2 are reserved.
+ * states with `decoded.inbound_connection` and
+ * `decoded.outbound_connection`. Bits 7 through 2 are reserved.
+ *
  *
  * @section type30_ownership Ownership
  *

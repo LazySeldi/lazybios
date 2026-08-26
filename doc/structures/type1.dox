@@ -3,19 +3,30 @@
  *
  * @brief System identity, UUID, wake-up event, SKU, and family interpretation.
  *
- * @section type1_selection Array result and ownership
  *
- * @ref lazybiosGetType1 returns every @ref SMBIOS_TYPE_SYSTEM structure and
- * writes the number of parsed structures to `type1_count`. Iterate the returned
- * @ref lazybiosType1_t array using that count, and pass the same count to
- * @ref lazybiosFreeType1. When assigned to `ctx->Type1`, the corresponding
- * `ctx->type1_count` is used by @ref lazybiosCleanup.
+ * @section type1_selection Result set and ownership
+ *
+ * @ref lazybiosGetType1 returns a @ref lazybiosType1Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType1, or assign it to `ctx->Type1` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing and stored in `decoded`,
+ * which mirrors the raw member names (`wake_up_type`). The raw value stays
+ * alongside it, so both the encoding and its meaning are available.
+ *
  *
  * @section type1_identity Identity strings
  *
  * Manufacturer, product name, version, and serial number belong to the base
  * structure. SKU number and family require SMBIOS 2.4 or newer. Check each
  * string field with @ref LAZYBIOS_FIELD_STATUS before relying on its value.
+ *
  *
  * @section type1_uuid UUID representation
  *
@@ -28,10 +39,11 @@
  * UUID means that it is not currently present but can be set. Both encodings
  * are preserved in `uuid` and report @ref LAZYBIOS_FIELD_ABSENT.
  *
+ *
  * @section type1_wakeup Wake-up event
  *
  * `wake_up_type` is present in SMBIOS 2.1 and newer. Check it with
- * @ref LAZYBIOS_FIELD_STATUS before calling @ref lazybiosType1WakeupTypeStr.
+ * @ref LAZYBIOS_FIELD_STATUS before calling `decoded.wake_up_type`.
  *
  * @snippet quick_start.c type1-wakeup
  *

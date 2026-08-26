@@ -3,24 +3,37 @@
  *
  * @brief Legacy onboard-device type, enablement, and description information.
  *
- * @section type10_obsolete Obsolete structure
  *
- * Type 10 became obsolete in SMBIOS 2.6 and was replaced by Type 41 Onboard
- * Devices Extended Information. Firmware can provide both structures for
- * compatibility.
+ * @section type10_selection Result set and ownership
+ *
+ * @ref lazybiosGetType10 returns a @ref lazybiosType10Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType10, or assign it to `ctx->Type10` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`device_status`, `device_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type10_array Structures and device entries
  *
  * @ref lazybiosGetType10 returns every Type 10 structure and writes the number
- * of structures to `type10_count`. Each formatted structure contains zero or
+ * result set. Each formatted structure contains zero or
  * more two-byte device entries. `device_count` is derived from the formatted
  * length, and every entry owns its decoded description string.
+ *
  *
  * @section type10_decoding Device type and status
  *
  * Bit 7 of `device_type_and_status` indicates whether the device is enabled;
  * bits 6:0 identify its type. Decode these fields with
- * @ref lazybiosType10DeviceStatusStr and @ref lazybiosType10DeviceTypeStr.
+ * `decoded.device_status` and `decoded.device_type`.
+ *
  *
  * @section type10_ownership Ownership
  *

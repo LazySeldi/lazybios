@@ -3,12 +3,22 @@
  *
  * @brief Installable firmware languages, description format, and current language.
  *
- * @section type13_array Array result
  *
- * @ref lazybiosGetType13 returns every
- * @ref SMBIOS_TYPE_FIRMWARE_LANGUAGE_INFORMATION structure and writes the
- * number of structures to `type13_count`. Pass the same count to
- * @ref lazybiosFreeType13 when cleanup is performed directly.
+ * @section type13_selection Result set and ownership
+ *
+ * @ref lazybiosGetType13 returns a @ref lazybiosType13Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType13, or assign it to `ctx->Type13` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`flags`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type13_languages Language collection
  *
@@ -17,12 +27,14 @@
  * `current_language` member contains a separately allocated copy of the string
  * selected by the one-based Current Language field.
  *
+ *
  * @section type13_format Description format
  *
  * SMBIOS 2.1 added bit 0 of `flags`. A clear bit selects the long format
  * `language|territory|encoding`; a set bit selects the four-character
  * abbreviated language and territory format. Decode this bit with
- * @ref lazybiosType13LanguageFormatStr. Bits 7:1 are reserved.
+ * `decoded.flags`. Bits 7:1 are reserved.
+ *
  *
  * @section type13_ownership Ownership
  *

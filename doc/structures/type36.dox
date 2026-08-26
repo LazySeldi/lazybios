@@ -3,10 +3,18 @@
  *
  * @brief Threshold values for environmental management-device components.
  *
- * @section type36_array Array result
  *
- * @ref lazybiosGetType36 returns every Management Device Threshold Data
- * structure and writes the number of structures to `type36_count`.
+ * @section type36_selection Result set and ownership
+ *
+ * @ref lazybiosGetType36 returns a @ref lazybiosType36Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType36, or assign it to `ctx->Type36` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type36_values Threshold interpretation
  *
@@ -18,6 +26,7 @@
  *
  * A threshold value of `0x8000` means that the threshold is unavailable. The
  * parser preserves this value and marks the field absent.
+ *
  *
  * @section type36_ownership Ownership
  *

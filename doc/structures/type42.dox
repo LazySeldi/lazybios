@@ -3,11 +3,22 @@
  *
  * @brief Management-controller host-interface data and shared protocols.
  *
- * @section type42_array Array result
  *
- * @ref lazybiosGetType42 returns every Management Controller Host Interface
- * structure and writes the number of structures to `type42_count`. Decode the
- * interface classification with @ref lazybiosType42InterfaceTypeStr.
+ * @section type42_selection Result set and ownership
+ *
+ * @ref lazybiosGetType42 returns a @ref lazybiosType42Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType42, or assign it to `ctx->Type42` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`interface_type`, `protocol_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type42_versions Layout revisions
  *
@@ -22,11 +33,12 @@
  * `interface_type_specific_data_size` of four. The newer encoded length,
  * protocol count, and protocol records remain absent.
  *
+ *
  * @section type42_protocols Protocol records
  *
  * Each @ref lazybiosType42ProtocolRecord_t contains a protocol type, its
  * encoded data length, and the corresponding opaque protocol-specific bytes.
- * Decode the type with @ref lazybiosType42ProtocolTypeStr. Protocol-specific
+ * Decode the type with `decoded.protocol_type`. Protocol-specific
  * formats are defined by their respective IPMI, MCTP, Redfish, or OEM
  * specifications and are preserved without reinterpretation.
  *
@@ -34,6 +46,7 @@
  * it. An interface data length below the required four bytes or any truncated
  * protocol record leaves `field_status.protocol_records` absent while
  * preserving available encoded length and count fields.
+ *
  *
  * @section type42_ownership Ownership
  *

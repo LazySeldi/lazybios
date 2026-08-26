@@ -3,19 +3,30 @@
  *
  * @brief Built-in pointing-device classification and interface information.
  *
- * @section type21_array Array result
  *
- * @ref lazybiosGetType21 returns every built-in pointing-device structure and
- * writes the number of structures to `type21_count`. The presence of a Type 21
- * structure describes installed hardware but does not indicate that the device
- * is currently active.
+ * @section type21_selection Result set and ownership
+ *
+ * @ref lazybiosGetType21 returns a @ref lazybiosType21Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType21, or assign it to `ctx->Type21` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`interface`, `pointing_device_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type21_decoding Device decoding
  *
  * Decode `pointing_device_type` with
- * @ref lazybiosType21PointingDeviceTypeStr and `interface` with
- * @ref lazybiosType21InterfaceStr. `number_of_buttons` is the reported physical
+ * `decoded.pointing_device_type` and `interface` with
+ * `decoded.interface`. `number_of_buttons` is the reported physical
  * button count.
+ *
  *
  * @section type21_ownership Ownership
  *

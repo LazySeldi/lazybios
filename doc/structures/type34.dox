@@ -3,23 +3,36 @@
  *
  * @brief Management-device identity, hardware type, address, and addressing method.
  *
- * @section type34_array Array result
  *
- * @ref lazybiosGetType34 returns every Management Device structure and writes
- * the number of structures to `type34_count`. Each description string is owned
- * by its parsed structure.
+ * @section type34_selection Result set and ownership
+ *
+ * @ref lazybiosGetType34 returns a @ref lazybiosType34Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType34, or assign it to `ctx->Type34` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`address_type`, `device_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type34_classification Device and address types
  *
- * Decode `device_type` with @ref lazybiosType34DeviceTypeStr. The enumeration
+ * Decode `device_type` with `decoded.device_type`. The enumeration
  * identifies standard environmental-monitoring devices. Decode `address_type`
- * with @ref lazybiosType34AddressTypeStr to determine how the raw `address`
+ * with `decoded.address_type` to determine how the raw `address`
  * value is interpreted.
+ *
  *
  * @section type34_relationships Managed components
  *
  * Type 35 Management Device Component structures reference a Type 34 structure
  * and associate it with the probes or cooling devices that it controls.
+ *
  *
  * @section type34_ownership Ownership
  *

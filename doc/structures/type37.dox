@@ -3,11 +3,22 @@
  *
  * @brief Memory-channel classification, load limits, and device associations.
  *
- * @section type37_array Array result
  *
- * @ref lazybiosGetType37 returns every Memory Channel structure and writes the
- * number of structures to `type37_count`. Each structure contains a counted
- * array of @ref lazybiosType37MemoryDevice_t entries.
+ * @section type37_selection Result set and ownership
+ *
+ * @ref lazybiosGetType37 returns a @ref lazybiosType37Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType37, or assign it to `ctx->Type37` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`channel_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type37_devices Memory-device entries
  *
@@ -22,6 +33,7 @@
  * formatted structure, `field_status.memory_devices` remains absent and no
  * partial array is returned. An entry handle of `0xFFFF` is preserved and its
  * entry-level field status reports absent.
+ *
  *
  * @section type37_ownership Ownership
  *

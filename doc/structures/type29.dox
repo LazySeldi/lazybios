@@ -3,17 +3,29 @@
  *
  * @brief Current-probe placement, health, range, and measurement precision.
  *
- * @section type29_array Array result
  *
- * @ref lazybiosGetType29 returns every Electrical Current Probe structure and
- * writes the number of structures to `type29_count`. Each description string
- * is owned by its parsed structure.
+ * @section type29_selection Result set and ownership
+ *
+ * @ref lazybiosGetType29 returns a @ref lazybiosType29Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType29, or assign it to `ctx->Type29` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`location`, `status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type29_classification Location and status
  *
  * `location_and_status` combines a five-bit physical location and a three-bit
  * monitored-current status. Decode them independently with
- * @ref lazybiosType29LocationStr and @ref lazybiosType29StatusStr.
+ * `decoded.location` and `decoded.status`.
+ *
  *
  * @section type29_measurement Measurement fields
  *
@@ -23,6 +35,7 @@
  * measurement field, `0x8000` means unknown and remains a present raw value.
  * `nominal_value` is optional and its availability is determined by the
  * formatted structure length.
+ *
  *
  * @section type29_ownership Ownership
  *

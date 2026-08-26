@@ -3,12 +3,17 @@
  *
  * @brief Access and interpret Dell BIOS Flags information.
  *
- * @section dell_type177_selection Array result and ownership
  *
- * @ref lazybiosGetOemDellType177 returns every Dell OEM Type 177 structure and
- * writes the number of parsed structures to `delltype177_count`. Iterate the
- * returned @ref lazybiosOemDellType177_t array using that count, and pass the
- * same count to @ref lazybiosFreeOemDellType177.
+ * @section dell_type177_selection Result set and ownership
+ *
+ * @ref lazybiosGetOemDellType177 returns a @ref lazybiosOemDellType177Array_t holding
+ * every matching structure. Iterate `entries` using `count`. A non-NULL result
+ * whose `count` is zero means the table contains none of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeOemDellType177, or assign it to `ctx->oem->dell->Type177` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the reported `length`.
  *
  * @section dell_type177_fields Fields
  *
@@ -20,11 +25,7 @@
  */
 
 /**
- * @var lazybiosOemDellType177_t* lazybiosCTX::DellType177
+ * @var lazybiosOemDellType177Array_t* lazybiosOemDell_t::Type177
  * @brief Dell OEM Type 177 structures.
  */
 
-/**
- * @var size_t lazybiosCTX::delltype177_count
- * @brief Number of elements in DellType177.
- */

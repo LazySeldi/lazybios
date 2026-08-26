@@ -3,25 +3,34 @@
  *
  * @brief Trusted Platform Module identity, firmware, and capabilities.
  *
- * @section type43_array Array result
  *
- * @ref lazybiosGetType43 returns every TPM Device structure and writes the
- * number of structures to `type43_count`. `vendor_id` contains the four TCG
- * vendor-ID bytes followed by a terminating null byte for direct display.
+ * @section type43_selection Result set and ownership
+ *
+ * @ref lazybiosGetType43 returns a @ref lazybiosType43Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType43, or assign it to `ctx->Type43` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type43_versions Versions and firmware
  *
  * `major_spec_version` and `minor_spec_version` identify the TPM specification
- * supported by the device. @ref lazybiosType43FirmwareVersionStr interprets
+ * supported by the device. `decoded.major_spec_version` interprets
  * the firmware fields according to the major version: TPM 1.x uses the
  * revision bytes in its TPM_VERSION structure, while TPM 2.x uses both
  * vendor-specific 32-bit firmware-version values.
  *
+ *
  * @section type43_characteristics Characteristics
  *
- * @ref lazybiosType43CharacteristicsStr reports when characteristics are not
+ * `decoded.characteristics` reports when characteristics are not
  * supported and otherwise describes firmware-update, platform-software, and
  * OEM mechanisms for changing the TPM family.
+ *
  *
  * @section type43_ownership Ownership
  *

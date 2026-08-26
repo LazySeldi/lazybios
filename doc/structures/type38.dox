@@ -3,29 +3,43 @@
  *
  * @brief IPMI BMC interface, addressing, and interrupt configuration.
  *
- * @section type38_array Array result
  *
- * @ref lazybiosGetType38 returns every IPMI Device Information structure and
- * writes the number of structures to `type38_count`.
+ * @section type38_selection Result set and ownership
+ *
+ * @ref lazybiosGetType38 returns a @ref lazybiosType38Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType38, or assign it to `ctx->Type38` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`base_address_type`, `register_spacing`, `interface_type`, `base_address`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type38_interface Interface information
  *
- * @ref lazybiosType38InterfaceTypeStr decodes the BMC interface type, and
- * @ref lazybiosType38SpecificationRevisionStr formats the packed BCD IPMI
+ * `decoded.interface_type` decodes the BMC interface type, and
+ * `decoded.ipmi_specification_revision` formats the packed BCD IPMI
  * specification revision. An NV storage-device address of `0xFF` indicates
  * that no storage device is present; this encoded value is preserved as a
  * raw value and reports @ref LAZYBIOS_FIELD_ABSENT.
  *
+ *
  * @section type38_address Address and interrupt information
  *
  * The least-significant bit of `base_address` selects I/O or memory-mapped
- * addressing. @ref lazybiosType38BaseAddressTypeStr reports that selection and
- * @ref lazybiosType38BaseAddressValue removes the selection bit while restoring
+ * addressing. `decoded.base_address_type` reports that selection and
+ * `decoded.base_address` removes the selection bit while restoring
  * the actual address bit from the modifier byte.
- * @ref lazybiosType38RegisterSpacingStr decodes register spacing, while
- * @ref lazybiosType38InterruptInfoStr decodes interrupt availability, polarity,
+ * `decoded.register_spacing` decodes register spacing, while
+ * `decoded.base_address_modifier_interrupt_info` decodes interrupt availability, polarity,
  * and trigger mode. The modifier and interrupt-number fields are marked absent
  * when the formatted structure does not contain their offsets.
+ *
  *
  * @section type38_ownership Ownership
  *

@@ -3,12 +3,17 @@
  *
  * @brief Access Dell Indexed I/O Access ports, checksum settings, and token records.
  *
- * @section dell_type212_selection Array result and ownership
  *
- * @ref lazybiosGetOemDellType212 returns every Dell OEM Type 212 structure and
- * writes the number of parsed structures to `delltype212_count`. Iterate the
- * returned @ref lazybiosOemDellType212_t array using that count, and pass the
- * same count to @ref lazybiosFreeOemDellType212.
+ * @section dell_type212_selection Result set and ownership
+ *
+ * @ref lazybiosGetOemDellType212 returns a @ref lazybiosOemDellType212Array_t holding
+ * every matching structure. Iterate `entries` using `count`. A non-NULL result
+ * whose `count` is zero means the table contains none of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeOemDellType212, or assign it to `ctx->oem->dell->Type212` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the reported `length`.
  *
  * @section dell_type212_fields Fields
  *
@@ -28,11 +33,7 @@
  */
 
 /**
- * @var lazybiosOemDellType212_t* lazybiosCTX::DellType212
+ * @var lazybiosOemDellType212Array_t* lazybiosOemDell_t::Type212
  * @brief Dell OEM Type 212 structures.
  */
 
-/**
- * @var size_t lazybiosCTX::delltype212_count
- * @brief Number of elements in DellType212.
- */

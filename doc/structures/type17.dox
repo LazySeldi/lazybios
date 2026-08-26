@@ -3,11 +3,22 @@
  *
  * @brief Memory-slot identity, capacity, speed, technology, voltage, and component IDs.
  *
- * @section type17_array Array result
  *
- * @ref lazybiosGetType17 returns one @ref lazybiosType17_t entry for every
- * @ref SMBIOS_TYPE_MEMORY_DEVICE record. The array can include empty slots as
- * well as installed devices. Retain `type17_count` for iteration and cleanup.
+ * @section type17_selection Result set and ownership
+ *
+ * @ref lazybiosGetType17 returns a @ref lazybiosType17Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType17, or assign it to `ctx->Type17` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`form_factor`, `memory_technology`, `memory_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type17_size Legacy and extended capacity
  *
@@ -20,12 +31,14 @@
  *
  * @snippet quick_start.c type17-size
  *
+ *
  * @section type17_speed Speed fields
  *
  * `speed` and `configured_memory_speed` are the base MT/s fields. SMBIOS 3.3
  * adds extended alternatives for larger values. Use
- * @ref lazybiosType17ExtendedSpeedStr for either extended speed field when its
+ * `decoded.extended_speed` for either extended speed field when its
  * corresponding base representation selects the extended value.
+ *
  *
  * @section type17_identity Identity and placement
  *
@@ -37,13 +50,15 @@
  * also absent for `0xFFFE` (no error structure supplied) and `0xFFFF` (no error
  * detected), while retaining the raw value.
  *
+ *
  * @section type17_classification Classification
  *
- * Decode form factor with @ref lazybiosType17FormFactorStr, memory type with
- * @ref lazybiosType17TypeStr, type-detail flags with
- * @ref lazybiosType17TypeDetailStr, memory technology with
- * @ref lazybiosType17MemoryTechnologyStr, and operating modes with
- * @ref lazybiosType17OperatingModeCapabilityStr.
+ * Decode form factor with `decoded.form_factor`, memory type with
+ * `decoded.memory_type`, type-detail flags with
+ * `decoded.type_detail`, memory technology with
+ * `decoded.memory_technology`, and operating modes with
+ * `decoded.memory_operating_mode_capability`.
+ *
  *
  * @section type17_width_voltage Width and voltage
  *
@@ -51,6 +66,7 @@
  * The minimum, maximum, and configured voltage fields are expressed in mV when
  * present. Check @ref LAZYBIOS_FIELD_STATUS before using any version-dependent
  * value.
+ *
  *
  * @section type17_regions Memory regions and identifiers
  *

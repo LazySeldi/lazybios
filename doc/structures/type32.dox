@@ -3,18 +3,29 @@
  *
  * @brief System boot result codes and status-specific additional data.
  *
- * @section type32_array Array result
  *
- * @ref lazybiosGetType32 returns every System Boot Information structure and
- * writes the number of structures to `type32_count`. SMBIOS requires exactly
- * one structure of this type, but the array result preserves every structure
- * found in the supplied table.
+ * @section type32_selection Result set and ownership
+ *
+ * @ref lazybiosGetType32 returns a @ref lazybiosType32Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType32, or assign it to `ctx->Type32` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`boot_status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type32_status Boot status
  *
  * `boot_status` identifies the reason or result of the previous system boot.
  * Decode standard, reserved, vendor-specific, and product-specific values with
- * @ref lazybiosType32BootStatusStr.
+ * `decoded.boot_status`.
+ *
  *
  * @section type32_additional Additional data
  *
@@ -22,6 +33,7 @@
  * additional bytes. `additional_data_size` reports their length and
  * `additional_data` owns an exact copy. A present zero-length additional-data
  * field has a size of zero and a NULL pointer.
+ *
  *
  * @section type32_ownership Ownership
  *

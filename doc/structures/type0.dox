@@ -3,13 +3,23 @@
  *
  * @brief BIOS identity, ROM capacity, release data, and firmware capability interpretation.
  *
- * @section type0_selection Array result and ownership
  *
- * @ref lazybiosGetType0 returns every @ref SMBIOS_TYPE_BIOS structure and writes
- * the number of parsed structures to `type0_count`. Iterate the returned
- * @ref lazybiosType0_t array using that count, and pass the same count to
- * @ref lazybiosFreeType0. When assigned to `ctx->Type0`, the corresponding
- * `ctx->type0_count` is used by @ref lazybiosCleanup.
+ * @section type0_selection Result set and ownership
+ *
+ * @ref lazybiosGetType0 returns a @ref lazybiosType0Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType0, or assign it to `ctx->Type0` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing and stored in `decoded`,
+ * which mirrors the raw member names (`extended_rom_size`, `extended_rom_size_unit`). The raw value stays
+ * alongside it, so both the encoding and its meaning are available.
+ *
  *
  * @section type0_versions Version-dependent data
  *
@@ -27,23 +37,25 @@
  * the corresponding release component is unavailable. These fields retain
  * their encoded bytes but report @ref LAZYBIOS_FIELD_ABSENT.
  *
+ *
  * @section type0_rom ROM capacity
  *
  * `rom_size` contains the decoded legacy size in KiB when that representation
  * applies. When the legacy byte is `0xFF`, check `extended_rom_size` and use
- * @ref lazybiosType0ExtendedROMSizeU16 to separate its numeric value from the
+ * `decoded.extended_rom_size` to separate its numeric value from the
  * MiB, GiB, or reserved unit encoding.
  * The parser also initializes the `unit` member whenever extended ROM size is
  * selected.
  * A zero `bios_starting_segment` is preserved and marked absent because SMBIOS
  * defines it as not applicable, including on UEFI systems.
  *
+ *
  * @section type0_characteristics Characteristics
  *
- * Use @ref lazybiosType0CharacteristicsStr for the main bit field. The
+ * Use `decoded.characteristics` for the main bit field. The
  * extension array can contain multiple bytes; use
- * @ref lazybiosType0CharacteristicsExtByte1Str and
- * @ref lazybiosType0CharacteristicsExtByte2Str only when the corresponding
+ * `decoded.characteristics_ext_byte1` and
+ * `decoded.characteristics_ext_byte2` only when the corresponding
  * byte exists according to `firmware_char_ext_bytes_count`.
  *
  * @snippet quick_start.c type0-decode

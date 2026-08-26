@@ -3,11 +3,18 @@
  *
  * @brief Supplemental values and descriptions for fields in other structures.
  *
- * @section type40_array Array result
  *
- * @ref lazybiosGetType40 returns every Additional Information structure and
- * writes the number of structures to `type40_count`. Each structure contains a
- * counted array of @ref lazybiosType40Entry_t records.
+ * @section type40_selection Result set and ownership
+ *
+ * @ref lazybiosGetType40 returns a @ref lazybiosType40Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType40, or assign it to `ctx->Type40` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type40_entries Entry interpretation
  *
@@ -26,6 +33,7 @@
  * entry is incomplete, `field_status.additional_information_entries` remains
  * absent and no partial array is exposed. The encoded entry count remains
  * present when its byte was available.
+ *
  *
  * @section type40_ownership Ownership
  *

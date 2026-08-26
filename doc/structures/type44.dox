@@ -3,19 +3,29 @@
  *
  * @brief Architecture-specific processor data associated with Type 4 records.
  *
- * @section type44_array Array result
  *
- * @ref lazybiosGetType44 returns every Processor Additional Information
- * structure and writes the number of structures to `type44_count`. Multiple
- * Type 44 structures can reference the same Type 4 processor handle when
- * different cores or architecture-specific subtypes require separate data.
+ * @section type44_selection Result set and ownership
+ *
+ * @ref lazybiosGetType44 returns a @ref lazybiosType44Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType44, or assign it to `ctx->Type44` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`processor_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type44_block Processor-specific block
  *
  * `referenced_handle` identifies the associated Type 4 structure.
  * `block_length` is the encoded length of `processor_specific_data`, and
  * `processor_type` selects the architecture decoded by
- * @ref lazybiosType44ProcessorTypeStr.
+ * `decoded.processor_type`.
  * A referenced handle of `0xFFFF` is preserved and marked absent.
  *
  * Processor-specific formats are maintained by architecture workgroups and
@@ -23,6 +33,7 @@
  * single architecture layout. If the declared data length exceeds the
  * formatted structure, `field_status.processor_specific_data` remains absent
  * while the available block length and processor type remain accessible.
+ *
  *
  * @section type44_ownership Ownership
  *

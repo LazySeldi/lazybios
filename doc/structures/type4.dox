@@ -3,33 +3,47 @@
  *
  * @brief Processor identity, socket, status, voltage, cache handles, and topology counts.
  *
- * @section type4_array Array result
  *
- * @ref lazybiosGetType4 returns every @ref SMBIOS_TYPE_PROCESSOR structure as
- * an array of @ref lazybiosType4_t. Retain the returned count for iteration and
- * @ref lazybiosFreeType4.
+ * @section type4_selection Result set and ownership
+ *
+ * @ref lazybiosGetType4 returns a @ref lazybiosType4Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType4, or assign it to `ctx->Type4` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`processor_family`, `processor_family_2`, `processor_type`, `processor_upgrade`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type4_identity Identity and family
  *
  * Processor manufacturer, version, ID, serial number, asset tag, and part
- * number are preserved from SMBIOS. Use @ref lazybiosType4ProcessorFamilyStr
+ * number are preserved from SMBIOS. Use `decoded.processor_family`
  * with `processor_family_2` when `processor_family` is `0xFE`; otherwise use the
  * 8-bit `processor_family` value. The extended family field requires SMBIOS
  * 2.6 or newer.
+ *
  *
  * @section type4_socket Socket information
  *
  * `socket_designation` is the installed socket label. `processor_upgrade` is
  * the enumerated upgrade/socket form decoded by
- * @ref lazybiosType4SocketTypeStr. The separate `socket_type` string is an
+ * `decoded.processor_upgrade`. The separate `socket_type` string is an
  * SMBIOS 3.8 field and must not be confused with `processor_upgrade`.
+ *
  *
  * @section type4_status Status and voltage
  *
- * @ref lazybiosType4StatusStr reports socket population and processor status.
- * @ref lazybiosType4VoltageStr handles both current-voltage and supported-
- * voltage encodings. @ref lazybiosType4CharacteristicsStr decodes the processor
+ * `decoded.status` reports socket population and processor status.
+ * `decoded.voltage` handles both current-voltage and supported-
+ * voltage encodings. `decoded.processor_characteristics` decodes the processor
  * characteristics bit field.
+ *
  *
  * @section type4_counts Topology counts
  *
@@ -38,6 +52,7 @@
  * field.
  *
  * @snippet quick_start.c type4-counts
+ *
  *
  * @section type4_cache Cache handles
  *

@@ -3,19 +3,28 @@
  *
  * @brief Automatic reset configuration, limits, and watchdog timing.
  *
- * @section type23_array Array result
  *
- * @ref lazybiosGetType23 returns every System Reset structure and writes the
- * number of structures to `type23_count`.
+ * @section type23_selection Result set and ownership
+ *
+ * @ref lazybiosGetType23 returns a @ref lazybiosType23Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType23, or assign it to `ctx->Type23` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type23_capabilities Capabilities
  *
  * `capabilities` reports whether automatic reset is enabled, whether a
  * watchdog timer is present, the boot action after a watchdog reset, and the
  * boot action after the reset limit is reached. Decode the complete bit field
- * with @ref lazybiosType23CapabilitiesStr. The two boot actions are also
- * available separately through @ref lazybiosType23BootOptionStr and
- * @ref lazybiosType23BootOptionOnLimitStr.
+ * with `decoded.capabilities`. The two boot actions are also
+ * available separately through `decoded.capabilities` and
+ * `decoded.capabilities`.
+ *
  *
  * @section type23_limits Counters and timers
  *
@@ -23,6 +32,7 @@
  * `timeout` are expressed in minutes. For each of these 16-bit fields,
  * `0xFFFF` means unknown. It remains a present specification value and is not
  * used to represent an absent field.
+ *
  *
  * @section type23_ownership Ownership
  *

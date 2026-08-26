@@ -3,26 +3,39 @@
  *
  * @brief Onboard-device identity, status, instance, and bus location.
  *
- * @section type41_array Array result
  *
- * @ref lazybiosGetType41 returns one structure per onboard device function and
- * writes the number of structures to `type41_count`. Multi-function devices
- * can therefore have multiple Type 41 structures associated through Type 14.
+ * @section type41_selection Result set and ownership
+ *
+ * @ref lazybiosGetType41 returns a @ref lazybiosType41Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType41, or assign it to `ctx->Type41` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`device_status`, `device_type`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type41_identity Device identity
  *
  * `reference_designation` normally contains the board silkscreen label.
- * Decode `device_type_and_status` with @ref lazybiosType41DeviceTypeStr and
- * @ref lazybiosType41DeviceStatusStr. `device_type_instance` identifies the
+ * Decode `device_type_and_status` with `decoded.device_type` and
+ * `decoded.device_status`. `device_type_instance` identifies the
  * ordering of devices that have the same onboard-device type.
+ *
  *
  * @section type41_bus Bus location
  *
  * PCI-family devices provide a segment group, bus number, and packed device
- * and function number. Use @ref lazybiosType41DeviceFunctionStr for the packed
+ * and function number. Use `decoded.device_function_number` for the packed
  * byte. Devices without applicable PCI bus information use the specification's
  * all-ones encodings; these values are preserved as present data and decode as
  * not applicable where supported.
+ *
  *
  * @section type41_ownership Ownership
  *

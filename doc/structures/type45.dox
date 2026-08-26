@@ -3,24 +3,35 @@
  *
  * @brief Firmware component inventory, state, and structure associations.
  *
- * @section type45_array Array result
  *
- * @ref lazybiosGetType45 returns one entry for every firmware component and
- * writes the number of entries to `type45_count`. Each entry can describe
- * platform firmware, management-controller firmware, or firmware belonging to
- * another device represented in the SMBIOS table.
+ * @section type45_selection Result set and ownership
+ *
+ * @ref lazybiosGetType45 returns a @ref lazybiosType45Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType45, or assign it to `ctx->Type45` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`firmware_id_format`, `state`, `version_format`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type45_formats Version and identifier formats
  *
  * `version_format` applies to both `firmware_version` and
  * `lowest_supported_firmware_version`. Decode it with
- * @ref lazybiosType45VersionFormatStr. Decode `firmware_id_format` with
- * @ref lazybiosType45FirmwareIDFormatStr before interpreting `firmware_id`.
+ * `decoded.version_format`. Decode `firmware_id_format` with
+ * `decoded.firmware_id_format` before interpreting `firmware_id`.
  *
  * `image_size` is measured in bytes. The raw value
  * `0xFFFFFFFFFFFFFFFF` means that the image size is unknown. It remains a
  * present field because this value is defined by SMBIOS rather than used as
  * LazyBIOS field-availability metadata.
+ *
  *
  * @section type45_associations Associated components
  *
@@ -33,6 +44,7 @@
  * If the declared handle list extends beyond the formatted structure,
  * `field_status.associated_component_handles` remains absent. A zero count is
  * valid and produces a present list with no allocated elements.
+ *
  *
  * @section type45_ownership Ownership
  *

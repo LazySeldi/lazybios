@@ -3,11 +3,18 @@
  *
  * @brief Date and time fields for the next scheduled system power-on.
  *
- * @section type25_array Array result
  *
- * @ref lazybiosGetType25 returns every System Power Controls structure and
- * writes the number of structures to `type25_count`. The presence of this
- * structure indicates that timed system power-on is available.
+ * @section type25_selection Result set and ownership
+ *
+ * @ref lazybiosGetType25 returns a @ref lazybiosType25Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType25, or assign it to `ctx->Type25` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type25_schedule Scheduled power-on
  *
@@ -17,9 +24,10 @@
  * invalid BCD digit or a value outside its field range does not constrain that
  * schedule component.
  *
- * @ref lazybiosType25NextScheduledPowerOnStr validates each component and
+ * `decoded.next_scheduled_power_on` validates each component and
  * formats the result as `MM-DD HH:MM:SS`. Unspecified, absent, or invalid
  * components are represented by `*`.
+ *
  *
  * @section type25_ownership Ownership
  *

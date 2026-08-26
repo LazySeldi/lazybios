@@ -3,24 +3,36 @@
  *
  * @brief System power-supply identity, capacity, state, and component associations.
  *
- * @section type39_array Array result
  *
- * @ref lazybiosGetType39 returns one structure for each possible system power
- * supply and writes the number of structures to `type39_count`. All returned
- * strings are owned by their parsed structure.
+ * @section type39_selection Result set and ownership
+ *
+ * @ref lazybiosGetType39 returns a @ref lazybiosType39Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType39, or assign it to `ctx->Type39` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`input_voltage_range_switching`, `power_supply_type`, `status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type39_characteristics Characteristics
  *
  * The `power_supply_characteristics` word contains the DMTF power-supply type,
  * operational status, input-voltage range switching method, and unplugged,
  * present, and hot-replaceable flags. Decode these values with
- * @ref lazybiosType39PowerSupplyTypeStr, @ref lazybiosType39StatusStr,
- * @ref lazybiosType39InputVoltageRangeSwitchingStr, and
- * @ref lazybiosType39CharacteristicsFlagsStr.
+ * `decoded.power_supply_type`, `decoded.status`,
+ * `decoded.input_voltage_range_switching`, and
+ * `decoded.power_supply_characteristics`.
  *
  * `max_power_capacity` is the maximum sustained output in watts. The encoded
  * value `0x8000` means that the capacity is unknown; LazyBIOS preserves that
  * value as present data.
+ *
  *
  * @section type39_handles Component handles
  *
@@ -28,6 +40,7 @@
  * an input voltage probe (Type 26), cooling device (Type 27), and input current
  * probe (Type 29). Each handle remains absent when its bytes are not included
  * in the formatted structure or when its encoded value is `0xFFFF`.
+ *
  *
  * @section type39_ownership Ownership
  *

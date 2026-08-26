@@ -3,28 +3,41 @@
  *
  * @brief Chassis identity, state, security, contained elements, and rack data.
  *
- * @section type3_array Array result
  *
- * @ref lazybiosGetType3 returns all @ref SMBIOS_TYPE_CHASSIS structures as an
- * array. Retain `type3_count` and pass it to @ref lazybiosFreeType3 for direct
- * cleanup.
+ * @section type3_selection Result set and ownership
+ *
+ * @ref lazybiosGetType3 returns a @ref lazybiosType3Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType3, or assign it to `ctx->Type3` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`boot_up_state`, `power_supply_state`, `thermal_state`, `security_status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type3_type Chassis type and lock
  *
  * The low seven bits of `type` select the enclosure type. Bit 7 indicates that
- * a chassis lock is present. @ref lazybiosType3TypeStr decodes both parts.
+ * a chassis lock is present. `decoded.type` decodes both parts.
  *
  * @snippet quick_start.c type3-description
+ *
  *
  * @section type3_state State and security
  *
  * Boot-up, power-supply, and thermal fields share the state decoder
- * @ref lazybiosType3StateStr. Security status uses
- * @ref lazybiosType3SecurityStatusStr. These fields require SMBIOS 2.1 or newer
+ * `decoded.boot_up_state`. Security status uses
+ * `decoded.security_status`. These fields require SMBIOS 2.1 or newer
  * and otherwise report @ref LAZYBIOS_FIELD_ABSENT through their field status.
  * A zero legacy height or power-cord count means unspecified and reports
  * absent. Legacy height `0xFF` also reports absent because it selects the
  * SMBIOS 3.9 rack-height field.
+ *
  *
  * @section type3_elements Contained elements
  *
@@ -32,12 +45,13 @@
  * `contained_element_count * contained_element_record_length` bytes. The first
  * byte of each record identifies either an SMBIOS structure type or a baseboard
  * type and can be decoded with
- * @ref lazybiosType3ContainedElementTypeStr. Preserve the declared record
+ * `decoded.contained_elements`. Preserve the declared record
  * length when advancing because later SMBIOS revisions can extend a record.
  * A zero element count leaves the array absent and requires a zero record
  * length. For a nonzero count, the parser requires the specification's minimum
  * three-byte record length and the complete declared array before exposing the
  * records or locating fields that follow them.
+ *
  *
  * @section type3_rack Rack fields
  *

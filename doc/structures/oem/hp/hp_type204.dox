@@ -6,14 +6,17 @@
  * @note Experimental: this HP OEM type has not been tested with real hardware
  * dumps.
  *
- * @section hp_type204_selection Array result and ownership
  *
- * @ref lazybiosGetOemHpType204 returns every HP OEM Type 204 structure and
- * writes the number of parsed structures to `hptype204_count`. Iterate the
- * returned @ref lazybiosOemHpType204_t array using that count, and pass the
- * same count to @ref lazybiosFreeOemHpType204. When assigned to
- * `ctx->HpType204`, @ref lazybiosCleanup releases the array using
- * `ctx->hptype204_count`.
+ * @section hp_type204_selection Result set and ownership
+ *
+ * @ref lazybiosGetOemHpType204 returns a @ref lazybiosOemHpType204Array_t holding
+ * every matching structure. Iterate `entries` using `count`. A non-NULL result
+ * whose `count` is zero means the table contains none of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeOemHpType204, or assign it to `ctx->oem->hp->Type204` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the reported `length`.
  *
  * @section hp_type204_fields Fields
  *
@@ -30,12 +33,8 @@
  */
 
 /**
- * @var lazybiosOemHpType204_t* lazybiosCTX::HpType204
+ * @var lazybiosOemHpType204Array_t* lazybiosOemHp_t::Type204
  * @brief HP OEM Type 204 structures.
  * @warning Experimental and untested.
  */
 
-/**
- * @var size_t lazybiosCTX::hptype204_count
- * @brief Number of elements in HpType204.
- */

@@ -3,17 +3,29 @@
  *
  * @brief Temperature-probe placement, health, range, and measurement precision.
  *
- * @section type28_array Array result
  *
- * @ref lazybiosGetType28 returns every Temperature Probe structure and writes
- * the number of structures to `type28_count`. Each description string is owned
- * by its parsed structure.
+ * @section type28_selection Result set and ownership
+ *
+ * @ref lazybiosGetType28 returns a @ref lazybiosType28Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType28, or assign it to `ctx->Type28` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`location`, `status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type28_classification Location and status
  *
  * `location_and_status` combines a five-bit physical location and a three-bit
  * monitored-temperature status. Decode them independently with
- * @ref lazybiosType28LocationStr and @ref lazybiosType28StatusStr.
+ * `decoded.location` and `decoded.status`.
+ *
  *
  * @section type28_measurement Measurement fields
  *
@@ -26,6 +38,7 @@
  * percent. For the other 16-bit measurement fields, the raw value `0x8000`
  * likewise means unknown and remains present. `nominal_value` is optional and
  * its availability is determined by the formatted structure length.
+ *
  *
  * @section type28_ownership Ownership
  *

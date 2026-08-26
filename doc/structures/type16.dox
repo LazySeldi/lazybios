@@ -3,28 +3,40 @@
  *
  * @brief Physical memory array placement, purpose, capacity, and error handling.
  *
- * @section type16_array Array result
  *
- * @ref lazybiosGetType16 returns every
- * @ref SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY structure and writes the number of
- * structures to `type16_count`. Each Type 17 Memory Device references its
- * owning Type 16 structure by handle.
+ * @section type16_selection Result set and ownership
+ *
+ * @ref lazybiosGetType16 returns a @ref lazybiosType16Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType16, or assign it to `ctx->Type16` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`location`, `maximum_capacity`, `memory_error_correction`, `use`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type16_classification Location, use, and correction
  *
  * Decode `location`, `use`, and `memory_error_correction` with
- * @ref lazybiosType16LocationStr, @ref lazybiosType16UseStr, and
- * @ref lazybiosType16MemoryErrorCorrectionStr. These values describe the
+ * `decoded.location`, `decoded.use`, and
+ * `decoded.memory_error_correction`. These values describe the
  * physical placement, function, and primary hardware error handling of the
  * complete array.
+ *
  *
  * @section type16_capacity Capacity fields
  *
  * `maximum_capacity` is expressed in KiB. The value `0x80000000` selects the
  * SMBIOS 2.7 `extended_maximum_capacity` field, which is expressed in bytes.
- * @ref lazybiosType16MaximumCapacityBytes applies this selection and returns a
+ * `decoded.maximum_capacity` applies this selection and returns a
  * byte count. Extended capacity is encoded but unused when the legacy field is
  * not `0x80000000`.
+ *
  *
  * @section type16_error Error information handle
  *
@@ -33,6 +45,7 @@
  * structure. `0xFFFF` means that no error was detected. Both values are
  * preserved and report @ref LAZYBIOS_FIELD_ABSENT because neither references
  * an error-information structure.
+ *
  *
  * @section type16_ownership Ownership
  *

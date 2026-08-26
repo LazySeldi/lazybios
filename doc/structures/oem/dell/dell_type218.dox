@@ -1,0 +1,51 @@
+/**
+ * @page dell_type218_guide Dell OEM Type 218: Dell Token Interface Guide
+ *
+ * @brief Access the Dell Token Interface command port, command classes, and token records.
+ *
+ *
+ * @section dell_type218_selection Result set and ownership
+ *
+ * @ref lazybiosGetOemDellType218 returns a @ref lazybiosOemDellType218Array_t holding
+ * every matching structure. Iterate `entries` using `count`. A non-NULL result
+ * whose `count` is zero means the table contains none of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeOemDellType218, or assign it to `ctx->oem->dell->Type218` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the reported `length`.
+ *
+ * @section dell_type218_fields Fields
+ *
+ * - `command_io_address`: I/O port address used to issue token commands.
+ * - `command_io_code`: Value written to the command port to trigger a command.
+ * - `supported_command_classes_bitmap`: Bitmap of the command classes the
+ *   firmware implements.
+ * - `tokens`: Variable-length array of token records. Each record contains a
+ *   `token_id`, a `location`, and a `value`, all 16-bit.
+ *
+ * Check the corresponding `field_status` member before using each fixed field
+ * or the token array, and iterate `tokens` using `token_count`.
+ *
+ *
+ * @section dell_type218_tokens Token list and terminator
+ *
+ * Token records are six bytes each and begin at offset `0x0B`, so the encoded
+ * count is `(length - 0x0B) / 6`. The final record is normally a terminator
+ * rather than real data.
+ *
+ * lazybios drops that trailing record only when it matches the terminator
+ * pattern, so a structure whose last record contains real data keeps it. This
+ * differs from <a href="https://www.nongnu.org/dmidecode/">dmidecode</a>, which
+ * always drops the last record. On firmware that terminates its token list the
+ * two agree exactly; where they differ, lazybios reports the extra record.
+ *
+ * @see @ref api_dell_type218
+ * @see @ref dell_type212_guide
+ */
+
+/**
+ * @var lazybiosOemDellType218Array_t* lazybiosOemDell_t::Type218
+ * @brief Dell OEM Type 218 structures.
+ */
+

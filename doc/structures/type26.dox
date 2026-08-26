@@ -3,17 +3,29 @@
  *
  * @brief Voltage-probe placement, health, range, and measurement precision.
  *
- * @section type26_array Array result
  *
- * @ref lazybiosGetType26 returns every Voltage Probe structure and writes the
- * number of structures to `type26_count`. Each description string is owned by
- * its parsed structure.
+ * @section type26_selection Result set and ownership
+ *
+ * @ref lazybiosGetType26 returns a @ref lazybiosType26Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType26, or assign it to `ctx->Type26` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`location`, `status`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type26_classification Location and status
  *
  * `location_and_status` combines a five-bit physical location and a three-bit
  * monitored-voltage status. Decode them independently with
- * @ref lazybiosType26LocationStr and @ref lazybiosType26StatusStr.
+ * `decoded.location` and `decoded.status`.
+ *
  *
  * @section type26_measurement Measurement fields
  *
@@ -23,6 +35,7 @@
  * `0x8000` means unknown and remains a present raw value. `nominal_value` is an
  * optional field whose availability is determined by the formatted structure
  * length.
+ *
  *
  * @section type26_ownership Ownership
  *

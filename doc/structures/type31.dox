@@ -3,11 +3,18 @@
  *
  * @brief Boot Integrity Services entry-point addresses and structure validation.
  *
- * @section type31_array Array result
  *
- * @ref lazybiosGetType31 returns every Boot Integrity Services Entry Point
- * structure and writes the number of structures to `type31_count`. SMBIOS
- * defines this structure as optional.
+ * @section type31_selection Result set and ownership
+ *
+ * @ref lazybiosGetType31 returns a @ref lazybiosType31Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType31, or assign it to `ctx->Type31` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type31_entry_points Entry points
  *
@@ -16,6 +23,7 @@
  * structure has a formatted length of at least 1Ch and nonzero entry-point
  * addresses.
  *
+ *
  * @section type31_checksum Checksum
  *
  * `checksum` contains the encoded structure-level checksum. When the complete
@@ -23,6 +31,7 @@
  * only when the sum of every formatted byte evaluates to zero modulo 256. The
  * parser preserves structures with invalid checksums so callers can inspect
  * their raw fields.
+ *
  *
  * @section type31_ownership Ownership
  *

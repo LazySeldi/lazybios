@@ -3,26 +3,36 @@
  *
  * @brief Address ranges mapped to physical memory arrays.
  *
- * @section type19_array Array result
  *
- * @ref lazybiosGetType19 returns one structure for each contiguous address
- * range mapped to a Type 16 Physical Memory Array and writes the number of
- * structures to `type19_count`. `memory_array_handle` identifies the owning
- * Type 16 structure, and `partition_width` reports the number of memory devices
- * that form one row in the described partition.
+ * @section type19_selection Result set and ownership
+ *
+ * @ref lazybiosGetType19 returns a @ref lazybiosType19Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType19, or assign it to `ctx->Type19` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
+ *
+ * Encoded fields are decoded during parsing into `decoded`, which mirrors the
+ * raw member names (`ending_address`, `starting_address`). The raw value stays alongside it, so both
+ * the encoding and its meaning are available.
  *
  * @section type19_address Address fields
  *
  * Legacy `starting_address` and `ending_address` values are expressed in KiB.
  * The ending value identifies the last KiB in the inclusive range. When both
  * legacy values are `0xFFFFFFFF`, the SMBIOS 2.7 extended fields contain the
- * actual inclusive byte addresses. @ref lazybiosType19StartingAddressBytes and
- * @ref lazybiosType19EndingAddressBytes select the applicable representation
+ * actual inclusive byte addresses. `decoded.starting_address` and
+ * `decoded.ending_address` select the applicable representation
  * and return byte addresses.
  *
  * A zero extended field is encoded but unused when its corresponding legacy
  * field is not `0xFFFFFFFF`. Field availability remains separate from these
  * specification values through @ref LAZYBIOS_FIELD_STATUS.
+ *
  *
  * @section type19_ownership Ownership
  *

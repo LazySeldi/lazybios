@@ -3,11 +3,18 @@
  *
  * @brief Component grouping, hierarchy, and nested association records.
  *
- * @section type14_array Array result
  *
- * @ref lazybiosGetType14 returns every @ref SMBIOS_TYPE_GROUP_ASSOCIATIONS
- * structure and writes the number of structures to `type14_count`. Multiple
- * Type 14 structures can describe separate groups or reference another group.
+ * @section type14_selection Result set and ownership
+ *
+ * @ref lazybiosGetType14 returns a @ref lazybiosType14Array_t holding every
+ * matching structure. Iterate `entries` using `count`. A non-NULL result whose
+ * `count` is zero means the table contains no structure of this type; NULL means
+ * the arguments were unusable or an allocation failed. Release the set with
+ * @ref lazybiosFreeType14, or assign it to `ctx->Type14` and let
+ * @ref lazybiosCleanup own it.
+ *
+ * Every record carries its own SMBIOS `handle` and the structure `length` the
+ * firmware reported.
  *
  * @section type14_items Group members
  *
@@ -21,6 +28,7 @@
  * the formatted length using `(Length - 5) / 3`. The count and array are marked
  * absent when the formatted length cannot contain an exact number of three-byte
  * item records.
+ *
  *
  * @section type14_ownership Ownership
  *
