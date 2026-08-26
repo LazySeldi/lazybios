@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(lazybios
-        VERSION 2.0.0
+        VERSION 3.0.0
         DESCRIPTION "Lightweight SMBIOS/DMI parsing library"
         LANGUAGES C
         HOMEPAGE_URL "https://github.com/LazySeldi/lazybios"
@@ -15,6 +15,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 include(GNUInstallDirs)
+
+file(GLOB OEM_SOURCES "src/structures/oem/*/*.c")
 
 set(LAZYBIOS_SOURCES
         src/backend.c
@@ -66,9 +68,7 @@ set(LAZYBIOS_SOURCES
         src/structures/type44.c
         src/structures/type45.c
         src/structures/type46.c
-        src/structures/oem/hp/hp_type204.c
-        src/structures/oem/dell/dell_type177.c
-        src/structures/oem/dell/dell_type212.c
+        ${OEM_SOURCES}
         src/json/cJSON.c
         src/json/lazybios_json.c
 )
@@ -177,7 +177,6 @@ add_executable(lazybios_test test/test.c test/test_oem.c)
 target_compile_definitions(lazybios_test PRIVATE TEST_OEM_NO_MAIN)
 
 # OEM FIELDS
-file(GLOB OEM_SOURCES "src/structures/oem/*/*.c")
 target_sources(lazybios PRIVATE ${OEM_SOURCES})
 file(GLOB OEM_TEST_SOURCES "test/oem/*/*.c")
 target_sources(lazybios_test PRIVATE ${OEM_TEST_SOURCES})
@@ -257,6 +256,20 @@ message(STATUS "Installation Path: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Backend Selected:  ${SELECTED_BACKEND}")
 message(STATUS "")
 message(STATUS "Build targets:")
+# Documentation. The version is injected here so the Doxyfile holds only one
+# copy of the project's settings and none of its version.
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    add_custom_target(docs
+            COMMAND ${CMAKE_COMMAND} -E echo "Generating documentation for ${PROJECT_NAME} ${PROJECT_VERSION}"
+            COMMAND ${CMAKE_COMMAND} -DDOXYFILE=${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+                    -DVERSION=${PROJECT_VERSION} -DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}
+                    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake-files/RunDoxygen.cmake
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Running Doxygen"
+            VERBATIM)
+endif()
+
 message(STATUS "  make           - Build library, tests, and extensions")
 message(STATUS "  make test      - Run automated tests")
 message(STATUS "  make install   - Install library and headers")
