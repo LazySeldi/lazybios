@@ -29,6 +29,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Logging system for lazybios
@@ -94,6 +95,44 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 	*len += ((size_t)written >= remaining) ? remaining - 1 : (size_t)written;
 }
 
+/**
+ * @brief Scratch buffer size for the file-local decoders.
+ *
+ * The longest decoding in the corpus is a Type 0 characteristics list at just
+ * over 500 bytes, so this leaves generous headroom; the decoded text is copied
+ * to an exact-sized allocation afterwards.
+ */
+#define LAZYBIOS_DECODER_BUF_SIZE 1024
+
+/**
+ * @brief Duplicates a NUL-terminated string with malloc.
+ *
+ * strdup is POSIX rather than C99, so the parsers use this when storing a
+ * decoded string that the record owns.
+ *
+ * @param src String to copy, may be NULL.
+ * @return Newly allocated copy, or NULL on failure or a NULL input.
+ */
+static inline char* lazybiosDup(const char* src) {
+	if (!src) return NULL;
+	size_t n = strlen(src) + 1;
+	char* out = malloc(n);
+	if (out) memcpy(out, src, n);
+	return out;
+}
+
+/** @brief Size of an SMBIOS structure header (type, length, handle). */
+#define SMBIOS_HEADER_SIZE 4
+
+/** @brief Absolute path to the Linux sysfs SMBIOS entry point. */
+#define LINUX_SYSFS_SMBIOS_ENTRY "/sys/firmware/dmi/tables/smbios_entry_point"
+
+/** @brief Absolute path to the Linux sysfs DMI table. */
+#define LINUX_SYSFS_DMI_TABLE "/sys/firmware/dmi/tables/DMI"
+
+/** @brief Absolute path to the physical memory device. */
+#define DEV_MEM "/dev/mem"
+
 #define SMBIOS_TYPE_BIOS 0
 #define SMBIOS_TYPE_SYSTEM 1
 #define SMBIOS_TYPE_BASEBOARD 2
@@ -150,6 +189,7 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 // DELL
 #define SMBIOS_OEM_DELL_TYPE177 177
 #define SMBIOS_OEM_DELL_TYPE212 212
+#define SMBIOS_OEM_DELL_TYPE218 218
 
 
 #define SMBIOS3_ANCHOR                 "_SM3_"
@@ -190,17 +230,17 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 
 /** @brief Marks a parsed structure field as present and valid. */
 #define LAZYBIOS_MARK_PRESENT(record, field) do { \
-    (record)->field_status.field = LAZYBIOS_FIELD_PRESENT; \
+    (record)->field_status.field = (lazybiosFieldStatus_t)LAZYBIOS_FIELD_PRESENT; \
 } while (0)
 
 /** @brief Marks a parsed structure field as absent. */
 #define LAZYBIOS_MARK_ABSENT(record, field) do { \
-    (record)->field_status.field = LAZYBIOS_FIELD_ABSENT; \
+    (record)->field_status.field = (lazybiosFieldStatus_t)LAZYBIOS_FIELD_ABSENT; \
 } while (0)
 
 /** @brief Marks a parsed structure field as unreachable (structure too short for newer spec version). */
 #define LAZYBIOS_MARK_UNREACHABLE(record, field) do { \
-    (record)->field_status.field = LAZYBIOS_FIELD_UNREACHABLE; \
+    (record)->field_status.field = (lazybiosFieldStatus_t)LAZYBIOS_FIELD_UNREACHABLE; \
 } while (0)
 
 /** @brief Clamps a structure length against available buffer boundaries. */
