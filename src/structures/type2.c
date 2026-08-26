@@ -30,7 +30,7 @@
 static size_t lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len);
 
 /* File-local decoders; their results are stored in each record's `decoded`. */
-const char* lazybiosType2BoardTypeStr(uint8_t board_type);
+static const char* lazybiosType2BoardTypeStr(uint8_t board_type);
 
 // Fields
 #define MANUFACTURER 0x04
@@ -170,7 +170,7 @@ static size_t lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, siz
 }
 
 // Board Type
-const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
+static const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 	switch (board_type) {
 		case BOARD_TYPE_UNKNOWN:
 			return "Unknown";

@@ -31,6 +31,7 @@ static size_t lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, c
 static size_t lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len);
 
 /* File-local decoders; their results are stored in each record's `decoded`. */
+static const char* lazybiosType3BoardTypeStr(uint8_t board_type);
 static inline const char* lazybiosType3StateStr(uint8_t state);
 static inline const char* lazybiosType3SecurityStatusStr(uint8_t security_status);
 
@@ -54,6 +55,21 @@ static inline const char* lazybiosType3SecurityStatusStr(uint8_t security_status
 #define RACK_TYPE(n, m) (0x16 + (n * m))
 #define RACK_HEIGHT(n, m) (0x17 + (n * m))
 
+
+// Board Type
+#define BOARD_TYPE_UNKNOWN 0x01
+#define BOARD_TYPE_OTHER 0x02
+#define BOARD_TYPE_SERVER_BLADE 0x03
+#define BOARD_TYPE_CONNECTIVITY_SWITCH 0x04
+#define BOARD_TYPE_SYSTEM_MANAGEMENT_MODULE 0x05
+#define BOARD_TYPE_PROCESSOR_MODULE 0x06
+#define BOARD_TYPE_IO_MODULE 0x07
+#define BOARD_TYPE_MEMORY_MODULE 0x08
+#define BOARD_TYPE_DAUGHTER_BOARD 0x09
+#define BOARD_TYPE_MOTHERBOARD 0x0A
+#define BOARD_TYPE_PROCESSOR_MEMORY_MODULE 0x0B
+#define BOARD_TYPE_PROCESSOR_IO_MODULE 0x0C
+#define BOARD_TYPE_INTERCONNECT_BOARD 0x0D
 
 // Chassis Type
 #define CHASSIS_TYPE_OTHER 0x01
@@ -450,6 +466,40 @@ static inline const char* lazybiosType3SecurityStatusStr(uint8_t security_status
 	}
 }
 
+// Board Type
+static const char* lazybiosType3BoardTypeStr(uint8_t board_type) {
+	switch (board_type) {
+		case BOARD_TYPE_UNKNOWN:
+			return "Unknown";
+		case BOARD_TYPE_OTHER:
+			return "Other";
+		case BOARD_TYPE_SERVER_BLADE:
+			return "Server Blade";
+		case BOARD_TYPE_CONNECTIVITY_SWITCH:
+			return "Connectivity Switch";
+		case BOARD_TYPE_SYSTEM_MANAGEMENT_MODULE:
+			return "System Management Module";
+		case BOARD_TYPE_PROCESSOR_MODULE:
+			return "Processor Module";
+		case BOARD_TYPE_IO_MODULE:
+			return "I/O Module";
+		case BOARD_TYPE_MEMORY_MODULE:
+			return "Memory Module";
+		case BOARD_TYPE_DAUGHTER_BOARD:
+			return "Daughter board";
+		case BOARD_TYPE_MOTHERBOARD:
+			return "Motherboard (includes processor, memory, and I/O)";
+		case BOARD_TYPE_PROCESSOR_MEMORY_MODULE:
+			return "Processor/Memory Module";
+		case BOARD_TYPE_PROCESSOR_IO_MODULE:
+			return "Processor/IO Module";
+		case BOARD_TYPE_INTERCONNECT_BOARD:
+			return "Interconnect board";
+		default:
+			return "Unknown Board Type!";
+	}
+}
+
 // Chassis Contained Elements
 static size_t lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len) {
 	if (!buf || buf_len == 0) return 0;
@@ -460,7 +510,7 @@ static size_t lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, c
 		snprintf(buf, buf_len, "SMBIOS Structure Type %u", struct_type);
 	} else { // MSB = 0 → board type
 		uint8_t board_type = contained_elements & 0x7F;
-		const char* str = lazybiosType2BoardTypeStr(board_type);
+		const char* str = lazybiosType3BoardTypeStr(board_type);
 		snprintf(buf, buf_len, "%s", str);
 	}
 	return buf ? strlen(buf) : 0;
