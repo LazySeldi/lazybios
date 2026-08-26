@@ -26,6 +26,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len);
+static size_t lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len);
+static size_t lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType4ProcessorFamilyStr(uint16_t family);
+static inline const char* lazybiosType4SocketTypeStr(uint8_t type);
+static inline const char* lazybiosType4TypeStr(uint8_t type);
+
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define PROCESSOR_TYPE 0x05
@@ -401,19 +411,23 @@
 #define PROC_TYPE_VIDEO_PROCESSOR 0x06
 
 
-lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, lazybiosDMI_t* DMIData) {
+lazybiosType4Array_t* lazybiosGetType4(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType4Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PROCESSOR);
 	size_t index = 0;
-	Type4 = calloc(count, sizeof(lazybiosType4_t));
-	if (!Type4) return NULL;
-	if (count == 0) {
-		*type4_count = 0;
-		return Type4;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -423,8 +437,10 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 		if (type == SMBIOS_TYPE_PROCESSOR) {
 			if (index >= count) break;
 
-			lazybiosType4_t* current = &Type4[index];
+			lazybiosType4_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, socket_designation, len, SOCKET_DESIGNATION, p, structure_end);
@@ -535,17 +551,36 @@ lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, l
 				LAZYBIOS_MARK_UNREACHABLE(current, socket_type);
 			}
 
+			current->decoded.processor_family = lazybiosType4ProcessorFamilyStr(current->processor_family);
+			current->decoded.processor_family_2 = lazybiosType4ProcessorFamilyStr(current->processor_family_2);
+			current->decoded.processor_type = lazybiosType4TypeStr(current->processor_type);
+			current->decoded.processor_upgrade = lazybiosType4SocketTypeStr(current->processor_upgrade);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, voltage) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType4VoltageStr(current->voltage, decbuf, sizeof(decbuf));
+				current->decoded.voltage = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, status) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType4StatusStr(current->status, decbuf, sizeof(decbuf));
+				current->decoded.status = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, processor_characteristics) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType4CharacteristicsStr(current->processor_characteristics, decbuf, sizeof(decbuf));
+				current->decoded.processor_characteristics = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type4_count = index;
-	return Type4;
+	out->count = index;
+	return out;
 }
 /* --- */
 
 // Processor Family
-const char* lazybiosType4ProcessorFamilyStr(uint16_t family) { // I do not know if everything here is added as per DMTF docs because I asked AI to extract the fields since I wans't gonna write this whole thing by hand, it will be checked though.
+static inline const char* lazybiosType4ProcessorFamilyStr(uint16_t family) { // I do not know if everything here is added as per DMTF docs because I asked AI to extract the fields since I wans't gonna write this whole thing by hand, it will be checked though.
 	switch (family) {
 		case PROC_FAMILY_OTHER:
 			return "Other";
@@ -1039,7 +1074,7 @@ const char* lazybiosType4ProcessorFamilyStr(uint16_t family) { // I do not know 
 }
 
 // Processor Socket Types
-const char* lazybiosType4SocketTypeStr(uint8_t type) {
+static inline const char* lazybiosType4SocketTypeStr(uint8_t type) {
 	switch (type) {
 		case SOCKET_TYPE_OTHER:
 			return "Other";
@@ -1223,8 +1258,8 @@ const char* lazybiosType4SocketTypeStr(uint8_t type) {
 }
 
 // Processor Characteristics
-void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	size_t len = 0;
 	buf[0] = '\0';
@@ -1244,10 +1279,11 @@ void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Processor type
-const char* lazybiosType4TypeStr(uint8_t type) {
+static inline const char* lazybiosType4TypeStr(uint8_t type) {
 	switch (type) {
 		case PROC_TYPE_OTHER:
 			return "Other";
@@ -1267,8 +1303,8 @@ const char* lazybiosType4TypeStr(uint8_t type) {
 }
 
 // Processor Status
-void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -1298,11 +1334,12 @@ void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len) {
 			lazybiosDecoderAppend(buf, buf_len, &len, "Reserved");
 			break;
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Processor Voltage
-void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -1334,11 +1371,19 @@ void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len) {
 		if (count > 1) lazybiosDecoderAppend(buf, buf_len, &len, " (Configurable)");
 		if (count == 0) lazybiosDecoderAppend(buf, buf_len, &len, "Not Supported");
 	}
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count) {
-    (void)type4_count;
+void lazybiosFreeType4(lazybiosType4Array_t* Type4) {
     if (!Type4) return;
+
+	for (size_t i = 0; i < Type4->count; i++) {
+		free(Type4->entries[i].decoded.voltage);
+		free(Type4->entries[i].decoded.status);
+		free(Type4->entries[i].decoded.processor_characteristics);
+	}
+
+    free(Type4->entries);
 
     free(Type4);
 }

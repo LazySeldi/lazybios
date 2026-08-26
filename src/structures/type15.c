@@ -22,8 +22,21 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType15LogStatusStr(uint8_t log_status, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType15AccessMethodStr(uint8_t access_method);
+static inline uint16_t lazybiosType15DataAddress(uint32_t access_method_address);
+static inline uint16_t lazybiosType15GPNVHandle(uint32_t access_method_address);
+static inline uint16_t lazybiosType15IndexAddress(uint32_t access_method_address);
+static inline const char* lazybiosType15LogHeaderFormatStr(uint8_t log_header_format);
+static inline const char* lazybiosType15LogTypeStr(uint8_t log_type);
+static inline const char* lazybiosType15VariableDataFormatTypeStr(uint8_t format_type);
 
 // Fields
 #define LOG_AREA_LENGTH 0x04
@@ -94,8 +107,11 @@
 #define VARIABLE_DATA_FORMAT_SYSTEM_MANAGEMENT_TYPE 0x05
 #define VARIABLE_DATA_FORMAT_MULTIPLE_EVENT_SYSTEM_MANAGEMENT_TYPE 0x06
 
-lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_count, lazybiosDMI_t* DMIData) {
+lazybiosType15Array_t* lazybiosGetType15(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType15Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -103,11 +119,12 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_EVENT_LOG);
 	size_t index = 0;
 
-	Type15 = calloc(count, sizeof(lazybiosType15_t));
-	if (!Type15) return NULL;
-	if (count == 0) {
-		*type15_count = 0;
-		return Type15;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -116,8 +133,10 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 
 		if (type == SMBIOS_TYPE_SYSTEM_EVENT_LOG) {
 			if (index >= count) break;
-			lazybiosType15_t* current = &Type15[index];
+			lazybiosType15_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU16(current, log_area_length, len, LOG_AREA_LENGTH, p);
 			READU16(current, log_header_start_offset, len, LOG_HEADER_START_OFFSET, p);
@@ -148,7 +167,8 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 							current->number_of_supported_log_type_descriptors,
 							sizeof(lazybiosType15LogTypeDescriptor_t));
 						if (!current->supported_log_type_descriptors) {
-							lazybiosFreeType15(Type15, index + 1);
+							out->count = index + 1;
+							lazybiosFreeType15(out);
 							return NULL;
 						}
 
@@ -162,6 +182,9 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 								p[descriptor_offset + DESCRIPTOR_VARIABLE_DATA_FORMAT_TYPE];
 							LAZYBIOS_MARK_PRESENT(descriptor, log_type);
 							LAZYBIOS_MARK_PRESENT(descriptor, variable_data_format_type);
+							descriptor->decoded.log_type = lazybiosType15LogTypeStr(descriptor->log_type);
+							descriptor->decoded.variable_data_format_type =
+								lazybiosType15VariableDataFormatTypeStr(descriptor->variable_data_format_type);
 						}
 						LAZYBIOS_MARK_PRESENT(current, supported_log_type_descriptors);
 					} else {
@@ -181,15 +204,27 @@ lazybiosType15_t* lazybiosGetType15(lazybiosType15_t* Type15, size_t* type15_cou
 				LAZYBIOS_MARK_UNREACHABLE(current, supported_log_type_descriptors);
 			}
 
+			current->decoded.access_method = lazybiosType15AccessMethodStr(current->access_method);
+			current->decoded.index_address = lazybiosType15IndexAddress(current->access_method_address);
+			current->decoded.data_address = lazybiosType15DataAddress(current->access_method_address);
+			current->decoded.gpnv_handle = lazybiosType15GPNVHandle(current->access_method_address);
+			current->decoded.log_header_format = lazybiosType15LogHeaderFormatStr(current->log_header_format);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, log_status) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType15LogStatusStr(current->log_status, decbuf, sizeof(decbuf));
+				current->decoded.log_status = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type15_count = index;
-	return Type15;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType15AccessMethodStr(uint8_t access_method) {
+static inline const char* lazybiosType15AccessMethodStr(uint8_t access_method) {
 	switch (access_method) {
 		case ACCESS_METHOD_INDEXED_IO_8BIT:
 			return "Indexed I/O: One 8-bit Index Port and One 8-bit Data Port";
@@ -207,14 +242,15 @@ const char* lazybiosType15AccessMethodStr(uint8_t access_method) {
 	}
 }
 
-void lazybiosType15LogStatusStr(uint8_t log_status, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType15LogStatusStr(uint8_t log_status, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	snprintf(buf, buf_len, "%s, %s",
 		(log_status & LOG_STATUS_VALID_MASK) ? "Valid" : "Invalid",
 		(log_status & LOG_STATUS_FULL_MASK) ? "Full" : "Not Full");
+	return buf ? strlen(buf) : 0;
 }
 
-const char* lazybiosType15LogHeaderFormatStr(uint8_t log_header_format) {
+static inline const char* lazybiosType15LogHeaderFormatStr(uint8_t log_header_format) {
 	switch (log_header_format) {
 		case LOG_HEADER_FORMAT_NONE:
 			return "No Header";
@@ -226,7 +262,7 @@ const char* lazybiosType15LogHeaderFormatStr(uint8_t log_header_format) {
 	}
 }
 
-const char* lazybiosType15LogTypeStr(uint8_t log_type) {
+static inline const char* lazybiosType15LogTypeStr(uint8_t log_type) {
 	switch (log_type) {
 		case LOG_TYPE_RESERVED:
 		case LOG_TYPE_RESERVED_2:
@@ -283,7 +319,7 @@ const char* lazybiosType15LogTypeStr(uint8_t log_type) {
 	}
 }
 
-const char* lazybiosType15VariableDataFormatTypeStr(uint8_t format_type) {
+static inline const char* lazybiosType15VariableDataFormatTypeStr(uint8_t format_type) {
 	switch (format_type) {
 		case VARIABLE_DATA_FORMAT_NONE:
 			return "None";
@@ -305,24 +341,30 @@ const char* lazybiosType15VariableDataFormatTypeStr(uint8_t format_type) {
 	}
 }
 
-uint16_t lazybiosType15IndexAddress(uint32_t access_method_address) {
+static inline uint16_t lazybiosType15IndexAddress(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address & 0xFFFF);
 }
 
-uint16_t lazybiosType15DataAddress(uint32_t access_method_address) {
+static inline uint16_t lazybiosType15DataAddress(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address >> 16);
 }
 
-uint16_t lazybiosType15GPNVHandle(uint32_t access_method_address) {
+static inline uint16_t lazybiosType15GPNVHandle(uint32_t access_method_address) {
 	return (uint16_t)(access_method_address & 0xFFFF);
 }
 
-void lazybiosFreeType15(lazybiosType15_t* Type15, size_t type15_count) {
+void lazybiosFreeType15(lazybiosType15Array_t* Type15) {
     if (!Type15) return;
 
-    for (size_t i = 0; i < type15_count; i++) {
-        free(Type15[i].supported_log_type_descriptors);
+	for (size_t i = 0; i < Type15->count; i++) {
+		free(Type15->entries[i].decoded.log_status);
+	}
+
+    for (size_t i = 0; i < Type15->count; i++) {
+        free(Type15->entries[i].supported_log_type_descriptors);
     }
+
+    free(Type15->entries);
 
     free(Type15);
 }

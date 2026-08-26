@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType37ChannelTypeStr(uint8_t channel_type);
+
 // Fields
 #define CHANNEL_TYPE 0x04
 #define MAXIMUM_CHANNEL_LOAD 0x05
@@ -38,8 +41,11 @@
 #define CHANNEL_TYPE_RAMBUS 0x03
 #define CHANNEL_TYPE_SYNCLINK 0x04
 
-lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_count, lazybiosDMI_t* DMIData) {
+lazybiosType37Array_t* lazybiosGetType37(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType37Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -47,11 +53,12 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MEMORY_CHANNEL);
 	size_t index = 0;
 
-	Type37 = calloc(count, sizeof(lazybiosType37_t));
-	if (!Type37) return NULL;
-	if (count == 0) {
-		*type37_count = 0;
-		return Type37;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -60,8 +67,10 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 
 		if (type == SMBIOS_TYPE_MEMORY_CHANNEL) {
 			if (index >= count) break;
-			lazybiosType37_t* current = &Type37[index];
+			lazybiosType37_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, channel_type, len, CHANNEL_TYPE, p);
 			READU8(current, maximum_channel_load, len, MAXIMUM_CHANNEL_LOAD, p);
@@ -73,7 +82,8 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 					if (current->memory_device_count > 0) {
 						current->memory_devices = calloc(current->memory_device_count, sizeof(lazybiosType37MemoryDevice_t));
 						if (!current->memory_devices) {
-							lazybiosFreeType37(Type37, index + 1);
+							out->count = index + 1;
+							lazybiosFreeType37(out);
 							return NULL;
 						}
 
@@ -92,15 +102,17 @@ lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_cou
 				}
 			}
 
+			current->decoded.channel_type = lazybiosType37ChannelTypeStr(current->channel_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type37_count = index;
-	return Type37;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType37ChannelTypeStr(uint8_t channel_type) {
+static inline const char* lazybiosType37ChannelTypeStr(uint8_t channel_type) {
 	switch (channel_type) {
 		case CHANNEL_TYPE_OTHER:
 			return "Other";
@@ -115,10 +127,12 @@ const char* lazybiosType37ChannelTypeStr(uint8_t channel_type) {
 	}
 }
 
-void lazybiosFreeType37(lazybiosType37_t* Type37, size_t type37_count) {
+void lazybiosFreeType37(lazybiosType37Array_t* Type37) {
     if (!Type37) return;
 
-    for (size_t i = 0; i < type37_count; i++) free(Type37[i].memory_devices);
+    for (size_t i = 0; i < Type37->count; i++) free(Type37->entries[i].memory_devices);
+
+    free(Type37->entries);
 
     free(Type37);
 }

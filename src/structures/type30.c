@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType30InboundConnectionStr(uint8_t connections);
+static inline const char* lazybiosType30OutboundConnectionStr(uint8_t connections);
+
 // Fields
 #define MANUFACTURER_NAME 0x04
 #define CONNECTIONS 0x05
@@ -32,8 +36,11 @@
 #define INBOUND_CONNECTION_ENABLED (1U << 0)
 #define OUTBOUND_CONNECTION_ENABLED (1U << 1)
 
-lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_count, lazybiosDMI_t* DMIData) {
+lazybiosType30Array_t* lazybiosGetType30(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType30Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -41,11 +48,12 @@ lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS);
 	size_t index = 0;
 
-	Type30 = calloc(count, sizeof(lazybiosType30_t));
-	if (!Type30) return NULL;
-	if (count == 0) {
-		*type30_count = 0;
-		return Type30;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -54,32 +62,38 @@ lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_cou
 
 		if (type == SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS) {
 			if (index >= count) break;
-			lazybiosType30_t* current = &Type30[index];
+			lazybiosType30_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, manufacturer_name, len, MANUFACTURER_NAME, p, structure_end);
 			READU8(current, connections, len, CONNECTIONS, p);
 
+			current->decoded.inbound_connection = lazybiosType30InboundConnectionStr(current->connections);
+			current->decoded.outbound_connection = lazybiosType30OutboundConnectionStr(current->connections);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type30_count = index;
-	return Type30;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType30InboundConnectionStr(uint8_t connections) {
+static inline const char* lazybiosType30InboundConnectionStr(uint8_t connections) {
 	return (connections & INBOUND_CONNECTION_ENABLED) ? "Enabled" : "Disabled";
 }
 
-const char* lazybiosType30OutboundConnectionStr(uint8_t connections) {
+static inline const char* lazybiosType30OutboundConnectionStr(uint8_t connections) {
 	return (connections & OUTBOUND_CONNECTION_ENABLED) ? "Enabled" : "Disabled";
 }
 
-void lazybiosFreeType30(lazybiosType30_t* Type30, size_t type30_count) {
-    (void)type30_count;
+void lazybiosFreeType30(lazybiosType30Array_t* Type30) {
     if (!Type30) return;
+
+    free(Type30->entries);
 
     free(Type30);
 }

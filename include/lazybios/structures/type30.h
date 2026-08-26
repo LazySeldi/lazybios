@@ -42,48 +42,55 @@ typedef struct {
 } lazybiosType30FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 30 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* inbound_connection;
+	const char* outbound_connection;
+} lazybiosType30Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 30 Out-of-Band Remote Access information.
  * @ingroup api_type30
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* manufacturer_name;
 	uint8_t connections;
+	lazybiosType30Decoded_t decoded;
 	lazybiosType30FieldStatus_t field_status;
 } lazybiosType30_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 30 structures.
+ * @ingroup api_type30
+ */
+typedef struct {
+	lazybiosType30_t* entries;
+	size_t count;
+} lazybiosType30Array_t;
 
 /** @addtogroup api_type30
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 30 Out-of-Band Remote Access structures.
- * @param Type30 Existing Type 30 array pointer value; it is not dereferenced or released.
- * @param type30_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 30 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 30 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 30 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType30_t* lazybiosGetType30(lazybiosType30_t* Type30, size_t* type30_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType30Array_t* lazybiosGetType30(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the inbound-connection state from a Type 30 connections field.
- * @param connections Raw Type 30 connections bit field.
- * @return Static string describing whether inbound connections are enabled.
+ * @brief Releases a parsed set of SMBIOS Type 30 structures.
+ * @param Type30 Set to release; may be NULL.
  */
-const char* lazybiosType30InboundConnectionStr(uint8_t connections);
-
-/**
- * @brief Decodes the outbound-connection state from a Type 30 connections field.
- * @param connections Raw Type 30 connections bit field.
- * @return Static string describing whether outbound connections are enabled.
- */
-const char* lazybiosType30OutboundConnectionStr(uint8_t connections);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 30 structures.
- * @param Type30 Type 30 array to release.
- * @param type30_count Number of elements in Type30.
- */
-void lazybiosFreeType30(lazybiosType30_t* Type30, size_t type30_count);
+void lazybiosFreeType30(lazybiosType30Array_t* Type30);
 
 /** @} */
 

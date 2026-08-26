@@ -1,0 +1,36 @@
+/**
+ * @page hp_type201_guide HP OEM Type 201: Rack Information Guide
+ *
+ * @brief HP OEM specific rack naming and identity information.
+ *
+ * @note Experimental: This HP OEM type is newly added and has not been tested
+ * with real hardware dumps.
+ * @warning Untested.
+ *
+ * @section hp_type201_selection Array result and ownership
+ *
+ * @ref lazybiosGetOemHpType201 returns every HP OEM Type 201 structure and writes
+ * the number of parsed structures to `hptype201_count`. Iterate the returned
+ * @ref lazybiosOemHpType201_t array using that count, and pass the same count to
+ * @ref lazybiosFreeOemHpType201. When assigned to `ctx->HpType201`,
+ * the corresponding `ctx->hptype201_count`
+ * is used by @ref lazybiosCleanup.
+ *
+ * @section hp_type201_fields Fields
+ *
+ * This structure currently contains:
+ * - `rack_name`: The name assigned to the rack containing the system.
+ *
+ * @see @ref api_hp_type201
+ */
+
+/**
+ * @var lazybiosOemHpType201_t* lazybiosCTX::HpType201
+ * @brief HP OEM Type 201 structures.
+ * @warning Experimental and untested.
+ */
+
+/**
+ * @var size_t lazybiosCTX::hptype201_count
+ * @brief Number of elements in HpType201.
+ */

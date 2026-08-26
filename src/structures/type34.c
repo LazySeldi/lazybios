@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType34AddressTypeStr(uint8_t address_type);
+static inline const char* lazybiosType34DeviceTypeStr(uint8_t device_type);
+
 // Fields
 #define DESCRIPTION 0x04
 #define DEVICE_TYPE 0x05
@@ -52,8 +56,11 @@
 #define ADDRESS_TYPE_MEMORY 0x04
 #define ADDRESS_TYPE_SM_BUS 0x05
 
-lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_count, lazybiosDMI_t* DMIData) {
+lazybiosType34Array_t* lazybiosGetType34(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType34Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -61,11 +68,12 @@ lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MANAGEMENT_DEVICE);
 	size_t index = 0;
 
-	Type34 = calloc(count, sizeof(lazybiosType34_t));
-	if (!Type34) return NULL;
-	if (count == 0) {
-		*type34_count = 0;
-		return Type34;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -74,8 +82,10 @@ lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_cou
 
 		if (type == SMBIOS_TYPE_MANAGEMENT_DEVICE) {
 			if (index >= count) break;
-			lazybiosType34_t* current = &Type34[index];
+			lazybiosType34_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, description, len, DESCRIPTION, p, structure_end);
@@ -83,15 +93,18 @@ lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_cou
 			READU32(current, address, len, ADDRESS, p);
 			READU8(current, address_type, len, ADDRESS_TYPE, p);
 
+			current->decoded.address_type = lazybiosType34AddressTypeStr(current->address_type);
+			current->decoded.device_type = lazybiosType34DeviceTypeStr(current->device_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type34_count = index;
-	return Type34;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType34DeviceTypeStr(uint8_t device_type) {
+static inline const char* lazybiosType34DeviceTypeStr(uint8_t device_type) {
 	switch (device_type) {
 		case DEVICE_TYPE_OTHER:
 			return "Other";
@@ -124,7 +137,7 @@ const char* lazybiosType34DeviceTypeStr(uint8_t device_type) {
 	}
 }
 
-const char* lazybiosType34AddressTypeStr(uint8_t address_type) {
+static inline const char* lazybiosType34AddressTypeStr(uint8_t address_type) {
 	switch (address_type) {
 		case ADDRESS_TYPE_OTHER:
 			return "Other";
@@ -141,9 +154,10 @@ const char* lazybiosType34AddressTypeStr(uint8_t address_type) {
 	}
 }
 
-void lazybiosFreeType34(lazybiosType34_t* Type34, size_t type34_count) {
-    (void)type34_count;
+void lazybiosFreeType34(lazybiosType34Array_t* Type34) {
     if (!Type34) return;
+
+    free(Type34->entries);
 
     free(Type34);
 }

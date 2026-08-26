@@ -47,10 +47,24 @@ typedef struct {
 } lazybiosType33FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 33 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* error_granularity;
+	const char* error_operation;
+	const char* error_type;
+} lazybiosType33Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 33 64-Bit Memory Error Information.
  * @ingroup api_type33
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t error_type;
 	uint8_t error_granularity;
 	uint8_t error_operation;
@@ -58,49 +72,36 @@ typedef struct {
 	uint64_t memory_array_error_address;
 	uint64_t device_error_address;
 	uint32_t error_resolution;
+	lazybiosType33Decoded_t decoded;
 	lazybiosType33FieldStatus_t field_status;
 } lazybiosType33_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 33 structures.
+ * @ingroup api_type33
+ */
+typedef struct {
+	lazybiosType33_t* entries;
+	size_t count;
+} lazybiosType33Array_t;
 
 /** @addtogroup api_type33
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 33 64-Bit Memory Error Information structures.
- * @param Type33 Existing Type 33 array pointer value; it is not dereferenced or released.
- * @param type33_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 33 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 33 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 33 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType33Array_t* lazybiosGetType33(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS 64-bit memory-error type.
- * @param error_type Raw SMBIOS memory-error type value.
- * @return Static string describing the error type.
+ * @brief Releases a parsed set of SMBIOS Type 33 structures.
+ * @param Type33 Set to release; may be NULL.
  */
-const char* lazybiosType33ErrorTypeStr(uint8_t error_type);
-
-/**
- * @brief Decodes SMBIOS 64-bit memory-error granularity.
- * @param error_granularity Raw SMBIOS error-granularity value.
- * @return Static string describing the granularity.
- */
-const char* lazybiosType33ErrorGranularityStr(uint8_t error_granularity);
-
-/**
- * @brief Decodes the operation that caused an SMBIOS 64-bit memory error.
- * @param error_operation Raw SMBIOS error-operation value.
- * @return Static string describing the operation.
- */
-const char* lazybiosType33ErrorOperationStr(uint8_t error_operation);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 33 structures.
- * @param Type33 Type 33 array to release.
- * @param type33_count Number of elements in Type33.
- */
-void lazybiosFreeType33(lazybiosType33_t* Type33, size_t type33_count);
+void lazybiosFreeType33(lazybiosType33Array_t* Type33);
 
 /** @} */
 

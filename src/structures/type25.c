@@ -22,8 +22,12 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char* buf, size_t buf_len);
 
 // Fields
 #define NEXT_SCHEDULED_POWER_ON_MONTH 0x04
@@ -32,8 +36,11 @@
 #define NEXT_SCHEDULED_POWER_ON_MINUTE 0x07
 #define NEXT_SCHEDULED_POWER_ON_SECOND 0x08
 
-lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_count, lazybiosDMI_t* DMIData) {
+lazybiosType25Array_t* lazybiosGetType25(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType25Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -41,11 +48,12 @@ lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_POWER_CONTROLS);
 	size_t index = 0;
 
-	Type25 = calloc(count, sizeof(lazybiosType25_t));
-	if (!Type25) return NULL;
-	if (count == 0) {
-		*type25_count = 0;
-		return Type25;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -54,8 +62,10 @@ lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_cou
 
 		if (type == SMBIOS_TYPE_SYSTEM_POWER_CONTROLS) {
 			if (index >= count) break;
-			lazybiosType25_t* current = &Type25[index];
+			lazybiosType25_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, next_scheduled_power_on_month, len, NEXT_SCHEDULED_POWER_ON_MONTH, p);
 			READU8(current, next_scheduled_power_on_day, len, NEXT_SCHEDULED_POWER_ON_DAY, p);
@@ -63,19 +73,23 @@ lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_cou
 			READU8(current, next_scheduled_power_on_minute, len, NEXT_SCHEDULED_POWER_ON_MINUTE, p);
 			READU8(current, next_scheduled_power_on_second, len, NEXT_SCHEDULED_POWER_ON_SECOND, p);
 
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			lazybiosType25NextScheduledPowerOnStr(current, decbuf, sizeof(decbuf));
+			current->decoded.next_scheduled_power_on = lazybiosDup(decbuf);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type25_count = index;
-	return Type25;
+	out->count = index;
+	return out;
 }
 
-void lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (!Type25) {
 		snprintf(buf, buf_len, "Not Present");
-		return;
+		return 0;
 	}
 
 	uint8_t fields[5] = {
@@ -111,11 +125,17 @@ void lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char*
 
 	snprintf(buf, buf_len, "%s-%s %s:%s:%s",
 		values[0], values[1], values[2], values[3], values[4]);
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType25(lazybiosType25_t* Type25, size_t type25_count) {
-    (void)type25_count;
+void lazybiosFreeType25(lazybiosType25Array_t* Type25) {
     if (!Type25) return;
+
+	for (size_t i = 0; i < Type25->count; i++) {
+		free(Type25->entries[i].decoded.next_scheduled_power_on);
+	}
+
+    free(Type25->entries);
 
     free(Type25);
 }

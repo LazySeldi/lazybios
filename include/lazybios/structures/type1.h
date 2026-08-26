@@ -48,10 +48,22 @@ typedef struct {
 } lazybiosType1FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 1 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* wake_up_type;
+} lazybiosType1Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 1 System Information.
  * @ingroup api_type1
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* manufacturer;
 	const char* product_name;
 	const char* version;
@@ -60,35 +72,36 @@ typedef struct {
 	uint8_t wake_up_type;
 	const char* sku_number;
 	const char* family;
+	lazybiosType1Decoded_t decoded;
 	lazybiosType1FieldStatus_t field_status;
 } lazybiosType1_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 1 structures.
+ * @ingroup api_type1
+ */
+typedef struct {
+	lazybiosType1_t* entries;
+	size_t count;
+} lazybiosType1Array_t;
 
 /** @addtogroup api_type1
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 1 System Information structures.
- * @param Type1 Existing Type 1 array pointer value; it is not dereferenced or released.
- * @param type1_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 1 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 1 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 1 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType1Array_t* lazybiosGetType1(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS system wake-up type.
- * @param wake_up_type Raw SMBIOS wake-up type value.
- * @return Static string describing the wake-up type.
+ * @brief Releases a parsed set of SMBIOS Type 1 structures.
+ * @param Type1 Set to release; may be NULL.
  */
-const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 1 structures.
- * @param Type1 Type 1 array to release.
- * @param type1_count Number of elements in Type1.
- */
-void lazybiosFreeType1(lazybiosType1_t* Type1, size_t type1_count);
+void lazybiosFreeType1(lazybiosType1Array_t* Type1);
 
 /** @} */
 

@@ -46,60 +46,60 @@ typedef struct {
 } lazybiosType41FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 41 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* device_status;
+	const char* device_type;
+	char* device_function_number;
+} lazybiosType41Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 41 Onboard Devices Extended Information.
  * @ingroup api_type41
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* reference_designation;
 	uint8_t device_type_and_status;
 	uint8_t device_type_instance;
 	uint16_t segment_group_number;
 	uint8_t bus_number;
 	uint8_t device_function_number;
+	lazybiosType41Decoded_t decoded;
 	lazybiosType41FieldStatus_t field_status;
 } lazybiosType41_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 41 structures.
+ * @ingroup api_type41
+ */
+typedef struct {
+	lazybiosType41_t* entries;
+	size_t count;
+} lazybiosType41Array_t;
 
 /** @addtogroup api_type41
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 41 Onboard Devices Extended Information structures.
- * @param Type41 Existing Type 41 array pointer value; it is not dereferenced or released.
- * @param type41_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 41 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 41 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 41 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType41Array_t* lazybiosGetType41(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the onboard-device type from a combined Type 41 type-and-status byte.
- * @param device_type_and_status Raw Type 41 device-type and status byte.
- * @return Static string describing the onboard-device type.
+ * @brief Releases a parsed set of SMBIOS Type 41 structures.
+ * @param Type41 Set to release; may be NULL.
  */
-const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status);
-
-/**
- * @brief Decodes the enabled status from a combined Type 41 type-and-status byte.
- * @param device_type_and_status Raw Type 41 device-type and status byte.
- * @return Static string describing whether the onboard device is enabled.
- */
-const char* lazybiosType41DeviceStatusStr(uint8_t device_type_and_status);
-
-/**
- * @brief Formats an SMBIOS Type 41 packed PCI device/function number.
- * @param device_function_number Raw packed device/function number value.
- * @param buf Output buffer that receives the decoded value.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 41 structures.
- * @param Type41 Type 41 array to release.
- * @param type41_count Number of elements in Type41.
- */
-void lazybiosFreeType41(lazybiosType41_t* Type41, size_t type41_count);
+void lazybiosFreeType41(lazybiosType41Array_t* Type41);
 
 /** @} */
 

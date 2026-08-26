@@ -26,6 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType45CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format);
+static inline const char* lazybiosType45StateStr(uint8_t state);
+static inline const char* lazybiosType45VersionFormatStr(uint8_t version_format);
+
 // Fields
 #define FIRMWARE_COMPONENT_NAME 0x04
 #define FIRMWARE_VERSION 0x05
@@ -65,8 +73,11 @@
 #define STATE_STANDBY_SPARE 0x07
 #define STATE_UNAVAILABLE_OFFLINE 0x08
 
-lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_count, lazybiosDMI_t* DMIData) {
+lazybiosType45Array_t* lazybiosGetType45(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType45Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -74,11 +85,12 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_FIRMWARE_INVENTORY_INFORMATION);
 	size_t index = 0;
 
-	Type45 = calloc(count, sizeof(lazybiosType45_t));
-	if (!Type45) return NULL;
-	if (count == 0) {
-		*type45_count = 0;
-		return Type45;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -87,8 +99,10 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 
 		if (type == SMBIOS_TYPE_FIRMWARE_INVENTORY_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType45_t* current = &Type45[index];
+			lazybiosType45_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, firmware_component_name, len, FIRMWARE_COMPONENT_NAME, p, structure_end);
@@ -112,7 +126,8 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 					if (current->number_of_associated_components > 0) {
 						current->associated_component_handles = malloc(associated_handles_size);
 						if (!current->associated_component_handles) {
-							lazybiosFreeType45(Type45, index + 1);
+							out->count = index + 1;
+							lazybiosFreeType45(out);
 							return NULL;
 						}
 						memcpy(current->associated_component_handles, p + ASSOCIATED_COMPONENT_HANDLES,
@@ -124,15 +139,25 @@ lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_cou
 				}
 			}
 
+			current->decoded.firmware_id_format = lazybiosType45FirmwareIDFormatStr(current->firmware_id_format);
+			current->decoded.state = lazybiosType45StateStr(current->state);
+			current->decoded.version_format = lazybiosType45VersionFormatStr(current->version_format);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, characteristics) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType45CharacteristicsStr(current->characteristics, decbuf, sizeof(decbuf));
+				current->decoded.characteristics = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type45_count = index;
-	return Type45;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType45VersionFormatStr(uint8_t version_format) {
+static inline const char* lazybiosType45VersionFormatStr(uint8_t version_format) {
 	switch (version_format) {
 		case VERSION_FORMAT_FREE_FORM:
 			return "Free-form String";
@@ -148,7 +173,7 @@ const char* lazybiosType45VersionFormatStr(uint8_t version_format) {
 	}
 }
 
-const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format) {
+static inline const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format) {
 	switch (firmware_id_format) {
 		case FIRMWARE_ID_FORMAT_FREE_FORM:
 			return "Free-form String";
@@ -160,15 +185,16 @@ const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format) {
 	}
 }
 
-void lazybiosType45CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType45CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	snprintf(buf, buf_len, "Updatable: %s, Write-protected: %s",
 			 (characteristics & CHARACTERISTICS_UPDATABLE_MASK) ? "Yes" : "No",
 			 (characteristics & CHARACTERISTICS_WRITE_PROTECTED_MASK) ? "Yes" : "No");
+	return buf ? strlen(buf) : 0;
 }
 
-const char* lazybiosType45StateStr(uint8_t state) {
+static inline const char* lazybiosType45StateStr(uint8_t state) {
 	switch (state) {
 		case STATE_OTHER:
 			return "Other";
@@ -191,9 +217,15 @@ const char* lazybiosType45StateStr(uint8_t state) {
 	}
 }
 
-void lazybiosFreeType45(lazybiosType45_t* Type45, size_t type45_count) {
+void lazybiosFreeType45(lazybiosType45Array_t* Type45) {
 	if (!Type45) return;
-	for (size_t i = 0; i < type45_count; i++) free(Type45[i].associated_component_handles);
+
+	for (size_t i = 0; i < Type45->count; i++) {
+		free(Type45->entries[i].decoded.characteristics);
+	}
+	for (size_t i = 0; i < Type45->count; i++) free(Type45->entries[i].associated_component_handles);
+
+    free(Type45->entries);
 
     free(Type45);
 }

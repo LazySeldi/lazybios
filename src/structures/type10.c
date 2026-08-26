@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType10DeviceStatusStr(uint8_t device_type_and_status);
+static inline const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status);
+
 #define DEVICES 0x04
 #define DEVICE_ENTRY_SIZE 2
 #define DEVICE_STATUS_MASK 0x80
@@ -41,25 +45,31 @@
 #define DEVICE_TYPE_SATA_CONTROLLER 0x09
 #define DEVICE_TYPE_SAS_CONTROLLER 0x0A
 
-lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_count, lazybiosDMI_t* DMIData) {
+lazybiosType10Array_t* lazybiosGetType10(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType10Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_ONBOARD_DEVICES);
 	size_t index = 0;
-	Type10 = calloc(count, sizeof(lazybiosType10_t));
-	if (!Type10) return NULL;
-	if (count == 0) {
-		*type10_count = 0;
-		return Type10;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 		if (type == SMBIOS_TYPE_ONBOARD_DEVICES) {
-			lazybiosType10_t* current = &Type10[index];
+			lazybiosType10_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			if (len >= DEVICES && (len - DEVICES) % DEVICE_ENTRY_SIZE == 0) {
@@ -68,13 +78,16 @@ lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_cou
 				if (current->device_count > 0) {
 					current->devices = calloc(current->device_count, sizeof(lazybiosType10Device_t));
 					if (!current->devices) {
-						lazybiosFreeType10(Type10, index + 1);
+						out->count = index + 1;
+						lazybiosFreeType10(out);
 						return NULL;
 					}
 					for (size_t i = 0; i < current->device_count; i++) {
 						size_t device_offset = DEVICES + (i * DEVICE_ENTRY_SIZE);
 						current->devices[i].device_type_and_status = p[device_offset];
 						LAZYBIOS_MARK_PRESENT(&current->devices[i], device_type_and_status);
+						current->devices[i].decoded.device_type = lazybiosType10DeviceTypeStr(current->devices[i].device_type_and_status);
+						current->devices[i].decoded.device_status = lazybiosType10DeviceStatusStr(current->devices[i].device_type_and_status);
 						uint8_t string_number = p[device_offset + 1];
 						current->devices[i].description = DMIString(p, len, string_number, structure_end);
 						if (string_number == 0 || current->devices[i].description) {
@@ -93,11 +106,11 @@ lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_cou
 		}
 		p = DMINext(p, end);
 	}
-	*type10_count = index;
-	return Type10;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status) {
+static inline const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status) {
 	switch (device_type_and_status & DEVICE_TYPE_MASK) {
 		case DEVICE_TYPE_OTHER: return "Other";
 		case DEVICE_TYPE_UNKNOWN: return "Unknown";
@@ -113,14 +126,15 @@ const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status) {
 	}
 }
 
-const char* lazybiosType10DeviceStatusStr(uint8_t device_type_and_status) {
+static inline const char* lazybiosType10DeviceStatusStr(uint8_t device_type_and_status) {
 	return (device_type_and_status & DEVICE_STATUS_MASK) ? "Enabled" : "Disabled";
 }
 
-void lazybiosFreeType10(lazybiosType10_t* Type10, size_t type10_count) {
+void lazybiosFreeType10(lazybiosType10Array_t* Type10) {
 	if (!Type10) return;
-	for (size_t i = 0; i < type10_count; i++) {
-		free(Type10[i].devices);
+	for (size_t i = 0; i < Type10->count; i++) {
+		free(Type10->entries[i].devices);
 	}
+	free(Type10->entries);
 	free(Type10);
 }

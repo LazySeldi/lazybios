@@ -60,43 +60,56 @@ typedef struct {
 } lazybiosType37FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 37 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* channel_type;
+} lazybiosType37Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 37 Memory Channel information.
  * @ingroup api_type37
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t channel_type;
 	uint8_t maximum_channel_load;
 	uint8_t memory_device_count;
 	lazybiosType37MemoryDevice_t* memory_devices;
+	lazybiosType37Decoded_t decoded;
 	lazybiosType37FieldStatus_t field_status;
 } lazybiosType37_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 37 structures.
+ * @ingroup api_type37
+ */
+typedef struct {
+	lazybiosType37_t* entries;
+	size_t count;
+} lazybiosType37Array_t;
 
 /** @addtogroup api_type37
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 37 Memory Channel structures.
- * @param Type37 Existing Type 37 array pointer value; it is not dereferenced or released.
- * @param type37_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 37 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 37 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 37 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType37_t* lazybiosGetType37(lazybiosType37_t* Type37, size_t* type37_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType37Array_t* lazybiosGetType37(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS Type 37 memory-channel type.
- * @param channel_type Raw memory-channel type value.
- * @return Static string describing the channel type.
+ * @brief Releases a parsed set of SMBIOS Type 37 structures.
+ * @param Type37 Set to release; may be NULL.
  */
-const char* lazybiosType37ChannelTypeStr(uint8_t channel_type);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 37 structures.
- * @param Type37 Type 37 array to release.
- * @param type37_count Number of elements in Type37.
- */
-void lazybiosFreeType37(lazybiosType37_t* Type37, size_t type37_count);
+void lazybiosFreeType37(lazybiosType37Array_t* Type37);
 
 /** @} */
 

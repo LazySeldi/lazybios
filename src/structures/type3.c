@@ -26,6 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len);
+static size_t lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType3StateStr(uint8_t state);
+static inline const char* lazybiosType3SecurityStatusStr(uint8_t security_status);
+
 // Fields
 #define MANUFACTURER 0x04
 #define TYPE 0x05
@@ -100,19 +108,23 @@
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_LOCKED_OUT 0x04
 #define CHASSIS_SECURITY_STATUS_EXT_INTERFACE_ENABLED 0x05
 
-lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, lazybiosDMI_t* DMIData) {
+lazybiosType3Array_t* lazybiosGetType3(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType3Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_CHASSIS);
 	size_t index = 0;
-	Type3 = calloc(count, sizeof(lazybiosType3_t));
-	if (!Type3) return NULL;
-	if (count == 0) {
-		*type3_count = 0;
-		return Type3;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -121,8 +133,10 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 
 		if (type == SMBIOS_TYPE_CHASSIS) {
 			if (index >= count) break;
-			lazybiosType3_t* current = &Type3[index];
+			lazybiosType3_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, manufacturer, len, MANUFACTURER, p, structure_end);
@@ -181,6 +195,19 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 							memcpy(current->contained_elements, p + CONTAINED_ELEMENTS, array_bytes);
 							LAZYBIOS_MARK_PRESENT(current, contained_elements);
 						}
+						if (current->contained_elements) {
+							current->decoded.contained_elements =
+								calloc(current->contained_element_count, sizeof(char*));
+							if (current->decoded.contained_elements) {
+								char elembuf[LAZYBIOS_DECODER_BUF_SIZE];
+								for (size_t e = 0; e < current->contained_element_count; e++) {
+									const uint8_t* rec = current->contained_elements +
+										(e * current->contained_element_record_length);
+									lazybiosType3ContainedElementTypeStr(rec[0], elembuf, sizeof(elembuf));
+									current->decoded.contained_elements[e] = lazybiosDup(elembuf);
+								}
+							}
+						}
 					} else {
 						LAZYBIOS_MARK_ABSENT(current, contained_elements);
 					}
@@ -230,18 +257,29 @@ lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, l
 				LAZYBIOS_MARK_UNREACHABLE(current, rack_height);
 			}
 
+			current->decoded.boot_up_state = lazybiosType3StateStr(current->boot_up_state);
+			current->decoded.power_supply_state = lazybiosType3StateStr(current->power_supply_state);
+			current->decoded.thermal_state = lazybiosType3StateStr(current->thermal_state);
+			current->decoded.security_status = lazybiosType3SecurityStatusStr(current->security_status);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, type) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType3TypeStr(current->type, decbuf, sizeof(decbuf));
+				current->decoded.type = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type3_count = index;
-	return Type3;
+	out->count = index;
+	return out;
 }
 
 
 // Chassis Type
-void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -370,10 +408,11 @@ void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len) {
 	if (len == 0) {
 		snprintf(buf, buf_len, "None");
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Chassis State
-const char* lazybiosType3StateStr(uint8_t state) {
+static inline const char* lazybiosType3StateStr(uint8_t state) {
 	switch (state) {
 		case CHASSIS_STATE_OTHER:
 			return "Other";
@@ -393,7 +432,7 @@ const char* lazybiosType3StateStr(uint8_t state) {
 }
 
 // Chassis Status
-const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
+static inline const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
 	switch (security_status) {
 		case CHASSIS_SECURITY_STATUS_OTHER:
 			return "Other";
@@ -411,8 +450,8 @@ const char* lazybiosType3SecurityStatusStr(uint8_t security_status) {
 }
 
 // Chassis Contained Elements
-void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	buf[0] = '\0';
 
 	if (contained_elements & 0x80) { // MSB = 1 → SMBIOS structure type
@@ -423,11 +462,23 @@ void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf,
 		const char* str = lazybiosType2BoardTypeStr(board_type);
 		snprintf(buf, buf_len, "%s", str);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count) {
+void lazybiosFreeType3(lazybiosType3Array_t* Type3) {
 	if (!Type3) return;
-	for (size_t i = 0; i < type3_count; i++) free(Type3[i].contained_elements);
+
+	for (size_t i = 0; i < Type3->count; i++) {
+		free(Type3->entries[i].decoded.type);
+		if (Type3->entries[i].decoded.contained_elements) {
+			for (size_t e = 0; e < Type3->entries[i].contained_element_count; e++)
+				free(Type3->entries[i].decoded.contained_elements[e]);
+			free(Type3->entries[i].decoded.contained_elements);
+		}
+	}
+	for (size_t i = 0; i < Type3->count; i++) free(Type3->entries[i].contained_elements);
+
+    free(Type3->entries);
 
     free(Type3);
 }

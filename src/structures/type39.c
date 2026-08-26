@@ -22,8 +22,17 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics);
+static inline const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics);
+static inline const char* lazybiosType39StatusStr(uint16_t characteristics);
 
 // Fields
 #define POWER_UNIT_GROUP 0x04
@@ -76,8 +85,11 @@
 #define INPUT_VOLTAGE_RANGE_SWITCHING_WIDE_RANGE 0x05
 #define INPUT_VOLTAGE_RANGE_SWITCHING_NOT_APPLICABLE 0x06
 
-lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_count, lazybiosDMI_t* DMIData) {
+lazybiosType39Array_t* lazybiosGetType39(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType39Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -85,11 +97,12 @@ lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_POWER_SUPPLY);
 	size_t index = 0;
 
-	Type39 = calloc(count, sizeof(lazybiosType39_t));
-	if (!Type39) return NULL;
-	if (count == 0) {
-		*type39_count = 0;
-		return Type39;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -98,8 +111,10 @@ lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_cou
 
 		if (type == SMBIOS_TYPE_SYSTEM_POWER_SUPPLY) {
 			if (index >= count) break;
-			lazybiosType39_t* current = &Type39[index];
+			lazybiosType39_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU8(current, power_unit_group, len, POWER_UNIT_GROUP, p);
@@ -119,15 +134,25 @@ lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_cou
 			if (current->cooling_device_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, cooling_device_handle);
 			if (current->input_current_probe_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, input_current_probe_handle);
 
+			current->decoded.input_voltage_range_switching = lazybiosType39InputVoltageRangeSwitchingStr(current->power_supply_characteristics);
+			current->decoded.power_supply_type = lazybiosType39PowerSupplyTypeStr(current->power_supply_characteristics);
+			current->decoded.status = lazybiosType39StatusStr(current->power_supply_characteristics);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, power_supply_characteristics) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType39CharacteristicsFlagsStr(current->power_supply_characteristics, decbuf, sizeof(decbuf));
+				current->decoded.power_supply_characteristics = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type39_count = index;
-	return Type39;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics) {
+static inline const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics) {
 	switch ((characteristics & POWER_SUPPLY_TYPE_MASK) >> POWER_SUPPLY_TYPE_SHIFT) {
 		case POWER_SUPPLY_TYPE_OTHER:
 			return "Other";
@@ -150,7 +175,7 @@ const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics) {
 	}
 }
 
-const char* lazybiosType39StatusStr(uint16_t characteristics) {
+static inline const char* lazybiosType39StatusStr(uint16_t characteristics) {
 	switch ((characteristics & POWER_SUPPLY_STATUS_MASK) >> POWER_SUPPLY_STATUS_SHIFT) {
 		case POWER_SUPPLY_STATUS_OTHER:
 			return "Other";
@@ -167,7 +192,7 @@ const char* lazybiosType39StatusStr(uint16_t characteristics) {
 	}
 }
 
-const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics) {
+static inline const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics) {
 	switch ((characteristics & INPUT_VOLTAGE_RANGE_SWITCHING_MASK) >> INPUT_VOLTAGE_RANGE_SWITCHING_SHIFT) {
 		case INPUT_VOLTAGE_RANGE_SWITCHING_OTHER:
 			return "Other";
@@ -186,18 +211,24 @@ const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics
 	}
 }
 
-void lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	snprintf(buf, buf_len, "Unplugged: %s, Present: %s, Hot-replaceable: %s",
 			 (characteristics & POWER_SUPPLY_UNPLUGGED_MASK) ? "Yes" : "No",
 			 (characteristics & POWER_SUPPLY_PRESENT_MASK) ? "Yes" : "No",
 			 (characteristics & POWER_SUPPLY_HOT_REPLACEABLE_MASK) ? "Yes" : "No");
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType39(lazybiosType39_t* Type39, size_t type39_count) {
-    (void)type39_count;
+void lazybiosFreeType39(lazybiosType39Array_t* Type39) {
     if (!Type39) return;
+
+	for (size_t i = 0; i < Type39->count; i++) {
+		free(Type39->entries[i].decoded.power_supply_characteristics);
+	}
+
+    free(Type39->entries);
 
     free(Type39);
 }

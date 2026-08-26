@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status);
+static inline const char* lazybiosType27StatusStr(uint8_t device_type_and_status);
+
 // Fields
 #define TEMPERATURE_PROBE_HANDLE 0x04
 #define DEVICE_TYPE_AND_STATUS 0x06
@@ -58,8 +62,11 @@
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
 
-lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_count, lazybiosDMI_t* DMIData) {
+lazybiosType27Array_t* lazybiosGetType27(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType27Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -67,11 +74,12 @@ lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_COOLING_DEVICE);
 	size_t index = 0;
 
-	Type27 = calloc(count, sizeof(lazybiosType27_t));
-	if (!Type27) return NULL;
-	if (count == 0) {
-		*type27_count = 0;
-		return Type27;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -80,8 +88,10 @@ lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_cou
 
 		if (type == SMBIOS_TYPE_COOLING_DEVICE) {
 			if (index >= count) break;
-			lazybiosType27_t* current = &Type27[index];
+			lazybiosType27_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU16(current, temperature_probe_handle, len, TEMPERATURE_PROBE_HANDLE, p);
@@ -97,15 +107,18 @@ lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_cou
 				READSTR(current, description, len, DESCRIPTION, p, structure_end);
 			}
 
+			current->decoded.device_type = lazybiosType27DeviceTypeStr(current->device_type_and_status);
+			current->decoded.status = lazybiosType27StatusStr(current->device_type_and_status);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type27_count = index;
-	return Type27;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status) {
+static inline const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status) {
 	switch (device_type_and_status & DEVICE_TYPE_MASK) {
 		case DEVICE_TYPE_OTHER:
 			return "Other";
@@ -134,7 +147,7 @@ const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status) {
 	}
 }
 
-const char* lazybiosType27StatusStr(uint8_t device_type_and_status) {
+static inline const char* lazybiosType27StatusStr(uint8_t device_type_and_status) {
 	switch ((device_type_and_status & STATUS_MASK) >> STATUS_SHIFT) {
 		case STATUS_OTHER:
 			return "Other";
@@ -153,9 +166,10 @@ const char* lazybiosType27StatusStr(uint8_t device_type_and_status) {
 	}
 }
 
-void lazybiosFreeType27(lazybiosType27_t* Type27, size_t type27_count) {
-    (void)type27_count;
+void lazybiosFreeType27(lazybiosType27Array_t* Type27) {
     if (!Type27) return;
+
+    free(Type27->entries);
 
     free(Type27);
 }

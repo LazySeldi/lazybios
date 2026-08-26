@@ -49,10 +49,23 @@ typedef struct {
 } lazybiosType26FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 26 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* location;
+	const char* status;
+} lazybiosType26Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 26 Voltage Probe information.
  * @ingroup api_type26
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* description;
 	uint8_t location_and_status;
 	uint16_t maximum_value;
@@ -62,42 +75,36 @@ typedef struct {
 	uint16_t accuracy;
 	uint32_t oem_defined;
 	uint16_t nominal_value;
+	lazybiosType26Decoded_t decoded;
 	lazybiosType26FieldStatus_t field_status;
 } lazybiosType26_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 26 structures.
+ * @ingroup api_type26
+ */
+typedef struct {
+	lazybiosType26_t* entries;
+	size_t count;
+} lazybiosType26Array_t;
 
 /** @addtogroup api_type26
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 26 Voltage Probe structures.
- * @param Type26 Existing Type 26 array pointer value; it is not dereferenced or released.
- * @param type26_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 26 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 26 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 26 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType26Array_t* lazybiosGetType26(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the physical location from a Type 26 location-and-status field.
- * @param location_and_status Raw Type 26 location-and-status byte.
- * @return Static string describing the voltage-probe location.
+ * @brief Releases a parsed set of SMBIOS Type 26 structures.
+ * @param Type26 Set to release; may be NULL.
  */
-const char* lazybiosType26LocationStr(uint8_t location_and_status);
-
-/**
- * @brief Decodes the monitored-voltage status from a Type 26 location-and-status field.
- * @param location_and_status Raw Type 26 location-and-status byte.
- * @return Static string describing the monitored-voltage status.
- */
-const char* lazybiosType26StatusStr(uint8_t location_and_status);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 26 structures.
- * @param Type26 Type 26 array to release.
- * @param type26_count Number of elements in Type26.
- */
-void lazybiosFreeType26(lazybiosType26_t* Type26, size_t type26_count);
+void lazybiosFreeType26(lazybiosType26Array_t* Type26);
 
 /** @} */
 

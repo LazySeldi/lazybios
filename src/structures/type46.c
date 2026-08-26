@@ -24,6 +24,9 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id);
+
 // Fields
 #define STRING_PROPERTY_ID 0x04
 #define STRING_PROPERTY_VALUE 0x06
@@ -35,8 +38,11 @@
 #define STRING_PROPERTY_ID_DMTF_MAX 0x7FFF
 #define STRING_PROPERTY_ID_FIRMWARE_VENDOR_MAX 0xBFFF
 
-lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_count, lazybiosDMI_t* DMIData) {
+lazybiosType46Array_t* lazybiosGetType46(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType46Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -44,11 +50,12 @@ lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_STRING_PROPERTY);
 	size_t index = 0;
 
-	Type46 = calloc(count, sizeof(lazybiosType46_t));
-	if (!Type46) return NULL;
-	if (count == 0) {
-		*type46_count = 0;
-		return Type46;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -57,8 +64,10 @@ lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_cou
 
 		if (type == SMBIOS_TYPE_STRING_PROPERTY) {
 			if (index >= count) break;
-			lazybiosType46_t* current = &Type46[index];
+			lazybiosType46_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU16(current, string_property_id, len, STRING_PROPERTY_ID, p);
@@ -66,15 +75,17 @@ lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_cou
 			READU16(current, parent_handle, len, PARENT_HANDLE, p);
 			if (current->parent_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, parent_handle);
 
+			current->decoded.string_property_id = lazybiosType46StringPropertyIDStr(current->string_property_id);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type46_count = index;
-	return Type46;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id) {
+static inline const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id) {
 	if (string_property_id == STRING_PROPERTY_ID_RESERVED) return "Reserved";
 	if (string_property_id == STRING_PROPERTY_ID_UEFI_DEVICE_PATH) return "UEFI Device Path";
 	if (string_property_id <= STRING_PROPERTY_ID_DMTF_MAX) return "Reserved for Future DMTF Use";
@@ -82,9 +93,10 @@ const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id) {
 	return "OEM-defined";
 }
 
-void lazybiosFreeType46(lazybiosType46_t* Type46, size_t type46_count) {
-    (void)type46_count;
+void lazybiosFreeType46(lazybiosType46Array_t* Type46) {
     if (!Type46) return;
+
+    free(Type46->entries);
 
     free(Type46);
 }

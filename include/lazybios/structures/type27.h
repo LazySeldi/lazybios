@@ -46,52 +46,59 @@ typedef struct {
 } lazybiosType27FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 27 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* device_type;
+	const char* status;
+} lazybiosType27Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 27 Cooling Device information.
  * @ingroup api_type27
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint16_t temperature_probe_handle;
 	uint8_t device_type_and_status;
 	uint8_t cooling_unit_group;
 	uint32_t oem_defined;
 	uint16_t nominal_speed;
 	const char* description;
+	lazybiosType27Decoded_t decoded;
 	lazybiosType27FieldStatus_t field_status;
 } lazybiosType27_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 27 structures.
+ * @ingroup api_type27
+ */
+typedef struct {
+	lazybiosType27_t* entries;
+	size_t count;
+} lazybiosType27Array_t;
 
 /** @addtogroup api_type27
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 27 Cooling Device structures.
- * @param Type27 Existing Type 27 array pointer value; it is not dereferenced or released.
- * @param type27_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 27 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 27 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 27 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType27_t* lazybiosGetType27(lazybiosType27_t* Type27, size_t* type27_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType27Array_t* lazybiosGetType27(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the cooling-device type from a Type 27 device-type-and-status field.
- * @param device_type_and_status Raw Type 27 device-type-and-status byte.
- * @return Static string describing the cooling-device type.
+ * @brief Releases a parsed set of SMBIOS Type 27 structures.
+ * @param Type27 Set to release; may be NULL.
  */
-const char* lazybiosType27DeviceTypeStr(uint8_t device_type_and_status);
-
-/**
- * @brief Decodes the cooling-device status from a Type 27 device-type-and-status field.
- * @param device_type_and_status Raw Type 27 device-type-and-status byte.
- * @return Static string describing the cooling-device status.
- */
-const char* lazybiosType27StatusStr(uint8_t device_type_and_status);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 27 structures.
- * @param Type27 Type 27 array to release.
- * @param type27_count Number of elements in Type27.
- */
-void lazybiosFreeType27(lazybiosType27_t* Type27, size_t type27_count);
+void lazybiosFreeType27(lazybiosType27Array_t* Type27);
 
 /** @} */
 

@@ -79,10 +79,36 @@ typedef struct {
 } lazybiosType17FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 17 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* form_factor;
+	const char* memory_technology;
+	const char* memory_type;
+	char* type_detail;
+	char* extended_size;
+	char* memory_operating_mode_capability;
+	char* module_manufacturer_id;
+	char* non_volatile_size;
+	char* volatile_size;
+	char* cache_size;
+	char* extended_speed;
+	char* pmic0_manufacturer_id;
+	char* pmic0_revision_number;
+	char* rcd_manufacturer_id;
+	char* rcd_revision_number;
+} lazybiosType17Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 17 Memory Device Information.
  * @ingroup api_type17
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint16_t physical_memory_array_handle;
 	uint16_t memory_error_information_handle;
 	uint16_t total_width;
@@ -122,47 +148,35 @@ typedef struct {
 	uint16_t pmic0_revision_number;
 	uint16_t rcd_manufacturer_id;
 	uint16_t rcd_revision_number;
+	lazybiosType17Decoded_t decoded;
 	lazybiosType17FieldStatus_t field_status;
 } lazybiosType17_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 17 structures.
+ * @ingroup api_type17
+ */
+typedef struct {
+	lazybiosType17_t* entries;
+	size_t count;
+} lazybiosType17Array_t;
 
 /** @addtogroup api_type17
  * @{
  */
 
-/** @brief Parses all Type 17 structures. */
-LAZYBIOS_WARN_UNUSED lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData);
-/** @brief Decodes a memory-device form factor. */
-const char* lazybiosType17FormFactorStr(uint8_t form_factor);
-/** @brief Decodes a memory type. */
-const char* lazybiosType17TypeStr(uint8_t memory_type);
-/** @brief Decodes memory type-detail flags. */
-void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len);
-/** @brief Formats extended memory-device size. */
-void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len);
-/** @brief Decodes memory technology. */
-const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology);
-/** @brief Decodes operating-mode capabilities. */
-void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len);
-/** @brief Formats a module identifier. */
-void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len);
-/** @brief Formats volatile capacity. */
-void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len);
-/** @brief Formats non-volatile capacity. */
-void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len);
-/** @brief Formats cache capacity. */
-void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len);
-/** @brief Formats extended memory speed. */
-void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len);
-/** @brief Formats a PMIC0 manufacturer identifier. */
-void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len);
-/** @brief Formats a PMIC0 revision. */
-void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len);
-/** @brief Formats an RCD manufacturer identifier. */
-void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len);
-/** @brief Formats an RCD revision. */
-void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len);
-/** @brief Releases parsed Type 17 structures. */
-void lazybiosFreeType17(lazybiosType17_t* Type17, size_t type17_count);
+/**
+ * @brief Parses all SMBIOS Type 17 structures.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated set, empty when the table holds no Type 17 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
+ */
+LAZYBIOS_WARN_UNUSED lazybiosType17Array_t* lazybiosGetType17(const lazybiosDMI_t* DMIData);
+/**
+ * @brief Releases a parsed set of SMBIOS Type 17 structures.
+ * @param Type17 Set to release; may be NULL.
+ */
+void lazybiosFreeType17(lazybiosType17Array_t* Type17);
 
 /** @} */
 

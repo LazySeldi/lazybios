@@ -26,6 +26,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+const char* lazybiosType2BoardTypeStr(uint8_t board_type);
+
 // Fields
 #define MANUFACTURER 0x04
 #define PRODUCT 0x05
@@ -55,19 +61,23 @@
 #define BOARD_TYPE_PROCESSOR_IO_MODULE 0x0C
 #define BOARD_TYPE_INTERCONNECT_BOARD 0x0D
 
-lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, lazybiosDMI_t* DMIData) {
+lazybiosType2Array_t* lazybiosGetType2(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType2Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BASEBOARD);
 	size_t index = 0;
-	Type2 = calloc(count, sizeof(lazybiosType2_t));
-	if (!Type2) return NULL;
-	if (count == 0) {
-		*type2_count = 0;
-		return Type2;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -76,8 +86,10 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 
 		if (type == SMBIOS_TYPE_BASEBOARD) {
 			if (index >= count) break;
-			lazybiosType2_t* current = &Type2[index];
+			lazybiosType2_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 			
 			READSTR(current, manufacturer, len, MANUFACTURER, p, structure_end);
@@ -120,17 +132,25 @@ lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, l
 				LAZYBIOS_MARK_ABSENT(current, contained_object_handles);
 			}
 
+			current->decoded.board_type = lazybiosType2BoardTypeStr(current->board_type);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, feature_flags) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType2FeatureflagsStr(current->feature_flags, decbuf, sizeof(decbuf));
+				current->decoded.feature_flags = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type2_count = index;
-	return Type2;
+	out->count = index;
+	return out;
 }
 
 // Feature Flags
-void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -145,6 +165,7 @@ void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_l
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Board Type
@@ -181,9 +202,15 @@ const char* lazybiosType2BoardTypeStr(uint8_t board_type) {
 	}
 }
 
-void lazybiosFreeType2(lazybiosType2_t* Type2, size_t type2_count) {
+void lazybiosFreeType2(lazybiosType2Array_t* Type2) {
 	if (!Type2) return;
-	for (size_t i = 0; i < type2_count; i++) free(Type2[i].contained_object_handles);
+
+	for (size_t i = 0; i < Type2->count; i++) {
+		free(Type2->entries[i].decoded.feature_flags);
+	}
+	for (size_t i = 0; i < Type2->count; i++) free(Type2->entries[i].contained_object_handles);
+
+    free(Type2->entries);
 
     free(Type2);
 }

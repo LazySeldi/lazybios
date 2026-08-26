@@ -30,8 +30,11 @@
 #define COMPONENT_HANDLE 0x07
 #define THRESHOLD_HANDLE 0x09
 
-lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_count, lazybiosDMI_t* DMIData) {
+lazybiosType35Array_t* lazybiosGetType35(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType35Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -39,11 +42,12 @@ lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MANAGEMENT_DEVICE_COMPONENT);
 	size_t index = 0;
 
-	Type35 = calloc(count, sizeof(lazybiosType35_t));
-	if (!Type35) return NULL;
-	if (count == 0) {
-		*type35_count = 0;
-		return Type35;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -52,8 +56,10 @@ lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_cou
 
 		if (type == SMBIOS_TYPE_MANAGEMENT_DEVICE_COMPONENT) {
 			if (index >= count) break;
-			lazybiosType35_t* current = &Type35[index];
+			lazybiosType35_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, description, len, DESCRIPTION, p, structure_end);
@@ -68,13 +74,14 @@ lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_cou
 		}
 		p = DMINext(p, end);
 	}
-	*type35_count = index;
-	return Type35;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeType35(lazybiosType35_t* Type35, size_t type35_count) {
-    (void)type35_count;
+void lazybiosFreeType35(lazybiosType35Array_t* Type35) {
     if (!Type35) return;
+
+    free(Type35->entries);
 
     free(Type35);
 }

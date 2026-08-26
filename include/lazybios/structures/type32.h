@@ -44,43 +44,56 @@ typedef struct {
 } lazybiosType32FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 32 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* boot_status;
+} lazybiosType32Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 32 System Boot Information.
  * @ingroup api_type32
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t reserved[6];
 	uint8_t boot_status;
 	size_t additional_data_size;
 	uint8_t* additional_data;
+	lazybiosType32Decoded_t decoded;
 	lazybiosType32FieldStatus_t field_status;
 } lazybiosType32_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 32 structures.
+ * @ingroup api_type32
+ */
+typedef struct {
+	lazybiosType32_t* entries;
+	size_t count;
+} lazybiosType32Array_t;
 
 /** @addtogroup api_type32
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 32 System Boot Information structures.
- * @param Type32 Existing Type 32 array pointer value; it is not dereferenced or released.
- * @param type32_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 32 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 32 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 32 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType32Array_t* lazybiosGetType32(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS Type 32 system boot status code.
- * @param boot_status Raw system boot status code.
- * @return Static string describing the system boot status.
+ * @brief Releases a parsed set of SMBIOS Type 32 structures.
+ * @param Type32 Set to release; may be NULL.
  */
-const char* lazybiosType32BootStatusStr(uint8_t boot_status);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 32 structures.
- * @param Type32 Type 32 array to release.
- * @param type32_count Number of elements in Type32.
- */
-void lazybiosFreeType32(lazybiosType32_t* Type32, size_t type32_count);
+void lazybiosFreeType32(lazybiosType32Array_t* Type32);
 
 /** @} */
 

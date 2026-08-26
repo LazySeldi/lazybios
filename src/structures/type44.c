@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type);
+
 // Fields
 #define REFERENCED_HANDLE 0x04
 #define BLOCK_LENGTH 0x06
@@ -44,8 +47,11 @@
 #define PROCESSOR_TYPE_LOONGARCH32 0x09
 #define PROCESSOR_TYPE_LOONGARCH64 0x0A
 
-lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_count, lazybiosDMI_t* DMIData) {
+lazybiosType44Array_t* lazybiosGetType44(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType44Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -53,11 +59,12 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PROCESSOR_ADDITIONAL_INFORMATION);
 	size_t index = 0;
 
-	Type44 = calloc(count, sizeof(lazybiosType44_t));
-	if (!Type44) return NULL;
-	if (count == 0) {
-		*type44_count = 0;
-		return Type44;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -66,8 +73,10 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 
 		if (type == SMBIOS_TYPE_PROCESSOR_ADDITIONAL_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType44_t* current = &Type44[index];
+			lazybiosType44_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU16(current, referenced_handle, len, REFERENCED_HANDLE, p);
 			if (current->referenced_handle == 0xFFFF) LAZYBIOS_MARK_ABSENT(current, referenced_handle);
@@ -80,7 +89,8 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 				if (current->block_length > 0) {
 					current->processor_specific_data = malloc(current->block_length);
 					if (!current->processor_specific_data) {
-						lazybiosFreeType44(Type44, index + 1);
+						out->count = index + 1;
+						lazybiosFreeType44(out);
 						return NULL;
 					}
 					memcpy(current->processor_specific_data, p + PROCESSOR_SPECIFIC_DATA, current->block_length);
@@ -88,15 +98,17 @@ lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_cou
 				LAZYBIOS_MARK_PRESENT(current, processor_specific_data);
 			}
 
+			current->decoded.processor_type = lazybiosType44ProcessorTypeStr(current->processor_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type44_count = index;
-	return Type44;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type) {
+static inline const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type) {
 	switch (processor_type) {
 		case PROCESSOR_TYPE_RESERVED:
 			return "Reserved";
@@ -125,10 +137,12 @@ const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type) {
 	}
 }
 
-void lazybiosFreeType44(lazybiosType44_t* Type44, size_t type44_count) {
+void lazybiosFreeType44(lazybiosType44Array_t* Type44) {
     if (!Type44) return;
 
-	for (size_t i = 0; i < type44_count; i++) free(Type44[i].processor_specific_data);
+	for (size_t i = 0; i < Type44->count; i++) free(Type44->entries[i].processor_specific_data);
+
+    free(Type44->entries);
 
     free(Type44);
 }

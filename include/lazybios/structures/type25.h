@@ -45,45 +45,54 @@ typedef struct {
 } lazybiosType25FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 25 encoded fields.
+ */
+typedef struct {
+	char* next_scheduled_power_on;
+} lazybiosType25Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 25 System Power Controls information.
  * @ingroup api_type25
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t next_scheduled_power_on_month;
 	uint8_t next_scheduled_power_on_day;
 	uint8_t next_scheduled_power_on_hour;
 	uint8_t next_scheduled_power_on_minute;
 	uint8_t next_scheduled_power_on_second;
+	lazybiosType25Decoded_t decoded;
 	lazybiosType25FieldStatus_t field_status;
 } lazybiosType25_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 25 structures.
+ * @ingroup api_type25
+ */
+typedef struct {
+	lazybiosType25_t* entries;
+	size_t count;
+} lazybiosType25Array_t;
 
 /** @addtogroup api_type25
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 25 System Power Controls structures.
- * @param Type25 Existing Type 25 array pointer value; it is not dereferenced or released.
- * @param type25_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 25 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 25 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 25 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType25_t* lazybiosGetType25(lazybiosType25_t* Type25, size_t* type25_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType25Array_t* lazybiosGetType25(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Formats the next scheduled power-on date and time.
- * @param Type25 Parsed Type 25 structure containing BCD date and time fields.
- * @param buf Output buffer that receives the formatted schedule.
- * @param buf_len Capacity of buf in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 25 structures.
+ * @param Type25 Set to release; may be NULL.
  */
-void lazybiosType25NextScheduledPowerOnStr(const lazybiosType25_t* Type25, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 25 structures.
- * @param Type25 Type 25 array to release.
- * @param type25_count Number of elements in Type25.
- */
-void lazybiosFreeType25(lazybiosType25_t* Type25, size_t type25_count);
+void lazybiosFreeType25(lazybiosType25Array_t* Type25);
 
 /** @} */
 

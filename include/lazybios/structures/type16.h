@@ -47,10 +47,25 @@ typedef struct {
 } lazybiosType16FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 16 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* location;
+	uint64_t maximum_capacity;
+	const char* memory_error_correction;
+	const char* use;
+} lazybiosType16Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 16 Physical Memory Array Information.
  * @ingroup api_type16
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t location;
 	uint8_t use;
 	uint8_t memory_error_correction;
@@ -58,57 +73,36 @@ typedef struct {
 	uint16_t memory_error_information_handle;
 	uint16_t number_of_memory_devices;
 	uint64_t extended_maximum_capacity;
+	lazybiosType16Decoded_t decoded;
 	lazybiosType16FieldStatus_t field_status;
 } lazybiosType16_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 16 structures.
+ * @ingroup api_type16
+ */
+typedef struct {
+	lazybiosType16_t* entries;
+	size_t count;
+} lazybiosType16Array_t;
 
 /** @addtogroup api_type16
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 16 Physical Memory Array structures.
- * @param Type16 Existing Type 16 array pointer value; it is not dereferenced or released.
- * @param type16_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 16 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 16 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 16 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType16Array_t* lazybiosGetType16(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS physical memory array location.
- * @param location Raw SMBIOS memory-array location value.
- * @return Static string describing the location.
+ * @brief Releases a parsed set of SMBIOS Type 16 structures.
+ * @param Type16 Set to release; may be NULL.
  */
-const char* lazybiosType16LocationStr(uint8_t location);
-
-/**
- * @brief Decodes the function of an SMBIOS physical memory array.
- * @param use Raw SMBIOS memory-array use value.
- * @return Static string describing the array function.
- */
-const char* lazybiosType16UseStr(uint8_t use);
-
-/**
- * @brief Decodes an SMBIOS physical memory array error-correction method.
- * @param memory_error_correction Raw SMBIOS error-correction value.
- * @return Static string describing the error-correction method.
- */
-const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correction);
-
-/**
- * @brief Converts SMBIOS Type 16 maximum-capacity fields to bytes.
- * @param maximum_capacity Raw 32-bit maximum capacity in KiB.
- * @param extended_maximum_capacity Raw extended maximum capacity in bytes.
- * @return Maximum array capacity in bytes.
- */
-uint64_t lazybiosType16MaximumCapacityBytes(uint32_t maximum_capacity, uint64_t extended_maximum_capacity);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 16 structures.
- * @param Type16 Type 16 array to release.
- * @param type16_count Number of elements in Type16.
- */
-void lazybiosFreeType16(lazybiosType16_t* Type16, size_t type16_count);
+void lazybiosFreeType16(lazybiosType16Array_t* Type16);
 
 /** @} */
 

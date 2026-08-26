@@ -44,6 +44,14 @@ typedef struct {
 } lazybiosType9PeerGroupFieldStatus_t;
 
 /**
+ * @brief Decoded forms of the encoded fields in one peer group.
+ */
+typedef struct {
+	const char* data_bus_width;
+	char* device_function_number;
+} lazybiosType9PeerGroupDecoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 9 peer grouping entry.
  * @ingroup api_type9
  */
@@ -53,6 +61,7 @@ typedef struct {
 	uint8_t device_function_number;
 	uint8_t data_bus_width;
 	lazybiosType9PeerGroupFieldStatus_t field_status;
+	lazybiosType9PeerGroupDecoded_t decoded;
 } lazybiosType9PeerGroup_t;
 
 /** @brief Availability metadata for SMBIOS Type 9 fields. */
@@ -78,10 +87,31 @@ typedef struct {
 } lazybiosType9FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 9 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* current_usage;
+	const char* data_bus_width;
+	const char* slot_data_bus_width;
+	const char* slot_height;
+	const char* slot_length;
+	const char* slot_physical_width;
+	const char* slot_type;
+	char* slot_characteristics_1;
+	char* slot_characteristics_2;
+	char* device_function_number;
+} lazybiosType9Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 9 System Slots Information.
  * @ingroup api_type9
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* slot_designation;
 	uint8_t slot_type;
 	uint8_t slot_data_bus_width;
@@ -100,33 +130,35 @@ typedef struct {
 	uint8_t slot_physical_width;
 	uint16_t slot_pitch;
 	uint8_t slot_height;
+	lazybiosType9Decoded_t decoded;
 	lazybiosType9FieldStatus_t field_status;
 } lazybiosType9_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 9 structures.
+ * @ingroup api_type9
+ */
+typedef struct {
+	lazybiosType9_t* entries;
+	size_t count;
+} lazybiosType9Array_t;
 
 /** @addtogroup api_type9
  * @{
  */
 
-/** @brief Parses all Type 9 structures. */
-LAZYBIOS_WARN_UNUSED lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, lazybiosDMI_t* DMIData);
-/** @brief Decodes a system-slot type. */
-const char* lazybiosType9SlotTypeStr(uint8_t slot_type);
-/** @brief Decodes a system-slot width. */
-const char* lazybiosType9SlotWidthStr(uint8_t width);
-/** @brief Decodes current slot usage. */
-const char* lazybiosType9CurrentUsageStr(uint8_t current_usage);
-/** @brief Decodes system-slot length. */
-const char* lazybiosType9SlotLengthStr(uint8_t slot_length);
-/** @brief Decodes characteristics byte 1. */
-void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t buf_len);
-/** @brief Decodes characteristics byte 2. */
-void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t buf_len);
-/** @brief Decodes a packed PCI device/function field. */
-void lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len);
-/** @brief Decodes system-slot height. */
-const char* lazybiosType9SlotHeightStr(uint8_t slot_height);
-/** @brief Releases parsed Type 9 structures. */
-void lazybiosFreeType9(lazybiosType9_t* Type9, size_t type9_count);
+/**
+ * @brief Parses all SMBIOS Type 9 structures.
+ * @param DMIData Raw DMI table container to parse.
+ * @return Newly allocated set, empty when the table holds no Type 9 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
+ */
+LAZYBIOS_WARN_UNUSED lazybiosType9Array_t* lazybiosGetType9(const lazybiosDMI_t* DMIData);
+/**
+ * @brief Releases a parsed set of SMBIOS Type 9 structures.
+ * @param Type9 Set to release; may be NULL.
+ */
+void lazybiosFreeType9(lazybiosType9Array_t* Type9);
 
 /** @} */
 

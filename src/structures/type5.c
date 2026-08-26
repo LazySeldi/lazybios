@@ -26,6 +26,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, size_t buf_len);
+static size_t lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_t buf_len);
+static size_t lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char* buf, size_t buf_len);
+static size_t lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method);
+static inline const char* lazybiosType5InterleaveStr(uint8_t interleave);
+
 // Fields
 #define ERROR_DETECTING_METHOD 0x04
 #define ERROR_CORRECTING_CAPABILITY 0x05
@@ -58,8 +68,11 @@
 #define INTERLEAVE_EIGHT_WAY 0x06
 #define INTERLEAVE_SIXTEEN_WAY 0x07
 
-lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, lazybiosDMI_t* DMIData) {
+lazybiosType5Array_t* lazybiosGetType5(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType5Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -67,11 +80,12 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MEMORY_CONTROLLER);
 	size_t index = 0;
 
-	Type5 = calloc(count, sizeof(lazybiosType5_t));
-	if (!Type5) return NULL;
-	if (count == 0) {
-		*type5_count = 0;
-		return Type5;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -80,8 +94,10 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 
 		if (type == SMBIOS_TYPE_MEMORY_CONTROLLER) {
 			if (index >= count) break;
-			lazybiosType5_t* current = &Type5[index];
+			lazybiosType5_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, error_detecting_method, len, ERROR_DETECTING_METHOD, p);
 			READU8(current, error_correcting_capability, len, ERROR_CORRECTING_CAPABILITY, p);
@@ -100,7 +116,8 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 						current->memory_module_configuration_handles =
 							calloc(current->number_of_associated_memory_slots, sizeof(uint16_t));
 						if (!current->memory_module_configuration_handles) {
-							lazybiosFreeType5(Type5, index + 1);
+							out->count = index + 1;
+							lazybiosFreeType5(out);
 							return NULL;
 						}
 						for (size_t i = 0; i < current->number_of_associated_memory_slots; i++) {
@@ -123,15 +140,41 @@ lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, l
 				LAZYBIOS_MARK_UNREACHABLE(current, enabled_error_correcting_capabilities);
 			}
 
+			current->decoded.current_interleave = lazybiosType5InterleaveStr(current->current_interleave);
+			current->decoded.error_detecting_method = lazybiosType5ErrorDetectingMethodStr(current->error_detecting_method);
+			current->decoded.supported_interleave = lazybiosType5InterleaveStr(current->supported_interleave);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, error_correcting_capability) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType5ErrorCorrectingCapabilityStr(current->error_correcting_capability, decbuf, sizeof(decbuf));
+				current->decoded.error_correcting_capability = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, enabled_error_correcting_capabilities) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType5ErrorCorrectingCapabilityStr(current->enabled_error_correcting_capabilities, decbuf, sizeof(decbuf));
+				current->decoded.enabled_error_correcting_capabilities = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, supported_speeds) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType5SupportedSpeedsStr(current->supported_speeds, decbuf, sizeof(decbuf));
+				current->decoded.supported_speeds = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, supported_memory_types) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType5SupportedMemoryTypesStr(current->supported_memory_types, decbuf, sizeof(decbuf));
+				current->decoded.supported_memory_types = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, memory_module_voltage) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType5MemoryModuleVoltageStr(current->memory_module_voltage, decbuf, sizeof(decbuf));
+				current->decoded.memory_module_voltage = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type5_count = index;
-	return Type5;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method) {
+static inline const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method) {
 	switch (error_detecting_method) {
 		case ERROR_DETECTING_OTHER: return "Other";
 		case ERROR_DETECTING_UNKNOWN: return "Unknown";
@@ -145,8 +188,8 @@ const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method)
 	}
 }
 
-void lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 	if (capability & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
@@ -158,9 +201,10 @@ void lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, si
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';
+	return buf ? strlen(buf) : 0;
 }
 
-const char* lazybiosType5InterleaveStr(uint8_t interleave) {
+static inline const char* lazybiosType5InterleaveStr(uint8_t interleave) {
 	switch (interleave) {
 		case INTERLEAVE_OTHER: return "Other";
 		case INTERLEAVE_UNKNOWN: return "Unknown";
@@ -173,8 +217,8 @@ const char* lazybiosType5InterleaveStr(uint8_t interleave) {
 	}
 }
 
-void lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 	if (supported_speeds & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "Other, ");
@@ -185,10 +229,11 @@ void lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 	const char* names[] = {"Other", "Unknown", "Standard", "Fast Page Mode", "EDO", "Parity",
@@ -201,10 +246,11 @@ void lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char*
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 	if (memory_module_voltage & (1U << 0)) lazybiosDecoderAppend(buf, buf_len, &len, "5 V, ");
@@ -213,11 +259,22 @@ void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* bu
 	if (len == 0) snprintf(buf, buf_len, "None");
 	else if (len >= 2 && len < buf_len) buf[len - 2] = '\0';
 	else buf[buf_len - 1] = '\0';
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType5(lazybiosType5_t* Type5, size_t type5_count) {
+void lazybiosFreeType5(lazybiosType5Array_t* Type5) {
 	if (!Type5) return;
-	for (size_t i = 0; i < type5_count; i++) free(Type5[i].memory_module_configuration_handles);
+
+	for (size_t i = 0; i < Type5->count; i++) {
+		free(Type5->entries[i].decoded.error_correcting_capability);
+		free(Type5->entries[i].decoded.supported_speeds);
+		free(Type5->entries[i].decoded.supported_memory_types);
+		free(Type5->entries[i].decoded.memory_module_voltage);
+		free(Type5->entries[i].decoded.enabled_error_correcting_capabilities);
+	}
+	for (size_t i = 0; i < Type5->count; i++) free(Type5->entries[i].memory_module_configuration_handles);
+
+	free(Type5->entries);
 
 	free(Type5);
 }

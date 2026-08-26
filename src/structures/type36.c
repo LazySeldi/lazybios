@@ -32,8 +32,11 @@
 #define LOWER_THRESHOLD_NON_RECOVERABLE 0x0C
 #define UPPER_THRESHOLD_NON_RECOVERABLE 0x0E
 
-lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_count, lazybiosDMI_t* DMIData) {
+lazybiosType36Array_t* lazybiosGetType36(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType36Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -41,11 +44,12 @@ lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MANAGEMENT_DEVICE_THRESHOLD_DATA);
 	size_t index = 0;
 
-	Type36 = calloc(count, sizeof(lazybiosType36_t));
-	if (!Type36) return NULL;
-	if (count == 0) {
-		*type36_count = 0;
-		return Type36;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -54,8 +58,10 @@ lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_cou
 
 		if (type == SMBIOS_TYPE_MANAGEMENT_DEVICE_THRESHOLD_DATA) {
 			if (index >= count) break;
-			lazybiosType36_t* current = &Type36[index];
+			lazybiosType36_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU16(current, lower_threshold_non_critical, len, LOWER_THRESHOLD_NON_CRITICAL, p);
 			READU16(current, upper_threshold_non_critical, len, UPPER_THRESHOLD_NON_CRITICAL, p);
@@ -75,13 +81,14 @@ lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_cou
 		}
 		p = DMINext(p, end);
 	}
-	*type36_count = index;
-	return Type36;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeType36(lazybiosType36_t* Type36, size_t type36_count) {
-    (void)type36_count;
+void lazybiosFreeType36(lazybiosType36Array_t* Type36) {
     if (!Type36) return;
+
+    free(Type36->entries);
 
     free(Type36);
 }

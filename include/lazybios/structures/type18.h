@@ -47,10 +47,24 @@ typedef struct {
 } lazybiosType18FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 18 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* error_granularity;
+	const char* error_operation;
+	const char* error_type;
+} lazybiosType18Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 18 32-Bit Memory Error Information.
  * @ingroup api_type18
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t error_type;
 	uint8_t error_granularity;
 	uint8_t error_operation;
@@ -58,49 +72,36 @@ typedef struct {
 	uint32_t memory_array_error_address;
 	uint32_t device_error_address;
 	uint32_t error_resolution;
+	lazybiosType18Decoded_t decoded;
 	lazybiosType18FieldStatus_t field_status;
 } lazybiosType18_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 18 structures.
+ * @ingroup api_type18
+ */
+typedef struct {
+	lazybiosType18_t* entries;
+	size_t count;
+} lazybiosType18Array_t;
 
 /** @addtogroup api_type18
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 18 32-Bit Memory Error Information structures.
- * @param Type18 Existing Type 18 array pointer value; it is not dereferenced or released.
- * @param type18_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 18 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 18 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 18 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType18_t* lazybiosGetType18(lazybiosType18_t* Type18, size_t* type18_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType18Array_t* lazybiosGetType18(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS memory-error type.
- * @param error_type Raw SMBIOS memory-error type value.
- * @return Static string describing the error type.
+ * @brief Releases a parsed set of SMBIOS Type 18 structures.
+ * @param Type18 Set to release; may be NULL.
  */
-const char* lazybiosType18ErrorTypeStr(uint8_t error_type);
-
-/**
- * @brief Decodes SMBIOS memory-error granularity.
- * @param error_granularity Raw SMBIOS error-granularity value.
- * @return Static string describing the granularity.
- */
-const char* lazybiosType18ErrorGranularityStr(uint8_t error_granularity);
-
-/**
- * @brief Decodes the operation that caused an SMBIOS memory error.
- * @param error_operation Raw SMBIOS error-operation value.
- * @return Static string describing the operation.
- */
-const char* lazybiosType18ErrorOperationStr(uint8_t error_operation);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 18 structures.
- * @param Type18 Type 18 array to release.
- * @param type18_count Number of elements in Type18.
- */
-void lazybiosFreeType18(lazybiosType18_t* Type18, size_t type18_count);
+void lazybiosFreeType18(lazybiosType18Array_t* Type18);
 
 /** @} */
 

@@ -44,43 +44,56 @@ typedef struct {
 } lazybiosType13FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 13 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* flags;
+} lazybiosType13Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 13 Firmware Language Information.
  * @ingroup api_type13
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t installable_languages;
 	uint8_t flags;
 	const char** languages;
 	const char* current_language;
+	lazybiosType13Decoded_t decoded;
 	lazybiosType13FieldStatus_t field_status;
 } lazybiosType13_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 13 structures.
+ * @ingroup api_type13
+ */
+typedef struct {
+	lazybiosType13_t* entries;
+	size_t count;
+} lazybiosType13Array_t;
 
 /** @addtogroup api_type13
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 13 Firmware Language Information structures.
- * @param Type13 Existing Type 13 array pointer value; it is not dereferenced or released.
- * @param type13_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 13 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 13 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 13 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType13Array_t* lazybiosGetType13(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the language-description format selected by the Type 13 flags.
- * @param flags Raw SMBIOS Type 13 flags byte.
- * @return Static string describing the language-description format.
+ * @brief Releases a parsed set of SMBIOS Type 13 structures.
+ * @param Type13 Set to release; may be NULL.
  */
-const char* lazybiosType13LanguageFormatStr(uint8_t flags);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 13 structures.
- * @param Type13 Type 13 array to release.
- * @param type13_count Number of elements in Type13.
- */
-void lazybiosFreeType13(lazybiosType13_t* Type13, size_t type13_count);
+void lazybiosFreeType13(lazybiosType13Array_t* Type13);
 
 /** @} */
 

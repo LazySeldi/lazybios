@@ -51,10 +51,23 @@ typedef struct {
 } lazybiosType2FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 2 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* board_type;
+	char* feature_flags;
+} lazybiosType2Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 2 Baseboard Information.
  * @ingroup api_type2
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* manufacturer;
 	const char* product;
 	const char* version;
@@ -66,43 +79,36 @@ typedef struct {
 	uint8_t board_type;
 	uint8_t number_of_contained_object_handles;
 	uint16_t* contained_object_handles;
+	lazybiosType2Decoded_t decoded;
 	lazybiosType2FieldStatus_t field_status;
 } lazybiosType2_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 2 structures.
+ * @ingroup api_type2
+ */
+typedef struct {
+	lazybiosType2_t* entries;
+	size_t count;
+} lazybiosType2Array_t;
 
 /** @addtogroup api_type2
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 2 Baseboard Information structures.
- * @param Type2 Existing Type 2 array pointer value; it is not dereferenced or released.
- * @param type2_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 2 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 2 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 2 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType2_t* lazybiosGetType2(lazybiosType2_t* Type2, size_t* type2_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType2Array_t* lazybiosGetType2(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes SMBIOS baseboard feature flags into a readable string.
- * @param feature_flags Raw SMBIOS baseboard feature flags.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 2 structures.
+ * @param Type2 Set to release; may be NULL.
  */
-void lazybiosType2FeatureflagsStr(uint8_t feature_flags, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes an SMBIOS baseboard type.
- * @param board_type Raw SMBIOS baseboard type value.
- * @return Static string describing the baseboard type.
- */
-const char* lazybiosType2BoardTypeStr(uint8_t board_type);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 2 structures.
- * @param Type2 Type 2 array to release.
- * @param type2_count Number of elements in Type2.
- */
-void lazybiosFreeType2(lazybiosType2_t* Type2, size_t type2_count);
+void lazybiosFreeType2(lazybiosType2Array_t* Type2);
 
 /** @} */
 

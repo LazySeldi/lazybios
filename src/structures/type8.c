@@ -25,6 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type);
+static inline const char* lazybiosType8PortTypeStr(uint8_t port_type);
+
 // Fields
 #define INTERNAL_REFERENCE_DESIGNATOR 0x04
 #define INTERNAL_CONNECTOR_TYPE 0x05
@@ -118,8 +122,11 @@
 #define PORT_TYPE_8251_FIFO_COMPATIBLE 0xA1
 #define PORT_TYPE_OTHER 0xFF
 
-lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, lazybiosDMI_t* DMIData) {
+lazybiosType8Array_t* lazybiosGetType8(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType8Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -127,11 +134,12 @@ lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PORT_CONNECTOR);
 	size_t index = 0;
 
-	Type8 = calloc(count, sizeof(lazybiosType8_t));
-	if (!Type8) return NULL;
-	if (count == 0) {
-		*type8_count = 0;
-		return Type8;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -140,8 +148,10 @@ lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, l
 
 		if (type == SMBIOS_TYPE_PORT_CONNECTOR) {
 			if (index >= count) break;
-			lazybiosType8_t* current = &Type8[index];
+			lazybiosType8_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, internal_reference_designator, len, INTERNAL_REFERENCE_DESIGNATOR, p, structure_end);
@@ -150,17 +160,21 @@ lazybiosType8_t* lazybiosGetType8(lazybiosType8_t* Type8, size_t* type8_count, l
 			READU8(current, external_connector_type, len, EXTERNAL_CONNECTOR_TYPE, p);
 			READU8(current, port_type, len, PORT_TYPE, p);
 
+			current->decoded.external_connector_type = lazybiosType8ConnectorTypeStr(current->external_connector_type);
+			current->decoded.internal_connector_type = lazybiosType8ConnectorTypeStr(current->internal_connector_type);
+			current->decoded.port_type = lazybiosType8PortTypeStr(current->port_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type8_count = index;
-	return Type8;
+	out->count = index;
+	return out;
 }
 
 
 // Connector Type
-const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type) {
+static inline const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type) {
 	switch (connector_type) {
 		case CONNECTOR_TYPE_NONE:
 			return "None";
@@ -252,7 +266,7 @@ const char* lazybiosType8ConnectorTypeStr(uint8_t connector_type) {
 }
 
 // Port Type
-const char* lazybiosType8PortTypeStr(uint8_t port_type) {
+static inline const char* lazybiosType8PortTypeStr(uint8_t port_type) {
 	switch (port_type) {
 		case PORT_TYPE_NONE:
 			return "None";
@@ -337,9 +351,10 @@ const char* lazybiosType8PortTypeStr(uint8_t port_type) {
 	}
 }
 
-void lazybiosFreeType8(lazybiosType8_t* Type8, size_t type8_count) {
-    (void)type8_count;
+void lazybiosFreeType8(lazybiosType8Array_t* Type8) {
     if (!Type8) return;
+
+    free(Type8->entries);
 
     free(Type8);
 }

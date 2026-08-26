@@ -22,8 +22,14 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static const char* lazybiosType23BootOptionStr(uint8_t capabilities);
+static const char* lazybiosType23BootOptionOnLimitStr(uint8_t capabilities);
+static size_t lazybiosType23CapabilitiesStr(uint8_t capabilities, char* buf, size_t buf_len);
 
 // Fields
 #define CAPABILITIES 0x04
@@ -46,8 +52,11 @@
 #define BOOT_OPTION_SYSTEM_UTILITIES 0x02
 #define BOOT_OPTION_DO_NOT_REBOOT 0x03
 
-lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_count, lazybiosDMI_t* DMIData) {
+lazybiosType23Array_t* lazybiosGetType23(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType23Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -55,11 +64,12 @@ lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_RESET);
 	size_t index = 0;
 
-	Type23 = calloc(count, sizeof(lazybiosType23_t));
-	if (!Type23) return NULL;
-	if (count == 0) {
-		*type23_count = 0;
-		return Type23;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -68,8 +78,10 @@ lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_cou
 
 		if (type == SMBIOS_TYPE_SYSTEM_RESET) {
 			if (index >= count) break;
-			lazybiosType23_t* current = &Type23[index];
+			lazybiosType23_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, capabilities, len, CAPABILITIES, p);
 			READU16(current, reset_count, len, RESET_COUNT, p);
@@ -77,15 +89,21 @@ lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_cou
 			READU16(current, timer_interval, len, TIMER_INTERVAL, p);
 			READU16(current, timeout, len, TIMEOUT, p);
 
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, capabilities) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType23CapabilitiesStr(current->capabilities, decbuf, sizeof(decbuf));
+				current->decoded.capabilities = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type23_count = index;
-	return Type23;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType23BootOptionStr(uint8_t capabilities) {
+static const char* lazybiosType23BootOptionStr(uint8_t capabilities) {
 	switch ((capabilities & BOOT_OPTION_MASK) >> BOOT_OPTION_SHIFT) {
 		case BOOT_OPTION_RESERVED:
 			return "Reserved";
@@ -100,7 +118,7 @@ const char* lazybiosType23BootOptionStr(uint8_t capabilities) {
 	}
 }
 
-const char* lazybiosType23BootOptionOnLimitStr(uint8_t capabilities) {
+static const char* lazybiosType23BootOptionOnLimitStr(uint8_t capabilities) {
 	switch ((capabilities & BOOT_OPTION_ON_LIMIT_MASK) >> BOOT_OPTION_ON_LIMIT_SHIFT) {
 		case BOOT_OPTION_RESERVED:
 			return "Reserved";
@@ -115,18 +133,24 @@ const char* lazybiosType23BootOptionOnLimitStr(uint8_t capabilities) {
 	}
 }
 
-void lazybiosType23CapabilitiesStr(uint8_t capabilities, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType23CapabilitiesStr(uint8_t capabilities, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	snprintf(buf, buf_len, "%s, %s, Boot Option: %s, Boot Option on Limit: %s",
 		(capabilities & RESET_STATUS_MASK) ? "Reset Enabled" : "Reset Disabled",
 		(capabilities & WATCHDOG_TIMER_MASK) ? "Watchdog Timer Present" : "Watchdog Timer Not Present",
 		lazybiosType23BootOptionStr(capabilities),
 		lazybiosType23BootOptionOnLimitStr(capabilities));
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType23(lazybiosType23_t* Type23, size_t type23_count) {
-    (void)type23_count;
+void lazybiosFreeType23(lazybiosType23Array_t* Type23) {
     if (!Type23) return;
+
+	for (size_t i = 0; i < Type23->count; i++) {
+		free(Type23->entries[i].decoded.capabilities);
+	}
+
+    free(Type23->entries);
 
     free(Type23);
 }

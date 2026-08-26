@@ -54,10 +54,26 @@ typedef struct {
 } lazybiosType0FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 0 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	uint16_t extended_rom_size;
+	char extended_rom_size_unit[5];
+	char* characteristics;
+	char* characteristics_ext_byte1;
+	char* characteristics_ext_byte2;
+} lazybiosType0Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 0 BIOS Information.
  * @ingroup api_type0
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* vendor;
 	const char* version;
 	const char* release_date;
@@ -72,60 +88,36 @@ typedef struct {
 	uint8_t ec_minor_release;
 	uint16_t extended_rom_size;
 	char unit[5];
+	lazybiosType0Decoded_t decoded;
 	lazybiosType0FieldStatus_t field_status;
 } lazybiosType0_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 0 structures.
+ * @ingroup api_type0
+ */
+typedef struct {
+	lazybiosType0_t* entries;
+	size_t count;
+} lazybiosType0Array_t;
 
 /** @addtogroup api_type0
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 0 BIOS Information structures.
- * @param Type0 Existing Type 0 array pointer value; it is not dereferenced or released.
- * @param type0_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 0 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 0 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 0 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType0Array_t* lazybiosGetType0(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes BIOS characteristics into a readable string.
- * @param characteristics SMBIOS BIOS characteristics bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 0 structures.
+ * @param Type0 Set to release; may be NULL.
  */
-void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes BIOS characteristics extension byte 1.
- * @param char_ext_byte_1 SMBIOS characteristics extension byte 1.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes BIOS characteristics extension byte 2.
- * @param char_ext_byte_2 SMBIOS characteristics extension byte 2.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len);
-
-/**
- * @brief Extracts the size and unit from an extended BIOS ROM size field.
- * @param raw Raw SMBIOS extended ROM size value.
- * @param unit Output array that receives "MiB", "GiB", or "RES".
- * @return Size portion of the extended ROM size field.
- */
-uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 0 structures.
- * @param Type0 Type 0 array to release.
- * @param type0_count Number of elements in Type0.
- */
-void lazybiosFreeType0(lazybiosType0_t* Type0, size_t type0_count);
+void lazybiosFreeType0(lazybiosType0Array_t* Type0);
 
 /** @} */
 

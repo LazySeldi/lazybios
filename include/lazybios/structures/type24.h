@@ -41,61 +41,56 @@ typedef struct {
 } lazybiosType24FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 24 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* administrator_password_status;
+	const char* front_panel_reset_status;
+	const char* keyboard_password_status;
+	const char* power_on_password_status;
+} lazybiosType24Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 24 Hardware Security information.
  * @ingroup api_type24
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t hardware_security_settings;
+	lazybiosType24Decoded_t decoded;
 	lazybiosType24FieldStatus_t field_status;
 } lazybiosType24_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 24 structures.
+ * @ingroup api_type24
+ */
+typedef struct {
+	lazybiosType24_t* entries;
+	size_t count;
+} lazybiosType24Array_t;
 
 /** @addtogroup api_type24
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 24 Hardware Security structures.
- * @param Type24 Existing Type 24 array pointer value; it is not dereferenced or released.
- * @param type24_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 24 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 24 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 24 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType24Array_t* lazybiosGetType24(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the power-on password status from Type 24 settings.
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the power-on password status.
+ * @brief Releases a parsed set of SMBIOS Type 24 structures.
+ * @param Type24 Set to release; may be NULL.
  */
-const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_settings);
-
-/**
- * @brief Decodes the keyboard password status from Type 24 settings.
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the keyboard password status.
- */
-const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_settings);
-
-/**
- * @brief Decodes the administrator password status from Type 24 settings.
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the administrator password status.
- */
-const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_security_settings);
-
-/**
- * @brief Decodes the front-panel reset status from Type 24 settings.
- * @param hardware_security_settings Raw Type 24 hardware-security settings byte.
- * @return Static string describing the front-panel reset status.
- */
-const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_settings);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 24 structures.
- * @param Type24 Type 24 array to release.
- * @param type24_count Number of elements in Type24.
- */
-void lazybiosFreeType24(lazybiosType24_t* Type24, size_t type24_count);
+void lazybiosFreeType24(lazybiosType24Array_t* Type24);
 
 /** @} */
 

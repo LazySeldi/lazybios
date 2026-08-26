@@ -48,6 +48,8 @@ typedef struct {
  * @ingroup api_type35
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* description;
 	uint16_t management_device_handle;
 	uint16_t component_handle;
@@ -55,25 +57,32 @@ typedef struct {
 	lazybiosType35FieldStatus_t field_status;
 } lazybiosType35_t;
 
+/**
+ * @brief A parsed set of SMBIOS Type 35 structures.
+ * @ingroup api_type35
+ */
+typedef struct {
+	lazybiosType35_t* entries;
+	size_t count;
+} lazybiosType35Array_t;
+
 /** @addtogroup api_type35
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 35 Management Device Component structures.
- * @param Type35 Existing Type 35 array pointer value; it is not dereferenced or released.
- * @param type35_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 35 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 35 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 35 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType35_t* lazybiosGetType35(lazybiosType35_t* Type35, size_t* type35_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType35Array_t* lazybiosGetType35(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed SMBIOS Type 35 structures.
- * @param Type35 Type 35 array to release.
- * @param type35_count Number of elements in Type35.
+ * @brief Releases a parsed set of SMBIOS Type 35 structures.
+ * @param Type35 Set to release; may be NULL.
  */
-void lazybiosFreeType35(lazybiosType35_t* Type35, size_t type35_count);
+void lazybiosFreeType35(lazybiosType35Array_t* Type35);
 
 /** @} */
 

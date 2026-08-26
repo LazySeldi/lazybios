@@ -43,6 +43,13 @@ typedef struct {
 } lazybiosType42ProtocolRecordFieldStatus_t;
 
 /**
+ * @brief Decoded forms of the encoded fields in one record.
+ */
+typedef struct {
+	const char* protocol_type;
+} lazybiosType42ProtocolRecordDecoded_t;
+
+/**
  * @brief Parsed protocol record from an SMBIOS Type 42 structure.
  * @ingroup api_type42
  */
@@ -51,6 +58,7 @@ typedef struct {
 	uint8_t protocol_type_specific_data_length;
 	uint8_t* protocol_type_specific_data;
 	lazybiosType42ProtocolRecordFieldStatus_t field_status;
+	lazybiosType42ProtocolRecordDecoded_t decoded;
 } lazybiosType42ProtocolRecord_t;
 
 /** @brief Availability metadata for SMBIOS Type 42 fields. */
@@ -63,52 +71,55 @@ typedef struct {
 } lazybiosType42FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 42 encoded fields.
+ */
+typedef struct {
+	const char* interface_type;
+} lazybiosType42Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 42 Management Controller Host Interface.
  * @ingroup api_type42
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t interface_type;
 	uint8_t interface_type_specific_data_length;
 	size_t interface_type_specific_data_size;
 	uint8_t* interface_type_specific_data;
 	uint8_t number_of_protocol_records;
 	lazybiosType42ProtocolRecord_t* protocol_records;
+	lazybiosType42Decoded_t decoded;
 	lazybiosType42FieldStatus_t field_status;
 } lazybiosType42_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 42 structures.
+ * @ingroup api_type42
+ */
+typedef struct {
+	lazybiosType42_t* entries;
+	size_t count;
+} lazybiosType42Array_t;
 
 /** @addtogroup api_type42
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 42 Management Controller Host Interface structures.
- * @param Type42 Existing Type 42 array pointer value; it is not dereferenced or released.
- * @param type42_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 42 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 42 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 42 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType42Array_t* lazybiosGetType42(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS Type 42 management-controller host-interface type.
- * @param interface_type Raw management-controller host-interface type value.
- * @return Static string describing the interface type.
+ * @brief Releases a parsed set of SMBIOS Type 42 structures.
+ * @param Type42 Set to release; may be NULL.
  */
-const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type);
-
-/**
- * @brief Decodes an SMBIOS Type 42 management-controller protocol type.
- * @param protocol_type Raw management-controller protocol type value.
- * @return Static string describing the protocol type.
- */
-const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 42 structures.
- * @param Type42 Type 42 array to release.
- * @param type42_count Number of elements in Type42.
- */
-void lazybiosFreeType42(lazybiosType42_t* Type42, size_t type42_count);
+void lazybiosFreeType42(lazybiosType42Array_t* Type42);
 
 /** @} */
 

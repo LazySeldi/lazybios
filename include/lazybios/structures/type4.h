@@ -68,10 +68,28 @@ typedef struct {
 } lazybiosType4FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 4 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* processor_family;
+	const char* processor_family_2;
+	const char* processor_type;
+	const char* processor_upgrade;
+	char* voltage;
+	char* status;
+	char* processor_characteristics;
+} lazybiosType4Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 4 Processor Information.
  * @ingroup api_type4
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* socket_designation;
 	uint8_t processor_type;
 	uint8_t processor_family;
@@ -100,73 +118,36 @@ typedef struct {
 	uint16_t thread_count_2;
 	uint16_t thread_enabled;
 	const char* socket_type;
+	lazybiosType4Decoded_t decoded;
 	lazybiosType4FieldStatus_t field_status;
 } lazybiosType4_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 4 structures.
+ * @ingroup api_type4
+ */
+typedef struct {
+	lazybiosType4_t* entries;
+	size_t count;
+} lazybiosType4Array_t;
 
 /** @addtogroup api_type4
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 4 Processor Information structures.
- * @param Type4 Existing Type 4 array pointer value; it is not dereferenced or released.
- * @param type4_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 4 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 4 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 4 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType4_t* lazybiosGetType4(lazybiosType4_t* Type4, size_t* type4_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType4Array_t* lazybiosGetType4(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS processor family value.
- * @param family Raw 8-bit or extended 16-bit processor family value.
- * @return Static string describing the processor family.
+ * @brief Releases a parsed set of SMBIOS Type 4 structures.
+ * @param Type4 Set to release; may be NULL.
  */
-const char* lazybiosType4ProcessorFamilyStr(uint16_t family);
-
-/**
- * @brief Decodes an SMBIOS processor upgrade or socket type.
- * @param type Raw SMBIOS processor upgrade value.
- * @return Static string describing the socket type.
- */
-const char* lazybiosType4SocketTypeStr(uint8_t type);
-
-/**
- * @brief Decodes SMBIOS processor characteristics into a readable string.
- * @param characteristics Raw SMBIOS processor characteristics bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType4CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes an SMBIOS processor type.
- * @param type Raw SMBIOS processor type value.
- * @return Static string describing the processor type.
- */
-const char* lazybiosType4TypeStr(uint8_t type);
-
-/**
- * @brief Decodes an SMBIOS processor status byte.
- * @param status Raw SMBIOS processor status value.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType4StatusStr(uint8_t status, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes an SMBIOS processor voltage byte.
- * @param voltage Raw SMBIOS processor voltage value.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType4VoltageStr(uint8_t voltage, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 4 structures.
- * @param Type4 Type 4 array to release.
- * @param type4_count Number of elements in Type4.
- */
-void lazybiosFreeType4(lazybiosType4_t* Type4, size_t type4_count);
+void lazybiosFreeType4(lazybiosType4Array_t* Type4);
 
 /** @} */
 

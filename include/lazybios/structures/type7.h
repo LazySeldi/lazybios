@@ -52,10 +52,30 @@ typedef struct {
 } lazybiosType7FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 7 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* associativity;
+	const char* error_correction_type;
+	uint64_t installed_cache_size_2;
+	uint64_t installed_size;
+	uint64_t maximum_cache_size;
+	uint64_t maximum_cache_size_2;
+	const char* system_cache_type;
+	char* cache_configuration;
+	char* supported_sram_type;
+} lazybiosType7Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 7 Cache Information.
  * @ingroup api_type7
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* socket_designation;
 	uint16_t cache_configuration;
 	uint16_t maximum_cache_size;
@@ -68,38 +88,36 @@ typedef struct {
 	uint8_t associativity;
 	uint32_t maximum_cache_size_2;
 	uint32_t installed_cache_size_2;
+	lazybiosType7Decoded_t decoded;
 	lazybiosType7FieldStatus_t field_status;
 } lazybiosType7_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 7 structures.
+ * @ingroup api_type7
+ */
+typedef struct {
+	lazybiosType7_t* entries;
+	size_t count;
+} lazybiosType7Array_t;
 
 /** @addtogroup api_type7
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 7 Cache Information structures.
- * @param Type7 Existing Type 7 array pointer value; it is not dereferenced or released.
- * @param type7_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 7 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 7 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 7 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType7Array_t* lazybiosGetType7(const lazybiosDMI_t* DMIData);
 
-/** @brief Converts a 16-bit SMBIOS cache size field to kibibytes. */
-uint64_t lazybiosType7CacheU16(uint16_t raw_size);
-/** @brief Decodes SMBIOS SRAM type flags. */
-void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len);
-/** @brief Decodes a cache error-correction type. */
-const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type);
-/** @brief Decodes a system cache type. */
-const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type);
-/** @brief Decodes cache associativity. */
-const char* lazybiosType7AssociativityStr(uint8_t associativity);
-/** @brief Decodes cache configuration. */
-void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len);
-/** @brief Converts a 32-bit SMBIOS cache size field to kibibytes. */
-uint64_t lazybiosType7CacheU32(uint32_t raw_size);
-/** @brief Releases parsed Type 7 structures. */
-void lazybiosFreeType7(lazybiosType7_t* Type7, size_t type7_count);
+/**
+ * @brief Releases a parsed set of SMBIOS Type 7 structures.
+ * @param Type7 Set to release; may be NULL.
+ */
+void lazybiosFreeType7(lazybiosType7Array_t* Type7);
 
 /** @} */
 

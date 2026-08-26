@@ -51,10 +51,29 @@ typedef struct {
 } lazybiosType5FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 5 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* current_interleave;
+	const char* error_detecting_method;
+	const char* supported_interleave;
+	char* error_correcting_capability;
+	char* enabled_error_correcting_capabilities;
+	char* supported_speeds;
+	char* supported_memory_types;
+	char* memory_module_voltage;
+} lazybiosType5Decoded_t;
+
+/**
  * @brief Parsed obsolete SMBIOS Type 5 Memory Controller Information.
  * @ingroup api_type5
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t error_detecting_method;
 	uint8_t error_correcting_capability;
 	uint8_t supported_interleave;
@@ -66,74 +85,36 @@ typedef struct {
 	uint8_t number_of_associated_memory_slots;
 	uint16_t* memory_module_configuration_handles;
 	uint8_t enabled_error_correcting_capabilities;
+	lazybiosType5Decoded_t decoded;
 	lazybiosType5FieldStatus_t field_status;
 } lazybiosType5_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 5 structures.
+ * @ingroup api_type5
+ */
+typedef struct {
+	lazybiosType5_t* entries;
+	size_t count;
+} lazybiosType5Array_t;
 
 /** @addtogroup api_type5
  * @{
  */
 
 /**
- * @brief Parses all obsolete SMBIOS Type 5 Memory Controller Information structures.
- * @param Type5 Existing Type 5 array pointer value; it is not dereferenced or released.
- * @param type5_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 5 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 5 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 5 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType5_t* lazybiosGetType5(lazybiosType5_t* Type5, size_t* type5_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType5Array_t* lazybiosGetType5(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes a Type 5 memory-error detecting method.
- * @param error_detecting_method Raw error-detecting method value.
- * @return Static string describing the method.
+ * @brief Releases a parsed set of SMBIOS Type 5 structures.
+ * @param Type5 Set to release; may be NULL.
  */
-const char* lazybiosType5ErrorDetectingMethodStr(uint8_t error_detecting_method);
-
-/**
- * @brief Decodes a Type 5 error-correcting capability bit field.
- * @param capability Raw supported or enabled error-correcting capability byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType5ErrorCorrectingCapabilityStr(uint8_t capability, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes a Type 5 memory-interleave value.
- * @param interleave Raw supported or current interleave value.
- * @return Static string describing the interleave configuration.
- */
-const char* lazybiosType5InterleaveStr(uint8_t interleave);
-
-/**
- * @brief Decodes the Type 5 supported-memory-speed bit field.
- * @param supported_speeds Raw supported-memory-speed bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType5SupportedSpeedsStr(uint16_t supported_speeds, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes the Type 5 supported-memory-type bit field.
- * @param supported_memory_types Raw supported-memory-type bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType5SupportedMemoryTypesStr(uint16_t supported_memory_types, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes the Type 5 memory-module voltage bit field.
- * @param memory_module_voltage Raw memory-module voltage bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType5MemoryModuleVoltageStr(uint8_t memory_module_voltage, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 5 structures.
- * @param Type5 Type 5 array to release.
- * @param type5_count Number of elements in Type5.
- */
-void lazybiosFreeType5(lazybiosType5_t* Type5, size_t type5_count);
+void lazybiosFreeType5(lazybiosType5Array_t* Type5);
 
 /** @} */
 

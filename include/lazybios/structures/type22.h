@@ -55,10 +55,24 @@ typedef struct {
 } lazybiosType22FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 22 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	uint32_t design_capacity;
+	const char* device_chemistry;
+	char* sbds_manufacture_date;
+} lazybiosType22Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 22 Portable Battery.
  * @ingroup api_type22
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* location;
 	const char* manufacturer;
 	const char* manufacture_date;
@@ -74,51 +88,36 @@ typedef struct {
 	const char* sbds_device_chemistry;
 	uint8_t design_capacity_multiplier;
 	uint32_t oem_specific;
+	lazybiosType22Decoded_t decoded;
 	lazybiosType22FieldStatus_t field_status;
 } lazybiosType22_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 22 structures.
+ * @ingroup api_type22
+ */
+typedef struct {
+	lazybiosType22_t* entries;
+	size_t count;
+} lazybiosType22Array_t;
 
 /** @addtogroup api_type22
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 22 Portable Battery structures.
- * @param Type22 Existing Type 22 array pointer value; it is not dereferenced or released.
- * @param type22_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 22 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 22 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 22 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType22Array_t* lazybiosGetType22(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS portable-battery chemistry value.
- * @param device_chemistry Raw portable-battery chemistry value.
- * @return Static string describing the chemistry.
+ * @brief Releases a parsed set of SMBIOS Type 22 structures.
+ * @param Type22 Set to release; may be NULL.
  */
-const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry);
-
-/**
- * @brief Calculates the effective portable-battery design capacity.
- * @param design_capacity Raw design capacity in mWh.
- * @param design_capacity_multiplier SMBIOS 2.2 multiplication factor, or 1 when unavailable.
- * @return Effective design capacity in mWh.
- */
-uint32_t lazybiosType22DesignCapacityMWh(uint16_t design_capacity, uint8_t design_capacity_multiplier);
-
-/**
- * @brief Formats an SMBIOS Smart Battery Data Specification manufacture date.
- * @param sbds_manufacture_date Raw packed SBDS manufacture date.
- * @param buf Output buffer that receives the formatted date.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 22 structures.
- * @param Type22 Type 22 array to release.
- * @param type22_count Number of elements in Type22.
- */
-void lazybiosFreeType22(lazybiosType22_t* Type22, size_t type22_count);
+void lazybiosFreeType22(lazybiosType22Array_t* Type22);
 
 /** @} */
 

@@ -26,6 +26,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len);
+static size_t lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType7AssociativityStr(uint8_t associativity);
+static inline uint64_t lazybiosType7CacheU16(uint16_t raw_size);
+static inline uint64_t lazybiosType7CacheU32(uint32_t raw_size);
+static inline const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type);
+static inline const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type);
+
 // Fields
 #define SOCKET_DESIGNATION 0x04
 #define CACHE_CONFIGURATION 0x05
@@ -72,8 +83,11 @@
 #define _64_WAY_SET_ASSOCIATIVE 0x0D
 #define _20_WAY_SET_ASSOCIATIVE 0x0E
 
-lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, lazybiosDMI_t* DMIData) {
+lazybiosType7Array_t* lazybiosGetType7(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType7Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -81,11 +95,12 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_CACHES);
 	size_t index = 0;
 
-	Type7 = calloc(count, sizeof(lazybiosType7_t));
-	if (!Type7) return NULL;
-	if (count == 0) {
-		*type7_count = 0;
-		return Type7;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -94,8 +109,10 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 
 		if (type == SMBIOS_TYPE_CACHES) {
 			if (index >= count) break;
-			lazybiosType7_t* current = &Type7[index];
+			lazybiosType7_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, socket_designation, len, SOCKET_DESIGNATION, p, structure_end);
@@ -115,18 +132,36 @@ lazybiosType7_t* lazybiosGetType7(lazybiosType7_t* Type7, size_t* type7_count, l
 				READU32(current, installed_cache_size_2, len, INSTALLED_CACHE_SIZE_2, p);
 			}
 
+			current->decoded.associativity = lazybiosType7AssociativityStr(current->associativity);
+			current->decoded.error_correction_type = lazybiosType7ErrorCorrectionTypeStr(current->error_correction_type);
+			current->decoded.installed_cache_size_2 = lazybiosType7CacheU32(current->installed_cache_size_2);
+			current->decoded.installed_size = lazybiosType7CacheU16(current->installed_size);
+			current->decoded.maximum_cache_size = lazybiosType7CacheU16(current->maximum_cache_size);
+			current->decoded.maximum_cache_size_2 = lazybiosType7CacheU32(current->maximum_cache_size_2);
+			current->decoded.system_cache_type = lazybiosType7SystemCacheTypeStr(current->system_cache_type);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, cache_configuration) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType7CacheConfigurationStr(current->cache_configuration, decbuf, sizeof(decbuf));
+				current->decoded.cache_configuration = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, supported_sram_type) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType7SRAMTypeStr(current->supported_sram_type, decbuf, sizeof(decbuf));
+				current->decoded.supported_sram_type = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type7_count = index;
-	return Type7;
+	out->count = index;
+	return out;
 }
 
 
 // Cache Size -- This is for both Maximum Cache Size and Installed Size
 // Returns the cache size in KB based on the 16-bit  value
-uint64_t lazybiosType7CacheU16(uint16_t raw_size) {
+static inline uint64_t lazybiosType7CacheU16(uint16_t raw_size) {
 	uint8_t granularity = (raw_size >> 15) & 0x01;
 	uint16_t size_value = raw_size & 0x7FFF; // Bits 14:0
 
@@ -138,8 +173,8 @@ uint64_t lazybiosType7CacheU16(uint16_t raw_size) {
 }
 
 // SRAM Type
-void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -156,10 +191,11 @@ void lazybiosType7SRAMTypeStr(uint16_t sram_type, char* buf, size_t buf_len) {
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Error Correction Type
-const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type) {
+static inline const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type) {
 	switch (ecc_type) {
 		case ECC_OTHER:
 			return "Other";
@@ -179,7 +215,7 @@ const char* lazybiosType7ErrorCorrectionTypeStr(uint8_t ecc_type) {
 }
 
 // System Cache Type
-const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type) {
+static inline const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type) {
 	switch (cache_type) {
 		case SC_OTHER:
 			return "Other";
@@ -197,7 +233,7 @@ const char* lazybiosType7SystemCacheTypeStr(uint8_t cache_type) {
 }
 
 // Associativity
-const char* lazybiosType7AssociativityStr(uint8_t associativity) {
+static inline const char* lazybiosType7AssociativityStr(uint8_t associativity) {
 	switch (associativity) {
 		case ASS_OTHER:
 			return "Other";
@@ -233,8 +269,8 @@ const char* lazybiosType7AssociativityStr(uint8_t associativity) {
 }
 
 // Cache Configuration
-void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -279,10 +315,11 @@ void lazybiosType7CacheConfigurationStr(uint16_t config, char* buf, size_t buf_l
 	if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Cache Size 2 -- Used for Maximum Cache Size 2, and Installed Cache Size 2
-uint64_t lazybiosType7CacheU32(uint32_t raw_size) {
+static inline uint64_t lazybiosType7CacheU32(uint32_t raw_size) {
 	// If the field is 0, no cache is installed
 	if (raw_size == 0) {
 		return 0;
@@ -298,9 +335,15 @@ uint64_t lazybiosType7CacheU32(uint32_t raw_size) {
 	}
 }
 
-void lazybiosFreeType7(lazybiosType7_t* Type7, size_t type7_count) {
-    (void)type7_count;
+void lazybiosFreeType7(lazybiosType7Array_t* Type7) {
     if (!Type7) return;
+
+	for (size_t i = 0; i < Type7->count; i++) {
+		free(Type7->entries[i].decoded.cache_configuration);
+		free(Type7->entries[i].decoded.supported_sram_type);
+	}
+
+    free(Type7->entries);
 
     free(Type7);
 }

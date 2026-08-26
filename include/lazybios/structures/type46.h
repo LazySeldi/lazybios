@@ -43,42 +43,55 @@ typedef struct {
 } lazybiosType46FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 46 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* string_property_id;
+} lazybiosType46Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 46 String Property.
  * @ingroup api_type46
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint16_t string_property_id;
 	const char* string_property_value;
 	uint16_t parent_handle;
+	lazybiosType46Decoded_t decoded;
 	lazybiosType46FieldStatus_t field_status;
 } lazybiosType46_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 46 structures.
+ * @ingroup api_type46
+ */
+typedef struct {
+	lazybiosType46_t* entries;
+	size_t count;
+} lazybiosType46Array_t;
 
 /** @addtogroup api_type46
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 46 String Property structures.
- * @param Type46 Existing Type 46 array pointer value; it is not dereferenced or released.
- * @param type46_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 46 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 46 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 46 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType46_t* lazybiosGetType46(lazybiosType46_t* Type46, size_t* type46_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType46Array_t* lazybiosGetType46(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS Type 46 string-property identifier.
- * @param string_property_id Raw string-property identifier.
- * @return Static string describing the property or its allocation range.
+ * @brief Releases a parsed set of SMBIOS Type 46 structures.
+ * @param Type46 Set to release; may be NULL.
  */
-const char* lazybiosType46StringPropertyIDStr(uint16_t string_property_id);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 46 structures.
- * @param Type46 Type 46 array to release.
- * @param type46_count Number of elements in Type46.
- */
-void lazybiosFreeType46(lazybiosType46_t* Type46, size_t type46_count);
+void lazybiosFreeType46(lazybiosType46Array_t* Type46);
 
 /** @} */
 

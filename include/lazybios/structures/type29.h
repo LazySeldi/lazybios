@@ -49,10 +49,23 @@ typedef struct {
 } lazybiosType29FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 29 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* location;
+	const char* status;
+} lazybiosType29Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 29 Electrical Current Probe information.
  * @ingroup api_type29
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* description;
 	uint8_t location_and_status;
 	uint16_t maximum_value;
@@ -62,42 +75,36 @@ typedef struct {
 	uint16_t accuracy;
 	uint32_t oem_defined;
 	uint16_t nominal_value;
+	lazybiosType29Decoded_t decoded;
 	lazybiosType29FieldStatus_t field_status;
 } lazybiosType29_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 29 structures.
+ * @ingroup api_type29
+ */
+typedef struct {
+	lazybiosType29_t* entries;
+	size_t count;
+} lazybiosType29Array_t;
 
 /** @addtogroup api_type29
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 29 Electrical Current Probe structures.
- * @param Type29 Existing Type 29 array pointer value; it is not dereferenced or released.
- * @param type29_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 29 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 29 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 29 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType29Array_t* lazybiosGetType29(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the physical location from a Type 29 location-and-status field.
- * @param location_and_status Raw Type 29 location-and-status byte.
- * @return Static string describing the current-probe location.
+ * @brief Releases a parsed set of SMBIOS Type 29 structures.
+ * @param Type29 Set to release; may be NULL.
  */
-const char* lazybiosType29LocationStr(uint8_t location_and_status);
-
-/**
- * @brief Decodes the monitored-current status from a Type 29 location-and-status field.
- * @param location_and_status Raw Type 29 location-and-status byte.
- * @return Static string describing the monitored-current status.
- */
-const char* lazybiosType29StatusStr(uint8_t location_and_status);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 29 structures.
- * @param Type29 Type 29 array to release.
- * @param type29_count Number of elements in Type29.
- */
-void lazybiosFreeType29(lazybiosType29_t* Type29, size_t type29_count);
+void lazybiosFreeType29(lazybiosType29Array_t* Type29);
 
 /** @} */
 

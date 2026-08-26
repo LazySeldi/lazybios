@@ -22,8 +22,16 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline uint32_t lazybiosType22DesignCapacityMWh(uint16_t design_capacity, uint8_t design_capacity_multiplier);
+static inline const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry);
 
 // Fields
 #define LOCATION 0x04
@@ -52,8 +60,11 @@
 #define DEVICE_CHEMISTRY_ZINC_AIR 0x07
 #define DEVICE_CHEMISTRY_LITHIUM_POLYMER 0x08
 
-lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_count, lazybiosDMI_t* DMIData) {
+lazybiosType22Array_t* lazybiosGetType22(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType22Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -61,11 +72,12 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PORTABLE_BATTERY);
 	size_t index = 0;
 
-	Type22 = calloc(count, sizeof(lazybiosType22_t));
-	if (!Type22) return NULL;
-	if (count == 0) {
-		*type22_count = 0;
-		return Type22;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -74,8 +86,10 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 
 		if (type == SMBIOS_TYPE_PORTABLE_BATTERY) {
 			if (index >= count) break;
-			lazybiosType22_t* current = &Type22[index];
+			lazybiosType22_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, location, len, LOCATION, p, structure_end);
@@ -119,15 +133,24 @@ lazybiosType22_t* lazybiosGetType22(lazybiosType22_t* Type22, size_t* type22_cou
 				LAZYBIOS_MARK_UNREACHABLE(current, oem_specific);
 			}
 
+			current->decoded.design_capacity = lazybiosType22DesignCapacityMWh(current->design_capacity, current->design_capacity_multiplier);
+			current->decoded.device_chemistry = lazybiosType22DeviceChemistryStr(current->device_chemistry);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, sbds_manufacture_date) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType22SBDSManufactureDateStr(current->sbds_manufacture_date, decbuf, sizeof(decbuf));
+				current->decoded.sbds_manufacture_date = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type22_count = index;
-	return Type22;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry) {
+static inline const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry) {
 	switch (device_chemistry) {
 		case DEVICE_CHEMISTRY_OTHER:
 			return "Other";
@@ -150,26 +173,32 @@ const char* lazybiosType22DeviceChemistryStr(uint8_t device_chemistry) {
 	}
 }
 
-uint32_t lazybiosType22DesignCapacityMWh(uint16_t design_capacity, uint8_t design_capacity_multiplier) {
+static inline uint32_t lazybiosType22DesignCapacityMWh(uint16_t design_capacity, uint8_t design_capacity_multiplier) {
 	return (uint32_t)design_capacity * design_capacity_multiplier;
 }
 
-void lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType22SBDSManufactureDateStr(uint16_t sbds_manufacture_date, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	uint16_t year = (uint16_t)(1980 + ((sbds_manufacture_date >> 9) & 0x7F));
 	uint8_t month = (uint8_t)((sbds_manufacture_date >> 5) & 0x0F);
 	uint8_t day = (uint8_t)(sbds_manufacture_date & 0x1F);
 
 	if (month < 1 || month > 12 || day < 1 || day > 31) {
 		snprintf(buf, buf_len, "Invalid");
-		return;
+		return 0;
 	}
 	snprintf(buf, buf_len, "%04hu-%02hhu-%02hhu", year, month, day);
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType22(lazybiosType22_t* Type22, size_t type22_count) {
-    (void)type22_count;
+void lazybiosFreeType22(lazybiosType22Array_t* Type22) {
     if (!Type22) return;
+
+	for (size_t i = 0; i < Type22->count; i++) {
+		free(Type22->entries[i].decoded.sbds_manufacture_date);
+	}
+
+    free(Type22->entries);
 
     free(Type22);
 }

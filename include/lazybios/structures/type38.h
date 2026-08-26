@@ -47,10 +47,27 @@ typedef struct {
 } lazybiosType38FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 38 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* base_address_type;
+	const char* register_spacing;
+	const char* interface_type;
+	uint64_t base_address;
+	char* ipmi_specification_revision;
+	char* base_address_modifier_interrupt_info;
+} lazybiosType38Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 38 IPMI Device Information.
  * @ingroup api_type38
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t interface_type;
 	uint8_t ipmi_specification_revision;
 	uint8_t i2c_target_address;
@@ -58,73 +75,36 @@ typedef struct {
 	uint64_t base_address;
 	uint8_t base_address_modifier_interrupt_info;
 	uint8_t interrupt_number;
+	lazybiosType38Decoded_t decoded;
 	lazybiosType38FieldStatus_t field_status;
 } lazybiosType38_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 38 structures.
+ * @ingroup api_type38
+ */
+typedef struct {
+	lazybiosType38_t* entries;
+	size_t count;
+} lazybiosType38Array_t;
 
 /** @addtogroup api_type38
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 38 IPMI Device Information structures.
- * @param Type38 Existing Type 38 array pointer value; it is not dereferenced or released.
- * @param type38_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 38 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 38 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 38 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType38Array_t* lazybiosGetType38(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an IPMI BMC interface type.
- * @param interface_type Raw Type 38 interface-type value.
- * @return Static string describing the BMC interface type.
+ * @brief Releases a parsed set of SMBIOS Type 38 structures.
+ * @param Type38 Set to release; may be NULL.
  */
-const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type);
-
-/**
- * @brief Formats the BCD-encoded IPMI specification revision.
- * @param revision Raw BCD-encoded specification revision.
- * @param buf Output buffer that receives the formatted revision.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes the address space selected by a Type 38 base address.
- * @param base_address Raw Type 38 base-address field.
- * @return Static string describing the selected address space.
- */
-const char* lazybiosType38BaseAddressTypeStr(uint64_t base_address);
-
-/**
- * @brief Reconstructs the effective BMC base address.
- * @param base_address Raw Type 38 base-address field.
- * @param modifier Raw base-address-modifier and interrupt-information byte.
- * @return Base address with the address-space flag removed and address bit zero restored.
- */
-uint64_t lazybiosType38BaseAddressValue(uint64_t base_address, uint8_t modifier);
-
-/**
- * @brief Decodes the IPMI interface register spacing.
- * @param modifier Raw base-address-modifier and interrupt-information byte.
- * @return Static string describing the register spacing.
- */
-const char* lazybiosType38RegisterSpacingStr(uint8_t modifier);
-
-/**
- * @brief Decodes Type 38 interrupt availability, polarity, and trigger mode.
- * @param interrupt_info Raw base-address-modifier and interrupt-information byte.
- * @param buf Output buffer that receives the decoded interrupt information.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 38 structures.
- * @param Type38 Type 38 array to release.
- * @param type38_count Number of elements in Type38.
- */
-void lazybiosFreeType38(lazybiosType38_t* Type38, size_t type38_count);
+void lazybiosFreeType38(lazybiosType38Array_t* Type38);
 
 /** @} */
 

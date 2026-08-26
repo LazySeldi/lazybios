@@ -26,6 +26,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t buf_len);
+static size_t lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t buf_len);
+static size_t lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType9CurrentUsageStr(uint8_t current_usage);
+static inline const char* lazybiosType9SlotHeightStr(uint8_t slot_height);
+static inline const char* lazybiosType9SlotLengthStr(uint8_t slot_length);
+static inline const char* lazybiosType9SlotTypeStr(uint8_t slot_type);
+static inline const char* lazybiosType9SlotWidthStr(uint8_t width);
+
 // Fields
 #define SLOT_DESIGNATION 0x04
 #define SLOT_TYPE 0x05
@@ -167,8 +179,11 @@
 #define SLOT_HEIGHT_FULL 0x03
 #define SLOT_HEIGHT_LOW_PROFILE 0x04
 
-lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, lazybiosDMI_t* DMIData) {
+lazybiosType9Array_t* lazybiosGetType9(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType9Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -176,11 +191,12 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_SLOTS);
 	size_t index = 0;
 
-	Type9 = calloc(count, sizeof(lazybiosType9_t));
-	if (!Type9) return NULL;
-	if (count == 0) {
-		*type9_count = 0;
-		return Type9;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -189,8 +205,10 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 
 		if (type == SMBIOS_TYPE_SYSTEM_SLOTS) {
 			if (index >= count) break;
-			lazybiosType9_t* current = &Type9[index];
+			lazybiosType9_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, slot_designation, len, SLOT_DESIGNATION, p, structure_end);
@@ -245,10 +263,18 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 								LAZYBIOS_MARK_PRESENT(&current->peer_groups[i], bus_number);
 								LAZYBIOS_MARK_PRESENT(&current->peer_groups[i], device_function_number);
 								LAZYBIOS_MARK_PRESENT(&current->peer_groups[i], data_bus_width);
+								current->peer_groups[i].decoded.data_bus_width =
+									lazybiosType9SlotWidthStr(current->peer_groups[i].data_bus_width);
+								{
+									char dfbuf[LAZYBIOS_DECODER_BUF_SIZE];
+									lazybiosType9DeviceFunctionStr(current->peer_groups[i].device_function_number, dfbuf, sizeof(dfbuf));
+									current->peer_groups[i].decoded.device_function_number = lazybiosDup(dfbuf);
+								}
 							}
 							LAZYBIOS_MARK_PRESENT(current, peer_groups);
 						} else {
-							lazybiosFreeType9(Type9, index + 1);
+							out->count = index + 1;
+							lazybiosFreeType9(out);
 							return NULL;
 						}
 					} else if (!peer_layout_valid) {
@@ -296,17 +322,39 @@ lazybiosType9_t* lazybiosGetType9(lazybiosType9_t* Type9, size_t* type9_count, l
 				}
 			}
 
+			current->decoded.current_usage = lazybiosType9CurrentUsageStr(current->current_usage);
+			current->decoded.data_bus_width = lazybiosType9SlotWidthStr(current->data_bus_width);
+			current->decoded.slot_data_bus_width = lazybiosType9SlotWidthStr(current->slot_data_bus_width);
+			current->decoded.slot_height = lazybiosType9SlotHeightStr(current->slot_height);
+			current->decoded.slot_length = lazybiosType9SlotLengthStr(current->slot_length);
+			current->decoded.slot_physical_width = lazybiosType9SlotWidthStr(current->slot_physical_width);
+			current->decoded.slot_type = lazybiosType9SlotTypeStr(current->slot_type);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, slot_characteristics_1) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType9Characteristics1Str(current->slot_characteristics_1, decbuf, sizeof(decbuf));
+				current->decoded.slot_characteristics_1 = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, slot_characteristics_2) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType9Characteristics2Str(current->slot_characteristics_2, decbuf, sizeof(decbuf));
+				current->decoded.slot_characteristics_2 = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, device_function_number) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType9DeviceFunctionStr(current->device_function_number, decbuf, sizeof(decbuf));
+				current->decoded.device_function_number = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type9_count = index;
-	return Type9;
+	out->count = index;
+	return out;
 }
 
 
 // Slot Type
-const char* lazybiosType9SlotTypeStr(uint8_t slot_type) {
+static inline const char* lazybiosType9SlotTypeStr(uint8_t slot_type) {
 	switch (slot_type) {
 		case SLOT_TYPE_OTHER: return "Other";
 		case SLOT_TYPE_UNKNOWN: return "Unknown";
@@ -392,7 +440,7 @@ const char* lazybiosType9SlotTypeStr(uint8_t slot_type) {
 }
 
 // Slot Data Bus Width and Slot Physical Width
-const char* lazybiosType9SlotWidthStr(uint8_t width) {
+static inline const char* lazybiosType9SlotWidthStr(uint8_t width) {
 	switch (width) {
 		case SLOT_WIDTH_OTHER: return "Other";
 		case SLOT_WIDTH_UNKNOWN: return "Unknown";
@@ -413,7 +461,7 @@ const char* lazybiosType9SlotWidthStr(uint8_t width) {
 }
 
 // Current Usage
-const char* lazybiosType9CurrentUsageStr(uint8_t current_usage) {
+static inline const char* lazybiosType9CurrentUsageStr(uint8_t current_usage) {
 	switch (current_usage) {
 		case SLOT_USAGE_OTHER: return "Other";
 		case SLOT_USAGE_UNKNOWN: return "Unknown";
@@ -425,7 +473,7 @@ const char* lazybiosType9CurrentUsageStr(uint8_t current_usage) {
 }
 
 // Slot Length
-const char* lazybiosType9SlotLengthStr(uint8_t slot_length) {
+static inline const char* lazybiosType9SlotLengthStr(uint8_t slot_length) {
 	switch (slot_length) {
 		case SLOT_LENGTH_OTHER: return "Other";
 		case SLOT_LENGTH_UNKNOWN: return "Unknown";
@@ -438,8 +486,8 @@ const char* lazybiosType9SlotLengthStr(uint8_t slot_length) {
 }
 
 // Slot Characteristics 1
-void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -457,11 +505,12 @@ void lazybiosType9Characteristics1Str(uint8_t characteristics, char* buf, size_t
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Slot Characteristics 2
-void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -479,23 +528,25 @@ void lazybiosType9Characteristics2Str(uint8_t characteristics, char* buf, size_t
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Device/Function Number
-void lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType9DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (device_function_number == 0xFF) {
 		snprintf(buf, buf_len, "Not Applicable");
-		return;
+		return 0;
 	}
 
 	uint8_t device = (device_function_number >> 3) & 0x1F;
 	uint8_t function = device_function_number & 0x07;
 	snprintf(buf, buf_len, "Device %u, Function %u", device, function);
+	return buf ? strlen(buf) : 0;
 }
 
 // Slot Height
-const char* lazybiosType9SlotHeightStr(uint8_t slot_height) {
+static inline const char* lazybiosType9SlotHeightStr(uint8_t slot_height) {
 	switch (slot_height) {
 		case SLOT_HEIGHT_NOT_APPLICABLE: return "Not applicable";
 		case SLOT_HEIGHT_OTHER: return "Other";
@@ -506,10 +557,22 @@ const char* lazybiosType9SlotHeightStr(uint8_t slot_height) {
 	}
 }
 
-void lazybiosFreeType9(lazybiosType9_t* Type9, size_t type9_count) {
+void lazybiosFreeType9(lazybiosType9Array_t* Type9) {
     if (!Type9) return;
 
-    for (size_t i = 0; i < type9_count; i++) free(Type9[i].peer_groups);
+	for (size_t i = 0; i < Type9->count; i++) {
+		free(Type9->entries[i].decoded.slot_characteristics_1);
+		free(Type9->entries[i].decoded.slot_characteristics_2);
+		free(Type9->entries[i].decoded.device_function_number);
+		if (Type9->entries[i].peer_groups) {
+			for (size_t g = 0; g < Type9->entries[i].peer_grouping_count; g++)
+				free(Type9->entries[i].peer_groups[g].decoded.device_function_number);
+		}
+	}
+
+    for (size_t i = 0; i < Type9->count; i++) free(Type9->entries[i].peer_groups);
+
+    free(Type9->entries);
 
     free(Type9);
 }

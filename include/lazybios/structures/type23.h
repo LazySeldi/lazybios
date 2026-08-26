@@ -45,59 +45,54 @@ typedef struct {
 } lazybiosType23FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 23 encoded fields.
+ */
+typedef struct {
+	char* capabilities;
+} lazybiosType23Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 23 System Reset information.
  * @ingroup api_type23
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t capabilities;
 	uint16_t reset_count;
 	uint16_t reset_limit;
 	uint16_t timer_interval;
 	uint16_t timeout;
+	lazybiosType23Decoded_t decoded;
 	lazybiosType23FieldStatus_t field_status;
 } lazybiosType23_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 23 structures.
+ * @ingroup api_type23
+ */
+typedef struct {
+	lazybiosType23_t* entries;
+	size_t count;
+} lazybiosType23Array_t;
 
 /** @addtogroup api_type23
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 23 System Reset structures.
- * @param Type23 Existing Type 23 array pointer value; it is not dereferenced or released.
- * @param type23_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 23 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 23 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 23 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType23_t* lazybiosGetType23(lazybiosType23_t* Type23, size_t* type23_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType23Array_t* lazybiosGetType23(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the watchdog boot option from Type 23 capabilities.
- * @param capabilities Raw Type 23 capabilities bit field.
- * @return Static string describing the boot option.
+ * @brief Releases a parsed set of SMBIOS Type 23 structures.
+ * @param Type23 Set to release; may be NULL.
  */
-const char* lazybiosType23BootOptionStr(uint8_t capabilities);
-
-/**
- * @brief Decodes the reset-limit boot option from Type 23 capabilities.
- * @param capabilities Raw Type 23 capabilities bit field.
- * @return Static string describing the boot option used at the reset limit.
- */
-const char* lazybiosType23BootOptionOnLimitStr(uint8_t capabilities);
-
-/**
- * @brief Decodes the SMBIOS Type 23 capabilities bit field.
- * @param capabilities Raw Type 23 capabilities byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType23CapabilitiesStr(uint8_t capabilities, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 23 structures.
- * @param Type23 Type 23 array to release.
- * @param type23_count Number of elements in Type23.
- */
-void lazybiosFreeType23(lazybiosType23_t* Type23, size_t type23_count);
+void lazybiosFreeType23(lazybiosType23Array_t* Type23);
 
 /** @} */
 

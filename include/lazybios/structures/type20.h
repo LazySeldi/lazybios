@@ -49,10 +49,23 @@ typedef struct {
 } lazybiosType20FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 20 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	uint64_t ending_address;
+	uint64_t starting_address;
+} lazybiosType20Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 20 Memory Device Mapped Address.
  * @ingroup api_type20
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint32_t starting_address;
 	uint32_t ending_address;
 	uint16_t memory_device_handle;
@@ -62,44 +75,36 @@ typedef struct {
 	uint8_t interleaved_data_depth;
 	uint64_t extended_starting_address;
 	uint64_t extended_ending_address;
+	lazybiosType20Decoded_t decoded;
 	lazybiosType20FieldStatus_t field_status;
 } lazybiosType20_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 20 structures.
+ * @ingroup api_type20
+ */
+typedef struct {
+	lazybiosType20_t* entries;
+	size_t count;
+} lazybiosType20Array_t;
 
 /** @addtogroup api_type20
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 20 Memory Device Mapped Address structures.
- * @param Type20 Existing Type 20 array pointer value; it is not dereferenced or released.
- * @param type20_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 20 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 20 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 20 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType20_t* lazybiosGetType20(lazybiosType20_t* Type20, size_t* type20_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType20Array_t* lazybiosGetType20(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Converts SMBIOS Type 20 starting-address fields to a byte address.
- * @param starting_address Raw 32-bit starting address in KiB.
- * @param extended_starting_address Raw extended starting address in bytes.
- * @return Effective starting address in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 20 structures.
+ * @param Type20 Set to release; may be NULL.
  */
-uint64_t lazybiosType20StartingAddressBytes(uint32_t starting_address, uint64_t extended_starting_address);
-
-/**
- * @brief Converts SMBIOS Type 20 ending-address fields to an inclusive byte address.
- * @param ending_address Raw 32-bit ending address identifying the last KiB.
- * @param extended_ending_address Raw extended inclusive ending address in bytes.
- * @return Effective inclusive ending address in bytes.
- */
-uint64_t lazybiosType20EndingAddressBytes(uint32_t ending_address, uint64_t extended_ending_address);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 20 structures.
- * @param Type20 Type 20 array to release.
- * @param type20_count Number of elements in Type20.
- */
-void lazybiosFreeType20(lazybiosType20_t* Type20, size_t type20_count);
+void lazybiosFreeType20(lazybiosType20Array_t* Type20);
 
 /** @} */
 

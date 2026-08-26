@@ -24,6 +24,12 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType16LocationStr(uint8_t location);
+static inline uint64_t lazybiosType16MaximumCapacityBytes(uint32_t maximum_capacity, uint64_t extended_maximum_capacity);
+static inline const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correction);
+static inline const char* lazybiosType16UseStr(uint8_t use);
+
 // Fields
 #define LOCATION 0x04
 #define USE 0x05
@@ -71,8 +77,11 @@
 #define ERROR_CORRECTION_MULTI_BIT_ECC 0x06
 #define ERROR_CORRECTION_CRC 0x07
 
-lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_count, lazybiosDMI_t* DMIData) {
+lazybiosType16Array_t* lazybiosGetType16(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType16Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -80,11 +89,12 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY);
 	size_t index = 0;
 
-	Type16 = calloc(count, sizeof(lazybiosType16_t));
-	if (!Type16) return NULL;
-	if (count == 0) {
-		*type16_count = 0;
-		return Type16;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -93,8 +103,10 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 
 		if (type == SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY) {
 			if (index >= count) break;
-			lazybiosType16_t* current = &Type16[index];
+			lazybiosType16_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, location, len, LOCATION, p);
 			READU8(current, use, len, USE, p);
@@ -114,15 +126,20 @@ lazybiosType16_t* lazybiosGetType16(lazybiosType16_t* Type16, size_t* type16_cou
 				LAZYBIOS_MARK_UNREACHABLE(current, extended_maximum_capacity);
 			}
 
+			current->decoded.location = lazybiosType16LocationStr(current->location);
+			current->decoded.maximum_capacity = lazybiosType16MaximumCapacityBytes(current->maximum_capacity, current->extended_maximum_capacity);
+			current->decoded.memory_error_correction = lazybiosType16MemoryErrorCorrectionStr(current->memory_error_correction);
+			current->decoded.use = lazybiosType16UseStr(current->use);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type16_count = index;
-	return Type16;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType16LocationStr(uint8_t location) {
+static inline const char* lazybiosType16LocationStr(uint8_t location) {
 	switch (location) {
 		case LOCATION_OTHER:
 			return "Other";
@@ -159,7 +176,7 @@ const char* lazybiosType16LocationStr(uint8_t location) {
 	}
 }
 
-const char* lazybiosType16UseStr(uint8_t use) {
+static inline const char* lazybiosType16UseStr(uint8_t use) {
 	switch (use) {
 		case USE_OTHER:
 			return "Other";
@@ -180,7 +197,7 @@ const char* lazybiosType16UseStr(uint8_t use) {
 	}
 }
 
-const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correction) {
+static inline const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correction) {
 	switch (memory_error_correction) {
 		case ERROR_CORRECTION_OTHER:
 			return "Other";
@@ -201,14 +218,15 @@ const char* lazybiosType16MemoryErrorCorrectionStr(uint8_t memory_error_correcti
 	}
 }
 
-uint64_t lazybiosType16MaximumCapacityBytes(uint32_t maximum_capacity, uint64_t extended_maximum_capacity) {
+static inline uint64_t lazybiosType16MaximumCapacityBytes(uint32_t maximum_capacity, uint64_t extended_maximum_capacity) {
 	if (maximum_capacity == USE_EXTENDED_MAXIMUM_CAPACITY) return extended_maximum_capacity;
 	return (uint64_t)maximum_capacity * 1024;
 }
 
-void lazybiosFreeType16(lazybiosType16_t* Type16, size_t type16_count) {
-    (void)type16_count;
+void lazybiosFreeType16(lazybiosType16Array_t* Type16) {
     if (!Type16) return;
+
+    free(Type16->entries);
 
     free(Type16);
 }

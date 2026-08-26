@@ -58,10 +58,27 @@ typedef struct {
 } lazybiosType3FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 3 encoded fields.
+ *
+ * Each member mirrors the identically named raw field and points at a static
+ * string. Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* boot_up_state;
+	const char* power_supply_state;
+	const char* thermal_state;
+	const char* security_status;
+	char* type;
+	char** contained_elements;
+} lazybiosType3Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 3 System Enclosure or Chassis Information.
  * @ingroup api_type3
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* manufacturer;
 	uint8_t type;
 	const char* version;
@@ -80,8 +97,18 @@ typedef struct {
 	const char* sku_number;
 	uint8_t rack_type;
 	uint8_t rack_height;
+	lazybiosType3Decoded_t decoded;
 	lazybiosType3FieldStatus_t field_status;
 } lazybiosType3_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 3 structures.
+ * @ingroup api_type3
+ */
+typedef struct {
+	lazybiosType3_t* entries;
+	size_t count;
+} lazybiosType3Array_t;
 
 /** @addtogroup api_type3
  * @{
@@ -89,49 +116,17 @@ typedef struct {
 
 /**
  * @brief Parses all SMBIOS Type 3 Chassis Information structures.
- * @param Type3 Existing Type 3 array pointer value; it is not dereferenced or released.
- * @param type3_count Output location for the number of parsed structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 3 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 3 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType3_t* lazybiosGetType3(lazybiosType3_t* Type3, size_t* type3_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType3Array_t* lazybiosGetType3(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS chassis type and lock indicator.
- * @param type Raw SMBIOS chassis type byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 3 structures.
+ * @param Type3 Set to release; may be NULL.
  */
-void lazybiosType3TypeStr(uint8_t type, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes an SMBIOS chassis state value.
- * @param state Raw boot-up, power-supply, or thermal state value.
- * @return Static string describing the chassis state.
- */
-const char* lazybiosType3StateStr(uint8_t state);
-
-/**
- * @brief Decodes an SMBIOS chassis security status.
- * @param security_status Raw SMBIOS security status value.
- * @return Static string describing the security status.
- */
-const char* lazybiosType3SecurityStatusStr(uint8_t security_status);
-
-/**
- * @brief Decodes the type field of a chassis contained-element record.
- * @param contained_elements Raw contained-element type byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType3ContainedElementTypeStr(uint8_t contained_elements, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 3 structures.
- * @param Type3 Type 3 array to release.
- * @param type3_count Number of elements in Type3.
- */
-void lazybiosFreeType3(lazybiosType3_t* Type3, size_t type3_count);
+void lazybiosFreeType3(lazybiosType3Array_t* Type3);
 
 /** @} */
 

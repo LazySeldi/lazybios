@@ -24,6 +24,12 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_security_settings);
+static inline const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_settings);
+static inline const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_settings);
+static inline const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_settings);
+
 // Fields
 #define HARDWARE_SECURITY_SETTINGS 0x04
 
@@ -42,8 +48,11 @@
 #define SECURITY_STATUS_NOT_IMPLEMENTED 0x02
 #define SECURITY_STATUS_UNKNOWN 0x03
 
-lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_count, lazybiosDMI_t* DMIData) {
+lazybiosType24Array_t* lazybiosGetType24(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType24Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -51,11 +60,12 @@ lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_HARDWARE_SECURITY);
 	size_t index = 0;
 
-	Type24 = calloc(count, sizeof(lazybiosType24_t));
-	if (!Type24) return NULL;
-	if (count == 0) {
-		*type24_count = 0;
-		return Type24;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -64,20 +74,27 @@ lazybiosType24_t* lazybiosGetType24(lazybiosType24_t* Type24, size_t* type24_cou
 
 		if (type == SMBIOS_TYPE_HARDWARE_SECURITY) {
 			if (index >= count) break;
-			lazybiosType24_t* current = &Type24[index];
+			lazybiosType24_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, hardware_security_settings, len, HARDWARE_SECURITY_SETTINGS, p);
+
+			current->decoded.administrator_password_status = lazybiosType24AdministratorPasswordStatusStr(current->hardware_security_settings);
+			current->decoded.front_panel_reset_status = lazybiosType24FrontPanelResetStatusStr(current->hardware_security_settings);
+			current->decoded.keyboard_password_status = lazybiosType24KeyboardPasswordStatusStr(current->hardware_security_settings);
+			current->decoded.power_on_password_status = lazybiosType24PowerOnPasswordStatusStr(current->hardware_security_settings);
 
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type24_count = index;
-	return Type24;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_settings) {
+static inline const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_settings) {
 	switch ((hardware_security_settings & POWER_ON_PASSWORD_STATUS_MASK) >> POWER_ON_PASSWORD_STATUS_SHIFT) {
 		case SECURITY_STATUS_DISABLED:
 			return "Disabled";
@@ -92,7 +109,7 @@ const char* lazybiosType24PowerOnPasswordStatusStr(uint8_t hardware_security_set
 	}
 }
 
-const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_settings) {
+static inline const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_settings) {
 	switch ((hardware_security_settings & KEYBOARD_PASSWORD_STATUS_MASK) >> KEYBOARD_PASSWORD_STATUS_SHIFT) {
 		case SECURITY_STATUS_DISABLED:
 			return "Disabled";
@@ -107,7 +124,7 @@ const char* lazybiosType24KeyboardPasswordStatusStr(uint8_t hardware_security_se
 	}
 }
 
-const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_security_settings) {
+static inline const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_security_settings) {
 	switch ((hardware_security_settings & ADMINISTRATOR_PASSWORD_STATUS_MASK) >>
 		ADMINISTRATOR_PASSWORD_STATUS_SHIFT) {
 		case SECURITY_STATUS_DISABLED:
@@ -123,7 +140,7 @@ const char* lazybiosType24AdministratorPasswordStatusStr(uint8_t hardware_securi
 	}
 }
 
-const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_settings) {
+static inline const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_settings) {
 	switch (hardware_security_settings & FRONT_PANEL_RESET_STATUS_MASK) {
 		case SECURITY_STATUS_DISABLED:
 			return "Disabled";
@@ -138,9 +155,10 @@ const char* lazybiosType24FrontPanelResetStatusStr(uint8_t hardware_security_set
 	}
 }
 
-void lazybiosFreeType24(lazybiosType24_t* Type24, size_t type24_count) {
-    (void)type24_count;
+void lazybiosFreeType24(lazybiosType24Array_t* Type24) {
     if (!Type24) return;
+
+    free(Type24->entries);
 
     free(Type24);
 }

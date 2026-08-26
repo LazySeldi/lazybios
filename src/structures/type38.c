@@ -22,8 +22,19 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t buf_len);
+static size_t lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType38BaseAddressTypeStr(uint64_t base_address);
+static inline uint64_t lazybiosType38BaseAddressValue(uint64_t base_address, uint8_t modifier);
+static inline const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type);
+static inline const char* lazybiosType38RegisterSpacingStr(uint8_t modifier);
 
 // Fields
 #define INTERFACE_TYPE 0x04
@@ -41,8 +52,11 @@
 #define INTERFACE_TYPE_BT 0x03
 #define INTERFACE_TYPE_SSIF 0x04
 
-lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_count, lazybiosDMI_t* DMIData) {
+lazybiosType38Array_t* lazybiosGetType38(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType38Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -50,11 +64,12 @@ lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_IPMI_DEVICE_INFORMATION);
 	size_t index = 0;
 
-	Type38 = calloc(count, sizeof(lazybiosType38_t));
-	if (!Type38) return NULL;
-	if (count == 0) {
-		*type38_count = 0;
-		return Type38;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -63,8 +78,10 @@ lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_cou
 
 		if (type == SMBIOS_TYPE_IPMI_DEVICE_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType38_t* current = &Type38[index];
+			lazybiosType38_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, interface_type, len, INTERFACE_TYPE, p);
 			READU8(current, ipmi_specification_revision, len, IPMI_SPECIFICATION_REVISION, p);
@@ -77,15 +94,30 @@ lazybiosType38_t* lazybiosGetType38(lazybiosType38_t* Type38, size_t* type38_cou
 			READU8(current, base_address_modifier_interrupt_info, len, BASE_ADDRESS_MODIFIER_INTERRUPT_INFO, p);
 			READU8(current, interrupt_number, len, INTERRUPT_NUMBER, p);
 
+			current->decoded.base_address_type = lazybiosType38BaseAddressTypeStr(current->base_address);
+			current->decoded.register_spacing = lazybiosType38RegisterSpacingStr(current->base_address_modifier_interrupt_info);
+			current->decoded.interface_type = lazybiosType38InterfaceTypeStr(current->interface_type);
+			current->decoded.base_address = lazybiosType38BaseAddressValue(current->base_address, current->base_address_modifier_interrupt_info);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, ipmi_specification_revision) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType38SpecificationRevisionStr(current->ipmi_specification_revision, decbuf, sizeof(decbuf));
+				current->decoded.ipmi_specification_revision = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, base_address_modifier_interrupt_info) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType38InterruptInfoStr(current->base_address_modifier_interrupt_info, decbuf, sizeof(decbuf));
+				current->decoded.base_address_modifier_interrupt_info = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type38_count = index;
-	return Type38;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type) {
+static inline const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type) {
 	switch (interface_type) {
 		case INTERFACE_TYPE_UNKNOWN:
 			return "Unknown";
@@ -102,8 +134,8 @@ const char* lazybiosType38InterfaceTypeStr(uint8_t interface_type) {
 	}
 }
 
-void lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	uint8_t major = revision >> 4;
 	uint8_t minor = revision & 0x0F;
@@ -112,17 +144,18 @@ void lazybiosType38SpecificationRevisionStr(uint8_t revision, char* buf, size_t 
 	} else {
 		snprintf(buf, buf_len, "Invalid BCD (0x%02X)", revision);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
-const char* lazybiosType38BaseAddressTypeStr(uint64_t base_address) {
+static inline const char* lazybiosType38BaseAddressTypeStr(uint64_t base_address) {
 	return (base_address & 1ULL) ? "I/O" : "Memory-mapped";
 }
 
-uint64_t lazybiosType38BaseAddressValue(uint64_t base_address, uint8_t modifier) {
+static inline uint64_t lazybiosType38BaseAddressValue(uint64_t base_address, uint8_t modifier) {
 	return (base_address & ~1ULL) | ((uint64_t)(modifier >> 4) & 1ULL);
 }
 
-const char* lazybiosType38RegisterSpacingStr(uint8_t modifier) {
+static inline const char* lazybiosType38RegisterSpacingStr(uint8_t modifier) {
 	switch ((modifier >> 6) & 0x03) {
 		case 0:
 			return "Successive Byte Boundaries";
@@ -135,22 +168,29 @@ const char* lazybiosType38RegisterSpacingStr(uint8_t modifier) {
 	}
 }
 
-void lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType38InterruptInfoStr(uint8_t interrupt_info, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	if (!(interrupt_info & (1U << 3))) {
 		snprintf(buf, buf_len, "Not Specified");
-		return;
+		return 0;
 	}
 
 	const char* polarity = (interrupt_info & (1U << 1)) ? "Active High" : "Active Low";
 	const char* trigger_mode = (interrupt_info & 1U) ? "Level-triggered" : "Edge-triggered";
 	snprintf(buf, buf_len, "%s, %s", polarity, trigger_mode);
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType38(lazybiosType38_t* Type38, size_t type38_count) {
-    (void)type38_count;
+void lazybiosFreeType38(lazybiosType38Array_t* Type38) {
     if (!Type38) return;
+
+	for (size_t i = 0; i < Type38->count; i++) {
+		free(Type38->entries[i].decoded.ipmi_specification_revision);
+		free(Type38->entries[i].decoded.base_address_modifier_interrupt_info);
+	}
+
+    free(Type38->entries);
 
     free(Type38);
 }

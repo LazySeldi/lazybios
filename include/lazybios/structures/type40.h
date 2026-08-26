@@ -69,30 +69,39 @@ typedef struct {
  * @ingroup api_type40
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t additional_information_entry_count;
 	lazybiosType40Entry_t* additional_information_entries;
 	lazybiosType40FieldStatus_t field_status;
 } lazybiosType40_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 40 structures.
+ * @ingroup api_type40
+ */
+typedef struct {
+	lazybiosType40_t* entries;
+	size_t count;
+} lazybiosType40Array_t;
 
 /** @addtogroup api_type40
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 40 Additional Information structures.
- * @param Type40 Existing Type 40 array pointer value; it is not dereferenced or released.
- * @param type40_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 40 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 40 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 40 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType40Array_t* lazybiosGetType40(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed SMBIOS Type 40 structures.
- * @param Type40 Type 40 array to release.
- * @param type40_count Number of elements in Type40.
+ * @brief Releases a parsed set of SMBIOS Type 40 structures.
+ * @param Type40 Set to release; may be NULL.
  */
-void lazybiosFreeType40(lazybiosType40_t* Type40, size_t type40_count);
+void lazybiosFreeType40(lazybiosType40Array_t* Type40);
 
 /** @} */
 

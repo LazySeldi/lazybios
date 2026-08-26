@@ -43,49 +43,56 @@ typedef struct {
 } lazybiosType21FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 21 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* interface;
+	const char* pointing_device_type;
+} lazybiosType21Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 21 Built-in Pointing Device.
  * @ingroup api_type21
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t pointing_device_type;
 	uint8_t interface;
 	uint8_t number_of_buttons;
+	lazybiosType21Decoded_t decoded;
 	lazybiosType21FieldStatus_t field_status;
 } lazybiosType21_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 21 structures.
+ * @ingroup api_type21
+ */
+typedef struct {
+	lazybiosType21_t* entries;
+	size_t count;
+} lazybiosType21Array_t;
 
 /** @addtogroup api_type21
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 21 Built-in Pointing Device structures.
- * @param Type21 Existing Type 21 array pointer value; it is not dereferenced or released.
- * @param type21_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 21 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 21 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 21 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType21Array_t* lazybiosGetType21(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS built-in pointing-device type.
- * @param pointing_device_type Raw pointing-device type value.
- * @return Static string describing the pointing-device type.
+ * @brief Releases a parsed set of SMBIOS Type 21 structures.
+ * @param Type21 Set to release; may be NULL.
  */
-const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type);
-
-/**
- * @brief Decodes an SMBIOS built-in pointing-device interface.
- * @param interface Raw pointing-device interface value.
- * @return Static string describing the interface.
- */
-const char* lazybiosType21InterfaceStr(uint8_t interface);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 21 structures.
- * @param Type21 Type 21 array to release.
- * @param type21_count Number of elements in Type21.
- */
-void lazybiosFreeType21(lazybiosType21_t* Type21, size_t type21_count);
+void lazybiosFreeType21(lazybiosType21Array_t* Type21);
 
 /** @} */
 

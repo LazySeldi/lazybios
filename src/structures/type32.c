@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType32BootStatusStr(uint8_t boot_status);
+
 // Fields
 #define RESERVED 0x04
 #define RESERVED_SIZE 6
@@ -42,8 +45,11 @@
 #define BOOT_STATUS_PREVIOUSLY_REQUESTED_IMAGE 0x07
 #define BOOT_STATUS_WATCHDOG_EXPIRED 0x08
 
-lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_count, lazybiosDMI_t* DMIData) {
+lazybiosType32Array_t* lazybiosGetType32(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType32Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -51,11 +57,12 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION);
 	size_t index = 0;
 
-	Type32 = calloc(count, sizeof(lazybiosType32_t));
-	if (!Type32) return NULL;
-	if (count == 0) {
-		*type32_count = 0;
-		return Type32;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -64,8 +71,10 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 
 		if (type == SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType32_t* current = &Type32[index];
+			lazybiosType32_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			if ((size_t)len >= RESERVED + RESERVED_SIZE) {
 				memcpy(current->reserved, p + RESERVED, RESERVED_SIZE);
@@ -81,7 +90,8 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 				if (current->additional_data_size > 0) {
 					current->additional_data = malloc(current->additional_data_size);
 					if (!current->additional_data) {
-						lazybiosFreeType32(Type32, index + 1);
+						out->count = index + 1;
+						lazybiosFreeType32(out);
 						return NULL;
 					}
 					memcpy(current->additional_data, p + ADDITIONAL_DATA, current->additional_data_size);
@@ -89,17 +99,19 @@ lazybiosType32_t* lazybiosGetType32(lazybiosType32_t* Type32, size_t* type32_cou
 				LAZYBIOS_MARK_PRESENT(current, additional_data);
 			}
 
+			current->decoded.boot_status = lazybiosType32BootStatusStr(current->boot_status);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type32_count = index;
-	return Type32;
+	out->count = index;
+	return out;
 }
 
 
 // Boot Status
-const char* lazybiosType32BootStatusStr(uint8_t boot_status) {
+static inline const char* lazybiosType32BootStatusStr(uint8_t boot_status) {
 	switch (boot_status) {
 		case BOOT_STATUS_NO_ERRORS:
 			return "No Errors Detected";
@@ -126,10 +138,12 @@ const char* lazybiosType32BootStatusStr(uint8_t boot_status) {
 	}
 }
 
-void lazybiosFreeType32(lazybiosType32_t* Type32, size_t type32_count) {
+void lazybiosFreeType32(lazybiosType32Array_t* Type32) {
     if (!Type32) return;
 
-	for (size_t i = 0; i < type32_count; i++) free(Type32[i].additional_data);
+	for (size_t i = 0; i < Type32->count; i++) free(Type32->entries[i].additional_data);
+
+    free(Type32->entries);
 
     free(Type32);
 }

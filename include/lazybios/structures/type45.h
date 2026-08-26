@@ -53,10 +53,25 @@ typedef struct {
 } lazybiosType45FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 45 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* firmware_id_format;
+	const char* state;
+	const char* version_format;
+	char* characteristics;
+} lazybiosType45Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 45 Firmware Inventory Information.
  * @ingroup api_type45
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* firmware_component_name;
 	const char* firmware_version;
 	uint8_t version_format;
@@ -70,57 +85,36 @@ typedef struct {
 	uint8_t state;
 	uint8_t number_of_associated_components;
 	uint16_t* associated_component_handles;
+	lazybiosType45Decoded_t decoded;
 	lazybiosType45FieldStatus_t field_status;
 } lazybiosType45_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 45 structures.
+ * @ingroup api_type45
+ */
+typedef struct {
+	lazybiosType45_t* entries;
+	size_t count;
+} lazybiosType45Array_t;
 
 /** @addtogroup api_type45
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 45 Firmware Inventory Information structures.
- * @param Type45 Existing Type 45 array pointer value; it is not dereferenced or released.
- * @param type45_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 45 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 45 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 45 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType45_t* lazybiosGetType45(lazybiosType45_t* Type45, size_t* type45_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType45Array_t* lazybiosGetType45(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the format of Type 45 firmware-version strings.
- * @param version_format Raw firmware-version format value.
- * @return Static string describing the version format.
+ * @brief Releases a parsed set of SMBIOS Type 45 structures.
+ * @param Type45 Set to release; may be NULL.
  */
-const char* lazybiosType45VersionFormatStr(uint8_t version_format);
-
-/**
- * @brief Decodes the format of a Type 45 firmware ID string.
- * @param firmware_id_format Raw firmware-ID format value.
- * @return Static string describing the firmware-ID format.
- */
-const char* lazybiosType45FirmwareIDFormatStr(uint8_t firmware_id_format);
-
-/**
- * @brief Formats the Type 45 updatable and write-protected characteristic flags.
- * @param characteristics Raw Type 45 characteristics word.
- * @param buf Output buffer that receives the decoded flags.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType45CharacteristicsStr(uint16_t characteristics, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes the operational state of a Type 45 firmware component.
- * @param state Raw firmware inventory state value.
- * @return Static string describing the firmware state.
- */
-const char* lazybiosType45StateStr(uint8_t state);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 45 structures.
- * @param Type45 Type 45 array to release.
- * @param type45_count Number of elements in Type45.
- */
-void lazybiosFreeType45(lazybiosType45_t* Type45, size_t type45_count);
+void lazybiosFreeType45(lazybiosType45Array_t* Type45);
 
 /** @} */
 

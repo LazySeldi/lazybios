@@ -24,6 +24,11 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType33ErrorGranularityStr(uint8_t error_granularity);
+static inline const char* lazybiosType33ErrorOperationStr(uint8_t error_operation);
+static inline const char* lazybiosType33ErrorTypeStr(uint8_t error_type);
+
 // Fields
 #define ERROR_TYPE 0x04
 #define ERROR_GRANULARITY 0x05
@@ -62,8 +67,11 @@
 #define ERROR_OPERATION_WRITE 0x04
 #define ERROR_OPERATION_PARTIAL_WRITE 0x05
 
-lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_count, lazybiosDMI_t* DMIData) {
+lazybiosType33Array_t* lazybiosGetType33(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType33Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -71,11 +79,12 @@ lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_64BIT_MEMORY_ERROR_INFORMATION);
 	size_t index = 0;
 
-	Type33 = calloc(count, sizeof(lazybiosType33_t));
-	if (!Type33) return NULL;
-	if (count == 0) {
-		*type33_count = 0;
-		return Type33;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -84,8 +93,10 @@ lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_cou
 
 		if (type == SMBIOS_TYPE_64BIT_MEMORY_ERROR_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType33_t* current = &Type33[index];
+			lazybiosType33_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, error_type, len, ERROR_TYPE, p);
 			READU8(current, error_granularity, len, ERROR_GRANULARITY, p);
@@ -95,15 +106,19 @@ lazybiosType33_t* lazybiosGetType33(lazybiosType33_t* Type33, size_t* type33_cou
 			READU64(current, device_error_address, len, DEVICE_ERROR_ADDRESS, p);
 			READU32(current, error_resolution, len, ERROR_RESOLUTION, p);
 
+			current->decoded.error_granularity = lazybiosType33ErrorGranularityStr(current->error_granularity);
+			current->decoded.error_operation = lazybiosType33ErrorOperationStr(current->error_operation);
+			current->decoded.error_type = lazybiosType33ErrorTypeStr(current->error_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type33_count = index;
-	return Type33;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType33ErrorTypeStr(uint8_t error_type) {
+static inline const char* lazybiosType33ErrorTypeStr(uint8_t error_type) {
 	switch (error_type) {
 		case ERROR_TYPE_OTHER:
 			return "Other";
@@ -138,7 +153,7 @@ const char* lazybiosType33ErrorTypeStr(uint8_t error_type) {
 	}
 }
 
-const char* lazybiosType33ErrorGranularityStr(uint8_t error_granularity) {
+static inline const char* lazybiosType33ErrorGranularityStr(uint8_t error_granularity) {
 	switch (error_granularity) {
 		case ERROR_GRANULARITY_OTHER:
 			return "Other";
@@ -153,7 +168,7 @@ const char* lazybiosType33ErrorGranularityStr(uint8_t error_granularity) {
 	}
 }
 
-const char* lazybiosType33ErrorOperationStr(uint8_t error_operation) {
+static inline const char* lazybiosType33ErrorOperationStr(uint8_t error_operation) {
 	switch (error_operation) {
 		case ERROR_OPERATION_OTHER:
 			return "Other";
@@ -170,9 +185,10 @@ const char* lazybiosType33ErrorOperationStr(uint8_t error_operation) {
 	}
 }
 
-void lazybiosFreeType33(lazybiosType33_t* Type33, size_t type33_count) {
-    (void)type33_count;
+void lazybiosFreeType33(lazybiosType33Array_t* Type33) {
     if (!Type33) return;
+
+    free(Type33->entries);
 
     free(Type33);
 }

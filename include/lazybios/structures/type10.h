@@ -42,6 +42,14 @@ typedef struct {
 } lazybiosType10DeviceFieldStatus_t;
 
 /**
+ * @brief Decoded forms of the encoded fields in one record.
+ */
+typedef struct {
+	const char* device_type;
+	const char* device_status;
+} lazybiosType10DeviceDecoded_t;
+
+/**
  * @brief Parsed device entry from an obsolete SMBIOS Type 10 structure.
  * @ingroup api_type10
  */
@@ -49,6 +57,7 @@ typedef struct {
 	uint8_t device_type_and_status;
 	const char* description;
 	lazybiosType10DeviceFieldStatus_t field_status;
+	lazybiosType10DeviceDecoded_t decoded;
 } lazybiosType10Device_t;
 
 /** @brief Availability metadata for SMBIOS Type 10 fields. */
@@ -57,49 +66,45 @@ typedef struct {
 	lazybiosFieldStatus_t devices;
 } lazybiosType10FieldStatus_t;
 
+
 /**
  * @brief Parsed obsolete SMBIOS Type 10 On Board Devices Information.
  * @ingroup api_type10
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	size_t device_count;
 	lazybiosType10Device_t* devices;
 	lazybiosType10FieldStatus_t field_status;
 } lazybiosType10_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 10 structures.
+ * @ingroup api_type10
+ */
+typedef struct {
+	lazybiosType10_t* entries;
+	size_t count;
+} lazybiosType10Array_t;
 
 /** @addtogroup api_type10
  * @{
  */
 
 /**
- * @brief Parses all obsolete SMBIOS Type 10 On Board Devices Information structures.
- * @param Type10 Existing Type 10 array pointer value; it is not dereferenced or released.
- * @param type10_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 10 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 10 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 10 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType10_t* lazybiosGetType10(lazybiosType10_t* Type10, size_t* type10_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType10Array_t* lazybiosGetType10(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an obsolete Type 10 onboard-device type.
- * @param device_type_and_status Raw combined device-type and status byte.
- * @return Static string describing the onboard-device type.
+ * @brief Releases a parsed set of SMBIOS Type 10 structures.
+ * @param Type10 Set to release; may be NULL.
  */
-const char* lazybiosType10DeviceTypeStr(uint8_t device_type_and_status);
-
-/**
- * @brief Decodes an obsolete Type 10 onboard-device status.
- * @param device_type_and_status Raw combined device-type and status byte.
- * @return Static string describing whether the device is enabled.
- */
-const char* lazybiosType10DeviceStatusStr(uint8_t device_type_and_status);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 10 structures.
- * @param Type10 Type 10 array to release.
- * @param type10_count Number of elements in Type10.
- */
-void lazybiosFreeType10(lazybiosType10_t* Type10, size_t type10_count);
+void lazybiosFreeType10(lazybiosType10Array_t* Type10);
 
 /** @} */
 

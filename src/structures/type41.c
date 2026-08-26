@@ -22,8 +22,16 @@
  * @author LazySeldi
  */
 #include "lazybios_internal.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType41DeviceStatusStr(uint8_t device_type_and_status);
+static inline const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status);
 
 // Fields
 #define REFERENCE_DESIGNATION 0x04
@@ -55,8 +63,11 @@
 #define DEVICE_TYPE_NVME_CONTROLLER 0x0F
 #define DEVICE_TYPE_UFS_CONTROLLER 0x10
 
-lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_count, lazybiosDMI_t* DMIData) {
+lazybiosType41Array_t* lazybiosGetType41(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType41Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -64,11 +75,12 @@ lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_ONBOARD_DEVICES_EXTENDED_INFORMATION);
 	size_t index = 0;
 
-	Type41 = calloc(count, sizeof(lazybiosType41_t));
-	if (!Type41) return NULL;
-	if (count == 0) {
-		*type41_count = 0;
-		return Type41;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -77,8 +89,10 @@ lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_cou
 
 		if (type == SMBIOS_TYPE_ONBOARD_DEVICES_EXTENDED_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType41_t* current = &Type41[index];
+			lazybiosType41_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, reference_designation, len, REFERENCE_DESIGNATION, p, structure_end);
@@ -88,15 +102,24 @@ lazybiosType41_t* lazybiosGetType41(lazybiosType41_t* Type41, size_t* type41_cou
 			READU8(current, bus_number, len, BUS_NUMBER, p);
 			READU8(current, device_function_number, len, DEVICE_FUNCTION_NUMBER, p);
 
+			current->decoded.device_status = lazybiosType41DeviceStatusStr(current->device_type_and_status);
+			current->decoded.device_type = lazybiosType41DeviceTypeStr(current->device_type_and_status);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, device_function_number) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType41DeviceFunctionStr(current->device_function_number, decbuf, sizeof(decbuf));
+				current->decoded.device_function_number = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type41_count = index;
-	return Type41;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status) {
+static inline const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status) {
 	switch (device_type_and_status & DEVICE_TYPE_MASK) {
 		case DEVICE_TYPE_OTHER:
 			return "Other";
@@ -135,26 +158,32 @@ const char* lazybiosType41DeviceTypeStr(uint8_t device_type_and_status) {
 	}
 }
 
-const char* lazybiosType41DeviceStatusStr(uint8_t device_type_and_status) {
+static inline const char* lazybiosType41DeviceStatusStr(uint8_t device_type_and_status) {
 	return (device_type_and_status & DEVICE_STATUS_MASK) ? "Enabled" : "Disabled";
 }
 
-void lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType41DeviceFunctionStr(uint8_t device_function_number, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	if (device_function_number == 0xFF) {
 		snprintf(buf, buf_len, "Not Applicable");
-		return;
+		return 0;
 	}
 
 	uint8_t device = (device_function_number >> 3) & 0x1F;
 	uint8_t function = device_function_number & 0x07;
 	snprintf(buf, buf_len, "Device %hhu, Function %hhu", device, function);
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType41(lazybiosType41_t* Type41, size_t type41_count) {
-    (void)type41_count;
+void lazybiosFreeType41(lazybiosType41Array_t* Type41) {
     if (!Type41) return;
+
+	for (size_t i = 0; i < Type41->count; i++) {
+		free(Type41->entries[i].decoded.device_function_number);
+	}
+
+    free(Type41->entries);
 
     free(Type41);
 }

@@ -44,43 +44,56 @@ typedef struct {
 } lazybiosType44FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 44 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* processor_type;
+} lazybiosType44Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 44 Processor Additional Information.
  * @ingroup api_type44
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint16_t referenced_handle;
 	uint8_t block_length;
 	uint8_t processor_type;
 	uint8_t* processor_specific_data;
+	lazybiosType44Decoded_t decoded;
 	lazybiosType44FieldStatus_t field_status;
 } lazybiosType44_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 44 structures.
+ * @ingroup api_type44
+ */
+typedef struct {
+	lazybiosType44_t* entries;
+	size_t count;
+} lazybiosType44Array_t;
 
 /** @addtogroup api_type44
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 44 Processor Additional Information structures.
- * @param Type44 Existing Type 44 array pointer value; it is not dereferenced or released.
- * @param type44_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 44 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 44 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 44 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType44_t* lazybiosGetType44(lazybiosType44_t* Type44, size_t* type44_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType44Array_t* lazybiosGetType44(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS Type 44 processor architecture type.
- * @param processor_type Raw processor architecture type value.
- * @return Static string describing the processor architecture.
+ * @brief Releases a parsed set of SMBIOS Type 44 structures.
+ * @param Type44 Set to release; may be NULL.
  */
-const char* lazybiosType44ProcessorTypeStr(uint8_t processor_type);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 44 structures.
- * @param Type44 Type 44 array to release.
- * @param type44_count Number of elements in Type44.
- */
-void lazybiosFreeType44(lazybiosType44_t* Type44, size_t type44_count);
+void lazybiosFreeType44(lazybiosType44Array_t* Type44);
 
 /** @} */
 

@@ -24,6 +24,9 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType13LanguageFormatStr(uint8_t flags);
+
 // Fields
 #define INSTALLABLE_LANGUAGES 0x04
 #define FLAGS 0x05
@@ -32,8 +35,11 @@
 // Flag Masks
 #define LANGUAGE_FORMAT_MASK 0x01
 
-lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_count, lazybiosDMI_t* DMIData) {
+lazybiosType13Array_t* lazybiosGetType13(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType13Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -41,11 +47,12 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_FIRMWARE_LANGUAGE_INFORMATION);
 	size_t index = 0;
 
-	Type13 = calloc(count, sizeof(lazybiosType13_t));
-	if (!Type13) return NULL;
-	if (count == 0) {
-		*type13_count = 0;
-		return Type13;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -54,8 +61,10 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 
 		if (type == SMBIOS_TYPE_FIRMWARE_LANGUAGE_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType13_t* current = &Type13[index];
+			lazybiosType13_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU8(current, installable_languages, len, INSTALLABLE_LANGUAGES, p);
@@ -87,29 +96,34 @@ lazybiosType13_t* lazybiosGetType13(lazybiosType13_t* Type13, size_t* type13_cou
 						}
 					}
 				} else {
-					lazybiosFreeType13(Type13, index + 1);
+					out->count = index + 1;
+					lazybiosFreeType13(out);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, installable_languages) == LAZYBIOS_FIELD_PRESENT) {
 				LAZYBIOS_MARK_PRESENT(current, languages);
 			}
 
+			current->decoded.flags = lazybiosType13LanguageFormatStr(current->flags);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type13_count = index;
-	return Type13;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType13LanguageFormatStr(uint8_t flags) {
+static inline const char* lazybiosType13LanguageFormatStr(uint8_t flags) {
 	return (flags & LANGUAGE_FORMAT_MASK) ? "Abbreviated" : "Long";
 }
 
-void lazybiosFreeType13(lazybiosType13_t* Type13, size_t type13_count) {
+void lazybiosFreeType13(lazybiosType13Array_t* Type13) {
     if (!Type13) return;
 
-    for (size_t i = 0; i < type13_count; i++) free(Type13[i].languages);
+    for (size_t i = 0; i < Type13->count; i++) free(Type13->entries[i].languages);
+    
+    free(Type13->entries);
     
     free(Type13);
 }

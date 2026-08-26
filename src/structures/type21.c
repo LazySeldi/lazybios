@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType21InterfaceStr(uint8_t interface);
+static inline const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type);
+
 // Fields
 #define POINTING_DEVICE_TYPE 0x04
 #define INTERFACE 0x05
@@ -55,8 +59,11 @@
 #define INTERFACE_I2C 0xA3
 #define INTERFACE_SPI 0xA4
 
-lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_count, lazybiosDMI_t* DMIData) {
+lazybiosType21Array_t* lazybiosGetType21(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType21Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -64,11 +71,12 @@ lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BUILT_IN_POINTING_DEVICE);
 	size_t index = 0;
 
-	Type21 = calloc(count, sizeof(lazybiosType21_t));
-	if (!Type21) return NULL;
-	if (count == 0) {
-		*type21_count = 0;
-		return Type21;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -77,22 +85,27 @@ lazybiosType21_t* lazybiosGetType21(lazybiosType21_t* Type21, size_t* type21_cou
 
 		if (type == SMBIOS_TYPE_BUILT_IN_POINTING_DEVICE) {
 			if (index >= count) break;
-			lazybiosType21_t* current = &Type21[index];
+			lazybiosType21_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, pointing_device_type, len, POINTING_DEVICE_TYPE, p);
 			READU8(current, interface, len, INTERFACE, p);
 			READU8(current, number_of_buttons, len, NUMBER_OF_BUTTONS, p);
 
+			current->decoded.interface = lazybiosType21InterfaceStr(current->interface);
+			current->decoded.pointing_device_type = lazybiosType21PointingDeviceTypeStr(current->pointing_device_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type21_count = index;
-	return Type21;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type) {
+static inline const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type) {
 	switch (pointing_device_type) {
 		case POINTING_DEVICE_OTHER:
 			return "Other";
@@ -117,7 +130,7 @@ const char* lazybiosType21PointingDeviceTypeStr(uint8_t pointing_device_type) {
 	}
 }
 
-const char* lazybiosType21InterfaceStr(uint8_t interface) {
+static inline const char* lazybiosType21InterfaceStr(uint8_t interface) {
 	switch (interface) {
 		case INTERFACE_OTHER:
 			return "Other";
@@ -150,9 +163,10 @@ const char* lazybiosType21InterfaceStr(uint8_t interface) {
 	}
 }
 
-void lazybiosFreeType21(lazybiosType21_t* Type21, size_t type21_count) {
-    (void)type21_count;
+void lazybiosFreeType21(lazybiosType21Array_t* Type21) {
     if (!Type21) return;
+
+    free(Type21->entries);
 
     free(Type21);
 }

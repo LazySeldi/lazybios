@@ -63,31 +63,40 @@ typedef struct {
  * @ingroup api_type14
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* group_name;
 	size_t item_count;
 	lazybiosType14Item_t* items;
 	lazybiosType14FieldStatus_t field_status;
 } lazybiosType14_t;
 
+/**
+ * @brief A parsed set of SMBIOS Type 14 structures.
+ * @ingroup api_type14
+ */
+typedef struct {
+	lazybiosType14_t* entries;
+	size_t count;
+} lazybiosType14Array_t;
+
 /** @addtogroup api_type14
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 14 Group Associations structures.
- * @param Type14 Existing Type 14 array pointer value; it is not dereferenced or released.
- * @param type14_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 14 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 14 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 14 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType14_t* lazybiosGetType14(lazybiosType14_t* Type14, size_t* type14_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType14Array_t* lazybiosGetType14(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed SMBIOS Type 14 structures.
- * @param Type14 Type 14 array to release.
- * @param type14_count Number of elements in Type14.
+ * @brief Releases a parsed set of SMBIOS Type 14 structures.
+ * @param Type14 Set to release; may be NULL.
  */
-void lazybiosFreeType14(lazybiosType14_t* Type14, size_t type14_count);
+void lazybiosFreeType14(lazybiosType14Array_t* Type14);
 
 /** @} */
 

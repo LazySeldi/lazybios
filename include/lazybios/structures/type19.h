@@ -46,54 +46,59 @@ typedef struct {
 } lazybiosType19FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 19 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	uint64_t ending_address;
+	uint64_t starting_address;
+} lazybiosType19Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 19 Memory Array Mapped Address.
  * @ingroup api_type19
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint32_t starting_address;
 	uint32_t ending_address;
 	uint16_t memory_array_handle;
 	uint8_t partition_width;
 	uint64_t extended_starting_address;
 	uint64_t extended_ending_address;
+	lazybiosType19Decoded_t decoded;
 	lazybiosType19FieldStatus_t field_status;
 } lazybiosType19_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 19 structures.
+ * @ingroup api_type19
+ */
+typedef struct {
+	lazybiosType19_t* entries;
+	size_t count;
+} lazybiosType19Array_t;
 
 /** @addtogroup api_type19
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 19 Memory Array Mapped Address structures.
- * @param Type19 Existing Type 19 array pointer value; it is not dereferenced or released.
- * @param type19_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 19 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 19 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 19 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType19Array_t* lazybiosGetType19(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Converts SMBIOS Type 19 starting-address fields to a byte address.
- * @param starting_address Raw 32-bit starting address in KiB.
- * @param extended_starting_address Raw extended starting address in bytes.
- * @return Effective starting address in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 19 structures.
+ * @param Type19 Set to release; may be NULL.
  */
-uint64_t lazybiosType19StartingAddressBytes(uint32_t starting_address, uint64_t extended_starting_address);
-
-/**
- * @brief Converts SMBIOS Type 19 ending-address fields to an inclusive byte address.
- * @param ending_address Raw 32-bit ending address identifying the last KiB.
- * @param extended_ending_address Raw extended inclusive ending address in bytes.
- * @return Effective inclusive ending address in bytes.
- */
-uint64_t lazybiosType19EndingAddressBytes(uint32_t ending_address, uint64_t extended_ending_address);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 19 structures.
- * @param Type19 Type 19 array to release.
- * @param type19_count Number of elements in Type19.
- */
-void lazybiosFreeType19(lazybiosType19_t* Type19, size_t type19_count);
+void lazybiosFreeType19(lazybiosType19Array_t* Type19);
 
 /** @} */
 

@@ -26,6 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType43FirmwareVersionStr(uint8_t major_spec_version, uint32_t firmware_version_1,
+									  uint32_t firmware_version_2, char* buf, size_t buf_len);
+static size_t lazybiosType43CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len);
+
 // Fields
 #define VENDOR_ID 0x04
 #define VENDOR_ID_LENGTH 0x04
@@ -43,8 +48,11 @@
 #define FAMILY_CONFIGURABLE_PLATFORM_SOFTWARE_MASK (1ULL << 4)
 #define FAMILY_CONFIGURABLE_OEM_MASK (1ULL << 5)
 
-lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_count, lazybiosDMI_t* DMIData) {
+lazybiosType43Array_t* lazybiosGetType43(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType43Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -52,11 +60,12 @@ lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_TPM_DEVICE);
 	size_t index = 0;
 
-	Type43 = calloc(count, sizeof(lazybiosType43_t));
-	if (!Type43) return NULL;
-	if (count == 0) {
-		*type43_count = 0;
-		return Type43;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -65,8 +74,10 @@ lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_cou
 
 		if (type == SMBIOS_TYPE_TPM_DEVICE) {
 			if (index >= count) break;
-			lazybiosType43_t* current = &Type43[index];
+			lazybiosType43_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			if ((size_t)len >= VENDOR_ID + VENDOR_ID_LENGTH) {
@@ -86,17 +97,28 @@ lazybiosType43_t* lazybiosGetType43(lazybiosType43_t* Type43, size_t* type43_cou
 			READU64(current, characteristics, len, CHARACTERISTICS, p);
 			READU32(current, oem_defined, len, OEM_DEFINED, p);
 
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, major_spec_version) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType43FirmwareVersionStr(current->major_spec_version, current->firmware_version_1,
+						current->firmware_version_2, decbuf, sizeof(decbuf));
+				current->decoded.major_spec_version = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, characteristics) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType43CharacteristicsStr(current->characteristics, decbuf, sizeof(decbuf));
+				current->decoded.characteristics = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type43_count = index;
-	return Type43;
+	out->count = index;
+	return out;
 }
 
-void lazybiosType43FirmwareVersionStr(uint8_t major_spec_version, uint32_t firmware_version_1,
+static size_t lazybiosType43FirmwareVersionStr(uint8_t major_spec_version, uint32_t firmware_version_1,
 									  uint32_t firmware_version_2, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+	if (!buf || buf_len == 0) return 0;
 
 	if (major_spec_version == 1) {
 		uint8_t revision_major = (uint8_t)((firmware_version_1 >> 16) & 0xFF);
@@ -107,25 +129,33 @@ void lazybiosType43FirmwareVersionStr(uint8_t major_spec_version, uint32_t firmw
 	} else {
 		snprintf(buf, buf_len, "0x%08X / 0x%08X", firmware_version_1, firmware_version_2);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosType43CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType43CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 
 	if (characteristics & CHARACTERISTICS_NOT_SUPPORTED_MASK) {
 		snprintf(buf, buf_len, "TPM Device Characteristics Not Supported");
-		return;
+		return 0;
 	}
 
 	snprintf(buf, buf_len, "Firmware Update: %s, Platform Software: %s, OEM Mechanism: %s",
 			 (characteristics & FAMILY_CONFIGURABLE_FIRMWARE_UPDATE_MASK) ? "Yes" : "No",
 			 (characteristics & FAMILY_CONFIGURABLE_PLATFORM_SOFTWARE_MASK) ? "Yes" : "No",
 			 (characteristics & FAMILY_CONFIGURABLE_OEM_MASK) ? "Yes" : "No");
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType43(lazybiosType43_t* Type43, size_t type43_count) {
-    (void)type43_count;
+void lazybiosFreeType43(lazybiosType43Array_t* Type43) {
     if (!Type43) return;
+
+	for (size_t i = 0; i < Type43->count; i++) {
+		free(Type43->entries[i].decoded.major_spec_version);
+		free(Type43->entries[i].decoded.characteristics);
+	}
+
+    free(Type43->entries);
 
     free(Type43);
 }

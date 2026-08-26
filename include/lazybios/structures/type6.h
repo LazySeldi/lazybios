@@ -47,10 +47,23 @@ typedef struct {
 } lazybiosType6FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 6 encoded fields.
+ */
+typedef struct {
+	char* bank_connections;
+	char* current_memory_type;
+	char* installed_size;
+	char* enabled_size;
+	char* error_status;
+} lazybiosType6Decoded_t;
+
+/**
  * @brief Parsed obsolete SMBIOS Type 6 Memory Module Information.
  * @ingroup api_type6
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* socket_designation;
 	uint8_t bank_connections;
 	uint8_t current_speed;
@@ -58,68 +71,36 @@ typedef struct {
 	uint8_t installed_size;
 	uint8_t enabled_size;
 	uint8_t error_status;
+	lazybiosType6Decoded_t decoded;
 	lazybiosType6FieldStatus_t field_status;
 } lazybiosType6_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 6 structures.
+ * @ingroup api_type6
+ */
+typedef struct {
+	lazybiosType6_t* entries;
+	size_t count;
+} lazybiosType6Array_t;
 
 /** @addtogroup api_type6
  * @{
  */
 
 /**
- * @brief Parses all obsolete SMBIOS Type 6 Memory Module Information structures.
- * @param Type6 Existing Type 6 array pointer value; it is not dereferenced or released.
- * @param type6_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 6 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 6 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 6 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType6_t* lazybiosGetType6(lazybiosType6_t* Type6, size_t* type6_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType6Array_t* lazybiosGetType6(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Formats the bank connections encoded by a Type 6 structure.
- * @param bank_connections Raw bank-connections byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
+ * @brief Releases a parsed set of SMBIOS Type 6 structures.
+ * @param Type6 Set to release; may be NULL.
  */
-void lazybiosType6BankConnectionsStr(uint8_t bank_connections, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes the Type 6 current-memory-type bit field.
- * @param current_memory_type Raw current-memory-type bit field.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType6CurrentMemoryTypeStr(uint16_t current_memory_type, char* buf, size_t buf_len);
-
-/**
- * @brief Formats an obsolete Type 6 installed-size value.
- * @param installed_size Raw installed-size byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType6InstalledSizeStr(uint8_t installed_size, char* buf, size_t buf_len);
-
-/**
- * @brief Formats an obsolete Type 6 enabled-size value.
- * @param enabled_size Raw enabled-size byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType6EnabledSizeStr(uint8_t enabled_size, char* buf, size_t buf_len);
-
-/**
- * @brief Decodes the Type 6 memory-module error-status bit field.
- * @param error_status Raw error-status byte.
- * @param buf Output buffer that receives the decoded text.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType6ErrorStatusStr(uint8_t error_status, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 6 structures.
- * @param Type6 Type 6 array to release.
- * @param type6_count Number of elements in Type6.
- */
-void lazybiosFreeType6(lazybiosType6_t* Type6, size_t type6_count);
+void lazybiosFreeType6(lazybiosType6Array_t* Type6);
 
 /** @} */
 

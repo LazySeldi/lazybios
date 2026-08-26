@@ -52,6 +52,8 @@ typedef struct {
  * @ingroup api_type31
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t checksum;
 	uint8_t reserved_1;
 	uint16_t reserved_2;
@@ -63,25 +65,32 @@ typedef struct {
 	lazybiosType31FieldStatus_t field_status;
 } lazybiosType31_t;
 
+/**
+ * @brief A parsed set of SMBIOS Type 31 structures.
+ * @ingroup api_type31
+ */
+typedef struct {
+	lazybiosType31_t* entries;
+	size_t count;
+} lazybiosType31Array_t;
+
 /** @addtogroup api_type31
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 31 Boot Integrity Services Entry Point structures.
- * @param Type31 Existing Type 31 array pointer value; it is not dereferenced or released.
- * @param type31_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 31 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 31 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 31 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType31Array_t* lazybiosGetType31(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed SMBIOS Type 31 structures.
- * @param Type31 Type 31 array to release.
- * @param type31_count Number of elements in Type31.
+ * @brief Releases a parsed set of SMBIOS Type 31 structures.
+ * @param Type31 Set to release; may be NULL.
  */
-void lazybiosFreeType31(lazybiosType31_t* Type31, size_t type31_count);
+void lazybiosFreeType31(lazybiosType31Array_t* Type31);
 
 /** @} */
 

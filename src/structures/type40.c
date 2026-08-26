@@ -37,8 +37,11 @@
 #define ENTRY_VALUE 0x05
 #define MINIMUM_ENTRY_LENGTH 0x06
 
-lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_count, lazybiosDMI_t* DMIData) {
+lazybiosType40Array_t* lazybiosGetType40(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType40Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -46,11 +49,12 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_ADDITIONAL_INFORMATION);
 	size_t index = 0;
 
-	Type40 = calloc(count, sizeof(lazybiosType40_t));
-	if (!Type40) return NULL;
-	if (count == 0) {
-		*type40_count = 0;
-		return Type40;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -59,8 +63,10 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 
 		if (type == SMBIOS_TYPE_ADDITIONAL_INFORMATION) {
 			if (index >= count) break;
-			lazybiosType40_t* current = &Type40[index];
+			lazybiosType40_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU8(current, additional_information_entry_count, len, ADDITIONAL_INFORMATION_ENTRY_COUNT, p);
@@ -88,7 +94,8 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 						current->additional_information_entries = calloc(
 							current->additional_information_entry_count, sizeof(lazybiosType40Entry_t));
 						if (!current->additional_information_entries) {
-							lazybiosFreeType40(Type40, index + 1);
+							out->count = index + 1;
+							lazybiosFreeType40(out);
 							return NULL;
 						}
 
@@ -105,7 +112,8 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 							if (entry->value_length > 0) {
 								entry->value = malloc(entry->value_length);
 								if (!entry->value) {
-									lazybiosFreeType40(Type40, index + 1);
+									out->count = index + 1;
+									lazybiosFreeType40(out);
 									return NULL;
 								}
 								memcpy(entry->value, p + entry_offset + ENTRY_VALUE, entry->value_length);
@@ -136,20 +144,21 @@ lazybiosType40_t* lazybiosGetType40(lazybiosType40_t* Type40, size_t* type40_cou
 		}
 		p = DMINext(p, end);
 	}
-	*type40_count = index;
-	return Type40;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeType40(lazybiosType40_t* Type40, size_t type40_count) {
+void lazybiosFreeType40(lazybiosType40Array_t* Type40) {
 	if (!Type40) return;
 
-	for (size_t i = 0; i < type40_count; i++) {
-		if (Type40[i].additional_information_entries) {
-			for (size_t j = 0; j < Type40[i].additional_information_entry_count; j++) {
-				free(Type40[i].additional_information_entries[j].value);
+	for (size_t i = 0; i < Type40->count; i++) {
+		if (Type40->entries[i].additional_information_entries) {
+			for (size_t j = 0; j < Type40->entries[i].additional_information_entry_count; j++) {
+				free(Type40->entries[i].additional_information_entries[j].value);
 			}
 		}
-		free(Type40[i].additional_information_entries);
+		free(Type40->entries[i].additional_information_entries);
 	}
+	free(Type40->entries);
 	free(Type40);
 }

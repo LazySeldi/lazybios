@@ -50,6 +50,8 @@ typedef struct {
  * @ingroup api_type36
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint16_t lower_threshold_non_critical;
 	uint16_t upper_threshold_non_critical;
 	uint16_t lower_threshold_critical;
@@ -59,25 +61,32 @@ typedef struct {
 	lazybiosType36FieldStatus_t field_status;
 } lazybiosType36_t;
 
+/**
+ * @brief A parsed set of SMBIOS Type 36 structures.
+ * @ingroup api_type36
+ */
+typedef struct {
+	lazybiosType36_t* entries;
+	size_t count;
+} lazybiosType36Array_t;
+
 /** @addtogroup api_type36
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 36 Management Device Threshold Data structures.
- * @param Type36 Existing Type 36 array pointer value; it is not dereferenced or released.
- * @param type36_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 36 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 36 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 36 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType36_t* lazybiosGetType36(lazybiosType36_t* Type36, size_t* type36_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType36Array_t* lazybiosGetType36(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed SMBIOS Type 36 structures.
- * @param Type36 Type 36 array to release.
- * @param type36_count Number of elements in Type36.
+ * @brief Releases a parsed set of SMBIOS Type 36 structures.
+ * @param Type36 Set to release; may be NULL.
  */
-void lazybiosFreeType36(lazybiosType36_t* Type36, size_t type36_count);
+void lazybiosFreeType36(lazybiosType36Array_t* Type36);
 
 /** @} */
 

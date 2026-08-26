@@ -26,6 +26,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len);
+static size_t lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len);
+static size_t lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]);
+
 #define VENDOR 0x04
 #define FIRMWARE_VERSION 0x05
 #define BIOS_STARTING_SEGMENT 0x06
@@ -39,25 +47,34 @@
 #define EMBEDDED_CONTROLLER_FIRMWARE_MINOR_RELEASE 0x17
 #define EXTENDED_FIRMWARE_ROM_SIZE 0x18
 
-lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, lazybiosDMI_t* DMIData) {
-	if (type0_count) *type0_count = 0;
-	if (!type0_count || !DMIData || !DMIData->dmi_data) return NULL;
+lazybiosType0Array_t* lazybiosGetType0(const lazybiosDMI_t* DMIData) {
+	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType0Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BIOS);
 	size_t index = 0;
 
-	Type0 = calloc(count, sizeof(*Type0));
-	if (!Type0) return NULL;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
+	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
 		if (type == SMBIOS_TYPE_BIOS) {
-			lazybiosType0_t* current = &Type0[index];
+			lazybiosType0_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, vendor, len, VENDOR, p, structure_end);
@@ -133,17 +150,37 @@ lazybiosType0_t* lazybiosGetType0(lazybiosType0_t* Type0, size_t* type0_count, l
 				LAZYBIOS_MARK_UNREACHABLE(current, ec_minor_release);
 			}
 
+			current->decoded.extended_rom_size = lazybiosType0ExtendedROMSizeU16(
+				current->extended_rom_size, current->decoded.extended_rom_size_unit);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, characteristics) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType0CharacteristicsStr(current->characteristics, decbuf, sizeof(decbuf));
+				current->decoded.characteristics = lazybiosDup(decbuf);
+			}
+			/* The extension bytes are a counted array; index only what exists. */
+			if (LAZYBIOS_FIELD_STATUS(current, firmware_char_ext_bytes) == LAZYBIOS_FIELD_PRESENT &&
+					current->firmware_char_ext_bytes && current->firmware_char_ext_bytes_count >= 1) {
+				lazybiosType0CharacteristicsExtByte1Str(current->firmware_char_ext_bytes[0], decbuf, sizeof(decbuf));
+				current->decoded.characteristics_ext_byte1 = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, firmware_char_ext_bytes) == LAZYBIOS_FIELD_PRESENT &&
+					current->firmware_char_ext_bytes && current->firmware_char_ext_bytes_count >= 2) {
+				lazybiosType0CharacteristicsExtByte2Str(current->firmware_char_ext_bytes[1], decbuf, sizeof(decbuf));
+				current->decoded.characteristics_ext_byte2 = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type0_count = index;
-	return Type0;
+	out->count = index;
+	return out;
 }
 
 // Firmware Characteristics
-void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -186,11 +223,12 @@ void lazybiosType0CharacteristicsStr(uint64_t characteristics, char* buf, size_t
 	} else if (len >= 2 && len < buf_len) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Firmware Characteristics Extension Byte 1
-void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -208,11 +246,12 @@ void lazybiosType0CharacteristicsExtByte1Str(uint8_t char_ext_byte_1, char* buf,
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Firmware Characteristics Extension Byte 2
-void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -229,10 +268,11 @@ void lazybiosType0CharacteristicsExtByte2Str(uint8_t char_ext_byte_2, char* buf,
 	} else if (len >= 2) {
 		buf[len - 2] = '\0';
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Firmware Extended ROM Size
-uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
+static inline uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 	uint16_t unit_bits = (raw >> 14) & 0x03;
 	uint16_t size_bits = raw & 0x3FFF;
 
@@ -252,10 +292,18 @@ uint16_t lazybiosType0ExtendedROMSizeU16(uint16_t raw, char unit[5]) {
 }
 
 
-void lazybiosFreeType0(lazybiosType0_t* Type0, size_t type0_count) {
+void lazybiosFreeType0(lazybiosType0Array_t* Type0) {
     if (!Type0) return;
 
-	for (size_t i = 0; i < type0_count; i++) free(Type0[i].firmware_char_ext_bytes);
+	for (size_t i = 0; i < Type0->count; i++) {
+		free(Type0->entries[i].decoded.characteristics);
+		free(Type0->entries[i].decoded.characteristics_ext_byte1);
+		free(Type0->entries[i].decoded.characteristics_ext_byte2);
+	}
+
+	for (size_t i = 0; i < Type0->count; i++) free(Type0->entries[i].firmware_char_ext_bytes);
+
+    free(Type0->entries);
 
     free(Type0);
 }

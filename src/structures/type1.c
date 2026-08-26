@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type);
+
 // Fields
 #define MANUFACTURER 0x04
 #define PRODUCT_NAME 0x05
@@ -47,25 +50,34 @@
 #define WAKEUP_TYPE_PCI_PME 0x07
 #define WAKEUP_TYPE_AC_POWER_RESTORED 0x08
 
-lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, lazybiosDMI_t* DMIData) {
-	if (type1_count) *type1_count = 0;
-	if (!type1_count || !DMIData || !DMIData->dmi_data) return NULL;
+lazybiosType1Array_t* lazybiosGetType1(const lazybiosDMI_t* DMIData) {
+	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType1Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM);
 	size_t index = 0;
 
-	Type1 = calloc(count, sizeof(*Type1));
-	if (!Type1) return NULL;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
+	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 
 		if (type == SMBIOS_TYPE_SYSTEM) {
-			lazybiosType1_t* current = &Type1[index];
+			lazybiosType1_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, manufacturer, len, MANUFACTURER, p, structure_end);
@@ -109,17 +121,19 @@ lazybiosType1_t* lazybiosGetType1(lazybiosType1_t* Type1, size_t* type1_count, l
 				LAZYBIOS_MARK_UNREACHABLE(current, family);
 			}
 
+			current->decoded.wake_up_type = lazybiosType1WakeupTypeStr(current->wake_up_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type1_count = index;
-	return Type1;
+	out->count = index;
+	return out;
 }
 
 
 // Wake Up Type
-const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
+static inline const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 	switch (wake_up_type) {
 		case WAKEUP_TYPE_RESERVED:
 			return "Reserved";
@@ -144,9 +158,10 @@ const char* lazybiosType1WakeupTypeStr(uint8_t wake_up_type) {
 	}
 }
 
-void lazybiosFreeType1(lazybiosType1_t* Type1, size_t type1_count) {
-    (void)type1_count;
+void lazybiosFreeType1(lazybiosType1Array_t* Type1) {
     if (!Type1) return;
+
+    free(Type1->entries);
 
     free(Type1);
 }

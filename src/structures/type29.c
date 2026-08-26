@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType29LocationStr(uint8_t location_and_status);
+static inline const char* lazybiosType29StatusStr(uint8_t location_and_status);
+
 // Fields
 #define DESCRIPTION 0x04
 #define LOCATION_AND_STATUS 0x05
@@ -61,8 +65,11 @@
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
 
-lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_count, lazybiosDMI_t* DMIData) {
+lazybiosType29Array_t* lazybiosGetType29(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType29Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -70,11 +77,12 @@ lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_ELECTRICAL_CURRENT_PROBE);
 	size_t index = 0;
 
-	Type29 = calloc(count, sizeof(lazybiosType29_t));
-	if (!Type29) return NULL;
-	if (count == 0) {
-		*type29_count = 0;
-		return Type29;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -83,8 +91,10 @@ lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_cou
 
 		if (type == SMBIOS_TYPE_ELECTRICAL_CURRENT_PROBE) {
 			if (index >= count) break;
-			lazybiosType29_t* current = &Type29[index];
+			lazybiosType29_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, description, len, DESCRIPTION, p, structure_end);
@@ -97,15 +107,18 @@ lazybiosType29_t* lazybiosGetType29(lazybiosType29_t* Type29, size_t* type29_cou
 			READU32(current, oem_defined, len, OEM_DEFINED, p);
 			READU16(current, nominal_value, len, NOMINAL_VALUE, p);
 
+			current->decoded.location = lazybiosType29LocationStr(current->location_and_status);
+			current->decoded.status = lazybiosType29StatusStr(current->location_and_status);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type29_count = index;
-	return Type29;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType29LocationStr(uint8_t location_and_status) {
+static inline const char* lazybiosType29LocationStr(uint8_t location_and_status) {
 	switch (location_and_status & LOCATION_MASK) {
 		case LOCATION_OTHER:
 			return "Other";
@@ -134,7 +147,7 @@ const char* lazybiosType29LocationStr(uint8_t location_and_status) {
 	}
 }
 
-const char* lazybiosType29StatusStr(uint8_t location_and_status) {
+static inline const char* lazybiosType29StatusStr(uint8_t location_and_status) {
 	switch ((location_and_status & STATUS_MASK) >> STATUS_SHIFT) {
 		case STATUS_OTHER:
 			return "Other";
@@ -153,9 +166,10 @@ const char* lazybiosType29StatusStr(uint8_t location_and_status) {
 	}
 }
 
-void lazybiosFreeType29(lazybiosType29_t* Type29, size_t type29_count) {
-    (void)type29_count;
+void lazybiosFreeType29(lazybiosType29Array_t* Type29) {
     if (!Type29) return;
+
+    free(Type29->entries);
 
     free(Type29);
 }

@@ -27,8 +27,11 @@
 // Fields
 #define COUNT 0x04
 
-lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_count, lazybiosDMI_t* DMIData) {
+lazybiosType12Array_t* lazybiosGetType12(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType12Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -36,11 +39,12 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_CONFIGURATION_OPTIONS);
 	size_t index = 0;
 
-	Type12 = calloc(count, sizeof(lazybiosType12_t));
-	if (!Type12) return NULL;
-	if (count == 0) {
-		*type12_count = 0;
-		return Type12;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -49,8 +53,10 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 
 		if (type == SMBIOS_TYPE_SYSTEM_CONFIGURATION_OPTIONS) {
 			if (index >= count) break;
-			lazybiosType12_t* current = &Type12[index];
+			lazybiosType12_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READU8(current, option_count, len, COUNT, p);
@@ -67,7 +73,8 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 						}
 					}
 				} else {
-					lazybiosFreeType12(Type12, index + 1);
+					out->count = index + 1;
+					lazybiosFreeType12(out);
 					return NULL;
 				}
 			} else if (LAZYBIOS_FIELD_STATUS(current, option_count) == LAZYBIOS_FIELD_PRESENT) {
@@ -78,14 +85,16 @@ lazybiosType12_t* lazybiosGetType12(lazybiosType12_t* Type12, size_t* type12_cou
 		}
 		p = DMINext(p, end);
 	}
-	*type12_count = index;
-	return Type12;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeType12(lazybiosType12_t* Type12, size_t type12_count) {
+void lazybiosFreeType12(lazybiosType12Array_t* Type12) {
     if (!Type12) return;
 
-    for (size_t i = 0; i < type12_count; i++) free(Type12[i].options);
+    for (size_t i = 0; i < Type12->count; i++) free(Type12->entries[i].options);
+
+    free(Type12->entries);
 
     free(Type12);
 }

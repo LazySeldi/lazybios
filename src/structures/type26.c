@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType26LocationStr(uint8_t location_and_status);
+static inline const char* lazybiosType26StatusStr(uint8_t location_and_status);
+
 // Fields
 #define DESCRIPTION 0x04
 #define LOCATION_AND_STATUS 0x05
@@ -61,8 +65,11 @@
 #define STATUS_CRITICAL 0x05
 #define STATUS_NON_RECOVERABLE 0x06
 
-lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_count, lazybiosDMI_t* DMIData) {
+lazybiosType26Array_t* lazybiosGetType26(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType26Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -70,11 +77,12 @@ lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_VOLTAGE_PROBE);
 	size_t index = 0;
 
-	Type26 = calloc(count, sizeof(lazybiosType26_t));
-	if (!Type26) return NULL;
-	if (count == 0) {
-		*type26_count = 0;
-		return Type26;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -83,8 +91,10 @@ lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_cou
 
 		if (type == SMBIOS_TYPE_VOLTAGE_PROBE) {
 			if (index >= count) break;
-			lazybiosType26_t* current = &Type26[index];
+			lazybiosType26_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, description, len, DESCRIPTION, p, structure_end);
@@ -97,15 +107,18 @@ lazybiosType26_t* lazybiosGetType26(lazybiosType26_t* Type26, size_t* type26_cou
 			READU32(current, oem_defined, len, OEM_DEFINED, p);
 			READU16(current, nominal_value, len, NOMINAL_VALUE, p);
 
+			current->decoded.location = lazybiosType26LocationStr(current->location_and_status);
+			current->decoded.status = lazybiosType26StatusStr(current->location_and_status);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type26_count = index;
-	return Type26;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType26LocationStr(uint8_t location_and_status) {
+static inline const char* lazybiosType26LocationStr(uint8_t location_and_status) {
 	switch (location_and_status & LOCATION_MASK) {
 		case LOCATION_OTHER:
 			return "Other";
@@ -134,7 +147,7 @@ const char* lazybiosType26LocationStr(uint8_t location_and_status) {
 	}
 }
 
-const char* lazybiosType26StatusStr(uint8_t location_and_status) {
+static inline const char* lazybiosType26StatusStr(uint8_t location_and_status) {
 	switch ((location_and_status & STATUS_MASK) >> STATUS_SHIFT) {
 		case STATUS_OTHER:
 			return "Other";
@@ -153,9 +166,10 @@ const char* lazybiosType26StatusStr(uint8_t location_and_status) {
 	}
 }
 
-void lazybiosFreeType26(lazybiosType26_t* Type26, size_t type26_count) {
-    (void)type26_count;
+void lazybiosFreeType26(lazybiosType26Array_t* Type26) {
     if (!Type26) return;
+
+    free(Type26->entries);
 
     free(Type26);
 }

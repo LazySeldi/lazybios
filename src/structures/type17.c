@@ -26,6 +26,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their output is stored in each record's `decoded`. */
+static size_t lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len);
+static size_t lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len);
+static size_t lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len);
+static size_t lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len);
+static size_t lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len);
+static size_t lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len);
+static size_t lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len);
+static size_t lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len);
+static size_t lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len);
+static size_t lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len);
+static size_t lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len);
+static size_t lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len);
+
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType17FormFactorStr(uint8_t form_factor);
+static inline const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology);
+static inline const char* lazybiosType17TypeStr(uint8_t memory_type);
+
 // Fields
 #define PHYSICAL_MEMORY_ARRAY_HANDLE 0x04
 #define MEMORY_ERROR_INFORMATION_HANDLE 0x06
@@ -135,19 +154,23 @@
 #define INTEL_OPTANE_PERSISTENT_MEMORY 0x07
 #define MRDIMM_DEPRECATED 0x08
 
-lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_count, lazybiosDMI_t* DMIData) {
+lazybiosType17Array_t* lazybiosGetType17(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType17Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MEMORY_DEVICE);
 	size_t index = 0;
-	Type17 = calloc(count, sizeof(lazybiosType17_t));
-	if (!Type17) return NULL;
-	if (count == 0) {
-		*type17_count = 0;
-		return Type17;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -156,8 +179,10 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 
 		if (type == SMBIOS_TYPE_MEMORY_DEVICE) {
 			if (index >= count) break;
-			lazybiosType17_t* current = &Type17[index];
+			lazybiosType17_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 			const uint8_t* structure_end = DMINext(p, end);
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
@@ -346,16 +371,70 @@ lazybiosType17_t* lazybiosGetType17(lazybiosType17_t* Type17, size_t* type17_cou
 				LAZYBIOS_MARK_UNREACHABLE(current, rcd_revision_number);
 			}
 
+			current->decoded.form_factor = lazybiosType17FormFactorStr(current->form_factor);
+			current->decoded.memory_technology = lazybiosType17MemoryTechnologyStr(current->memory_technology);
+			current->decoded.memory_type = lazybiosType17TypeStr(current->memory_type);
+
+			char decbuf[LAZYBIOS_DECODER_BUF_SIZE];
+			if (LAZYBIOS_FIELD_STATUS(current, type_detail) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17TypeDetailStr(current->type_detail, decbuf, sizeof(decbuf));
+				current->decoded.type_detail = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, extended_size) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17ExtendedSizeStr(current->extended_size, decbuf, sizeof(decbuf));
+				current->decoded.extended_size = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, memory_operating_mode_capability) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17OperatingModeCapabilityStr(current->memory_operating_mode_capability, decbuf, sizeof(decbuf));
+				current->decoded.memory_operating_mode_capability = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, module_manufacturer_id) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17ModuleManufacturerIDStr(current->module_manufacturer_id, decbuf, sizeof(decbuf));
+				current->decoded.module_manufacturer_id = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, non_volatile_size) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17NonVolatileSizeStr(current->non_volatile_size, decbuf, sizeof(decbuf));
+				current->decoded.non_volatile_size = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, volatile_size) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17VolatileSizeStr(current->volatile_size, decbuf, sizeof(decbuf));
+				current->decoded.volatile_size = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, cache_size) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17CacheSizeStr(current->cache_size, decbuf, sizeof(decbuf));
+				current->decoded.cache_size = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, extended_speed) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17ExtendedSpeedStr(current->extended_speed, decbuf, sizeof(decbuf));
+				current->decoded.extended_speed = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, pmic0_manufacturer_id) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17PMIC0ManufacturerIDStr(current->pmic0_manufacturer_id, decbuf, sizeof(decbuf));
+				current->decoded.pmic0_manufacturer_id = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, pmic0_revision_number) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17PMIC0RevisionStr(current->pmic0_revision_number, decbuf, sizeof(decbuf));
+				current->decoded.pmic0_revision_number = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, rcd_manufacturer_id) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17RCDManufacturerIDStr(current->rcd_manufacturer_id, decbuf, sizeof(decbuf));
+				current->decoded.rcd_manufacturer_id = lazybiosDup(decbuf);
+			}
+			if (LAZYBIOS_FIELD_STATUS(current, rcd_revision_number) == LAZYBIOS_FIELD_PRESENT) {
+				lazybiosType17RCDRevisionStr(current->rcd_revision_number, decbuf, sizeof(decbuf));
+				current->decoded.rcd_revision_number = lazybiosDup(decbuf);
+			}
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type17_count = index;
-	return Type17;
+	out->count = index;
+	return out;
 }
 
 // Form Factor
-const char* lazybiosType17FormFactorStr(uint8_t form_factor) {
+static inline const char* lazybiosType17FormFactorStr(uint8_t form_factor) {
 	switch (form_factor) {
 		case FF_OTHER:
 			return "Other";
@@ -401,7 +480,7 @@ const char* lazybiosType17FormFactorStr(uint8_t form_factor) {
 }
 
 // Memory Type
-const char* lazybiosType17TypeStr(uint8_t memory_type) {
+static inline const char* lazybiosType17TypeStr(uint8_t memory_type) {
 	switch (memory_type) {
 		case MT_OTHER:
 			return "Other";
@@ -477,8 +556,8 @@ const char* lazybiosType17TypeStr(uint8_t memory_type) {
 }
 
 // Type Detail
-void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -504,14 +583,15 @@ void lazybiosType17TypeDetailStr(uint16_t type_detail, char* buf, size_t buf_len
 	} else {
 		snprintf(buf, buf_len, "None");
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Extended Size
-void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (extended_size == 0) {
 		snprintf(buf, buf_len, "Not used (Size field applies)");
-		return;
+		return 0;
 	}
 
 	// Bit 31 is reserved, must be set to 0.
@@ -519,10 +599,11 @@ void lazybiosType17ExtendedSizeStr(uint32_t extended_size, char* buf, size_t buf
 	uint32_t size_mib = extended_size & 0x7FFFFFFF;
 
 	snprintf(buf, buf_len, "%u MiB", size_mib);
+	return buf ? strlen(buf) : 0;
 }
 
 // Memory Technology
-const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
+static inline const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
 	switch (memory_technology) {
 		case MTECH_OTHER:
 			return "Other";
@@ -546,8 +627,8 @@ const char* lazybiosType17MemoryTechnologyStr(uint8_t memory_technology) {
 }
 
 // Memory Operating Mode Capability
-void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_capability, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	size_t len = 0;
 	buf[0] = '\0';
 
@@ -562,51 +643,56 @@ void lazybiosType17OperatingModeCapabilityStr(uint16_t memory_operating_mode_cap
 	} else {
 		snprintf(buf, buf_len, "None");
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Module Manufacturers IDs
-void lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17ModuleManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "0x%04X", id);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Volatile Size
-void lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17VolatileSizeStr(uint64_t volatile_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "%llu", (unsigned long long)volatile_size);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Non-Volatile Size
-void lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17NonVolatileSizeStr(uint64_t non_volatile_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (non_volatile_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "%llu", (unsigned long long)non_volatile_size);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Cache Size
-void lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17CacheSizeStr(uint64_t cache_size, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (cache_size == 0xFFFFFFFFFFFFFFFFULL) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "%llu", (unsigned long long)cache_size);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // Extended Speed
-void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	// Bit 31 is reserved, must be set to 0.
 	// Bits 30:0 represent the speed in MT/s.
 	uint32_t speed_mts = extended_speed & 0x7FFFFFFF;
@@ -614,53 +700,74 @@ void lazybiosType17ExtendedSpeedStr(uint32_t extended_speed, char* buf, size_t b
 	if (speed_mts == 0) {
 		snprintf(buf, buf_len, "Not used (Speed field applies)");
 	} else {
-		snprintf(buf, buf_len, "%u", speed_mts); //  MT/s should be used for this field. Versions below 3.0.0 used MHz
+		snprintf(buf, buf_len, "%u", speed_mts); //  MT/s should be used for this field. Versions before 3.0.0 used MHz
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // PMIC0 Manufacturer ID
-void lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17PMIC0ManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "0x%04X", id);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // PMIC0 Revision
-void lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17PMIC0RevisionStr(uint16_t revision, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (revision == 0xFF00) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "0x%04X", revision);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // RCD Manufacturer ID
-void lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17RCDManufacturerIDStr(uint16_t id, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (id == 0x0000) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "0x%04X", id);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
 // RCD Revision Number
-void lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) {
-	if (!buf || buf_len == 0) return;
+static size_t lazybiosType17RCDRevisionStr(uint16_t revision, char* buf, size_t buf_len) {
+	if (!buf || buf_len == 0) return 0;
 	if (revision == 0xFF00) {
 		snprintf(buf, buf_len, "Unknown");
 	} else {
 		snprintf(buf, buf_len, "0x%04X", revision);
 	}
+	return buf ? strlen(buf) : 0;
 }
 
-void lazybiosFreeType17(lazybiosType17_t* Type17, size_t type17_count) {
-    (void)type17_count;
+void lazybiosFreeType17(lazybiosType17Array_t* Type17) {
     if (!Type17) return;
+
+	for (size_t i = 0; i < Type17->count; i++) {
+		free(Type17->entries[i].decoded.type_detail);
+		free(Type17->entries[i].decoded.extended_size);
+		free(Type17->entries[i].decoded.memory_operating_mode_capability);
+		free(Type17->entries[i].decoded.module_manufacturer_id);
+		free(Type17->entries[i].decoded.non_volatile_size);
+		free(Type17->entries[i].decoded.volatile_size);
+		free(Type17->entries[i].decoded.cache_size);
+		free(Type17->entries[i].decoded.extended_speed);
+		free(Type17->entries[i].decoded.pmic0_manufacturer_id);
+		free(Type17->entries[i].decoded.pmic0_revision_number);
+		free(Type17->entries[i].decoded.rcd_manufacturer_id);
+		free(Type17->entries[i].decoded.rcd_revision_number);
+	}
+
+    free(Type17->entries);
 
     free(Type17);
 }

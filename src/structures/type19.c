@@ -24,6 +24,10 @@
 #include "lazybios_internal.h"
 #include <stdlib.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline uint64_t lazybiosType19EndingAddressBytes(uint32_t ending_address, uint64_t extended_ending_address);
+static inline uint64_t lazybiosType19StartingAddressBytes(uint32_t starting_address, uint64_t extended_starting_address);
+
 // Fields
 #define STARTING_ADDRESS 0x04
 #define ENDING_ADDRESS 0x08
@@ -35,8 +39,11 @@
 // Address Selection
 #define USE_EXTENDED_ADDRESS 0xFFFFFFFFU
 
-lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_count, lazybiosDMI_t* DMIData) {
+lazybiosType19Array_t* lazybiosGetType19(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType19Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -44,11 +51,12 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS);
 	size_t index = 0;
 
-	Type19 = calloc(count, sizeof(lazybiosType19_t));
-	if (!Type19) return NULL;
-	if (count == 0) {
-		*type19_count = 0;
-		return Type19;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -57,8 +65,10 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 
 		if (type == SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS) {
 			if (index >= count) break;
-			lazybiosType19_t* current = &Type19[index];
+			lazybiosType19_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU32(current, starting_address, len, STARTING_ADDRESS, p);
 			READU32(current, ending_address, len, ENDING_ADDRESS, p);
@@ -76,27 +86,31 @@ lazybiosType19_t* lazybiosGetType19(lazybiosType19_t* Type19, size_t* type19_cou
 				LAZYBIOS_MARK_UNREACHABLE(current, extended_ending_address);
 			}
 
+			current->decoded.ending_address = lazybiosType19EndingAddressBytes(current->ending_address, current->extended_ending_address);
+			current->decoded.starting_address = lazybiosType19StartingAddressBytes(current->starting_address, current->extended_starting_address);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type19_count = index;
-	return Type19;
+	out->count = index;
+	return out;
 }
 
-uint64_t lazybiosType19StartingAddressBytes(uint32_t starting_address, uint64_t extended_starting_address) {
+static inline uint64_t lazybiosType19StartingAddressBytes(uint32_t starting_address, uint64_t extended_starting_address) {
 	if (starting_address == USE_EXTENDED_ADDRESS) return extended_starting_address;
 	return (uint64_t)starting_address * 1024;
 }
 
-uint64_t lazybiosType19EndingAddressBytes(uint32_t ending_address, uint64_t extended_ending_address) {
+static inline uint64_t lazybiosType19EndingAddressBytes(uint32_t ending_address, uint64_t extended_ending_address) {
 	if (ending_address == USE_EXTENDED_ADDRESS) return extended_ending_address;
 	return (uint64_t)ending_address * 1024 + 1023;
 }
 
-void lazybiosFreeType19(lazybiosType19_t* Type19, size_t type19_count) {
-    (void)type19_count;
+void lazybiosFreeType19(lazybiosType19Array_t* Type19) {
     if (!Type19) return;
+
+    free(Type19->entries);
 
     free(Type19);
 }

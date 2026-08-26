@@ -53,10 +53,25 @@ typedef struct {
 } lazybiosType39FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 39 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* input_voltage_range_switching;
+	const char* power_supply_type;
+	const char* status;
+	char* power_supply_characteristics;
+} lazybiosType39Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 39 System Power Supply information.
  * @ingroup api_type39
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t power_unit_group;
 	const char* location;
 	const char* device_name;
@@ -70,57 +85,36 @@ typedef struct {
 	uint16_t input_voltage_probe_handle;
 	uint16_t cooling_device_handle;
 	uint16_t input_current_probe_handle;
+	lazybiosType39Decoded_t decoded;
 	lazybiosType39FieldStatus_t field_status;
 } lazybiosType39_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 39 structures.
+ * @ingroup api_type39
+ */
+typedef struct {
+	lazybiosType39_t* entries;
+	size_t count;
+} lazybiosType39Array_t;
 
 /** @addtogroup api_type39
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 39 System Power Supply structures.
- * @param Type39 Existing Type 39 array pointer value; it is not dereferenced or released.
- * @param type39_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 39 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 39 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 39 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType39_t* lazybiosGetType39(lazybiosType39_t* Type39, size_t* type39_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType39Array_t* lazybiosGetType39(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes the DMTF power-supply type from Type 39 characteristics.
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @return Static string describing the power-supply type.
+ * @brief Releases a parsed set of SMBIOS Type 39 structures.
+ * @param Type39 Set to release; may be NULL.
  */
-const char* lazybiosType39PowerSupplyTypeStr(uint16_t characteristics);
-
-/**
- * @brief Decodes the power-supply status from Type 39 characteristics.
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @return Static string describing the power-supply status.
- */
-const char* lazybiosType39StatusStr(uint16_t characteristics);
-
-/**
- * @brief Decodes input-voltage range switching from Type 39 characteristics.
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @return Static string describing the input-voltage range switching method.
- */
-const char* lazybiosType39InputVoltageRangeSwitchingStr(uint16_t characteristics);
-
-/**
- * @brief Formats the unplugged, present, and hot-replaceable characteristic flags.
- * @param characteristics Raw Type 39 power-supply characteristics word.
- * @param buf Output buffer that receives the decoded flags.
- * @param buf_len Capacity of buf in bytes.
- */
-void lazybiosType39CharacteristicsFlagsStr(uint16_t characteristics, char* buf, size_t buf_len);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 39 structures.
- * @param Type39 Type 39 array to release.
- * @param type39_count Number of elements in Type39.
- */
-void lazybiosFreeType39(lazybiosType39_t* Type39, size_t type39_count);
+void lazybiosFreeType39(lazybiosType39Array_t* Type39);
 
 /** @} */
 

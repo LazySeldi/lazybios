@@ -35,8 +35,11 @@
 
 #define TYPE31_MINIMUM_LENGTH 0x1C
 
-lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_count, lazybiosDMI_t* DMIData) {
+lazybiosType31Array_t* lazybiosGetType31(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType31Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -44,11 +47,12 @@ lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BOOT_INTEGRITY_SERVICES_ENTRY_POINT);
 	size_t index = 0;
 
-	Type31 = calloc(count, sizeof(lazybiosType31_t));
-	if (!Type31) return NULL;
-	if (count == 0) {
-		*type31_count = 0;
-		return Type31;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -57,8 +61,10 @@ lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_cou
 
 		if (type == SMBIOS_TYPE_BOOT_INTEGRITY_SERVICES_ENTRY_POINT) {
 			if (index >= count) break;
-			lazybiosType31_t* current = &Type31[index];
+			lazybiosType31_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, checksum, len, CHECKSUM, p);
 			READU8(current, reserved_1, len, RESERVED_1, p);
@@ -81,13 +87,14 @@ lazybiosType31_t* lazybiosGetType31(lazybiosType31_t* Type31, size_t* type31_cou
 		}
 		p = DMINext(p, end);
 	}
-	*type31_count = index;
-	return Type31;
+	out->count = index;
+	return out;
 }
 
-void lazybiosFreeType31(lazybiosType31_t* Type31, size_t type31_count) {
-    (void)type31_count;
+void lazybiosFreeType31(lazybiosType31Array_t* Type31) {
     if (!Type31) return;
+
+    free(Type31->entries);
 
     free(Type31);
 }

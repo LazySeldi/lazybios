@@ -44,50 +44,57 @@ typedef struct {
 } lazybiosType34FieldStatus_t;
 
 /**
+ * @brief Decoded forms of the Type 34 encoded fields.
+ *
+ * Each member holds the decoded form of the raw field it is named for.
+ * Consult the matching `field_status` member before using one.
+ */
+typedef struct {
+	const char* address_type;
+	const char* device_type;
+} lazybiosType34Decoded_t;
+
+/**
  * @brief Parsed SMBIOS Type 34 Management Device information.
  * @ingroup api_type34
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	const char* description;
 	uint8_t device_type;
 	uint32_t address;
 	uint8_t address_type;
+	lazybiosType34Decoded_t decoded;
 	lazybiosType34FieldStatus_t field_status;
 } lazybiosType34_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 34 structures.
+ * @ingroup api_type34
+ */
+typedef struct {
+	lazybiosType34_t* entries;
+	size_t count;
+} lazybiosType34Array_t;
 
 /** @addtogroup api_type34
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 34 Management Device structures.
- * @param Type34 Existing Type 34 array pointer value; it is not dereferenced or released.
- * @param type34_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 34 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 34 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 34 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType34_t* lazybiosGetType34(lazybiosType34_t* Type34, size_t* type34_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType34Array_t* lazybiosGetType34(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Decodes an SMBIOS Type 34 management-device type.
- * @param device_type Raw management-device type value.
- * @return Static string describing the management-device type.
+ * @brief Releases a parsed set of SMBIOS Type 34 structures.
+ * @param Type34 Set to release; may be NULL.
  */
-const char* lazybiosType34DeviceTypeStr(uint8_t device_type);
-
-/**
- * @brief Decodes an SMBIOS Type 34 management-device address type.
- * @param address_type Raw management-device address-type value.
- * @return Static string describing the address type.
- */
-const char* lazybiosType34AddressTypeStr(uint8_t address_type);
-
-/**
- * @brief Releases an array of parsed SMBIOS Type 34 structures.
- * @param Type34 Type 34 array to release.
- * @param type34_count Number of elements in Type34.
- */
-void lazybiosFreeType34(lazybiosType34_t* Type34, size_t type34_count);
+void lazybiosFreeType34(lazybiosType34Array_t* Type34);
 
 /** @} */
 

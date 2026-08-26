@@ -25,6 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* File-local decoders; their results are stored in each record's `decoded`. */
+static inline const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type);
+static inline const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type);
+
 // Fields
 #define INTERFACE_TYPE 0x04
 #define INTERFACE_TYPE_SPECIFIC_DATA_LENGTH 0x05
@@ -45,8 +49,11 @@
 #define PROTOCOL_TYPE_REDFISH_OVER_IP 0x04
 #define PROTOCOL_TYPE_OEM 0xF0
 
-lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_count, lazybiosDMI_t* DMIData) {
+lazybiosType42Array_t* lazybiosGetType42(const lazybiosDMI_t* DMIData) {
 	if (!DMIData || !DMIData->dmi_data) return NULL;
+
+	lazybiosType42Array_t* out = calloc(1, sizeof(*out));
+	if (!out) return NULL;
 
 	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
@@ -54,11 +61,12 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_MANAGEMENT_CONTROLLER_HOST_INTERFACE);
 	size_t index = 0;
 
-	Type42 = calloc(count, sizeof(lazybiosType42_t));
-	if (!Type42) return NULL;
-	if (count == 0) {
-		*type42_count = 0;
-		return Type42;
+	if (count == 0) return out;
+
+	out->entries = calloc(count, sizeof(*out->entries));
+	if (!out->entries) {
+		free(out);
+		return NULL;
 	}
 
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
@@ -67,8 +75,10 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 
 		if (type == SMBIOS_TYPE_MANAGEMENT_CONTROLLER_HOST_INTERFACE) {
 			if (index >= count) break;
-			lazybiosType42_t* current = &Type42[index];
+			lazybiosType42_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
+			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
+			current->length = len;
 
 			READU8(current, interface_type, len, INTERFACE_TYPE, p);
 
@@ -85,7 +95,8 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 						if (current->interface_type_specific_data_size > 0) {
 							current->interface_type_specific_data = malloc(current->interface_type_specific_data_size);
 							if (!current->interface_type_specific_data) {
-								lazybiosFreeType42(Type42, index + 1);
+								out->count = index + 1;
+								lazybiosFreeType42(out);
 								return NULL;
 							}
 							memcpy(current->interface_type_specific_data, p + INTERFACE_TYPE_SPECIFIC_DATA,
@@ -120,7 +131,8 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 									current->protocol_records = calloc(current->number_of_protocol_records,
 																	   sizeof(lazybiosType42ProtocolRecord_t));
 									if (!current->protocol_records) {
-										lazybiosFreeType42(Type42, index + 1);
+										out->count = index + 1;
+										lazybiosFreeType42(out);
 										return NULL;
 									}
 
@@ -128,12 +140,14 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 									for (size_t i = 0; i < current->number_of_protocol_records; i++) {
 										lazybiosType42ProtocolRecord_t* protocol = &current->protocol_records[i];
 										protocol->protocol_type = p[protocol_offset];
+										protocol->decoded.protocol_type = lazybiosType42ProtocolTypeStr(protocol->protocol_type);
 										protocol->protocol_type_specific_data_length = p[protocol_offset + 1];
 										if (protocol->protocol_type_specific_data_length > 0) {
 											protocol->protocol_type_specific_data = malloc(
 												protocol->protocol_type_specific_data_length);
 											if (!protocol->protocol_type_specific_data) {
-											lazybiosFreeType42(Type42, index + 1);
+												out->count = index + 1;
+												lazybiosFreeType42(out);
 												return NULL;
 											}
 											memcpy(protocol->protocol_type_specific_data, p + protocol_offset + 2,
@@ -160,7 +174,8 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 				current->interface_type_specific_data_size = PRE_3_2_OEM_DATA_LENGTH;
 				current->interface_type_specific_data = malloc(current->interface_type_specific_data_size);
 				if (!current->interface_type_specific_data) {
-					lazybiosFreeType42(Type42, index + 1);
+					out->count = index + 1;
+					lazybiosFreeType42(out);
 					return NULL;
 				}
 				memcpy(current->interface_type_specific_data, p + INTERFACE_TYPE_SPECIFIC_DATA_LENGTH,
@@ -168,15 +183,17 @@ lazybiosType42_t* lazybiosGetType42(lazybiosType42_t* Type42, size_t* type42_cou
 				LAZYBIOS_MARK_PRESENT(current, interface_type_specific_data);
 			}
 
+			current->decoded.interface_type = lazybiosType42InterfaceTypeStr(current->interface_type);
+
 			index++;
 		}
 		p = DMINext(p, end);
 	}
-	*type42_count = index;
-	return Type42;
+	out->count = index;
+	return out;
 }
 
-const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type) {
+static inline const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type) {
 	if (interface_type <= INTERFACE_TYPE_MCTP_MAX) return "MCTP Host Interface";
 
 	switch (interface_type) {
@@ -189,7 +206,7 @@ const char* lazybiosType42InterfaceTypeStr(uint8_t interface_type) {
 	}
 }
 
-const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type) {
+static inline const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type) {
 	switch (protocol_type) {
 		case PROTOCOL_TYPE_RESERVED_0:
 		case PROTOCOL_TYPE_RESERVED_1:
@@ -207,17 +224,18 @@ const char* lazybiosType42ProtocolTypeStr(uint8_t protocol_type) {
 	}
 }
 
-void lazybiosFreeType42(lazybiosType42_t* Type42, size_t type42_count) {
+void lazybiosFreeType42(lazybiosType42Array_t* Type42) {
 	if (!Type42) return;
 
-	for (size_t i = 0; i < type42_count; i++) {
-		free(Type42[i].interface_type_specific_data);
-		if (Type42[i].protocol_records) {
-			for (size_t j = 0; j < Type42[i].number_of_protocol_records; j++) {
-				free(Type42[i].protocol_records[j].protocol_type_specific_data);
+	for (size_t i = 0; i < Type42->count; i++) {
+		free(Type42->entries[i].interface_type_specific_data);
+		if (Type42->entries[i].protocol_records) {
+			for (size_t j = 0; j < Type42->entries[i].number_of_protocol_records; j++) {
+				free(Type42->entries[i].protocol_records[j].protocol_type_specific_data);
 			}
 		}
-		free(Type42[i].protocol_records);
+		free(Type42->entries[i].protocol_records);
 	}
+	free(Type42->entries);
 	free(Type42);
 }

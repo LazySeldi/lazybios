@@ -46,30 +46,39 @@ typedef struct {
  * @ingroup api_type11
  */
 typedef struct {
+	uint16_t handle;
+	uint8_t length;
 	uint8_t string_count;
 	const char** strings;
 	lazybiosType11FieldStatus_t field_status;
 } lazybiosType11_t;
+
+/**
+ * @brief A parsed set of SMBIOS Type 11 structures.
+ * @ingroup api_type11
+ */
+typedef struct {
+	lazybiosType11_t* entries;
+	size_t count;
+} lazybiosType11Array_t;
 
 /** @addtogroup api_type11
  * @{
  */
 
 /**
- * @brief Parses all SMBIOS Type 11 OEM Strings structures.
- * @param Type11 Existing Type 11 array pointer value; it is not dereferenced or released.
- * @param type11_count Output location for the number of parsed structures.
+ * @brief Parses all SMBIOS Type 11 structures.
  * @param DMIData Raw DMI table container to parse.
- * @return Newly allocated Type 11 array, or NULL on failure.
+ * @return Newly allocated set, empty when the table holds no Type 11 structure,
+ *         or NULL when the arguments are unusable or an allocation fails.
  */
-LAZYBIOS_WARN_UNUSED lazybiosType11_t* lazybiosGetType11(lazybiosType11_t* Type11, size_t* type11_count, lazybiosDMI_t* DMIData);
+LAZYBIOS_WARN_UNUSED lazybiosType11Array_t* lazybiosGetType11(const lazybiosDMI_t* DMIData);
 
 /**
- * @brief Releases an array of parsed SMBIOS Type 11 structures.
- * @param Type11 Type 11 array to release.
- * @param type11_count Number of elements in Type11.
+ * @brief Releases a parsed set of SMBIOS Type 11 structures.
+ * @param Type11 Set to release; may be NULL.
  */
-void lazybiosFreeType11(lazybiosType11_t* Type11, size_t type11_count);
+void lazybiosFreeType11(lazybiosType11Array_t* Type11);
 
 /** @} */
 
