@@ -62,6 +62,7 @@ lazybiosType19Array_t* lazybiosGetType19(const lazybiosDMI_t* DMIData) {
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS) {
 			if (index >= count) break;
@@ -78,7 +79,13 @@ lazybiosType19Array_t* lazybiosGetType19(const lazybiosDMI_t* DMIData) {
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 7)) {
 				READU64(current, extended_starting_address, len, EXTENDED_STARTING_ADDRESS, p);
+				/* Only meaningful when the 32-bit field defers to it. */
+				if (current->starting_address != USE_EXTENDED_ADDRESS)
+					LAZYBIOS_MARK_ABSENT(current, extended_starting_address);
 				READU64(current, extended_ending_address, len, EXTENDED_ENDING_ADDRESS, p);
+				/* Only meaningful when the 32-bit field defers to it. */
+				if (current->ending_address != USE_EXTENDED_ADDRESS)
+					LAZYBIOS_MARK_ABSENT(current, extended_ending_address);
 			} else {
 				current->extended_starting_address = 0;
 				LAZYBIOS_MARK_UNREACHABLE(current, extended_starting_address);

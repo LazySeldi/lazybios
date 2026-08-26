@@ -96,6 +96,7 @@ lazybiosType45Array_t* lazybiosGetType45(const lazybiosDMI_t* DMIData) {
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_TYPE_FIRMWARE_INVENTORY_INFORMATION) {
 			if (index >= count) break;
@@ -115,6 +116,8 @@ lazybiosType45Array_t* lazybiosGetType45(const lazybiosDMI_t* DMIData) {
 			READSTR(current, lowest_supported_firmware_version, len, LOWEST_SUPPORTED_FIRMWARE_VERSION, p,
 					structure_end);
 			READU64(current, image_size, len, IMAGE_SIZE, p);
+			/* 0xFFFFFFFFFFFFFFFF means the size is unknown. */
+			if (current->image_size == UINT64_MAX) LAZYBIOS_MARK_ABSENT(current, image_size);
 			READU16(current, characteristics, len, CHARACTERISTICS, p);
 			READU8(current, state, len, STATE, p);
 			READU8(current, number_of_associated_components, len, NUMBER_OF_ASSOCIATED_COMPONENTS, p);

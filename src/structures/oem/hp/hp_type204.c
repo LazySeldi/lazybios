@@ -59,6 +59,7 @@ lazybiosOemHpType204Array_t* lazybiosGetOemHpType204(const lazybiosDMI_t* DMIDat
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_OEM_HP_TYPE204) {
 			lazybiosOemHpType204_t* current = &out->entries[index];

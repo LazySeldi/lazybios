@@ -60,6 +60,7 @@ lazybiosType40Array_t* lazybiosGetType40(const lazybiosDMI_t* DMIData) {
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_TYPE_ADDITIONAL_INFORMATION) {
 			if (index >= count) break;

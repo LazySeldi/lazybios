@@ -73,6 +73,7 @@ lazybiosOemDellType212Array_t* lazybiosGetOemDellType212(const lazybiosDMI_t* DM
     while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
         uint8_t type = p[0];
         uint8_t len = p[1];
+        if (len < SMBIOS_HEADER_SIZE) break;
 
         if (type == SMBIOS_OEM_DELL_TYPE212) {
             lazybiosOemDellType212_t *current = &out->entries[index];

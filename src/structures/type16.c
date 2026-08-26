@@ -100,6 +100,7 @@ lazybiosType16Array_t* lazybiosGetType16(const lazybiosDMI_t* DMIData) {
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY) {
 			if (index >= count) break;
@@ -121,6 +122,9 @@ lazybiosType16Array_t* lazybiosGetType16(const lazybiosDMI_t* DMIData) {
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 7)) {
 				READU64(current, extended_maximum_capacity, len, EXTENDED_MAXIMUM_CAPACITY, p);
+				/* Only meaningful when the 32-bit field defers to it. */
+				if (current->maximum_capacity != USE_EXTENDED_MAXIMUM_CAPACITY)
+					LAZYBIOS_MARK_ABSENT(current, extended_maximum_capacity);
 			} else {
 				current->extended_maximum_capacity = 0;
 				LAZYBIOS_MARK_UNREACHABLE(current, extended_maximum_capacity);

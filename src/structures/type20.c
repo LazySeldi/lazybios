@@ -65,6 +65,7 @@ lazybiosType20Array_t* lazybiosGetType20(const lazybiosDMI_t* DMIData) {
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_TYPE_MEMORY_DEVICE_MAPPED_ADDRESS) {
 			if (index >= count) break;
@@ -84,10 +85,20 @@ lazybiosType20Array_t* lazybiosGetType20(const lazybiosDMI_t* DMIData) {
 			READU8(current, partition_row_position, len, PARTITION_ROW_POSITION, p);
 			READU8(current, interleave_position, len, INTERLEAVE_POSITION, p);
 			READU8(current, interleaved_data_depth, len, INTERLEAVED_DATA_DEPTH, p);
+			/* 0xFF means unknown for each of the three position fields. */
+			if (current->partition_row_position == 0xFF) LAZYBIOS_MARK_ABSENT(current, partition_row_position);
+			if (current->interleave_position == 0xFF) LAZYBIOS_MARK_ABSENT(current, interleave_position);
+			if (current->interleaved_data_depth == 0xFF) LAZYBIOS_MARK_ABSENT(current, interleaved_data_depth);
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 7)) {
 				READU64(current, extended_starting_address, len, EXTENDED_STARTING_ADDRESS, p);
+				/* Only meaningful when the 32-bit field defers to it. */
+				if (current->starting_address != USE_EXTENDED_ADDRESS)
+					LAZYBIOS_MARK_ABSENT(current, extended_starting_address);
 				READU64(current, extended_ending_address, len, EXTENDED_ENDING_ADDRESS, p);
+				/* Only meaningful when the 32-bit field defers to it. */
+				if (current->ending_address != USE_EXTENDED_ADDRESS)
+					LAZYBIOS_MARK_ABSENT(current, extended_ending_address);
 			} else {
 				current->extended_starting_address = 0;
 				LAZYBIOS_MARK_UNREACHABLE(current, extended_starting_address);

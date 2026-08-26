@@ -130,6 +130,7 @@ lazybiosType15Array_t* lazybiosGetType15(const lazybiosDMI_t* DMIData) {
 	while (p + SMBIOS_HEADER_SIZE <= end && index < count) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
+		if (len < SMBIOS_HEADER_SIZE) break;
 
 		if (type == SMBIOS_TYPE_SYSTEM_EVENT_LOG) {
 			if (index >= count) break;
@@ -144,6 +145,8 @@ lazybiosType15Array_t* lazybiosGetType15(const lazybiosDMI_t* DMIData) {
 			READU8(current, access_method, len, ACCESS_METHOD, p);
 			READU8(current, log_status, len, LOG_STATUS, p);
 			READU32(current, log_change_token, len, LOG_CHANGE_TOKEN, p);
+			/* A zero change token means the feature is not implemented. */
+			if (current->log_change_token == 0) LAZYBIOS_MARK_ABSENT(current, log_change_token);
 			READU32(current, access_method_address, len, ACCESS_METHOD_ADDRESS, p);
 
 			if (lazybiosIsVersionPlus(DMIData, 2, 1)) {
