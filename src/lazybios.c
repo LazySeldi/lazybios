@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char lazybiosVersion[] = "2.0.0";
+const char lazybiosVersion[] = "3.0.0";
 
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
@@ -127,7 +127,7 @@ int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 }
 
 int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path) {
-	if (!ctx) return -1;
+	if (!ctx || !ctx->DMIData || !entry_path || !dmi_path) return -1;
 
 	FILE* entry = fopen(entry_path, "rb");
 	if (!entry) {
@@ -209,6 +209,25 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
 
 	ctx->DMIData = calloc(1, sizeof(*ctx->DMIData));
 	if (!ctx->DMIData) {
+		free(ctx);
+		return NULL;
+	}
+
+	/* The vendor containers are always present; only their per-type members
+	 * are NULL until the matching getter runs. */
+	ctx->oem = calloc(1, sizeof(*ctx->oem));
+	if (!ctx->oem) {
+		free(ctx->DMIData);
+		free(ctx);
+		return NULL;
+	}
+	ctx->oem->dell = calloc(1, sizeof(*ctx->oem->dell));
+	ctx->oem->hp = calloc(1, sizeof(*ctx->oem->hp));
+	if (!ctx->oem->dell || !ctx->oem->hp) {
+		free(ctx->oem->dell);
+		free(ctx->oem->hp);
+		free(ctx->oem);
+		free(ctx->DMIData);
 		free(ctx);
 		return NULL;
 	}
@@ -528,6 +547,10 @@ size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_t
 		uint8_t type = p[0];
 		if (type == SMBIOS_TYPE_END) break;
 
+		/* A formatted section is at least a header; anything shorter is not a
+		 * structure, so the table ends here. DMINext applies the same rule. */
+		if (p[1] < SMBIOS_HEADER_SIZE) break;
+
 		if (type == target_type)
 			count++;
 
@@ -537,219 +560,221 @@ size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_t
 	return count;
 }
 
-void lazybiosPrintSMVer(const lazybiosCTX_t* ctx) {
-	if (!ctx) return;
-	if (ctx->DMIData->entry_tag == SMBIOS_VER_3X) {
-		printf("SMBIOS version %d.%d.%d\n", ctx->DMIData->entry_union.v3->major_version, ctx->DMIData->entry_union.v3->minor_version, ctx->DMIData->entry_union.v3->docrev);
-	} else if (ctx->DMIData->entry_tag == SMBIOS_VER_2X) {
-		printf("SMBIOS version %d.%d\n", ctx->DMIData->entry_union.v2->major_version, ctx->DMIData->entry_union.v2->minor_version);
-	} else {
-		printf("Couldn't find SMBIOS Version!\n");
-	}
+int lazybiosParseAll(lazybiosCTX_t* ctx) {
+	if (!ctx || !ctx->DMIData || !ctx->DMIData->dmi_data) return -1;
+
+	/*
+	 * Types already parsed are left alone, so calling this twice does not
+	 * strand the first result set.
+	 */
+	if (!ctx->Type0) ctx->Type0 = lazybiosGetType0(ctx->DMIData);
+	if (!ctx->Type1) ctx->Type1 = lazybiosGetType1(ctx->DMIData);
+	if (!ctx->Type2) ctx->Type2 = lazybiosGetType2(ctx->DMIData);
+	if (!ctx->Type3) ctx->Type3 = lazybiosGetType3(ctx->DMIData);
+	if (!ctx->Type4) ctx->Type4 = lazybiosGetType4(ctx->DMIData);
+	if (!ctx->Type5) ctx->Type5 = lazybiosGetType5(ctx->DMIData);
+	if (!ctx->Type6) ctx->Type6 = lazybiosGetType6(ctx->DMIData);
+	if (!ctx->Type7) ctx->Type7 = lazybiosGetType7(ctx->DMIData);
+	if (!ctx->Type8) ctx->Type8 = lazybiosGetType8(ctx->DMIData);
+	if (!ctx->Type9) ctx->Type9 = lazybiosGetType9(ctx->DMIData);
+	if (!ctx->Type10) ctx->Type10 = lazybiosGetType10(ctx->DMIData);
+	if (!ctx->Type11) ctx->Type11 = lazybiosGetType11(ctx->DMIData);
+	if (!ctx->Type12) ctx->Type12 = lazybiosGetType12(ctx->DMIData);
+	if (!ctx->Type13) ctx->Type13 = lazybiosGetType13(ctx->DMIData);
+	if (!ctx->Type14) ctx->Type14 = lazybiosGetType14(ctx->DMIData);
+	if (!ctx->Type15) ctx->Type15 = lazybiosGetType15(ctx->DMIData);
+	if (!ctx->Type16) ctx->Type16 = lazybiosGetType16(ctx->DMIData);
+	if (!ctx->Type17) ctx->Type17 = lazybiosGetType17(ctx->DMIData);
+	if (!ctx->Type18) ctx->Type18 = lazybiosGetType18(ctx->DMIData);
+	if (!ctx->Type19) ctx->Type19 = lazybiosGetType19(ctx->DMIData);
+	if (!ctx->Type20) ctx->Type20 = lazybiosGetType20(ctx->DMIData);
+	if (!ctx->Type21) ctx->Type21 = lazybiosGetType21(ctx->DMIData);
+	if (!ctx->Type22) ctx->Type22 = lazybiosGetType22(ctx->DMIData);
+	if (!ctx->Type23) ctx->Type23 = lazybiosGetType23(ctx->DMIData);
+	if (!ctx->Type24) ctx->Type24 = lazybiosGetType24(ctx->DMIData);
+	if (!ctx->Type25) ctx->Type25 = lazybiosGetType25(ctx->DMIData);
+	if (!ctx->Type26) ctx->Type26 = lazybiosGetType26(ctx->DMIData);
+	if (!ctx->Type27) ctx->Type27 = lazybiosGetType27(ctx->DMIData);
+	if (!ctx->Type28) ctx->Type28 = lazybiosGetType28(ctx->DMIData);
+	if (!ctx->Type29) ctx->Type29 = lazybiosGetType29(ctx->DMIData);
+	if (!ctx->Type30) ctx->Type30 = lazybiosGetType30(ctx->DMIData);
+	if (!ctx->Type31) ctx->Type31 = lazybiosGetType31(ctx->DMIData);
+	if (!ctx->Type32) ctx->Type32 = lazybiosGetType32(ctx->DMIData);
+	if (!ctx->Type33) ctx->Type33 = lazybiosGetType33(ctx->DMIData);
+	if (!ctx->Type34) ctx->Type34 = lazybiosGetType34(ctx->DMIData);
+	if (!ctx->Type35) ctx->Type35 = lazybiosGetType35(ctx->DMIData);
+	if (!ctx->Type36) ctx->Type36 = lazybiosGetType36(ctx->DMIData);
+	if (!ctx->Type37) ctx->Type37 = lazybiosGetType37(ctx->DMIData);
+	if (!ctx->Type38) ctx->Type38 = lazybiosGetType38(ctx->DMIData);
+	if (!ctx->Type39) ctx->Type39 = lazybiosGetType39(ctx->DMIData);
+	if (!ctx->Type40) ctx->Type40 = lazybiosGetType40(ctx->DMIData);
+	if (!ctx->Type41) ctx->Type41 = lazybiosGetType41(ctx->DMIData);
+	if (!ctx->Type42) ctx->Type42 = lazybiosGetType42(ctx->DMIData);
+	if (!ctx->Type43) ctx->Type43 = lazybiosGetType43(ctx->DMIData);
+	if (!ctx->Type44) ctx->Type44 = lazybiosGetType44(ctx->DMIData);
+	if (!ctx->Type45) ctx->Type45 = lazybiosGetType45(ctx->DMIData);
+	if (!ctx->Type46) ctx->Type46 = lazybiosGetType46(ctx->DMIData);
+
+	if (!ctx->oem->dell->Type177) ctx->oem->dell->Type177 = lazybiosGetOemDellType177(ctx->DMIData);
+	if (!ctx->oem->dell->Type212) ctx->oem->dell->Type212 = lazybiosGetOemDellType212(ctx->DMIData);
+	if (!ctx->oem->dell->Type218) ctx->oem->dell->Type218 = lazybiosGetOemDellType218(ctx->DMIData);
+	if (!ctx->oem->hp->Type204) ctx->oem->hp->Type204 = lazybiosGetOemHpType204(ctx->DMIData);
+
+	return 0;
 }
 
 int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	if (!ctx) return -1;
 
-	lazybiosFreeType0(ctx->Type0, ctx->type0_count);
+	lazybiosFreeType0(ctx->Type0);
 	ctx->Type0 = NULL;
-	ctx->type0_count = 0;
 
-	lazybiosFreeType1(ctx->Type1, ctx->type1_count);
+	lazybiosFreeType1(ctx->Type1);
 	ctx->Type1 = NULL;
-	ctx->type1_count = 0;
 
-    lazybiosFreeType2(ctx->Type2, ctx->type2_count);
+    lazybiosFreeType2(ctx->Type2);
     ctx->Type2 = NULL;
-    ctx->type2_count = 0;
 
-    lazybiosFreeType3(ctx->Type3, ctx->type3_count);
+    lazybiosFreeType3(ctx->Type3);
     ctx->Type3 = NULL;
-    ctx->type3_count = 0;
 
-    lazybiosFreeType4(ctx->Type4, ctx->type4_count);
+    lazybiosFreeType4(ctx->Type4);
     ctx->Type4 = NULL;
-    ctx->type4_count = 0;
 
-    lazybiosFreeType5(ctx->Type5, ctx->type5_count);
+    lazybiosFreeType5(ctx->Type5);
     ctx->Type5 = NULL;
-    ctx->type5_count = 0;
 
-    lazybiosFreeType6(ctx->Type6, ctx->type6_count);
+    lazybiosFreeType6(ctx->Type6);
     ctx->Type6 = NULL;
-    ctx->type6_count = 0;
 
-    lazybiosFreeType7(ctx->Type7, ctx->type7_count);
+    lazybiosFreeType7(ctx->Type7);
     ctx->Type7 = NULL;
-    ctx->type7_count = 0;
 
-    lazybiosFreeType8(ctx->Type8, ctx->type8_count);
+    lazybiosFreeType8(ctx->Type8);
     ctx->Type8 = NULL;
-    ctx->type8_count = 0;
 
-    lazybiosFreeType9(ctx->Type9, ctx->type9_count);
+    lazybiosFreeType9(ctx->Type9);
     ctx->Type9 = NULL;
-    ctx->type9_count = 0;
 
-    lazybiosFreeType10(ctx->Type10, ctx->type10_count);
+    lazybiosFreeType10(ctx->Type10);
     ctx->Type10 = NULL;
-    ctx->type10_count = 0;
 
-    lazybiosFreeType11(ctx->Type11, ctx->type11_count);
+    lazybiosFreeType11(ctx->Type11);
     ctx->Type11 = NULL;
-    ctx->type11_count = 0;
 
-    lazybiosFreeType12(ctx->Type12, ctx->type12_count);
+    lazybiosFreeType12(ctx->Type12);
     ctx->Type12 = NULL;
-    ctx->type12_count = 0;
 
-    lazybiosFreeType13(ctx->Type13, ctx->type13_count);
+    lazybiosFreeType13(ctx->Type13);
     ctx->Type13 = NULL;
-    ctx->type13_count = 0;
 
-    lazybiosFreeType14(ctx->Type14, ctx->type14_count);
+    lazybiosFreeType14(ctx->Type14);
     ctx->Type14 = NULL;
-    ctx->type14_count = 0;
 
-    lazybiosFreeType15(ctx->Type15, ctx->type15_count);
+    lazybiosFreeType15(ctx->Type15);
     ctx->Type15 = NULL;
-    ctx->type15_count = 0;
 
-    lazybiosFreeType16(ctx->Type16, ctx->type16_count);
+    lazybiosFreeType16(ctx->Type16);
     ctx->Type16 = NULL;
-    ctx->type16_count = 0;
 
-    lazybiosFreeType17(ctx->Type17, ctx->type17_count);
+    lazybiosFreeType17(ctx->Type17);
     ctx->Type17 = NULL;
-    ctx->type17_count = 0;
 
-    lazybiosFreeType18(ctx->Type18, ctx->type18_count);
+    lazybiosFreeType18(ctx->Type18);
     ctx->Type18 = NULL;
-    ctx->type18_count = 0;
 
-    lazybiosFreeType19(ctx->Type19, ctx->type19_count);
+    lazybiosFreeType19(ctx->Type19);
     ctx->Type19 = NULL;
-    ctx->type19_count = 0;
 
-    lazybiosFreeType20(ctx->Type20, ctx->type20_count);
+    lazybiosFreeType20(ctx->Type20);
     ctx->Type20 = NULL;
-    ctx->type20_count = 0;
 
-    lazybiosFreeType21(ctx->Type21, ctx->type21_count);
+    lazybiosFreeType21(ctx->Type21);
     ctx->Type21 = NULL;
-    ctx->type21_count = 0;
 
-    lazybiosFreeType22(ctx->Type22, ctx->type22_count);
+    lazybiosFreeType22(ctx->Type22);
     ctx->Type22 = NULL;
-    ctx->type22_count = 0;
 
-    lazybiosFreeType23(ctx->Type23, ctx->type23_count);
+    lazybiosFreeType23(ctx->Type23);
     ctx->Type23 = NULL;
-    ctx->type23_count = 0;
 
-    lazybiosFreeType24(ctx->Type24, ctx->type24_count);
+    lazybiosFreeType24(ctx->Type24);
     ctx->Type24 = NULL;
-    ctx->type24_count = 0;
 
-    lazybiosFreeType25(ctx->Type25, ctx->type25_count);
+    lazybiosFreeType25(ctx->Type25);
     ctx->Type25 = NULL;
-    ctx->type25_count = 0;
 
-    lazybiosFreeType26(ctx->Type26, ctx->type26_count);
+    lazybiosFreeType26(ctx->Type26);
     ctx->Type26 = NULL;
-    ctx->type26_count = 0;
 
-    lazybiosFreeType27(ctx->Type27, ctx->type27_count);
+    lazybiosFreeType27(ctx->Type27);
     ctx->Type27 = NULL;
-    ctx->type27_count = 0;
 
-    lazybiosFreeType28(ctx->Type28, ctx->type28_count);
+    lazybiosFreeType28(ctx->Type28);
     ctx->Type28 = NULL;
-    ctx->type28_count = 0;
 
-    lazybiosFreeType29(ctx->Type29, ctx->type29_count);
+    lazybiosFreeType29(ctx->Type29);
     ctx->Type29 = NULL;
-    ctx->type29_count = 0;
 
-    lazybiosFreeType30(ctx->Type30, ctx->type30_count);
+    lazybiosFreeType30(ctx->Type30);
     ctx->Type30 = NULL;
-    ctx->type30_count = 0;
 
-    lazybiosFreeType31(ctx->Type31, ctx->type31_count);
+    lazybiosFreeType31(ctx->Type31);
     ctx->Type31 = NULL;
-    ctx->type31_count = 0;
 
-    lazybiosFreeType32(ctx->Type32, ctx->type32_count);
+    lazybiosFreeType32(ctx->Type32);
     ctx->Type32 = NULL;
-    ctx->type32_count = 0;
 
-    lazybiosFreeType33(ctx->Type33, ctx->type33_count);
+    lazybiosFreeType33(ctx->Type33);
     ctx->Type33 = NULL;
-    ctx->type33_count = 0;
 
-    lazybiosFreeType34(ctx->Type34, ctx->type34_count);
+    lazybiosFreeType34(ctx->Type34);
     ctx->Type34 = NULL;
-    ctx->type34_count = 0;
 
-    lazybiosFreeType35(ctx->Type35, ctx->type35_count);
+    lazybiosFreeType35(ctx->Type35);
     ctx->Type35 = NULL;
-    ctx->type35_count = 0;
 
-    lazybiosFreeType36(ctx->Type36, ctx->type36_count);
+    lazybiosFreeType36(ctx->Type36);
     ctx->Type36 = NULL;
-    ctx->type36_count = 0;
 
-    lazybiosFreeType37(ctx->Type37, ctx->type37_count);
+    lazybiosFreeType37(ctx->Type37);
     ctx->Type37 = NULL;
-    ctx->type37_count = 0;
 
-    lazybiosFreeType38(ctx->Type38, ctx->type38_count);
+    lazybiosFreeType38(ctx->Type38);
     ctx->Type38 = NULL;
-    ctx->type38_count = 0;
 
-    lazybiosFreeType39(ctx->Type39, ctx->type39_count);
+    lazybiosFreeType39(ctx->Type39);
     ctx->Type39 = NULL;
-    ctx->type39_count = 0;
 
-    lazybiosFreeType40(ctx->Type40, ctx->type40_count);
+    lazybiosFreeType40(ctx->Type40);
     ctx->Type40 = NULL;
-    ctx->type40_count = 0;
 
-    lazybiosFreeType41(ctx->Type41, ctx->type41_count);
+    lazybiosFreeType41(ctx->Type41);
     ctx->Type41 = NULL;
-    ctx->type41_count = 0;
 
-    lazybiosFreeType42(ctx->Type42, ctx->type42_count);
+    lazybiosFreeType42(ctx->Type42);
     ctx->Type42 = NULL;
-    ctx->type42_count = 0;
 
-    lazybiosFreeType43(ctx->Type43, ctx->type43_count);
+    lazybiosFreeType43(ctx->Type43);
     ctx->Type43 = NULL;
-    ctx->type43_count = 0;
 
-    lazybiosFreeType44(ctx->Type44, ctx->type44_count);
+    lazybiosFreeType44(ctx->Type44);
     ctx->Type44 = NULL;
-    ctx->type44_count = 0;
 
-    lazybiosFreeType45(ctx->Type45, ctx->type45_count);
+    lazybiosFreeType45(ctx->Type45);
     ctx->Type45 = NULL;
-    ctx->type45_count = 0;
 
-    lazybiosFreeType46(ctx->Type46, ctx->type46_count);
+    lazybiosFreeType46(ctx->Type46);
     ctx->Type46 = NULL;
-    ctx->type46_count = 0;
 
-    lazybiosFreeOemHpType204(ctx->HpType204, ctx->hptype204_count);
-    ctx->HpType204 = NULL;
-    ctx->hptype204_count = 0;
-    
-    lazybiosFreeOemDellType177(ctx->DellType177, ctx->delltype177_count);
-    ctx->DellType177 = NULL;
-    ctx->delltype177_count = 0;
-    
-    lazybiosFreeOemDellType212(ctx->DellType212, ctx->delltype212_count);
-    ctx->DellType212 = NULL;
-    ctx->delltype212_count = 0;
+	lazybiosFreeOemDellType177(ctx->oem->dell->Type177);
+	lazybiosFreeOemDellType212(ctx->oem->dell->Type212);
+	lazybiosFreeOemDellType218(ctx->oem->dell->Type218);
+	lazybiosFreeOemHpType204(ctx->oem->hp->Type204);
+	free(ctx->oem->dell);
+	free(ctx->oem->hp);
+	free(ctx->oem);
+	ctx->oem = NULL;
 
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);
