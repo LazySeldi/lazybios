@@ -166,36 +166,34 @@ static int test_type28_signed_temperature(void) {
 	lazybiosCTX_t ctx = {.DMIData = &dmi};
 	CHECK(lazybiosParseEntry(&ctx, entry, sizeof(entry)) == 0);
 
-	size_t count = 0;
-	lazybiosType28_t* probes = lazybiosGetType28(NULL, &count, &dmi);
+	lazybiosType28Array_t* probes = lazybiosGetType28(&dmi);
 	CHECK(probes != NULL);
-	CHECK(count == 1);
-	CHECK(probes[0].description && strcmp(probes[0].description, "CPU probe") == 0);
-	CHECK(probes[0].maximum_value == 1234);
-	CHECK(probes[0].minimum_value == -250);
-	CHECK(probes[0].resolution == 125);
-	CHECK(probes[0].tolerance == 15);
-	CHECK(probes[0].accuracy == 250);
-	CHECK(probes[0].oem_defined == UINT32_C(0x11223344));
-	CHECK(probes[0].nominal_value == 220);
-	CHECK(LAZYBIOS_FIELD_STATUS(&probes[0], minimum_value) == LAZYBIOS_FIELD_PRESENT);
-	CHECK(strcmp(lazybiosType28LocationStr(probes[0].location_and_status), "Motherboard") == 0);
-	CHECK(strcmp(lazybiosType28StatusStr(probes[0].location_and_status), "OK") == 0);
-	lazybiosFreeType28(probes, count);
+	CHECK(probes->count == 1);
+	CHECK(probes->entries[0].description && strcmp(probes->entries[0].description, "CPU probe") == 0);
+	CHECK(probes->entries[0].maximum_value == 1234);
+	CHECK(probes->entries[0].minimum_value == -250);
+	CHECK(probes->entries[0].resolution == 125);
+	CHECK(probes->entries[0].tolerance == 15);
+	CHECK(probes->entries[0].accuracy == 250);
+	CHECK(probes->entries[0].oem_defined == UINT32_C(0x11223344));
+	CHECK(probes->entries[0].nominal_value == 220);
+	CHECK(LAZYBIOS_FIELD_STATUS(&probes->entries[0], minimum_value) == LAZYBIOS_FIELD_PRESENT);
+	CHECK(strcmp(probes->entries[0].decoded.location, "Motherboard") == 0);
+	CHECK(strcmp(probes->entries[0].decoded.status, "OK") == 0);
+	lazybiosFreeType28(probes);
 
 	uint8_t truncated[] = {
 		28, 8, 0, 0, 0, 0, 0x34, 0x12, 0, 0
 	};
 	dmi.dmi_data = truncated;
 	dmi.dmi_len = sizeof(truncated);
-	count = 0;
-	probes = lazybiosGetType28(NULL, &count, &dmi);
+	probes = lazybiosGetType28(&dmi);
 	CHECK(probes != NULL);
-	CHECK(count == 1);
-	CHECK(probes[0].maximum_value == 0x1234);
-	CHECK(LAZYBIOS_FIELD_STATUS(&probes[0], maximum_value) == LAZYBIOS_FIELD_PRESENT);
-	CHECK(LAZYBIOS_FIELD_STATUS(&probes[0], minimum_value) == LAZYBIOS_FIELD_ABSENT);
-	lazybiosFreeType28(probes, count);
+	CHECK(probes->count == 1);
+	CHECK(probes->entries[0].maximum_value == 0x1234);
+	CHECK(LAZYBIOS_FIELD_STATUS(&probes->entries[0], maximum_value) == LAZYBIOS_FIELD_PRESENT);
+	CHECK(LAZYBIOS_FIELD_STATUS(&probes->entries[0], minimum_value) == LAZYBIOS_FIELD_ABSENT);
+	lazybiosFreeType28(probes);
 	return 0;
 }
 
@@ -227,44 +225,180 @@ static int test_type0_type1_counts(void) {
 	lazybiosCTX_t ctx = {.DMIData = &dmi};
 	CHECK(lazybiosParseEntry(&ctx, entry, sizeof(entry)) == 0);
 
-	lazybiosType0_t* type0 = lazybiosGetType0(NULL, &ctx.type0_count, &dmi);
-	lazybiosType1_t* type1 = lazybiosGetType1(NULL, &ctx.type1_count, &dmi);
+	lazybiosType0Array_t* type0 = lazybiosGetType0(&dmi);
+	lazybiosType1Array_t* type1 = lazybiosGetType1(&dmi);
 	CHECK(type0 != NULL);
 	CHECK(type1 != NULL);
-	CHECK(ctx.type0_count == 2);
-	CHECK(ctx.type1_count == 2);
-	lazybiosFreeType0(type0, ctx.type0_count);
-	lazybiosFreeType1(type1, ctx.type1_count);
+	CHECK(type0->count == 2);
+	CHECK(type1->count == 2);
+	lazybiosFreeType0(type0);
+	lazybiosFreeType1(type1);
+	return 0;
+}
+
+/*
+ * The single-value decoders became file-local in 3.0 and their results are
+ * stored in each record's `decoded`, so they are exercised through the
+ * parsers rather than called directly here.
+ */
+/*
+ * The single-value decoders became file-local in 3.0, so instead of calling
+ * them directly these drive the parsers over synthetic tables and check what
+ * landed in each record's `decoded`.
+ */
+static int test_decoded_numeric_values(void) {
+	uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH];
+	make_entry3(entry, 3, 9, 0);
+
+	/* Type 7: 1 KiB granularity, then the 64 KiB-granularity bit, then the
+	 * 32-bit fields that supersede both. */
+	uint8_t cache[] = {
+		7, 0x1B, 0x00, 0x07,
+		0, 0x00, 0x00,
+		0x01, 0x00,             /* maximum_cache_size   0x0001 -> 1 KB    */
+		0x01, 0x80,             /* installed_size       0x8001 -> 64 KB   */
+		0x00, 0x00, 0x00, 0x00, /* 0x0B supported / 0x0D current SRAM type */
+		0x00, 0x00, 0x00, 0x00, /* 0x0F speed, 0x10 ECC, 0x11 type, 0x12 assoc */
+		0x02, 0x00, 0x00, 0x80, /* 0x13 maximum_cache_size_2 -> 128 */
+		0x02, 0x00, 0x00, 0x80, /* installed_cache_size_2                 */
+		0, 0
+	};
+	lazybiosDMI_t dmi = { .dmi_data = cache, .dmi_len = sizeof(cache) };
+	lazybiosCTX_t ctx = {.DMIData = &dmi};
+	CHECK(lazybiosParseEntry(&ctx, entry, sizeof(entry)) == 0);
+	lazybiosType7Array_t* caches = lazybiosGetType7(&dmi);
+	CHECK(caches != NULL);
+	CHECK(caches->count == 1);
+	CHECK(caches->entries[0].decoded.maximum_cache_size == 1);
+	CHECK(caches->entries[0].decoded.installed_size == 64);
+	CHECK(caches->entries[0].decoded.maximum_cache_size_2 == 128);
+	CHECK(caches->entries[0].decoded.installed_cache_size_2 == 128);
+	lazybiosFreeType7(caches);
+
+	/* Type 16: the 32-bit capacity is in KB; 0x80000000 defers to the
+	 * 64-bit extended field. */
+	uint8_t array_kb[] = {
+		16, 0x17, 0x00, 0x10,
+		0x03, 0x03, 0x03,
+		0x02, 0x00, 0x00, 0x00,   /* maximum_capacity 2 KB -> 2048 bytes */
+		0xFF, 0xFF, 0x01, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0, 0
+	};
+	dmi.dmi_data = array_kb; dmi.dmi_len = sizeof(array_kb);
+	lazybiosType16Array_t* arrays = lazybiosGetType16(&dmi);
+	CHECK(arrays != NULL);
+	CHECK(arrays->count == 1);
+	CHECK(arrays->entries[0].decoded.maximum_capacity == 2048);
+	lazybiosFreeType16(arrays);
+
+	uint8_t array_ext[] = {
+		16, 0x17, 0x00, 0x10,
+		0x03, 0x03, 0x03,
+		0x00, 0x00, 0x00, 0x80,   /* sentinel: use the extended field */
+		0xFF, 0xFF, 0x01, 0x00,
+		0x63, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* 99 bytes */
+		0, 0
+	};
+	dmi.dmi_data = array_ext; dmi.dmi_len = sizeof(array_ext);
+	arrays = lazybiosGetType16(&dmi);
+	CHECK(arrays != NULL);
+	CHECK(arrays->entries[0].decoded.maximum_capacity == 99);
+	lazybiosFreeType16(arrays);
+
+	/* Type 19: KB addresses, and the 0xFFFFFFFF sentinel deferring to the
+	 * 64-bit extended pair. */
+	uint8_t mapped[] = {
+		19, 0x1F, 0x00, 0x13,
+		0x02, 0x00, 0x00, 0x00,   /* starting_address 2 KB -> 2048       */
+		0x02, 0x00, 0x00, 0x00,   /* ending_address   2 -> 2*1024+1023   */
+		0x00, 0x10, 0x01,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0, 0
+	};
+	dmi.dmi_data = mapped; dmi.dmi_len = sizeof(mapped);
+	lazybiosType19Array_t* maps = lazybiosGetType19(&dmi);
+	CHECK(maps != NULL);
+	CHECK(maps->count == 1);
+	CHECK(maps->entries[0].decoded.starting_address == 2048);
+	CHECK(maps->entries[0].decoded.ending_address == 3071);
+	lazybiosFreeType19(maps);
+
+	uint8_t mapped_ext[] = {
+		19, 0x1F, 0x00, 0x13,
+		0xFF, 0xFF, 0xFF, 0xFF,   /* sentinel */
+		0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x10, 0x01,
+		0xD2, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* 1234 */
+		0x2E, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* 5678 */
+		0, 0
+	};
+	dmi.dmi_data = mapped_ext; dmi.dmi_len = sizeof(mapped_ext);
+	maps = lazybiosGetType19(&dmi);
+	CHECK(maps != NULL);
+	CHECK(maps->entries[0].decoded.starting_address == 1234);
+	CHECK(maps->entries[0].decoded.ending_address == 5678);
+	lazybiosFreeType19(maps);
+
+	/* Type 22: design capacity is mWh scaled by the multiplier. */
+	uint8_t battery[] = {
+		22, 0x1A, 0x00, 0x16,
+		0, 0, 0x00, 0x00, 0, 0,
+		0x64, 0x00,               /* 0x0A design_capacity 100 */
+		0x00, 0x00, 0x00, 0x00,   /* 0x0C voltage, 0x0E sbds ver, 0x0F max err */
+		0x00, 0x00, 0x00, 0x00,   /* 0x10 sbds serial, 0x12 sbds date */
+		0x00,                     /* 0x14 sbds chemistry */
+		0x03,                     /* 0x15 multiplier 3 -> 300 */
+		0x00, 0x00, 0x00, 0x00,   /* 0x16 oem_specific */
+		0, 0
+	};
+	dmi.dmi_data = battery; dmi.dmi_len = sizeof(battery);
+	lazybiosType22Array_t* batteries = lazybiosGetType22(&dmi);
+	CHECK(batteries != NULL);
+	CHECK(batteries->count == 1);
+	CHECK(batteries->entries[0].decoded.design_capacity == 300);
+	lazybiosFreeType22(batteries);
+
+	/* Type 38: the low bit of the modifier byte is not part of the address. */
+	uint8_t ipmi[] = {
+		38, 0x12, 0x00, 0x26,
+		0x01, 0x20, 0xFF, 0xFF,
+		0x01, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   /* 0x1001 */
+		0x10,                                             /* modifier */
+		0x00,
+		0, 0
+	};
+	dmi.dmi_data = ipmi; dmi.dmi_len = sizeof(ipmi);
+	lazybiosType38Array_t* ipmis = lazybiosGetType38(&dmi);
+	CHECK(ipmis != NULL);
+	CHECK(ipmis->count == 1);
+	CHECK(ipmis->entries[0].decoded.base_address == UINT64_C(0x1001));
+	lazybiosFreeType38(ipmis);
+
 	return 0;
 }
 
 static int test_numeric_decoders(void) {
-	CHECK(lazybiosType7CacheU16(0x0001) == 1);
-	CHECK(lazybiosType7CacheU16(0x8001) == 64);
-	CHECK(lazybiosType7CacheU32(UINT32_C(0x80000002)) == 128);
-	CHECK(lazybiosType16MaximumCapacityBytes(2, 99) == 2048);
-	CHECK(lazybiosType16MaximumCapacityBytes(UINT32_C(0x80000000), 99) == 99);
-	CHECK(lazybiosType19StartingAddressBytes(2, 99) == 2048);
-	CHECK(lazybiosType19EndingAddressBytes(2, 99) == 3071);
-	CHECK(lazybiosType20StartingAddressBytes(UINT32_C(0xFFFFFFFF), 1234) == 1234);
-	CHECK(lazybiosType20EndingAddressBytes(UINT32_C(0xFFFFFFFF), 5678) == 5678);
-	CHECK(lazybiosType22DesignCapacityMWh(100, 3) == 300);
-	CHECK(lazybiosType38BaseAddressValue(UINT64_C(0x1001), 0x10) == UINT64_C(0x1001));
+	uint8_t entry[SMBIOS3_ENTRY_POINT_LENGTH];
+	make_entry3(entry, 3, 9, 0);
 
-	lazybiosType25_t controls = {0};
-	controls.next_scheduled_power_on_month = 0x12;
-	controls.next_scheduled_power_on_day = 0x31;
-	controls.next_scheduled_power_on_hour = 0x23;
-	controls.next_scheduled_power_on_minute = 0x59;
-	controls.next_scheduled_power_on_second = 0x58;
-	controls.field_status.next_scheduled_power_on_month = LAZYBIOS_FIELD_PRESENT;
-	controls.field_status.next_scheduled_power_on_day = LAZYBIOS_FIELD_PRESENT;
-	controls.field_status.next_scheduled_power_on_hour = LAZYBIOS_FIELD_PRESENT;
-	controls.field_status.next_scheduled_power_on_minute = LAZYBIOS_FIELD_PRESENT;
-	controls.field_status.next_scheduled_power_on_second = LAZYBIOS_FIELD_PRESENT;
-	char decoded[32];
-	lazybiosType25NextScheduledPowerOnStr(&controls, decoded, sizeof(decoded));
-	CHECK(strcmp(decoded, "12-31 23:59:58") == 0);
+	/* Type 25: BCD month, day, hour, minute, second. */
+	uint8_t table[] = {
+		25, 0x09, 0x00, 0x19,
+		0x12, 0x31, 0x23, 0x59, 0x58,
+		0, 0
+	};
+	lazybiosDMI_t dmi = { .dmi_data = table, .dmi_len = sizeof(table) };
+	lazybiosCTX_t ctx = {.DMIData = &dmi};
+	CHECK(lazybiosParseEntry(&ctx, entry, sizeof(entry)) == 0);
+
+	lazybiosType25Array_t* controls = lazybiosGetType25(&dmi);
+	CHECK(controls != NULL);
+	CHECK(controls->count == 1);
+	CHECK(controls->entries[0].decoded.next_scheduled_power_on != NULL);
+	CHECK(strcmp(controls->entries[0].decoded.next_scheduled_power_on, "12-31 23:59:58") == 0);
+	lazybiosFreeType25(controls);
 	return 0;
 }
 
@@ -512,53 +646,53 @@ static int test_backend_enum_values(void) {
 }
 
 static int test_null_free_contracts(void) {
-	lazybiosFreeType0(NULL, 4);
-	lazybiosFreeType1(NULL, 4);
-	lazybiosFreeType2(NULL, 4);
-	lazybiosFreeType3(NULL, 4);
-	lazybiosFreeType4(NULL, 4);
-	lazybiosFreeType5(NULL, 4);
-	lazybiosFreeType6(NULL, 4);
-	lazybiosFreeType7(NULL, 4);
-	lazybiosFreeType8(NULL, 4);
-	lazybiosFreeType9(NULL, 4);
-	lazybiosFreeType10(NULL, 4);
-	lazybiosFreeType11(NULL, 4);
-	lazybiosFreeType12(NULL, 4);
-	lazybiosFreeType13(NULL, 4);
-	lazybiosFreeType14(NULL, 4);
-	lazybiosFreeType15(NULL, 4);
-	lazybiosFreeType16(NULL, 4);
-	lazybiosFreeType17(NULL, 4);
-	lazybiosFreeType18(NULL, 4);
-	lazybiosFreeType19(NULL, 4);
-	lazybiosFreeType20(NULL, 4);
-	lazybiosFreeType21(NULL, 4);
-	lazybiosFreeType22(NULL, 4);
-	lazybiosFreeType23(NULL, 4);
-	lazybiosFreeType24(NULL, 4);
-	lazybiosFreeType25(NULL, 4);
-	lazybiosFreeType26(NULL, 4);
-	lazybiosFreeType27(NULL, 4);
-	lazybiosFreeType28(NULL, 4);
-	lazybiosFreeType29(NULL, 4);
-	lazybiosFreeType30(NULL, 4);
-	lazybiosFreeType31(NULL, 4);
-	lazybiosFreeType32(NULL, 4);
-	lazybiosFreeType33(NULL, 4);
-	lazybiosFreeType34(NULL, 4);
-	lazybiosFreeType35(NULL, 4);
-	lazybiosFreeType36(NULL, 4);
-	lazybiosFreeType37(NULL, 4);
-	lazybiosFreeType38(NULL, 4);
-	lazybiosFreeType39(NULL, 4);
-	lazybiosFreeType40(NULL, 4);
-	lazybiosFreeType41(NULL, 4);
-	lazybiosFreeType42(NULL, 4);
-	lazybiosFreeType43(NULL, 4);
-	lazybiosFreeType44(NULL, 4);
-	lazybiosFreeType45(NULL, 4);
-	lazybiosFreeType46(NULL, 4);
+	lazybiosFreeType0(NULL);
+	lazybiosFreeType1(NULL);
+	lazybiosFreeType2(NULL);
+	lazybiosFreeType3(NULL);
+	lazybiosFreeType4(NULL);
+	lazybiosFreeType5(NULL);
+	lazybiosFreeType6(NULL);
+	lazybiosFreeType7(NULL);
+	lazybiosFreeType8(NULL);
+	lazybiosFreeType9(NULL);
+	lazybiosFreeType10(NULL);
+	lazybiosFreeType11(NULL);
+	lazybiosFreeType12(NULL);
+	lazybiosFreeType13(NULL);
+	lazybiosFreeType14(NULL);
+	lazybiosFreeType15(NULL);
+	lazybiosFreeType16(NULL);
+	lazybiosFreeType17(NULL);
+	lazybiosFreeType18(NULL);
+	lazybiosFreeType19(NULL);
+	lazybiosFreeType20(NULL);
+	lazybiosFreeType21(NULL);
+	lazybiosFreeType22(NULL);
+	lazybiosFreeType23(NULL);
+	lazybiosFreeType24(NULL);
+	lazybiosFreeType25(NULL);
+	lazybiosFreeType26(NULL);
+	lazybiosFreeType27(NULL);
+	lazybiosFreeType28(NULL);
+	lazybiosFreeType29(NULL);
+	lazybiosFreeType30(NULL);
+	lazybiosFreeType31(NULL);
+	lazybiosFreeType32(NULL);
+	lazybiosFreeType33(NULL);
+	lazybiosFreeType34(NULL);
+	lazybiosFreeType35(NULL);
+	lazybiosFreeType36(NULL);
+	lazybiosFreeType37(NULL);
+	lazybiosFreeType38(NULL);
+	lazybiosFreeType39(NULL);
+	lazybiosFreeType40(NULL);
+	lazybiosFreeType41(NULL);
+	lazybiosFreeType42(NULL);
+	lazybiosFreeType43(NULL);
+	lazybiosFreeType44(NULL);
+	lazybiosFreeType45(NULL);
+	lazybiosFreeType46(NULL);
 	return 0;
 }
 
@@ -567,6 +701,7 @@ int main(void) {
 		test_traversal_helpers() != 0 ||
 		test_type28_signed_temperature() != 0 ||
 		test_type0_type1_counts() != 0 ||
+		test_decoded_numeric_values() != 0 ||
 		test_numeric_decoders() != 0 ||
 		test_backend_transformations() != 0 ||
 		test_backend_enum_values() != 0 ||

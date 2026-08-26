@@ -26,20 +26,21 @@
 #include "../test_oem.h"
 #include "lazybios/lazybios.h"
 #include "lazybios/structures/oem/dell/dell_type177.h"
+#include "lazybios/structures/oem/dell/dell_type218.h"
 
 static inline void printOemDELLType177(lazybiosCTX_t* ctx) {
     printf("=== Oem DELL Type 177 ===\n");
 
-    if (!ctx->DellType177) ctx->DellType177 = lazybiosGetOemDellType177(ctx->DellType177, &ctx->delltype177_count, ctx->DMIData);
+    if (!ctx->oem->dell->Type177) ctx->oem->dell->Type177 = lazybiosGetOemDellType177(ctx->DMIData);
 
-    if (ctx->DellType177 && ctx->delltype177_count > 0) {
-        for (size_t i = 0; i < ctx->delltype177_count; i++) {
-            lazybiosOemDellType177_t* DellType177 = &ctx->DellType177[i];
+    if (ctx->oem->dell->Type177 && ctx->oem->dell->Type177->count > 0) {
+        for (size_t i = 0; i < ctx->oem->dell->Type177->count; i++) {
+            lazybiosOemDellType177_t* DellType177 = &ctx->oem->dell->Type177->entries[i];
 
-            if (ctx->delltype177_count > 1) printf("--- Oem DELL Type 177: %zu ---\n", i + 1);
+            if (ctx->oem->dell->Type177->count > 1) printf("--- Oem DELL Type 177: %zu ---\n", i + 1);
 
             if (LAZYBIOS_FIELD_STATUS(DellType177, acpi_wmi_supported) == LAZYBIOS_FIELD_PRESENT) {
-                printf("ACPI WMI Supported: %s\n", DellType177->acpi_wmi_supported);
+                printf("ACPI WMI Supported: %s\n", DellType177->decoded.acpi_wmi_supported);
             }
         }
     } else {
@@ -50,19 +51,15 @@ static inline void printOemDELLType177(lazybiosCTX_t* ctx) {
 static inline void printOemDELLType212(lazybiosCTX_t* ctx) {
     printf("=== OEM Dell Type 212 ===\n");
 
-    if (!ctx->DellType212) {
-        ctx->DellType212 = lazybiosGetOemDellType212(
-            ctx->DellType212,
-            &ctx->delltype212_count,
-            ctx->DMIData
-        );
+    if (!ctx->oem->dell->Type212) {
+        ctx->oem->dell->Type212 = lazybiosGetOemDellType212(ctx->DMIData);
     }
 
-    if (ctx->DellType212 && ctx->delltype212_count > 0) {
-        for (size_t i = 0; i < ctx->delltype212_count; i++) {
-            lazybiosOemDellType212_t* current = &ctx->DellType212[i];
+    if (ctx->oem->dell->Type212 && ctx->oem->dell->Type212->count > 0) {
+        for (size_t i = 0; i < ctx->oem->dell->Type212->count; i++) {
+            lazybiosOemDellType212_t* current = &ctx->oem->dell->Type212->entries[i];
 
-            if (ctx->delltype212_count > 1) {
+            if (ctx->oem->dell->Type212->count > 1) {
                 printf("--- Dell Type 212 Instance %zu ---\n", i + 1);
             }
 
@@ -78,7 +75,7 @@ static inline void printOemDELLType212(lazybiosCTX_t* ctx) {
 
             // Checksum Type
             if (LAZYBIOS_FIELD_STATUS(current, checksum_type) == LAZYBIOS_FIELD_PRESENT) {
-                printf("\tType: %s\n", current->checksum_type);
+                printf("\tType: %s\n", current->decoded.checksum_type);
             }
 
             // Start Index
@@ -121,7 +118,58 @@ static inline void printOemDELLType212(lazybiosCTX_t* ctx) {
     }
 }
 
+static inline void printOemDELLType218(lazybiosCTX_t* ctx) {
+    printf("=== OEM Dell Type 218 ===\n");
+
+    if (!ctx->oem->dell->Type218) {
+        ctx->oem->dell->Type218 = lazybiosGetOemDellType218(ctx->DMIData);
+    }
+
+    if (ctx->oem->dell->Type218 && ctx->oem->dell->Type218->count > 0) {
+        for (size_t i = 0; i < ctx->oem->dell->Type218->count; i++) {
+            lazybiosOemDellType218_t* current = &ctx->oem->dell->Type218->entries[i];
+
+            if (ctx->oem->dell->Type218->count > 1) {
+                printf("--- Dell Type 218 Instance %zu ---\n", i + 1);
+            }
+
+            // Command I/O Address
+            if (LAZYBIOS_FIELD_STATUS(current, command_io_address) == LAZYBIOS_FIELD_PRESENT) {
+                printf("\tCommand I/O Address: 0x%04x\n", current->command_io_address);
+            }
+
+            // Command I/O Code
+            if (LAZYBIOS_FIELD_STATUS(current, command_io_code) == LAZYBIOS_FIELD_PRESENT) {
+                printf("\tCommand I/O Code: 0x%02x\n", current->command_io_code);
+            }
+
+            // Supported Command Classes Bitmap
+            if (LAZYBIOS_FIELD_STATUS(current, supported_command_classes_bitmap) == LAZYBIOS_FIELD_PRESENT) {
+                printf("\tSupported Command Classes Bitmap: 0x%08x\n", current->supported_command_classes_bitmap);
+            }
+
+            // Tokens
+            if (LAZYBIOS_FIELD_STATUS(current, tokens) == LAZYBIOS_FIELD_PRESENT &&
+                current->tokens && current->token_count > 0) {
+
+                printf("\tTokens:\n");
+                for (size_t j = 0; j < current->token_count; j++) {
+                    lazybiosOemDellType218Token_t* token = &current->tokens[j];
+                    printf("\t\t0x%04x (location 0x%04x, value 0x%04x)\n",
+                           token->token_id,
+                           token->location,
+                           token->value);
+                }
+            }
+        }
+        printf("\n");
+    } else {
+        printf("No Dell Type 218 structures found.\n\n");
+    }
+}
+
 void printOemDell(lazybiosCTX_t* ctx) {
     printOemDELLType177(ctx);
     printOemDELLType212(ctx);
+    printOemDELLType218(ctx);
 }

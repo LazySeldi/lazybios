@@ -30,13 +30,13 @@
 static inline void printOemHPType204(lazybiosCTX_t* ctx) {
     printf("\n=== Oem HP Type 204 ===\n");
 
-    if (!ctx->HpType204) ctx->HpType204 = lazybiosGetOemHpType204(ctx->HpType204, &ctx->hptype204_count, ctx->DMIData);
+    if (!ctx->oem->hp->Type204) ctx->oem->hp->Type204 = lazybiosGetOemHpType204(ctx->DMIData);
 
-    if (ctx->HpType204 && ctx->hptype204_count > 0) {
-        for (size_t i = 0; i < ctx->hptype204_count; i++) {
-            lazybiosOemHpType204_t* HpType204 = &ctx->HpType204[i];
+    if (ctx->oem->hp->Type204 && ctx->oem->hp->Type204->count > 0) {
+        for (size_t i = 0; i < ctx->oem->hp->Type204->count; i++) {
+            lazybiosOemHpType204_t* HpType204 = &ctx->oem->hp->Type204->entries[i];
 
-            if (ctx->hptype204_count > 1) printf("--- Oem HP Type 204: %zu ---\n", i + 1);
+            if (ctx->oem->hp->Type204->count > 1) printf("--- Oem HP Type 204: %zu ---\n", i + 1);
 
             if (LAZYBIOS_FIELD_STATUS(HpType204, rack_name) == LAZYBIOS_FIELD_PRESENT) {
                 printf("Rack Name: %s\n", HpType204->rack_name);
