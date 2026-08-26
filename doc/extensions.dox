@@ -18,6 +18,10 @@
  * - @ref lazybiosExtJSONAddType0 through @ref lazybiosExtJSONAddType46
  *   serialize every standard SMBIOS type currently implemented by lazybios.
  *   Each function attaches its result under the matching `TypeN` key.
+ * - The `lazybiosExtJSONAddOem*` functions serialize the vendor-specific
+ *   structures. Because OEM structure numbers are only meaningful together
+ *   with their vendor, these attach under a vendor-qualified key such as
+ *   `DellType212` rather than a bare `TypeN`.
  *
  * @subsection ext_json_types Supported structures
  *
@@ -33,26 +37,53 @@
  * | 30-39 | Out-of-Band Remote Access, Boot Integrity Services, System Boot, 64-Bit Memory Error, Management Device, Management Device Component, Management Device Threshold Data, Memory Channel, IPMI Device, and System Power Supply |
  * | 40-46 | Additional Information, Onboard Devices Extended Information, Management Controller Host Interface, TPM Device, Processor Additional Information, Firmware Inventory Information, and String Property |
  *
+ * OEM structures nest under `oem`, mirroring `ctx->oem->dell->TypeN`:
+ *
+ * | Key | Structure | Serializer |
+ * | --- | --- | --- |
+ * | `oem.dell.Type177` | Dell BIOS Flags | @ref lazybiosExtJSONAddOemDellType177 |
+ * | `oem.dell.Type212` | Dell Indexed I/O Access | @ref lazybiosExtJSONAddOemDellType212 |
+ * | `oem.dell.Type218` | Dell Token Interface | @ref lazybiosExtJSONAddOemDellType218 |
+ * | `oem.hp.Type204` | HPE ProLiant System/Rack Locator | @ref lazybiosExtJSONAddOemHpType204 |
+ *
  * The detailed function documentation in @ref lazybios_json.h covers the
- * matching `lazybiosExtJSONAddTypeN()` function for every type.
+ * matching serializer for every type.
  *
  * @subsection ext_json_contract Output contract
  *
- * Callers create and own the destination cJSON root object. Each serializer
- * adds one child to it; call cJSON_Delete() on the root when finished. Parsed
+ * Each serializer takes the result set returned by its getter and adds one child
+ * to the caller-owned cJSON root; call cJSON_Delete() on the root when finished. Parsed
  * lazybios data must remain alive until the serializer returns. The serializers
  * copy their output into cJSON, so the resulting cJSON tree remains valid after
  * lazybiosCleanup().
  *
- * When an input type array is NULL or its count is zero, the corresponding
- * `TypeN` value is a descriptive JSON string instead of an array. Consumers
- * should therefore check whether `TypeN` is an array before iterating it.
+ * Each `TypeN` key holds an array of record objects, an empty array when the
+ * table contains no structure of that type, or `null` when the serialiser was
+ * handed a NULL set. The value is never a string, so a consumer can iterate it
+ * without a type check.
+ *
+ * Values that are address-like or bit-oriented — I/O ports, masks, indices,
+ * and token fields in the OEM structures — are written as hexadecimal strings
+ * such as `"0x00B2"` rather than as JSON numbers, matching how the library
+ * already serializes handles and identifiers. Quantities remain JSON numbers.
+ *
+ * Every serialized record carries `handle` — the SMBIOS handle other structures
+ * reference it by — and `length`, the structure length the firmware reported.
+ *
+ * Within a record the top-level members are the raw encodings, and their
+ * decoded forms sit in a nested `decoded` object:
+ *
+ * @code{.json}
+ * { "handle": "0x0400", "processor_type": 3,
+ *   "decoded": { "processor_type": "Central Processor" } }
+ * @endcode
  *
  * Field status handling:
  * - `LAZYBIOS_FIELD_PRESENT` values are serialized as native JSON strings or numbers.
- * - `LAZYBIOS_FIELD_ABSENT` fields are serialized as JSON `null`.
- * - `LAZYBIOS_FIELD_UNREACHABLE` fields are serialized as the sentinel string `"N/A"`
- *   (defined by @ref LAZYBIOS_JSON_UNREACHABLE).
+ * - `LAZYBIOS_FIELD_ABSENT` and `LAZYBIOS_FIELD_UNREACHABLE` fields are `null`.
+ *   Earlier releases wrote the sentinel string `"N/A"` for unreachable fields,
+ *   which made a numeric member change type; `length` now carries the
+ *   information needed to tell a short structure from an unpopulated field.
  *
  * @see @ref api_extensions
  */

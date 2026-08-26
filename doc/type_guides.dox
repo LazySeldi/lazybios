@@ -8,6 +8,44 @@
  * focus on selection rules, version-dependent fields, and raw-value
  * interpretation. For vendor-specific records, see @ref oem_type_guides.
  *
+ * @section type_guides_bytopic Find a type by topic
+ *
+ * If you know what you are looking for but not its structure number, start
+ * here. Types marked *(obsolete)* are defined by earlier revisions of the
+ * specification and are parsed for completeness.
+ *
+ * | Topic | Types |
+ * | :--- | :--- |
+ * | Identity and firmware | @ref type0_guide "0 BIOS" · @ref type1_guide "1 System" · @ref type2_guide "2 Baseboard" · @ref type3_guide "3 Chassis" · @ref type13_guide "13 Language" · @ref type45_guide "45 Firmware Inventory" |
+ * | Processors and cache | @ref type4_guide "4 Processor" · @ref type7_guide "7 Cache" · @ref type44_guide "44 Processor Additional" |
+ * | Memory | @ref type16_guide "16 Memory Array" · @ref type17_guide "17 Memory Device" · @ref type19_guide "19 Array Mapped Address" · @ref type20_guide "20 Device Mapped Address" · @ref type37_guide "37 Memory Channel" · @ref type5_guide "5 Memory Controller *(obsolete)*" · @ref type6_guide "6 Memory Module *(obsolete)*" |
+ * | Memory errors | @ref type18_guide "18 32-Bit Error" · @ref type33_guide "33 64-Bit Error" |
+ * | Slots, ports and devices | @ref type8_guide "8 Port Connector" · @ref type9_guide "9 System Slots" · @ref type21_guide "21 Pointing Device" · @ref type40_guide "40 Additional Information" · @ref type41_guide "41 Onboard Devices Extended" · @ref type10_guide "10 On Board Devices *(obsolete)*" |
+ * | Power and battery | @ref type22_guide "22 Portable Battery" · @ref type25_guide "25 Power Controls" · @ref type39_guide "39 Power Supply" |
+ * | Sensors and cooling | @ref type26_guide "26 Voltage Probe" · @ref type27_guide "27 Cooling Device" · @ref type28_guide "28 Temperature Probe" · @ref type29_guide "29 Current Probe" |
+ * | Management and remote access | @ref type30_guide "30 Out-of-Band Remote Access" · @ref type34_guide "34 Management Device" · @ref type35_guide "35 Device Component" · @ref type36_guide "36 Threshold Data" · @ref type38_guide "38 IPMI Device" · @ref type42_guide "42 Controller Host Interface" |
+ * | Security, boot and reset | @ref type23_guide "23 System Reset" · @ref type24_guide "24 Hardware Security" · @ref type31_guide "31 Boot Integrity Services" · @ref type32_guide "32 System Boot" · @ref type43_guide "43 TPM Device" |
+ * | Logs, groups and vendor data | @ref type11_guide "11 OEM Strings" · @ref type12_guide "12 Configuration Options" · @ref type14_guide "14 Group Associations" · @ref type15_guide "15 System Event Log" · @ref type46_guide "46 String Property" |
+ *
+ * @section type_guides_reading How to read a type guide
+ *
+ * Every guide follows the same shape, so once you have read one you can skim
+ * the rest:
+ *
+ * - **Result set and ownership** — how to iterate what the getter returned, and
+ *   which free function or context member owns it.
+ * - **Fields** — what each parsed member means, and which raw encodings the
+ *   parser preserves rather than normalizing.
+ * - **Decoded values** — which encoded fields have a ready-made string or
+ *   computed value waiting in `decoded`. Decoding happens during parsing; there
+ *   is nothing for a caller to invoke.
+ *
+ * Before consuming any optional value, check its availability with
+ * @ref LAZYBIOS_FIELD_STATUS. The rules behind that metadata are described in
+ * @ref core_concepts.
+ *
+ * @section type_guides_all All guides in order
+ *
  * @subpage type0_guide
  *
  * @subpage type1_guide

@@ -10,7 +10,7 @@ int read_host_bios(void) {
 		return -1;
 	}
 
-	ctx->Type0 = lazybiosGetType0(ctx->Type0, &ctx->type0_count, ctx->DMIData);
+	ctx->Type0 = lazybiosGetType0(ctx->DMIData);
 	if (!ctx->Type0) {
 		lazybiosCleanup(ctx);
 		return -1;
@@ -31,7 +31,7 @@ int read_dump_files(const char* entry_path, const char* dmi_path) {
 		return -1;
 	}
 
-	ctx->Type1 = lazybiosGetType1(ctx->Type1, &ctx->type1_count, ctx->DMIData);
+	ctx->Type1 = lazybiosGetType1(ctx->DMIData);
 	int result = ctx->Type1 ? 0 : -1;
 	lazybiosCleanup(ctx);
 	return result;
@@ -51,12 +51,11 @@ int read_merged_dump(const char* binary_path) {
 
 //! [processor-array]
 int inspect_processors(lazybiosCTX_t* ctx) {
-	ctx->Type4 = lazybiosGetType4(ctx->Type4, &ctx->type4_count, ctx->DMIData);
+	ctx->Type4 = lazybiosGetType4(ctx->DMIData);
 	if (!ctx->Type4) return -1;
 
-	for (size_t i = 0; i < ctx->type4_count; ++i) {
-		const char* family = lazybiosType4ProcessorFamilyStr(
-			ctx->Type4[i].processor_family);
+	for (size_t i = 0; i < ctx->Type4->count; ++i) {
+		const char* family = ctx->Type4->entries[i].decoded.processor_family;
 		(void)family;
 	}
 
@@ -66,38 +65,40 @@ int inspect_processors(lazybiosCTX_t* ctx) {
 
 //! [explicit-cleanup]
 int parse_type2_without_context_ownership(lazybiosDMI_t* dmi_data) {
-	size_t count = 0;
-	lazybiosType2_t* boards = lazybiosGetType2(NULL, &count, dmi_data);
+	lazybiosType2Array_t* boards = lazybiosGetType2(dmi_data);
 	if (!boards) return -1;
 
-	/* Use boards[0] through boards[count - 1]. */
-	lazybiosFreeType2(boards, count);
+	/* Use boards->entries[0] through boards->entries[boards->count - 1]. */
+	lazybiosFreeType2(boards);
 	return 0;
 }
 //! [explicit-cleanup]
 
 //! [type0-decode]
-void decode_type0(const lazybiosType0_t* bios, char* output, size_t output_size) {
-	lazybiosType0CharacteristicsStr(bios->characteristics, output, output_size);
+const char* decode_type0(const lazybiosType0_t* bios) {
+	if (LAZYBIOS_FIELD_STATUS(bios, characteristics) != LAZYBIOS_FIELD_PRESENT) return "Not Present";
+	return bios->decoded.characteristics;
 }
 //! [type0-decode]
 
 //! [type1-wakeup]
 const char* decode_type1_wakeup(const lazybiosType1_t* system) {
 	if (LAZYBIOS_FIELD_STATUS(system, wake_up_type) != LAZYBIOS_FIELD_PRESENT) return "Not Present";
-	return lazybiosType1WakeupTypeStr(system->wake_up_type);
+	return system->decoded.wake_up_type;
 }
 //! [type1-wakeup]
 
 //! [type2-flags]
-void decode_type2_flags(const lazybiosType2_t* board, char* output, size_t output_size) {
-	lazybiosType2FeatureflagsStr(board->feature_flags, output, output_size);
+const char* decode_type2_flags(const lazybiosType2_t* board) {
+	if (LAZYBIOS_FIELD_STATUS(board, feature_flags) != LAZYBIOS_FIELD_PRESENT) return "Not Present";
+	return board->decoded.feature_flags;
 }
 //! [type2-flags]
 
 //! [type3-description]
-void decode_type3(const lazybiosType3_t* chassis, char* output, size_t output_size) {
-	lazybiosType3TypeStr(chassis->type, output, output_size);
+const char* decode_type3(const lazybiosType3_t* chassis) {
+	if (LAZYBIOS_FIELD_STATUS(chassis, type) != LAZYBIOS_FIELD_PRESENT) return "Not Present";
+	return chassis->decoded.type;
 }
 //! [type3-description]
 
@@ -111,9 +112,9 @@ uint16_t processor_core_count(const lazybiosType4_t* processor) {
 //! [type7-capacity]
 uint64_t installed_cache_kib(const lazybiosType7_t* cache) {
 	if (cache->installed_size == 0xFFFF) {
-		return lazybiosType7CacheU32(cache->installed_cache_size_2);
+		return cache->decoded.installed_cache_size_2;
 	}
-	return lazybiosType7CacheU16(cache->installed_size);
+	return cache->decoded.installed_size;
 }
 //! [type7-capacity]
 

@@ -57,6 +57,12 @@
  */
 
 /**
+ * @defgroup api_dell_type218 Dell OEM Type 218: Dell Token Interface
+ * @ingroup api_oem_types
+ * @brief Dell Token Interface command port, command classes, and token records.
+ */
+
+/**
  * @defgroup api_hp_type204 HP OEM Type 204: HPE ProLiant System/Rack Locator
  * @ingroup api_oem_types
  * @brief HPE ProLiant System/Rack Locator information.

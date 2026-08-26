@@ -6,8 +6,21 @@
  * @section concepts_context Context layout
  *
  * @ref lazybiosCTX is the top-level owner. It contains the selected backend,
- * a @ref lazybiosDMI_t raw-data container, and pointers for each supported
- * parsed SMBIOS type. Repeated types have a matching count field.
+ * a @ref lazybiosDMI_t raw-data container, and one pointer per supported SMBIOS
+ * type. Each of those points at a result set — a small structure holding an
+ * `entries` array and its `count` — so an array can never be separated from the
+ * number of elements in it.
+ *
+ * Vendor-specific structures live under `ctx->oem`. That member and the vendor
+ * containers beneath it (`ctx->oem->dell`, `ctx->oem->hp`) are allocated by
+ * @ref lazybiosCTXNew and are never NULL; only the per-type members inside them
+ * are NULL until the matching getter runs. An OEM structure number means nothing
+ * without its vendor — type 212 is Dell Indexed I/O Access and also HPE 64-bit
+ * CRU Information — so the vendor is part of the path rather than the name.
+ *
+ * Do not embed @ref lazybiosCTX by value or take its `sizeof`. Always allocate it
+ * with @ref lazybiosCTXNew, so that adding structures in a later release does not
+ * break your build.
  *
  * @section concepts_raw Raw DMI and entry-point data
  *
@@ -23,10 +36,12 @@
  *
  * @section concepts_ownership Ownership rules
  *
- * Getters allocate their return values. Each structure-type API documents
- * whether its getter returns the first matching structure or a count-tracked
- * array. Array getters write the number of parsed elements through their count
- * parameter.
+ * Getters allocate their return values. Each takes only the raw
+ * @ref lazybiosDMI_t table and returns a result set. A non-NULL result whose
+ * `count` is zero means the table simply contains no structure of that type;
+ * NULL is reserved for a genuine failure, either unusable arguments or a failed
+ * allocation. Because the two cases are distinguishable, a caller can tell
+ * "this machine has no TPM" from "we ran out of memory".
  *
  * Assign getter results to the matching context member when using
  * @ref lazybiosCleanup. If a caller keeps a result outside the context, it must
@@ -35,6 +50,28 @@
  * independently of their containing parsed structure.
  *
  * @snippet quick_start.c explicit-cleanup
+ *
+ * @section concepts_decoded Decoded values
+ *
+ * Fields that carry an encoded value are decoded while parsing and stored in the
+ * record's `decoded` member, which mirrors the raw member names:
+ *
+ * @code{.c}
+ * t->wake_up_type              // raw encoding, e.g. 6
+ * t->decoded.wake_up_type      // "Power Switch"
+ * t->field_status.wake_up_type // whether the raw field was present
+ * @endcode
+ *
+ * The raw value is always preserved next to the decoded one, so machine-readable
+ * consumers keep the encoding while human-readable ones get the meaning. This
+ * holds for multi-flag text too: those strings are built during parsing and
+ * owned by the record, released with it. lazybios exposes no decoder functions
+ * at all — `decoded` is the whole interface.
+ *
+ * Every parsed record also carries the SMBIOS `handle` that identifies it and the
+ * `length` the firmware reported. Handles are what cross-structure references
+ * resolve against: a Type 17 memory device names its array through
+ * `physical_memory_array_handle`, which matches the `handle` of a Type 16 record.
  *
  * @section concepts_presence Field status
  *

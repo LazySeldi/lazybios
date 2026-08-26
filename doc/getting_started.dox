@@ -10,9 +10,10 @@
  * 1. Allocate a @ref lazybiosCTX with @ref lazybiosCTXNew.
  * 2. Load raw SMBIOS data with @ref lazybiosInit, @ref lazybiosFile, or
  *    @ref lazybiosSingleFile.
- * 3. Parse the required structures with the corresponding getter.
- * 4. Store returned pointers and counts in the context when
- *    @ref lazybiosCleanup should own them.
+ * 3. Parse the required structures with the corresponding getter, which takes
+ *    only the raw @ref lazybiosDMI_t table.
+ * 4. Store the returned result set in the context when @ref lazybiosCleanup
+ *    should own it.
  * 5. Call @ref lazybiosCleanup exactly once.
  *
  * @section start_host Read from the host system
@@ -29,10 +30,9 @@
  *
  * @section start_arrays Read a repeated SMBIOS structure
  *
- * Getters for repeatable SMBIOS structure types return count-tracked arrays.
- * Always pass a count output pointer, retain the returned count, and use the
- * same count during cleanup. The relevant type API and guide document the
- * getter's result cardinality.
+ * Every getter returns a result set holding an `entries` array and its `count`,
+ * so the two can never drift apart. A non-NULL set whose `count` is zero means
+ * the table holds no structure of that type; NULL means the call itself failed.
  *
  * @snippet quick_start.c processor-array
  *

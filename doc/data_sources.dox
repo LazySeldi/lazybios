@@ -36,9 +36,9 @@
  * maps the structure-table address and length reported by that entry point.
  * Access to physical memory can require elevated operating-system permissions.
  *
- * The default sysfs paths are exposed as @ref LINUX_SYSFS_SMBIOS_ENTRY and
- * @ref LINUX_SYSFS_DMI_TABLE. The physical-memory device path is exposed as
- * @ref DEV_MEM.
+ * The default sysfs paths are exposed as `LINUX_SYSFS_SMBIOS_ENTRY` and
+ * `LINUX_SYSFS_DMI_TABLE`. The physical-memory device path is exposed as
+ * `DEV_MEM`.
  *
  * @section sources_windows Windows
  *

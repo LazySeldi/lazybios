@@ -9,20 +9,45 @@
  * rules. Standard DMTF-defined records are documented separately in
  * @ref type_guides.
  *
- * @section oem_type_workflow Suggested workflow
- *
- * 1. Start with the relevant supported-type entry below to confirm the vendor
- *    and structure number.
- * 2. Call that type's getter with the raw @ref lazybiosDMI_t table.
- * 3. Check the returned count and each field's `field_status` before using a
- *    parsed value.
- * 4. Release the returned array with the matching type-specific free function.
- *
  * @section oem_type_supported Supported OEM types
  *
- * - Dell Type 177 — @ref dell_type177_guide "Dell BIOS Flags"
- * - Dell Type 212 — @ref dell_type212_guide "Dell Indexed I/O Access"
- * - HP Type 204 — @ref hp_type204_guide "HPE ProLiant System/Rack Locator"
+ * | Type | Vendor | Structure | Guide | API |
+ * | ---: | :--- | :--- | :--- | :--- |
+ * | 177 | Dell | Dell BIOS Flags | @ref dell_type177_guide "Guide" | @ref api_dell_type177 "API" |
+ * | 212 | Dell | Dell Indexed I/O Access | @ref dell_type212_guide "Guide" | @ref api_dell_type212 "API" |
+ * | 218 | Dell | Dell Token Interface | @ref dell_type218_guide "Guide" | @ref api_dell_type218 "API" |
+ * | 204 | HP | HPE ProLiant System/Rack Locator | @ref hp_type204_guide "Guide" | @ref api_hp_type204 "API" |
+ *
+ * @section oem_type_workflow Suggested workflow
+ *
+ * 1. Start with the table above to confirm the vendor and structure number.
+ * 2. Call that type's getter with the raw @ref lazybiosDMI_t table.
+ * 3. Check the returned `count` and each field's `field_status` before using a
+ *    parsed value.
+ * 4. Release the result set with the matching free function, or assign it to
+ *    `ctx->oem->dell->TypeN` (or `ctx->oem->hp->TypeN`) and let
+ *    @ref lazybiosCleanup own it.
+ *
+ * OEM structures hang off `ctx->oem` rather than the context root, because a
+ * structure number is only meaningful together with its vendor — type 212 is
+ * Dell Indexed I/O Access and also HPE 64-bit CRU Information. `ctx->oem` and
+ * the vendor containers below it are always allocated; only the per-type members
+ * are NULL until parsed.
+ *
+ * @section oem_type_caveats What to expect from OEM records
+ *
+ * OEM layouts are not covered by the DMTF specification, so they carry
+ * different guarantees than the standard types:
+ *
+ * - **Vendor-gated.** A structure number means nothing without its vendor. Read
+ *   the system manufacturer from @ref type1_guide "Type 1" before trusting an
+ *   OEM record's layout.
+ * - **Firmware-dependent.** Field presence varies between models and firmware
+ *   revisions of the same vendor. The `field_status` metadata is the reliable
+ *   check; structure length alone is not.
+ * - **Repeated structures.** Several OEM types publish multiple structures that
+ *   together form one logical record set. Each guide states whether that
+ *   applies.
  *
  * @section oem_type_reference Reference and attribution
  *
@@ -35,6 +60,8 @@
  * @subpage dell_type177_guide
  *
  * @subpage dell_type212_guide
+ *
+ * @subpage dell_type218_guide
  *
  * @subpage hp_type204_guide
  */

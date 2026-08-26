@@ -43,9 +43,13 @@
  *
  * @section limits_results Result cardinality
  *
- * Each structure-type API documents whether its getter returns the first
- * matching structure or a count-tracked array. No getter performs in-place
- * population of the pointer passed as its first parameter.
+ * Every getter returns a result set: an `entries` array with its `count`. There
+ * is no single-structure variant and no in-place population — a getter takes
+ * only the raw table and allocates what it returns.
+ *
+ * A non-NULL set whose `count` is zero means the table contains no structure of
+ * that type, which is an ordinary outcome rather than a failure. NULL is
+ * reserved for unusable arguments or a failed allocation.
  *
  * @section limits_normalization Raw representation
  *
