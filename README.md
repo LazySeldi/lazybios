@@ -7,9 +7,9 @@
 ## Features
 
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones).
-- **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety.
-- **Library Extensions** - Built-in cJSON output supports every implemented standard SMBIOS type (0-46).
-- **OEM Extensions** - Initial experimental support for HP Type 204 and Dell Types 177 and 212 OEM-specific structures (More coming soon). dmidecode was used as a reference for these OEM types. 
+- **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety. Getters return a result set that keeps each array and its count together.
+- **Library Extensions** - Built-in cJSON output supports every implemented standard SMBIOS type (0-46), plus the supported OEM structures.
+- **OEM Extensions** - Initial experimental support for HP Type 204 and Dell Types 177, 212, and 218 OEM-specific structures (More coming soon). dmidecode was used as a reference for these OEM types. 
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup.
 - **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
@@ -17,6 +17,36 @@
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
 - **Architectures:** x86_64, ARM (32/64), RISC-V 64(Did run on RISC-V, but not heavily tested), and others.
+---
+
+## A quick look
+
+```c
+#include <lazybios/lazybios.h>
+
+lazybiosCTX_t* ctx = lazybiosCTXNew();
+if (!ctx || lazybiosInit(ctx) != 0) return 1;       /* read this machine */
+
+ctx->Type17 = lazybiosGetType17(ctx->DMIData);      /* memory devices */
+if (!ctx->Type17) { lazybiosCleanup(ctx); return 1; } /* free the old pointer if it exists */
+
+for (size_t i = 0; i < ctx->Type17->count; i++) {
+    const lazybiosType17_t* dev = &ctx->Type17->entries[i];
+    if (LAZYBIOS_FIELD_STATUS(dev, size) == LAZYBIOS_FIELD_PRESENT)
+        printf("%s: %u MB, %s\n", dev->device_locator,
+               dev->size, dev->decoded.memory_type); /* fields in decoded are already decoded */
+}
+
+lazybiosCleanup(ctx);                               /* frees everything above */
+```
+
+Three steps: make a context, load data into it, parse what you need. The context
+owns whatever it hands you, so one `lazybiosCleanup` releases all of it.
+
+Every parsed field comes with three views — the raw encoding the firmware wrote,
+a decoded form in `decoded`, and a `field_status` saying whether the firmware
+populated it at all.
+
 ---
 
 ## Project Status
@@ -102,6 +132,7 @@
 | 177 | Dell BIOS Flags |
 | 204 | HPE ProLiant System/Rack Locator |
 | 212 | Dell Indexed I/O Access |
+| 218 | Dell Token Interface |
 
 </details>
 
@@ -154,10 +185,14 @@ sudo make install # Optional; installs to the configured prefix.
 Generate the complete user guide and API reference with:
 
 ```shell
-doxygen Doxyfile
+cmake --build build --target docs
 ```
 
-The generated documentation entry point is `docs/html/index.html`.
+That injects the project version from CMake, so the version lives in exactly one
+place. Plain `doxygen Doxyfile` still works if you would rather not go through
+CMake; it just leaves the version off the generated pages.
+
+The entry point is `docs/html/index.html`.
 
 ### Testing and Examples
 
@@ -174,8 +209,9 @@ It's best to review the `test/` directory for integration examples.
 ## Fuzzing
 
 The library parses untrusted firmware data, so seven libFuzzer targets cover
-entry points, structure tables, file loaders, decoders, traversal helpers,
-cleanup paths, and platform-neutral backend transformations:
+entry points, structure tables, file loaders, traversal helpers,
+cleanup paths, JSON serialization, and platform-neutral backend
+transformations:
 
 ```shell
 cmake -B build-fuzz -DCMAKE_C_COMPILER=clang -DLAZYBIOS_BUILD_FUZZERS=ON
