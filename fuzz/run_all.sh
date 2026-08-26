@@ -48,7 +48,7 @@ echo
 "$root/fuzz/make_corpus.sh" "$corpus"
 mkdir -p "$artifacts"
 
-targets="dmi_table entry_point decoders helpers backend_buffers single_file two_files"
+targets="dmi_table entry_point helpers backend_buffers json single_file two_files"
 for name in $targets; do
 	binary=$build/fuzz/fuzz_$name
 	if [ ! -x "$binary" ]; then

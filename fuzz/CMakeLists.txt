@@ -34,9 +34,15 @@ else()
 endif()
 
 # Same sources as the shared library, referenced from the project root.
+# LAZYBIOS_SOURCES mixes relative paths with absolute ones from file(GLOB),
+# so only the relative entries may be rooted at the project directory.
 set(LAZYBIOS_FUZZ_LIB_SOURCES "")
 foreach(src ${LAZYBIOS_SOURCES})
-    list(APPEND LAZYBIOS_FUZZ_LIB_SOURCES ${PROJECT_SOURCE_DIR}/${src})
+    if(IS_ABSOLUTE "${src}")
+        list(APPEND LAZYBIOS_FUZZ_LIB_SOURCES "${src}")
+    else()
+        list(APPEND LAZYBIOS_FUZZ_LIB_SOURCES "${PROJECT_SOURCE_DIR}/${src}")
+    endif()
 endforeach()
 
 add_library(lazybios_fuzz_lib STATIC ${LAZYBIOS_FUZZ_LIB_SOURCES})
@@ -80,9 +86,9 @@ set_target_properties(lazybios_fuzz_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set(LAZYBIOS_FUZZ_TARGETS
         fuzz_dmi_table
         fuzz_entry_point
-        fuzz_decoders
         fuzz_helpers
         fuzz_backend_buffers
+        fuzz_json
 )
 
 if(UNIX)

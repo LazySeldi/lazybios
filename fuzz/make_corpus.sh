@@ -17,7 +17,8 @@ if [ ! -d "$dumps" ]; then
 fi
 
 mkdir -p "$out/dmi_table" "$out/entry_point" "$out/single_file" \
-	"$out/two_files" "$out/decoders" "$out/helpers" "$out/backend_buffers"
+	"$out/two_files" "$out/helpers" "$out/backend_buffers" \
+	"$out/json"
 
 for dir in "$dumps"/*/; do
 	name=$(basename "$dir")
@@ -25,6 +26,8 @@ for dir in "$dumps"/*/; do
 	# fuzz_dmi_table consumes three selector bytes followed by the raw table.
 	if [ -f "$dir/DMI" ]; then
 		{ printf '\003\003\000'; cat "$dir/DMI"; } > "$out/dmi_table/$name"
+		# fuzz_json takes the same three selector bytes as fuzz_dmi_table.
+		{ printf '\003\003\000'; cat "$dir/DMI"; } > "$out/json/$name"
 		cp "$dir/DMI" "$out/helpers/$name"
 		cp "$dir/DMI" "$out/backend_buffers/$name"
 	fi
@@ -61,11 +64,5 @@ for dir in "$root"/fuzz/regressions/*/; do
 	done
 done
 
-# fuzz_decoders takes an opaque byte stream; a handful of lengths is enough.
-i=0
-while [ "$i" -lt 8 ]; do
-	head -c $((16 + i * 37)) /dev/urandom > "$out/decoders/seed-$i"
-	i=$((i + 1))
-done
 
 echo "seed corpora written under $out"

@@ -1,19 +1,20 @@
 # Fuzzing lazybios
 
 Seven libFuzzer targets cover the untrusted bytes, bounded traversal helpers,
-backend transformations, and lifecycle paths used by the library. The two
-file-loader targets are POSIX-only; the other five build anywhere the Clang
-libFuzzer runtime is available.
+backend transformations, serialization, and lifecycle paths used by the
+library. The decoders are file-local, so they are covered through the parsers
+that call them rather than by a target of their own. The two file-loader targets are POSIX-only; the other five build
+anywhere the Clang libFuzzer runtime is available.
 
 | Target | Covers |
 | --- | --- |
-| `fuzz_dmi_table` | All standard and HP OEM structure parsers against an arbitrary DMI table, with the SMBIOS version driven by the input |
+| `fuzz_dmi_table` | All standard, Dell OEM, and HP OEM structure parsers against an arbitrary DMI table, with the SMBIOS version driven by the input |
 | `fuzz_entry_point` | `lazybiosParseEntry`, `lazybiosIsVersionPlus`, `lazybiosPrintSMVer` |
 | `fuzz_single_file` | `lazybiosSingleFile` plus every parser, including tightly concatenated tables and valid embedded table offsets |
 | `fuzz_two_files` | `lazybiosFile` plus every parser — the shape a Linux sysfs host load takes |
-| `fuzz_decoders` | Every decoder helper, including the ones that format into a caller-supplied buffer |
 | `fuzz_helpers` | `DMINext`, `DMIString`, all-type counting, partial-context cleanup, and unavailable `lazybiosInit` dispatches |
 | `fuzz_backend_buffers` | Windows `RawSMBIOSData`, raw-buffer loading used by macOS, physical-memory entry-point scanning, and SMBIOS 2.x/3.x table-address extraction used by NetBSD |
+| `fuzz_json` | Every `lazybiosExtJSONAdd*()` serializer, including the OEM ones, over structures parsed from an arbitrary table, plus `cJSON_Print` and tree teardown |
 
 The DMI table and entry point buffers are allocated at exactly the size the
 library is told they are, so an over-read of a single byte is a hard ASan
