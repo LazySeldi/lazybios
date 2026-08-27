@@ -1,0 +1,87 @@
+# Builds and tests on the three host platforms lazybios supports natively.
+#
+# The runners are virtual machines with their own SMBIOS tables, so the
+# optional host-backend test runs against real firmware data on each of them
+# rather than only against captured dumps.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  name: Linux }
+          - { os: macos-latest,   name: macOS }
+          - { os: windows-latest, name: Windows }
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_TESTING=ON
+          -DLAZYBIOS_TEST_HOST_BACKEND=ON
+
+      # --config matters on Windows: the Visual Studio generator is
+      # multi-config and ignores CMAKE_BUILD_TYPE.
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      # sysfs DMI and /dev/mem are root-only, so the unprivileged run above
+      # reports this test as skipped. Re-run just that test with privileges to
+      # exercise the real backend. Windows needs no elevation: the firmware
+      # table API is available to normal users.
+      - name: Host backend test (elevated)
+        if: runner.os != 'Windows'
+        run: sudo ctest --test-dir build --build-config Release -R host_backend --output-on-failure
+
+      # Parse every captured dump, as a cheap check that nothing regressed
+      # against the corpus on a platform other than the developer's.
+      - name: Parse the dump corpus
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          fail=0
+          for d in test-dumps/test-*; do
+            [ -f "$d/DMI" ] || continue
+            ./build/lazybios_json_test --sources "$d/smbios_entry_point" "$d/DMI" > /dev/null || {
+              echo "FAILED: $d"; fail=1;
+            }
+          done
+          exit $fail
+
+      # Each runner has a different virtual firmware, so this collects tables
+      # the corpus does not already contain. Download from the run's artifacts.
+      - name: Capture this runner's SMBIOS table
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p captured
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./build/Release/lazybios_test.exe --dump captured
+          else
+            sudo ./build/lazybios_test --dump captured
+            sudo chown -R "$(id -u):$(id -g)" captured
+          fi
+          ls -l captured
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smbios-dump-${{ matrix.name }}
+          path: captured/
+          if-no-files-found: ignore
