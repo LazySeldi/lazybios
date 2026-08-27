@@ -30,6 +30,89 @@
 
 const char lazybiosVersion[] = "3.0.0";
 
+lazybiosCTX_t* lazybiosCTXNew(void) {
+	lazybiosCTX_t* ctx = calloc(1, sizeof(*ctx));
+	if (!ctx) return NULL;
+
+	ctx->DMIData = calloc(1, sizeof(*ctx->DMIData));
+	if (!ctx->DMIData) {
+		free(ctx);
+		return NULL;
+	}
+
+	/* The vendor containers are always present; only their per-type members
+	 * are NULL until the matching getter runs. */
+	ctx->oem = calloc(1, sizeof(*ctx->oem));
+	if (!ctx->oem) {
+		free(ctx->DMIData);
+		free(ctx);
+		return NULL;
+	}
+	ctx->oem->dell = calloc(1, sizeof(*ctx->oem->dell));
+	ctx->oem->hp = calloc(1, sizeof(*ctx->oem->hp));
+	if (!ctx->oem->dell || !ctx->oem->hp) {
+		free(ctx->oem->dell);
+		free(ctx->oem->hp);
+		free(ctx->oem);
+		free(ctx->DMIData);
+		free(ctx);
+		return NULL;
+	}
+
+	#if defined(OS_LINUX)
+		ctx->backend = LAZYBIOS_BACKEND_LINUX;
+	#elif defined(OS_WINDOWS)
+		ctx->backend = LAZYBIOS_BACKEND_WINDOWS;
+	#elif defined(OS_MACOS)
+		ctx->backend = LAZYBIOS_BACKEND_MACOS;
+	#elif defined(OS_OPENBSD)
+		ctx->backend = LAZYBIOS_BACKEND_OPENBSD;
+	#elif defined(OS_FREEBSD)
+		ctx->backend = LAZYBIOS_BACKEND_FREEBSD;
+	#elif defined(OS_NETBSD)
+		ctx->backend = LAZYBIOS_BACKEND_NETBSD;
+    #elif defined(OS_SUNOS)
+        ctx->backend = LAZYBIOS_BACKEND_SUNOS;
+    #elif defined(OS_DRAGONFLY)
+        ctx->backend = LAZYBIOS_BACKEND_DRAGONFLY;
+    #elif defined(OS_HAIKU)
+        ctx->backend = LAZYBIOS_BACKEND_HAIKU;
+    #elif defined(OS_BEOS)
+        ctx->backend = LAZYBIOS_BACKEND_BEOS;
+    #elif defined(OS_REACTOS)
+        ctx->backend = LAZYBIOS_BACKEND_REACTOS;
+	#elif defined(OS_GENERIC)
+		ctx->backend = LAZYBIOS_BACKEND_GENERIC;
+	#else
+		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
+	#endif
+
+	return ctx;
+}
+
+static inline int lazybiosBuildTypeIndex(lazybiosDMI_t* DMIData) {
+    memset(DMIData->index, 0, sizeof(DMIData->index));
+    DMIData->index_valid = 0;
+    if (!DMIData->dmi_data || DMIData->dmi_len > UINT32_MAX) return -1;
+
+    const uint8_t* p = DMIData->dmi_data;
+    const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
+
+    while (p + SMBIOS_HEADER_SIZE < end) {
+        const uint8_t type = p[0];
+        if (type == SMBIOS_TYPE_END) break;
+        if (p[1] < SMBIOS_HEADER_SIZE) break;
+
+        if (DMIData->index[type].count == 0)
+            DMIData->index[type].first = (uint32_t)(p - DMIData->dmi_data);
+        DMIData->index[type].count++;
+
+        p = DMINext(p, end);
+    }
+    DMIData->index_valid = 1;
+    return 0;
+}
+
 int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path) {
 	if (!ctx || !ctx->DMIData || !bin_path) return -1;
 
@@ -203,175 +286,141 @@ int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_pat
 	return 0;
 }
 
-lazybiosCTX_t* lazybiosCTXNew(void) {
-	lazybiosCTX_t* ctx = calloc(1, sizeof(*ctx));
-	if (!ctx) return NULL;
+static int lazybiosDetectBackend(lazybiosCTX_t* ctx) {
+            switch (ctx->backend) {
+		    case LAZYBIOS_BACKEND_LINUX:
+			    #if defined(OS_LINUX)
+			    return lazybiosLinux(ctx);
+			    #else
+			    lb_log("Linux backend is not available in this build!");
+			    return -1;
+			    #endif
 
-	ctx->DMIData = calloc(1, sizeof(*ctx->DMIData));
-	if (!ctx->DMIData) {
-		free(ctx);
-		return NULL;
-	}
+		    case LAZYBIOS_BACKEND_WINDOWS:
+			    #if defined(OS_WINDOWS)
+			    return lazybiosWindows(ctx);
+			    #else
+			    lb_log("Windows backend is not available in this build");
+			    return -1;
+			    #endif
 
-	/* The vendor containers are always present; only their per-type members
-	 * are NULL until the matching getter runs. */
-	ctx->oem = calloc(1, sizeof(*ctx->oem));
-	if (!ctx->oem) {
-		free(ctx->DMIData);
-		free(ctx);
-		return NULL;
-	}
-	ctx->oem->dell = calloc(1, sizeof(*ctx->oem->dell));
-	ctx->oem->hp = calloc(1, sizeof(*ctx->oem->hp));
-	if (!ctx->oem->dell || !ctx->oem->hp) {
-		free(ctx->oem->dell);
-		free(ctx->oem->hp);
-		free(ctx->oem);
-		free(ctx->DMIData);
-		free(ctx);
-		return NULL;
-	}
+		    case LAZYBIOS_BACKEND_MACOS:
+			    #if defined(OS_MACOS)
+			    return lazybiosMacOS(ctx);
+			    #else
+			    lb_log("MacOS backend is not available in this build");
+			    return -1;
+			    #endif
 
-	#if defined(OS_LINUX)
-		ctx->backend = LAZYBIOS_BACKEND_LINUX;
-	#elif defined(OS_WINDOWS)
-		ctx->backend = LAZYBIOS_BACKEND_WINDOWS;
-	#elif defined(OS_MACOS)
-		ctx->backend = LAZYBIOS_BACKEND_MACOS;
-	#elif defined(OS_OPENBSD)
-		ctx->backend = LAZYBIOS_BACKEND_OPENBSD;
-	#elif defined(OS_FREEBSD)
-		ctx->backend = LAZYBIOS_BACKEND_FREEBSD;
-	#elif defined(OS_NETBSD)
-		ctx->backend = LAZYBIOS_BACKEND_NETBSD;
-    #elif defined(OS_SUNOS)
-        ctx->backend = LAZYBIOS_BACKEND_SUNOS;
-    #elif defined(OS_DRAGONFLY)
-        ctx->backend = LAZYBIOS_BACKEND_DRAGONFLY;
-    #elif defined(OS_HAIKU)
-        ctx->backend = LAZYBIOS_BACKEND_HAIKU;
-    #elif defined(OS_BEOS)
-        ctx->backend = LAZYBIOS_BACKEND_BEOS;
-    #elif defined(OS_REACTOS)
-        ctx->backend = LAZYBIOS_BACKEND_REACTOS;
-	#elif defined(OS_GENERIC)
-		ctx->backend = LAZYBIOS_BACKEND_GENERIC;
-	#else
-		ctx->backend = LAZYBIOS_BACKEND_UNKNOWN;
-	#endif
+		    case LAZYBIOS_BACKEND_OPENBSD:
+			    #if defined(OS_OPENBSD)
+			    return lazybiosOpenBSD(ctx);
+			    #else
+			    lb_log("OpenBSD backend is not available in this build");
+			    return -1;
+			    #endif
 
-	return ctx;
+		    case LAZYBIOS_BACKEND_FREEBSD:
+			    #if defined(OS_FREEBSD)
+			    return lazybiosFreeBSD(ctx);
+			    #else
+			    lb_log("FreeBSD backend is not available in this build");
+			    return -1;
+			    #endif
+
+		    case LAZYBIOS_BACKEND_NETBSD:
+			    #if defined(OS_NETBSD)
+			    return lazybiosNetBSD(ctx);
+			    #else
+			    lb_log("NetBSD backend is not available in this build");
+			    return -1;
+			    #endif
+
+	        case LAZYBIOS_BACKEND_SUNOS:
+	            #if defined(OS_SUNOS)
+	            return lazybiosSunOS(ctx);
+	            #else
+	            lb_log("SunOS backend is not available in this build");
+	            return -1;
+	            #endif
+
+	        case LAZYBIOS_BACKEND_DRAGONFLY:
+	            #if defined(OS_DRAGONFLY)
+	            return lazybiosDragonFly(ctx);
+	            #else
+	            lb_log("DragonFly backend is not available in this build");
+                return -1;
+	            #endif
+
+	        case LAZYBIOS_BACKEND_HAIKU:
+	            #if defined(OS_HAIKU)
+	            return lazybiosHaiku(ctx);
+	            #else
+	            lb_log("Haiku backend is not available in this build");
+                return -1;
+	            #endif
+
+	        case LAZYBIOS_BACKEND_BEOS:
+	            #if defined(OS_BEOS)
+	            return lazybiosBeOS(ctx);
+	            #else
+	            lb_log("BeOS backend is not available in this build");
+	            return -1;
+                #endif
+
+	        case LAZYBIOS_BACKEND_REACTOS:
+	            #if defined(OS_REACTOS)
+	            return lazybiosReactOS(ctx);
+	            #else
+	            lb_log("ReactOS backend is not available in this build");
+	            return -1;
+	            #endif
+
+		    case LAZYBIOS_BACKEND_UNKNOWN:
+			    lb_log("No host backend was selected");
+			    return -1;
+
+		    case LAZYBIOS_BACKEND_GENERIC:
+			    #if defined(OS_GENERIC)
+			    return lazybiosGeneric(ctx);
+			    #else
+			    lb_log("Generic backend is not available in this build");
+			    return -1;
+			    #endif
+
+		    default:
+			    lb_log("No backend found for initialization!");
+			    return -1;
+	    }
 }
 
-
-int lazybiosInit(lazybiosCTX_t* ctx) {
+int lazybiosInit(lazybiosCTX_t* ctx, const char* entry_point, const char* DMI_BIN) {
 	if (!ctx) return -1;
+    if (entry_point && !DMI_BIN) {
+        lb_log("entry point path set, but DMI table path not set");
+        lb_dbg("Entry path: %s", entry_point);
+        return -1;
+    }
 
-	switch (ctx->backend) {
-		case LAZYBIOS_BACKEND_LINUX:
-			#if defined(OS_LINUX)
-			return lazybiosLinux(ctx);
-			#else
-			lb_log("Linux backend is not available in this build!");
-			return -1;
-			#endif
+    if (!entry_point && DMI_BIN) {
+        if (lazybiosSingleFile(ctx, DMI_BIN) != 0) return -1; // lazybiosSingleFile has already said why it broke
+    }
 
-		case LAZYBIOS_BACKEND_WINDOWS:
-			#if defined(OS_WINDOWS)
-			return lazybiosWindows(ctx);
-			#else
-			lb_log("Windows backend is not available in this build");
-			return -1;
-			#endif
+    if (entry_point && DMI_BIN) {
+        if (lazybiosFile(ctx, entry_point, DMI_BIN) != 0) return -1;
 
-		case LAZYBIOS_BACKEND_MACOS:
-			#if defined(OS_MACOS)
-			return lazybiosMacOS(ctx);
-			#else
-			lb_log("MacOS backend is not available in this build");
-			return -1;
-			#endif
+    }
 
-		case LAZYBIOS_BACKEND_OPENBSD:
-			#if defined(OS_OPENBSD)
-			return lazybiosOpenBSD(ctx);
-			#else
-			lb_log("OpenBSD backend is not available in this build");
-			return -1;
-			#endif
+    if (!entry_point && !DMI_BIN) {
+        if (lazybiosDetectBackend(ctx) != 0) return -1;
+    }
 
-		case LAZYBIOS_BACKEND_FREEBSD:
-			#if defined(OS_FREEBSD)
-			return lazybiosFreeBSD(ctx);
-			#else
-			lb_log("FreeBSD backend is not available in this build");
-			return -1;
-			#endif
 
-		case LAZYBIOS_BACKEND_NETBSD:
-			#if defined(OS_NETBSD)
-			return lazybiosNetBSD(ctx);
-			#else
-			lb_log("NetBSD backend is not available in this build");
-			return -1;
-			#endif
+    if (lazybiosBuildTypeIndex(ctx->DMIData) != 0) {
+        lb_log("Couldn't build Type Index table, falling back to manual structure walking");
+    }
 
-	    case LAZYBIOS_BACKEND_SUNOS:
-	        #if defined(OS_SUNOS)
-	        return lazybiosSunOS(ctx);
-	        #else
-	        lb_log("SunOS backend is not available in this build");
-	        return -1;
-	        #endif
-
-	    case LAZYBIOS_BACKEND_DRAGONFLY:
-	        #if defined(OS_DRAGONFLY)
-	        return lazybiosDragonFly(ctx);
-	        #else
-	        lb_log("DragonFly backend is not available in this build");
-            return -1;
-	        #endif
-
-	    case LAZYBIOS_BACKEND_HAIKU:
-	        #if defined(OS_HAIKU)
-	        return lazybiosHaiku(ctx);
-	        #else
-	        lb_log("Haiku backend is not available in this build");
-            return -1;
-	        #endif
-
-	    case LAZYBIOS_BACKEND_BEOS:
-	        #if defined(OS_BEOS)
-	        return lazybiosBeOS(ctx);
-	        #else
-	        lb_log("BeOS backend is not available in this build");
-	        return -1;
-            #endif
-
-	    case LAZYBIOS_BACKEND_REACTOS:
-	        #if defined(OS_REACTOS)
-	        return lazybiosReactOS(ctx);
-	        #else
-	        lb_log("ReactOS backend is not available in this build");
-	        return -1;
-	        #endif
-	        
-		case LAZYBIOS_BACKEND_UNKNOWN:
-			lb_log("No host backend was selected");
-			return -1;
-
-		case LAZYBIOS_BACKEND_GENERIC:
-			#if defined(OS_GENERIC)
-			return lazybiosGeneric(ctx);
-			#else
-			lb_log("Generic backend is not available in this build");
-			return -1;
-			#endif
-
-		default:
-			lb_log("No backend found for initialization!");
-			return -1;
-	}
+    return 0;
 }
 
 const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
@@ -405,10 +454,17 @@ const char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uin
 
 	// Point to the start of the unformatted string area
 	const uint8_t* str = p + length;
-	const uint8_t* strings_end = str;
-	while (strings_end + 1 < end && (strings_end[0] != 0 || strings_end[1] != 0))
-		strings_end++;
-	if (strings_end + 1 >= end) return NULL;
+
+	/*
+	 * `end` is the next structure's address, which DMINext places two bytes
+	 * past the double NUL that terminates this string set. Deriving the
+	 * terminator from it costs a bounds check instead of a scan, and callers
+	 * that hand over a truncated structure are rejected by the length guard
+	 * above before reaching here.
+	 */
+	if ((size_t)(end - str) < 2) return NULL;
+	const uint8_t* strings_end = end - 2;
+	if (strings_end[0] != 0 || strings_end[1] != 0) return NULL;
 
 	// Iterate until the selected string
 	for (uint8_t i = 1; i < index; i++) {
@@ -537,27 +593,27 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
 }
 
 size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type) {
-	if (!DMIData || !DMIData->dmi_data) return 0;
+    if (!DMIData || !DMIData->dmi_data) return 0;
 
-	size_t count = 0;
-	const uint8_t* p = DMIData->dmi_data;
-	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
+    size_t count = 0;
+    const uint8_t* p = DMIData->dmi_data;
+    const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-	while (p + 4 < end) { // SMBIOS_HEADER_SIZE
-		uint8_t type = p[0];
-		if (type == SMBIOS_TYPE_END) break;
+    while (p + 4 < end) { // SMBIOS_HEADER_SIZE
+        uint8_t type = p[0];
+        if (type == SMBIOS_TYPE_END) break;
 
-		/* A formatted section is at least a header; anything shorter is not a
-		 * structure, so the table ends here. DMINext applies the same rule. */
-		if (p[1] < SMBIOS_HEADER_SIZE) break;
+        /* A formatted section is at least a header; anything shorter is not a
+         * structure, so the table ends here. DMINext applies the same rule. */
+        if (p[1] < SMBIOS_HEADER_SIZE) break;
 
-		if (type == target_type)
-			count++;
+        if (type == target_type)
+            count++;
 
-		p = DMINext(p, end);
-	}
+        p = DMINext(p, end);
+    }
 
-	return count;
+    return count;
 }
 
 int lazybiosParseAll(lazybiosCTX_t* ctx) {
@@ -775,6 +831,9 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
 	free(ctx->oem->hp);
 	free(ctx->oem);
 	ctx->oem = NULL;
+
+    memset(ctx->DMIData->index, 0, sizeof(ctx->DMIData->index));
+    ctx->DMIData->index_valid = 0;
 
 	free(ctx->DMIData->dmi_data);
 	free(ctx->DMIData->entry_data);

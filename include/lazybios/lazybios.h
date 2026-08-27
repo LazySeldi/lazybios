@@ -165,6 +165,19 @@ typedef struct {
 } lazybiosSMBIOS3Entry;
 
 /**
+ * @brief Cached location and population count for one SMBIOS structure type.
+ * @ingroup api_entry
+ *
+ * One entry per possible type byte. Both members are meaningful only while the
+ * containing @ref lazybiosDMI_t has a non-zero `index_valid`, and `first` only
+ * when `count` is greater than zero.
+ */
+typedef struct {
+	uint32_t count; /**< Number of structures of this type in the table. */
+	uint32_t first; /**< Byte offset of the first one, from the table start. */
+} lazybiosTypeIndex_t;
+
+/**
  * @brief Identifies the SMBIOS entry point layout stored in a DMI container.
  * @ingroup api_entry
  */
@@ -181,6 +194,23 @@ typedef enum {
 typedef struct lazybiosDMI {
 	uint8_t* dmi_data;
 	size_t dmi_len;
+
+	/**
+	 * Per-type location cache, built once when the table is loaded. A type
+	 * byte is a single octet, so 256 entries cover every possible type.
+	 * Without it, each parser had to walk the whole table just to size its
+	 * result array, which dominated parse time.
+	 */
+	lazybiosTypeIndex_t index[256];
+
+	/**
+	 * Non-zero once @p index describes @p dmi_data. A zero-initialized or
+	 * hand-assembled container leaves this clear, and the parsers fall back to
+	 * walking the table, so the cache is an optimization rather than a
+	 * precondition. Clear it if @p dmi_data is replaced.
+	 */
+	int index_valid;
+
 	uint8_t* entry_data;
 	size_t entry_len;
 	lazybiosSMBIOSVersionTag entry_tag;
@@ -356,37 +386,40 @@ struct lazybiosCTX {
 
 /**
  * @brief Allocates and initializes a lazybios context.
+ * @ingroup api_context
  * @return Newly allocated context, or NULL if allocation fails.
  */
 LAZYBIOS_WARN_UNUSED lazybiosCTX_t* lazybiosCTXNew(void);
 
 /**
- * @brief Loads SMBIOS data using the context's selected platform backend.
+ * @brief Loads SMBIOS data from the host system or from captured table files.
+ * @ingroup api_context
+ *
+ * The two path arguments select the input mode:
+ *
+ * | @p entry_point | @p DMI_BIN | Source |
+ * | :--- | :--- | :--- |
+ * | `NULL` | `NULL` | the host system, through the context's backend |
+ * | `NULL` | path | one merged file holding the entry point and table |
+ * | path | path | separate raw entry-point and DMI-table files |
+ *
+ * Supplying an entry point without a table is rejected, because the entry
+ * point alone describes nothing to parse.
+ *
+ * On success the context owns copies of both buffers and its type index is
+ * built. A failed load must not be followed by a structure getter; release the
+ * context with @ref lazybiosCleanup instead.
+ *
  * @param ctx Context that receives the raw entry point and DMI table data.
+ * @param entry_point Path to a raw SMBIOS entry-point file, or NULL.
+ * @param DMI_BIN Path to a raw DMI table or merged dump file, or NULL for the host.
  * @return 0 on success, or -1 on failure.
  */
-LAZYBIOS_WARN_UNUSED int lazybiosInit(lazybiosCTX_t* ctx);
-
-/**
- * @brief Loads an SMBIOS entry point and DMI table from separate files.
- * @param ctx Context that receives the loaded data.
- * @param entry_path Path to the raw SMBIOS entry point file.
- * @param dmi_path Path to the raw DMI structure table file.
- * @return 0 on success, or -1 on failure.
- */
-LAZYBIOS_WARN_UNUSED int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path);
-
-/**
- * @brief Loads SMBIOS entry point and DMI data from one merged file.
- * @param ctx Context that receives the loaded data.
- * @param bin_path Path to a file containing the entry point and DMI table,
- * either concatenated or separated by an advertised file-relative offset.
- * @return 0 on success, or -1 on failure.
- */
-LAZYBIOS_WARN_UNUSED int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
+LAZYBIOS_WARN_UNUSED int lazybiosInit(lazybiosCTX_t* ctx, const char* entry_point, const char* DMI_BIN);
 
 /**
  * @brief Parses every implemented structure type into the context.
+ * @ingroup api_parsing
  *
  * Types already present in @p ctx are left untouched, so calling this more than
  * once does not strand an earlier result set. A type the table does not contain
@@ -400,6 +433,7 @@ LAZYBIOS_WARN_UNUSED int lazybiosParseAll(lazybiosCTX_t* ctx);
 
 /**
  * @brief Releases a context and all SMBIOS data owned by it.
+ * @ingroup api_context
  * @param ctx Context to release.
  * @return 0 on success, or -1 if ctx is NULL.
  */
