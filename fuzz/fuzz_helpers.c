@@ -45,7 +45,9 @@ static void fuzz_unavailable_init(uint8_t selector) {
 		LAZYBIOS_BACKEND_UNKNOWN,
 		LAZYBIOS_BACKEND_HAIKU,
 		LAZYBIOS_BACKEND_BEOS,
-		LAZYBIOS_BACKEND_GENERIC
+		LAZYBIOS_BACKEND_GENERIC,
+		LAZYBIOS_BACKEND_QNX,
+		LAZYBIOS_BACKEND_MINIX
 	};
 	lazybiosBackend_t selected =
 		backends[selector % (sizeof(backends) / sizeof(backends[0]))];

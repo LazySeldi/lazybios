@@ -81,6 +81,10 @@ lazybiosCTX_t* lazybiosCTXNew(void) {
         ctx->backend = LAZYBIOS_BACKEND_BEOS;
     #elif defined(OS_REACTOS)
         ctx->backend = LAZYBIOS_BACKEND_REACTOS;
+    #elif defined(OS_QNX)
+        ctx->backend = LAZYBIOS_BACKEND_QNX;
+    #elif defined(OS_MINIX)
+        ctx->backend = LAZYBIOS_BACKEND_MINIX;
 	#elif defined(OS_GENERIC)
 		ctx->backend = LAZYBIOS_BACKEND_GENERIC;
 	#else
@@ -376,6 +380,22 @@ static int lazybiosDetectBackend(lazybiosCTX_t* ctx) {
 	            return -1;
 	            #endif
 
+	        case LAZYBIOS_BACKEND_QNX:
+	            #if defined(OS_QNX)
+	            return lazybiosQNX(ctx);
+	            #else
+	            lb_log("QNX backend is not available in this build");
+	            return -1;
+	            #endif
+
+	        case LAZYBIOS_BACKEND_MINIX:
+	            #if defined(OS_MINIX)
+	            return lazybiosMINIX(ctx);
+	            #else
+	            lb_log("MINIX backend is not available in this build");
+	            return -1;
+	            #endif
+
 		    case LAZYBIOS_BACKEND_UNKNOWN:
 			    lb_log("No host backend was selected");
 			    return -1;
@@ -439,7 +459,7 @@ const uint8_t* DMINext(const uint8_t* p, const uint8_t* end) {
 	}
 
 	// Skip double-null terminator
-	if (next + 2 <= end) 
+	if (next + 2 <= end)
 		next += 2;
 	else
 		next = end;

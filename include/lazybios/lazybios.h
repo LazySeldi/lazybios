@@ -52,7 +52,15 @@ typedef enum {
 	LAZYBIOS_BACKEND_BEOS,      /**< BeOS legacy physical-memory backend. */
 	LAZYBIOS_BACKEND_REACTOS,   /**< ReactOS Win32 firmware-table API backend. */
 	LAZYBIOS_BACKEND_GENERIC,   /**< Generic legacy physical-memory backend. */
-	LAZYBIOS_BACKEND_UNKNOWN    /**< No usable host backend was selected. */
+	LAZYBIOS_BACKEND_UNKNOWN,   /**< No usable host backend was selected. */
+	/*
+	 * Backends added after 3.0.0 are appended here rather than kept in
+	 * platform order, because the values above are part of the released ABI
+	 * and inserting before LAZYBIOS_BACKEND_UNKNOWN would renumber it for
+	 * every consumer already built against that header.
+	 */
+	LAZYBIOS_BACKEND_QNX,       /**< QNX Neutrino mapped physical-memory backend. */
+	LAZYBIOS_BACKEND_MINIX      /**< MINIX 3 legacy physical-memory backend. */
 } lazybiosBackend_t;
 
 /** @addtogroup api_constants

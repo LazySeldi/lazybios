@@ -613,6 +613,9 @@ static int test_backend_enum_values(void) {
 	CHECK(LAZYBIOS_BACKEND_REACTOS == 10);
 	CHECK(LAZYBIOS_BACKEND_GENERIC == 11);
 	CHECK(LAZYBIOS_BACKEND_UNKNOWN == 12);
+	/* Appended after 3.0.0, so the released values above stay pinned. */
+	CHECK(LAZYBIOS_BACKEND_QNX == 13);
+	CHECK(LAZYBIOS_BACKEND_MINIX == 14);
 
 	ctx = lazybiosCTXNew();
 	CHECK(ctx != NULL);
@@ -636,6 +639,10 @@ static int test_backend_enum_values(void) {
 	CHECK(ctx->backend == LAZYBIOS_BACKEND_HAIKU);
 	#elif defined(OS_BEOS)
 	CHECK(ctx->backend == LAZYBIOS_BACKEND_BEOS);
+	#elif defined(OS_QNX)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_QNX);
+	#elif defined(OS_MINIX)
+	CHECK(ctx->backend == LAZYBIOS_BACKEND_MINIX);
 	#elif defined(OS_GENERIC)
 	CHECK(ctx->backend == LAZYBIOS_BACKEND_GENERIC);
 	#else

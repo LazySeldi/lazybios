@@ -32,7 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC)
+#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC) || \
+	defined(OS_QNX) || defined(OS_MINIX)
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -280,7 +281,8 @@ int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available,
 	return 0;
 }
 
-#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC)
+#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC) || \
+	defined(OS_QNX) || defined(OS_MINIX)
 
 #define LEGACY_PHYSICAL_SMBIOS_START UINT64_C(0xF0000)
 #define LEGACY_PHYSICAL_SMBIOS_SIZE 0x10000U

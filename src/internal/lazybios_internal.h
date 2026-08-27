@@ -456,12 +456,23 @@ int lazybiosBeOS(lazybiosCTX_t* ctx);
 int lazybiosReactOS(lazybiosCTX_t* ctx);
 #endif
 
+#if defined(OS_QNX)
+/** @brief Loads SMBIOS data through the QNX Neutrino backend. */
+int lazybiosQNX(lazybiosCTX_t* ctx);
+#endif
+
+#if defined(OS_MINIX)
+/** @brief Loads SMBIOS data through the MINIX 3 backend. */
+int lazybiosMINIX(lazybiosCTX_t* ctx);
+#endif
+
 #if defined(OS_GENERIC)
 /** @brief Loads SMBIOS data through the generic legacy backend. */
 int lazybiosGeneric(lazybiosCTX_t* ctx);
 #endif
 
-#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC)
+#if defined(OS_HAIKU) || defined(OS_BEOS) || defined(OS_GENERIC) || \
+	defined(OS_QNX) || defined(OS_MINIX)
 /** @brief Loads an SMBIOS table from a legacy physical-memory device. */
 int lazybiosLoadLegacyPhysicalMemory(lazybiosCTX_t* ctx,
 	const char* const* device_paths, size_t device_count,
