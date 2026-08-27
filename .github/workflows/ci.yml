@@ -1,8 +1,8 @@
 # Builds and tests on the three host platforms lazybios supports natively.
 #
-# The runners are virtual machines with their own SMBIOS tables, so the
-# optional host-backend test runs against real firmware data on each of them
-# rather than only against captured dumps.
+# Most runners are virtual machines with their own SMBIOS tables, so the
+# optional host-backend test runs against real firmware data rather than only
+# against captured dumps. The exception is arm64 macOS, where it skips.
 name: CI
 
 on:
@@ -19,9 +19,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,  name: Linux }
-          - { os: macos-latest,   name: macOS }
-          - { os: windows-latest, name: Windows }
+          - { os: ubuntu-latest,   name: Linux }
+          - { os: macos-latest,    name: macOS }
+          # macos-latest is Apple Silicon, which has no SMBIOS at all: the
+          # hardware description lives in a device tree and AppleSMBIOS is an
+          # Intel-only kext, so the host-backend test can only ever skip there.
+          # This image is the last x86_64 macOS runner GitHub offers, available
+          # until August 2027, and the only place the macOS backend actually
+          # reads firmware.
+          - { os: macos-15-intel,  name: macOS-Intel }
+          - { os: windows-latest,  name: Windows }
 
     steps:
       - uses: actions/checkout@v6
