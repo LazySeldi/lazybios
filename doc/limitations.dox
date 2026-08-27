@@ -13,7 +13,8 @@
  * - OpenBSD host loading uses `/var/run/dmesg.boot` as an address hint before
  *   falling back to the legacy `/dev/mem` firmware window.
  * - FreeBSD host loading uses the `hint.smbios.0.mem` kernel environment value
- *   before falling back to the legacy `/dev/mem` firmware window.
+ *   before falling back to the legacy `/dev/mem` firmware window. Its
+ *   derivatives select the same backend and carry the same caveat.
  * - DragonFly BSD host loading uses the `hint.smbios.0.mem` kernel environment
  *   value before falling back to the legacy `/dev/mem` firmware window.
  * - NetBSD host loading uses `machdep.smbios` with the address-based

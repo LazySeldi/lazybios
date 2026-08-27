@@ -13,7 +13,7 @@
 - **OEM Extensions** - Initial experimental support for HP Type 204 and Dell Types 177, 212, and 218 OEM-specific structures (More coming soon). dmidecode was used as a reference for these OEM types. 
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup.
-- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, ReactOS, QNX Neutrino, and MINIX 3.
+- **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD (and its derivatives, including MidnightBSD), NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, ReactOS, QNX Neutrino, and MINIX 3.
 - **Human-readable values** - Every bitfield and enum is decoded during parsing into a `decoded` member, alongside the raw encoding. Nothing to call.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
@@ -73,6 +73,7 @@ populated it at all.
    **macOS support:** Implemented using the AppleSMBIOS I/O Registry service through IOKit and CoreFoundation. \
    **OpenBSD support:** Implemented via `/var/run/dmesg.boot` discovery and validated `/dev/mem` access. \
    **FreeBSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access. \
+   **FreeBSD derivative support:** MidnightBSD is matched by name because it renames itself in `newvers.sh`. GhostBSD, HardenedBSD, TrueNAS CORE, pfSense, OPNsense, and CheriBSD all keep the FreeBSD operating-system name and select the FreeBSD backend automatically. \
    **NetBSD support:** Implemented via `machdep.smbios` and the address-based `/dev/smbios` interface, with `/dev/mem` fallbacks. \
    **SunOS (Solaris/illumos) support:** Implemented via the offset-aware `/dev/smbios` snapshot, with a legacy `/dev/mem` fallback. \
    **DragonFly BSD support:** Implemented via the `hint.smbios.0.mem` kernel environment value and validated `/dev/mem` access. \
@@ -81,7 +82,7 @@ populated it at all.
    **ReactOS support:** Implemented using Win32 firmware-table API calls. \
    **QNX Neutrino support:** Maps the legacy x86 firmware window with `mmap_device_memory()`, falling back to `/dev/mem` when the `PROCMGR_AID_MEM_PHYS` ability is unavailable. \
    **MINIX 3 support:** Uses the same validated legacy x86 physical-memory loader through `/dev/mem`.
-2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, ReactOS, QNX Neutrino, and MINIX 3. File-based parsing is available independently of the selected host backend.
+2. Host loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD (and its derivatives, including MidnightBSD), NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, ReactOS, QNX Neutrino, and MINIX 3. File-based parsing is available independently of the selected host backend.
 3. The library is nearing a very stable status. Features are unlikely to change!
 
 ---
