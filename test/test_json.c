@@ -365,7 +365,8 @@ int main(int argc, char* argv[]) {
     }
     cJSON *root = cJSON_CreateObject();
     const int from_files = (entry_file != NULL && dmi_file != NULL);
-    if (from_files ? lazybiosFile(ctx, entry_file, dmi_file) != 0 : lazybiosInit(ctx) != 0) {
+    if (lazybiosInit(ctx, from_files ? entry_file : NULL,
+                          from_files ? dmi_file   : NULL) != 0) {
         fprintf(stderr, "Failed to load SMBIOS data\n");
         cJSON_Delete(root);
         lazybiosCleanup(ctx);

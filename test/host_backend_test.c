@@ -34,7 +34,7 @@ int main(void) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return EXIT_FAILURE;
 
-	if (lazybiosInit(ctx) != 0) {
+	if (lazybiosInit(ctx, NULL, NULL) != 0) {
 		fprintf(stderr,
 			"host SMBIOS data is unavailable or requires additional privileges\n");
 		lazybiosCleanup(ctx);

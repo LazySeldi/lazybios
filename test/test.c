@@ -3647,19 +3647,19 @@ int main(int argc, const char* argv[]) {
 
     // We initialize from custom files ONLY if specified
     if (entry_file && dmi_file) {
-        if (lazybiosFile(ctx, entry_file, dmi_file) != 0) {
+        if (lazybiosInit(ctx, entry_file, dmi_file) != 0) {
             fprintf(stderr, "Failed to initialize lazybios from files\n");
             lazybiosCleanup(ctx);
             return -1;
         }
     } else if (single_file) {
-        if (lazybiosSingleFile(ctx, single_file) != 0) {
+        if (lazybiosInit(ctx, NULL, single_file) != 0) {
             fprintf(stderr, "Failed to initialize lazybios from single file\n");
             lazybiosCleanup(ctx);
             return -1;
         }
     } else {
-        if (lazybiosInit(ctx) != 0) {
+        if (lazybiosInit(ctx, NULL, NULL) != 0) {
             fprintf(stderr, "Failed to initialize lazybios library\n");
             lazybiosCleanup(ctx);
             return -1;

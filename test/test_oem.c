@@ -54,12 +54,12 @@ int main(int argc, char* argv[]) {
     }
 
     if (entry_file && dmi_file) {
-        if (lazybiosFile(ctx, entry_file, dmi_file) != 0) {
+        if (lazybiosInit(ctx, entry_file, dmi_file) != 0) {
             fprintf(stderr, "Failed to load source files\n");
             lazybiosCleanup(ctx);
             return -1;
         }
-    } else if (lazybiosInit(ctx) != 0) {
+    } else if (lazybiosInit(ctx, NULL, NULL) != 0) {
         fprintf(stderr, "Failed to initialize lazybios context\n");
         lazybiosCleanup(ctx);
         return -1;
