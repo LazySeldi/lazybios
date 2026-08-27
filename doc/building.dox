@@ -13,14 +13,15 @@
  * On macOS, CMake locates and links the system IOKit and CoreFoundation
  * frameworks required by the AppleSMBIOS backend.
  * Linux, Windows, ReactOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos),
- * DragonFly BSD, Haiku, and BeOS use interfaces supplied by their base systems;
+ * DragonFly BSD, Haiku, BeOS, QNX Neutrino, and MINIX 3 use interfaces
+ * supplied by their base systems;
  * CMake selects the matching backend source for the target operating system
  * (including ReactOS via `cmake-files/reactOS.cmake`). An unrecognized target
  * selects the generic `/dev/mem` source, which assumes a POSIX-like x86 environment.
  *
  * Operating system definition macros (such as `OS_LINUX`, `OS_WINDOWS`, `OS_REACTOS`,
  * `OS_MACOS`, `OS_FREEBSD`, `OS_OPENBSD`, `OS_NETBSD`, `OS_DRAGONFLY`, `OS_SUNOS`,
- * `OS_HAIKU`, `OS_BEOS`, and `OS_GENERIC`) are centrally managed and defined by
+ * `OS_HAIKU`, `OS_BEOS`, `OS_QNX`, `OS_MINIX`, and `OS_GENERIC`) are centrally managed and defined by
  * CMake compile definitions rather than compiler-provided host preprocessor macros
  * in internal headers, ensuring reliable cross-compilation behavior.
  * File-based parsing is the portable alternative.

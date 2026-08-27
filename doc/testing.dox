@@ -74,8 +74,9 @@
  * Operating-system calls themselves, including FreeBSD and DragonFly BSD
  * `kenv(2)`, NetBSD's `sysctlbyname`, the NetBSD and SunOS
  * (Solaris/illumos) `/dev/smbios` interfaces, and the physical-memory access
- * used by Haiku, BeOS, and the generic fallback (`mmap`, `pread`, and
- * `lseek`/`read`) are integration-tested on their native systems; fuzzing
+ * used by Haiku, BeOS, MINIX 3, and the generic fallback (`mmap`, `pread`,
+ * and `lseek`/`read`), and QNX's `mmap_device_memory()`, are
+ * integration-tested on their native systems; fuzzing
  * covers the byte-processing code after those calls return. Enable the
  * optional native check with
  * `LAZYBIOS_TEST_HOST_BACKEND=ON`. CTest reports it as skipped when the host

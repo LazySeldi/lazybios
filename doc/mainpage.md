@@ -67,7 +67,8 @@ in @ref core_concepts.
 ## Data sources
 
 lazybios reads from the host system on Linux, Windows, macOS, OpenBSD, FreeBSD,
-NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
+NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, ReactOS, QNX
+Neutrino, and MINIX 3.
 
 It can also parse saved table dumps, which needs no privileges and works on any
 build platform. That makes dump files the practical choice for testing and for

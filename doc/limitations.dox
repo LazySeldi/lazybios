@@ -25,6 +25,13 @@
  * - Haiku and BeOS host loading scans only the legacy x86
  *   firmware window through `/dev/misc/mem` or `/dev/mem`. A failed mapping is
  *   retried with `pread`, then `lseek` and `read`.
+ * - QNX Neutrino host loading maps the legacy x86 firmware window with
+ *   `mmap_device_memory()`, which needs the `PROCMGR_AID_MEM_PHYS` ability.
+ *   Without it the backend falls back to `/dev/mem`. AArch64 targets have no
+ *   legacy window and fail cleanly.
+ * - MINIX 3 host loading scans only the legacy x86 firmware window through
+ *   `/dev/mem`, with the same mapping and positional-read fallbacks as Haiku
+ *   and BeOS.
  * - All `/dev/mem` paths remain subject to platform permissions, securelevel,
  *   and physical-memory access policy.
  * - @ref LAZYBIOS_BACKEND_GENERIC assumes an unrecognized POSIX-like x86

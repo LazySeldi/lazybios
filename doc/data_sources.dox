@@ -17,10 +17,10 @@
  *
  * Native host acquisition is kept in one source file per platform under
  * `src/backends/`. Shared validation, conversion, and the common legacy
- * physical-memory reader used by Haiku, BeOS, and the generic backend live in
- * `src/backend.c`, while `src/lazybios.c` selects and dispatches the active
- * backend. The physical-memory portion of `src/backend.c` is compiled only for
- * those three targets.
+ * physical-memory reader used by Haiku, BeOS, QNX Neutrino, MINIX 3, and the
+ * generic backend live in `src/backend.c`, while `src/lazybios.c` selects and
+ * dispatches the active backend. The physical-memory portion of
+ * `src/backend.c` is compiled only for those targets.
  *
  * @section sources_linux Linux
  *
@@ -162,6 +162,37 @@
  * The ReactOS backend obtains the DMI table using the Win32 `GetSystemFirmwareTable`
  * API. It operates similarly to the Windows backend, constructing a compatible
  * entry point from the returned table metadata.
+ *
+ * @section sources_qnx QNX Neutrino
+ *
+ * The QNX backend maps physical memory directly with `mmap_device_memory()`,
+ * which QNX documents as the interface for this purpose and which wraps
+ * `mmap` with `MAP_PHYS` and `NOFD`. No device node is involved, so the
+ * backend does not depend on `/dev/mem` being enabled. It reads the legacy x86
+ * firmware window from `0xF0000` through `0xFFFFF`, validates the selected
+ * entry point, and then maps the physical structure-table range described by
+ * it. Each mapping is page-aligned and released with
+ * `munmap_device_memory()`.
+ *
+ * Mapping physical memory requires the `PROCMGR_AID_MEM_PHYS` ability. A
+ * process without it fails at the first mapping and the backend falls back to
+ * the shared legacy `/dev/mem` reader, which retries with `mmap`, then
+ * `pread`, then `lseek` plus `read`.
+ *
+ * Only x86 targets attempt either path. QNX also runs on AArch64, where no
+ * legacy firmware window exists; those builds report the missing window
+ * instead of scanning an address range that cannot hold an entry point.
+ *
+ * @section sources_minix MINIX 3
+ *
+ * The MINIX backend reads the legacy x86 firmware window through `/dev/mem`
+ * and shares the Haiku and BeOS mapping, positional-read, validation, and
+ * cleanup behavior. MINIX exposes physical memory through its memory driver,
+ * so access is subject to the permissions that driver enforces.
+ *
+ * Like the other legacy-window backends, it does not consume an SMBIOS
+ * entry-point address published only through a modern firmware interface, and
+ * it fails cleanly on non-x86 targets.
  *
  * @section sources_unknown Unknown platforms
  *

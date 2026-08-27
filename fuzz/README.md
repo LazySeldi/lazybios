@@ -153,12 +153,13 @@ The HTML report is written to
 `build-fuzz-coverage/coverage/html/index.html`.
 
 The platform-neutral parts of the Windows, macOS, Linux, OpenBSD, FreeBSD,
-NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and generic
-backends are fuzzed by `fuzz_backend_buffers`. This includes NetBSD's
+NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, QNX Neutrino,
+MINIX 3, and generic backends are fuzzed by `fuzz_backend_buffers`. This includes NetBSD's
 checksum-validated SMBIOS 2.x/3.x table-address and table-length extraction.
 Calls into `GetSystemFirmwareTable`, IOKit, sysfs, EFI systab, OpenBSD dmesg,
 FreeBSD and DragonFly BSD `kenv`, NetBSD `sysctlbyname`, `/dev/smbios`,
-`/dev/mem`, `/dev/misc/mem`, `mmap`, `pread`, `lseek`/`read`, and permission
+`/dev/mem`, `/dev/misc/mem`, QNX `mmap_device_memory`, `mmap`, `pread`,
+`lseek`/`read`, and permission
 handling remain platform integration work. Exercise them on a native machine
 with:
 
