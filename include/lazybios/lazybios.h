@@ -60,7 +60,11 @@ typedef enum {
  */
 
 /** @brief Complete lazybios semantic version string. */
+#if defined(_WIN32) && !defined(LAZYBIOS_STATIC)
+__declspec(dllexport) extern const char lazybiosVersion[]; // Windows being windows
+#else
 extern const char lazybiosVersion[];
+#endif
 
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 3
