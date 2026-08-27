@@ -1,0 +1,73 @@
+# Builds the Doxygen documentation and publishes it to GitHub Pages.
+#
+# Nothing generated is committed: the HTML is uploaded straight from the
+# runner as a Pages artifact, so docs/ stays gitignored and the repository
+# never carries a copy of its own output.
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow one deployment at a time. Queued runs wait rather than cancel, so a
+# deployment that has already started is never left half-applied.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Pinned rather than taken from apt, for two reasons: the Doxyfile uses
+      # MARKDOWN_ID_STYLE, which needs 1.10 or newer, and WARN_AS_ERROR is set
+      # to FAIL_ON_WARNINGS, so an older Doxygen warning about an unsupported
+      # tag would fail the run. Pinning also keeps CI output identical to a
+      # local `cmake --build build --target docs`.
+      #
+      # Doxygen must be on PATH before CMake configures: the `docs` target only
+      # exists when find_package(Doxygen) succeeds.
+      - name: Install Doxygen
+        env:
+          DOXYGEN_VERSION: 1.18.0
+        run: |
+          curl -fsSL -o doxygen.tar.gz \
+            "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz"
+          tar -xzf doxygen.tar.gz
+          sudo install -m 755 "doxygen-${DOXYGEN_VERSION}/bin/doxygen" /usr/local/bin/
+          rm -rf doxygen.tar.gz "doxygen-${DOXYGEN_VERSION}"
+          doxygen --version
+
+      - uses: actions/configure-pages@v5
+
+      - name: Build documentation
+        run: |
+          cmake -S . -B build
+          cmake --build build --target docs
+
+      # WARN_AS_ERROR = FAIL_ON_WARNINGS already fails the step above, but the
+      # log is the useful artifact when it does.
+      - name: Show Doxygen warnings
+        if: always()
+        run: cat docs/doxygen-warnings.log || true
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
