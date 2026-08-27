@@ -43,9 +43,16 @@ lazybiosOemDellType218Array_t* lazybiosGetOemDellType218(const lazybiosDMI_t* DM
     lazybiosOemDellType218Array_t* out = calloc(1, sizeof(*out));
     if (!out) return NULL;
 
-    const uint8_t *p = DMIData->dmi_data;
     const uint8_t *end = DMIData->dmi_data + DMIData->dmi_len;
-    const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_DELL_TYPE218);
+    size_t count;
+    const uint8_t *p;
+    if (DMIData->index_valid != 1) {
+        count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_DELL_TYPE218);
+        p = DMIData->dmi_data;
+    } else {
+        count = DMIData->index[SMBIOS_OEM_DELL_TYPE218].count;
+        p = DMIData->dmi_data + DMIData->index[SMBIOS_OEM_DELL_TYPE218].first;
+    }
     size_t index = 0;
 
     if (count == 0) return out;
@@ -60,14 +67,13 @@ lazybiosOemDellType218Array_t* lazybiosGetOemDellType218(const lazybiosDMI_t* DM
         uint8_t type = p[0];
         uint8_t len = p[1];
         if (len < SMBIOS_HEADER_SIZE) break;
+        const uint8_t *structure_end = DMINext(p, end);
 
         if (type == SMBIOS_OEM_DELL_TYPE218) {
             lazybiosOemDellType218_t *current = &out->entries[index];
             LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
             current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
             current->length = len;
-            const uint8_t *structure_end = DMINext(p, end);
-            (void)structure_end;
 
             READU16(current, command_io_address, len, COMMAND_IO_ADDR, p);
             READU8(current, command_io_code, len, COMMAND_IO_CODE, p);
@@ -101,7 +107,7 @@ lazybiosOemDellType218Array_t* lazybiosGetOemDellType218(const lazybiosDMI_t* DM
 
             index++;
         }
-        p = DMINext(p, end);
+        p = structure_end;
     }
 
     out->count = index;

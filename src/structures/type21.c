@@ -65,10 +65,17 @@ lazybiosType21Array_t* lazybiosGetType21(const lazybiosDMI_t* DMIData) {
 	lazybiosType21Array_t* out = calloc(1, sizeof(*out));
 	if (!out) return NULL;
 
-	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BUILT_IN_POINTING_DEVICE);
+	size_t count;
+	const uint8_t* p;
+	if (DMIData->index_valid != 1) {
+	    count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_BUILT_IN_POINTING_DEVICE);
+	    p = DMIData->dmi_data;
+	} else {
+	    count = DMIData->index[SMBIOS_TYPE_BUILT_IN_POINTING_DEVICE].count;
+	    p = DMIData->dmi_data + DMIData->index[SMBIOS_TYPE_BUILT_IN_POINTING_DEVICE].first;
+	}
 	size_t index = 0;
 
 	if (count == 0) return out;

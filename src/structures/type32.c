@@ -51,10 +51,17 @@ lazybiosType32Array_t* lazybiosGetType32(const lazybiosDMI_t* DMIData) {
 	lazybiosType32Array_t* out = calloc(1, sizeof(*out));
 	if (!out) return NULL;
 
-	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION);
+	size_t count;
+	const uint8_t* p;
+	if (DMIData->index_valid != 1) {
+	    count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION);
+	    p = DMIData->dmi_data;
+	} else {
+	    count = DMIData->index[SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION].count;
+	    p = DMIData->dmi_data + DMIData->index[SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION].first;
+	}
 	size_t index = 0;
 
 	if (count == 0) return out;

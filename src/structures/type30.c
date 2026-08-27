@@ -42,10 +42,17 @@ lazybiosType30Array_t* lazybiosGetType30(const lazybiosDMI_t* DMIData) {
 	lazybiosType30Array_t* out = calloc(1, sizeof(*out));
 	if (!out) return NULL;
 
-	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS);
+	size_t count;
+	const uint8_t* p;
+	if (DMIData->index_valid != 1) {
+	    count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS);
+	    p = DMIData->dmi_data;
+	} else {
+	    count = DMIData->index[SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS].count;
+	    p = DMIData->dmi_data + DMIData->index[SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS].first;
+	}
 	size_t index = 0;
 
 	if (count == 0) return out;
@@ -60,6 +67,7 @@ lazybiosType30Array_t* lazybiosGetType30(const lazybiosDMI_t* DMIData) {
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 		if (len < SMBIOS_HEADER_SIZE) break;
+		const uint8_t* structure_end = DMINext(p, end);
 
 		if (type == SMBIOS_TYPE_OUT_OF_BAND_REMOTE_ACCESS) {
 			if (index >= count) break;
@@ -67,7 +75,6 @@ lazybiosType30Array_t* lazybiosGetType30(const lazybiosDMI_t* DMIData) {
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
 			current->length = len;
-			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, manufacturer_name, len, MANUFACTURER_NAME, p, structure_end);
 			READU8(current, connections, len, CONNECTIONS, p);
@@ -77,7 +84,7 @@ lazybiosType30Array_t* lazybiosGetType30(const lazybiosDMI_t* DMIData) {
 
 			index++;
 		}
-		p = DMINext(p, end);
+		p = structure_end;
 	}
 	out->count = index;
 	return out;

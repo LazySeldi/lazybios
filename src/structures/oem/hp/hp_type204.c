@@ -43,9 +43,16 @@ lazybiosOemHpType204Array_t* lazybiosGetOemHpType204(const lazybiosDMI_t* DMIDat
 	lazybiosOemHpType204Array_t* out = calloc(1, sizeof(*out));
 	if (!out) return NULL;
 
-	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
-	const size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_HP_TYPE204);
+	size_t count;
+	const uint8_t* p;
+	if (DMIData->index_valid != 1) {
+	    count = lazybiosCountStructsByType(DMIData, SMBIOS_OEM_HP_TYPE204);
+	    p = DMIData->dmi_data;
+	} else {
+	    count = DMIData->index[SMBIOS_OEM_HP_TYPE204].count;
+	    p = DMIData->dmi_data + DMIData->index[SMBIOS_OEM_HP_TYPE204].first;
+	}
 	size_t index = 0;
 
 	if (count == 0) return out;
@@ -60,13 +67,13 @@ lazybiosOemHpType204Array_t* lazybiosGetOemHpType204(const lazybiosDMI_t* DMIDat
 		uint8_t type = p[0];
 		uint8_t len = p[1];
 		if (len < SMBIOS_HEADER_SIZE) break;
+		const uint8_t* structure_end = DMINext(p, end);
 
 		if (type == SMBIOS_OEM_HP_TYPE204) {
 			lazybiosOemHpType204_t* current = &out->entries[index];
 			LAZYBIOS_CLAMP_STRUCTURE_LENGTH(len, p, end);
 			current->handle = (uint16_t)((uint16_t)p[2] | ((uint16_t)p[3] << 8));
 			current->length = len;
-			const uint8_t* structure_end = DMINext(p, end);
 
 			READSTR(current, rack_name, len, RACK_NAME, p, structure_end);
 		    READSTR(current, enclosure_name, len, ENCLOSURE_NAME, p, structure_end);
@@ -78,7 +85,7 @@ lazybiosOemHpType204Array_t* lazybiosGetOemHpType204(const lazybiosDMI_t* DMIDat
 
 			index++;
 		}
-		p = DMINext(p, end);
+		p = structure_end;
 	}
 	out->count = index;
 	return out;

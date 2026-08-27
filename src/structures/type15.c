@@ -113,10 +113,17 @@ lazybiosType15Array_t* lazybiosGetType15(const lazybiosDMI_t* DMIData) {
 	lazybiosType15Array_t* out = calloc(1, sizeof(*out));
 	if (!out) return NULL;
 
-	const uint8_t* p = DMIData->dmi_data;
 	const uint8_t* end = DMIData->dmi_data + DMIData->dmi_len;
 
-	size_t count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_EVENT_LOG);
+	size_t count;
+	const uint8_t* p;
+	if (DMIData->index_valid != 1) {
+	    count = lazybiosCountStructsByType(DMIData, SMBIOS_TYPE_SYSTEM_EVENT_LOG);
+	    p = DMIData->dmi_data;
+	} else {
+	    count = DMIData->index[SMBIOS_TYPE_SYSTEM_EVENT_LOG].count;
+	    p = DMIData->dmi_data + DMIData->index[SMBIOS_TYPE_SYSTEM_EVENT_LOG].first;
+	}
 	size_t index = 0;
 
 	if (count == 0) return out;
