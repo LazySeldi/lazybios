@@ -63,6 +63,8 @@ Every parsed field comes with three views — the raw encoding the firmware wrot
 a decoded form in `decoded`, and a `field_status` saying whether the firmware
 populated it at all.
 
+- **[Documentation](https://lazyseldi.github.io/lazybios)** - For the full Doxygen documentation
+
 ---
 
 ## Project Status
