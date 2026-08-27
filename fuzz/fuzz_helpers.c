@@ -51,7 +51,7 @@ static void fuzz_unavailable_init(uint8_t selector) {
 		backends[selector % (sizeof(backends) / sizeof(backends[0]))];
 	if (selected == ctx->backend) selected = LAZYBIOS_BACKEND_UNKNOWN;
 	ctx->backend = selected;
-	fuzz_sink_val((uint64_t)lazybiosInit(ctx));
+	fuzz_sink_val((uint64_t)lazybiosInit(ctx, NULL, NULL));
 	lazybiosCleanup(ctx);
 }
 

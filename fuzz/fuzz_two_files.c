@@ -18,11 +18,12 @@
  */
 /**
  * @file fuzz_two_files.c
- * @brief libFuzzer target for lazybiosFile() and the parsers behind it.
+ * @brief libFuzzer target for the two-file loader and the parsers behind it.
  *
- * This is the shape a Linux host load takes: lazybiosInit() hands the two
- * sysfs files (smbios_entry_point and DMI) to lazybiosFile(). The input is
- * split at a length prefix into those two files.
+ * This is the shape a Linux host load takes: lazybiosInit() is given the two
+ * sysfs files (smbios_entry_point and DMI). The input is split at a length
+ * prefix into those two files. Loading through lazybiosInit() also builds the
+ * type index, so the index is fuzzed against the same arbitrary tables.
  */
 
 #include "fuzz_common.h"
@@ -88,7 +89,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return 0;
 
-	if (lazybiosFile(ctx, entry_path, dmi_path) == 0)
+	if (lazybiosInit(ctx, entry_path, dmi_path) == 0)
 		fuzz_parse_all_types(ctx);
 
 	lazybiosCleanup(ctx);

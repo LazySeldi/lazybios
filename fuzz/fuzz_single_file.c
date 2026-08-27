@@ -18,11 +18,11 @@
  */
 /**
  * @file fuzz_single_file.c
- * @brief libFuzzer target for lazybiosSingleFile() and the parsers behind it.
+ * @brief libFuzzer target for the merged-file loader and the parsers behind it.
  *
  * The input is written to a scratch file and loaded back through the public
- * merged-file loader, so the entry point sizing, seeking and short-read paths
- * are exercised together with the structure parsers.
+ * merged-file path, so the entry point sizing, seeking and short-read paths
+ * are exercised together with the structure parsers and the type index.
  */
 
 #include "fuzz_common.h"
@@ -68,7 +68,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return 0;
 
-	if (lazybiosSingleFile(ctx, scratch_path) == 0)
+	if (lazybiosInit(ctx, NULL, scratch_path) == 0)
 		fuzz_parse_all_types(ctx);
 
 	lazybiosCleanup(ctx);
