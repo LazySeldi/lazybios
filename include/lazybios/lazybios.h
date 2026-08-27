@@ -61,17 +61,22 @@ typedef enum {
 
 /** @brief Complete lazybios semantic version string. */
 /*
- * WINDOWS_EXPORT_ALL_SYMBOLS exports this from the DLL on its own, but a
- * consumer still has to reference it through an import stub, so it needs
- * dllimport here. Marking it dllexport instead makes the consumer emit the
- * bare symbol name and the link fails. CMake defines lazybios_EXPORTS only
- * while compiling the library itself.
+ * WINDOWS_EXPORT_ALL_SYMBOLS auto-exports functions but not data, so this one
+ * carries its own markup, and the two sides need different keywords: the DLL
+ * exports it, a consumer imports it. CMake defines lazybios_EXPORTS only while
+ * compiling the library itself, which is what tells the two apart.
  */
-#if defined(_WIN32) && !defined(LAZYBIOS_STATIC) && !defined(lazybios_EXPORTS)
-__declspec(dllimport) extern const char lazybiosVersion[];
+#if defined(_WIN32) && !defined(LAZYBIOS_STATIC)
+#  if defined(lazybios_EXPORTS)
+#    define LAZYBIOS_DATA __declspec(dllexport)
+#  else
+#    define LAZYBIOS_DATA __declspec(dllimport)
+#  endif
 #else
-extern const char lazybiosVersion[];
+#  define LAZYBIOS_DATA
 #endif
+
+LAZYBIOS_DATA extern const char lazybiosVersion[];
 
 /** @brief Major component of the lazybios version. */
 #define LAZYBIOS_MAJOR 3
