@@ -8,12 +8,13 @@
 
 - **SMBIOS Version Detection** - Supports SMBIOS 2.x and 3.x(and future ones).
 - **Clean C API** - Simple function calls, only 3 steps to ensure memory-safety. Getters return a result set that keeps each array and its count together.
+- **Fast** - The table is indexed once at load, so parsers jump straight to the structures they want instead of rescanning the whole table.
 - **Library Extensions** - Built-in cJSON output supports every implemented standard SMBIOS type (0-46), plus the supported OEM structures.
 - **OEM Extensions** - Initial experimental support for HP Type 204 and Dell Types 177, 212, and 218 OEM-specific structures (More coming soon). dmidecode was used as a reference for these OEM types. 
 - **Zero Dependencies** - Pure C standard library, except libc.
 - **Memory Safe** - Proper allocation and cleanup.
 - **Cross Platform** - Host SMBIOS loading is supported on Linux, Windows, macOS, OpenBSD, FreeBSD, NetBSD, SunOS (Solaris/illumos), DragonFly BSD, Haiku, BeOS, and ReactOS.
-- **Human-readable decoders** - Convert SMBIOS bitfields and enums into readable strings with built-in helper functions.
+- **Human-readable values** - Every bitfield and enum is decoded during parsing into a `decoded` member, alongside the raw encoding. Nothing to call.
 - **Easy to integrate** - Works naturally from C, C++, and other languages capable of calling C APIs.
 - **Always up-to-date** - Implemented against the latest published DMTF SMBIOS specification.
 - **Architectures:** x86_64, ARM (32/64), RISC-V 64(Did run on RISC-V, but not heavily tested), and others.
@@ -25,7 +26,7 @@
 #include <lazybios/lazybios.h>
 
 lazybiosCTX_t* ctx = lazybiosCTXNew();
-if (!ctx || lazybiosInit(ctx) != 0) return 1;       /* read this machine */
+if (!ctx || lazybiosInit(ctx, NULL, NULL) != 0) return 1;  /* read this machine */
 
 ctx->Type17 = lazybiosGetType17(ctx->DMIData);      /* memory devices */
 if (!ctx->Type17) { lazybiosCleanup(ctx); return 1; } /* free the old pointer if it exists */
@@ -42,6 +43,21 @@ lazybiosCleanup(ctx);                               /* frees everything above */
 
 Three steps: make a context, load data into it, parse what you need. The context
 owns whatever it hands you, so one `lazybiosCleanup` releases all of it.
+
+`lazybiosInit` is the only loader, and its two path arguments pick the source:
+
+```c
+lazybiosInit(ctx, NULL, NULL);                        /* this machine        */
+lazybiosInit(ctx, NULL, "dump.bin");                  /* one merged file     */
+lazybiosInit(ctx, "smbios_entry_point", "DMI");       /* two separate files  */
+```
+
+The file modes need no privileges and behave identically everywhere, which makes
+them the practical way to test or to reproduce a report from another machine.
+
+Want the whole table instead of a few types? `lazybiosParseAll(ctx)` fills every
+member in one call, and `lazybiosParseJSONAll(ctx, root)` does the same straight
+into a cJSON tree.
 
 Every parsed field comes with three views — the raw encoding the firmware wrote,
 a decoded form in `decoded`, and a `field_status` saying whether the firmware

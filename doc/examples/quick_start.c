@@ -5,7 +5,7 @@ int read_host_bios(void) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return -1;
 
-	if (lazybiosInit(ctx) != 0) {
+	if (lazybiosInit(ctx, NULL, NULL) != 0) {
 		lazybiosCleanup(ctx);
 		return -1;
 	}
@@ -26,7 +26,7 @@ int read_dump_files(const char* entry_path, const char* dmi_path) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return -1;
 
-	if (lazybiosFile(ctx, entry_path, dmi_path) != 0) {
+	if (lazybiosInit(ctx, entry_path, dmi_path) != 0) {
 		lazybiosCleanup(ctx);
 		return -1;
 	}
@@ -43,11 +43,27 @@ int read_merged_dump(const char* binary_path) {
 	lazybiosCTX_t* ctx = lazybiosCTXNew();
 	if (!ctx) return -1;
 
-	int result = lazybiosSingleFile(ctx, binary_path);
+	int result = lazybiosInit(ctx, NULL, binary_path);
 	lazybiosCleanup(ctx);
 	return result;
 }
 //! [merged-file]
+
+//! [parse-all]
+int parse_everything(lazybiosCTX_t* ctx) {
+	if (lazybiosParseAll(ctx) != 0) return -1;
+
+	/* Every implemented type is now populated, or NULL if that parse failed. */
+	if (ctx->Type17) {
+		for (size_t i = 0; i < ctx->Type17->count; ++i) {
+			const char* locator = ctx->Type17->entries[i].device_locator;
+			(void)locator;
+		}
+	}
+
+	return 0;
+}
+//! [parse-all]
 
 //! [processor-array]
 int inspect_processors(lazybiosCTX_t* ctx) {
