@@ -13,8 +13,10 @@
  *
  * @subsection ext_json_api API Overview
  *
- * - @ref lazybiosExtJSONAddSMBIOSInfo serializes entry-point metadata and the
- *   lazybios version under the `smbios_info` key.
+ * - @ref lazybiosExtJSONAddSMBIOSInfo serializes entry-point metadata under the
+ *   `smbios_info` key, including the SMBIOS version the firmware reported. The
+ *   lazybios version itself is written at the root as `lazybios_version`, since
+ *   it describes the tool rather than the machine.
  * - @ref lazybiosExtJSONAddType0 through @ref lazybiosExtJSONAddType46
  *   serialize every standard SMBIOS type currently implemented by lazybios.
  *   Each function attaches its result under the matching `TypeN` key.
@@ -22,6 +24,21 @@
  *   structures. Because OEM structure numbers are only meaningful together
  *   with their vendor, these attach under a vendor-qualified key such as
  *   `DellType212` rather than a bare `TypeN`.
+ * - @ref lazybiosParseJSONAll does the whole job in one call: it parses every
+ *   implemented type into the context, then runs every serializer above against
+ *   the caller's root. It is the JSON counterpart to @ref lazybiosParseAll and
+ *   inherits its behavior, so types already parsed are reused rather than
+ *   re-parsed.
+ *
+ * @code{.c}
+ * cJSON* root = cJSON_CreateObject();
+ * if (lazybiosParseJSONAll(ctx, root) == 0) {
+ *     char* text = cJSON_Print(root);
+ *     puts(text);
+ *     free(text);
+ * }
+ * cJSON_Delete(root);
+ * @endcode
  *
  * @subsection ext_json_types Supported structures
  *

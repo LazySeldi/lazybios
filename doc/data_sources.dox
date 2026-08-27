@@ -7,9 +7,10 @@
  *
  * @ref lazybiosCTXNew selects a @ref lazybiosBackend_t value from the target
  * platform. Applications may inspect `ctx->backend` before calling
- * @ref lazybiosInit. Backend selection affects only host initialization;
- * @ref lazybiosFile and @ref lazybiosSingleFile provide deterministic input
- * paths for captured tables.
+ * @ref lazybiosInit. Backend selection affects only host loading — that is,
+ * @ref lazybiosInit called with two NULL paths. The file modes described in
+ * @ref sources_separate and @ref sources_merged are deterministic and behave
+ * identically regardless of which backend the build selected.
  * @ref LAZYBIOS_BACKEND_UNKNOWN remains the no-backend sentinel, while
  * @ref LAZYBIOS_BACKEND_GENERIC identifies an active generic fallback on an
  * otherwise unrecognized target.
@@ -173,13 +174,16 @@
  *
  * @section sources_separate Separate entry point and DMI files
  *
- * @ref lazybiosFile expects one raw SMBIOS entry point file and one raw DMI
- * structure-table file. This layout corresponds to the two Linux sysfs files.
- * The function owns copies of both file contents through @ref lazybiosDMI_t.
+ * `lazybiosInit(ctx, entry_path, dmi_path)` expects one raw SMBIOS entry point
+ * file and one raw DMI structure-table file. This layout corresponds to the two
+ * Linux sysfs files, so a table captured from `/sys/firmware/dmi/tables/` can be
+ * replayed as-is. The context owns copies of both file contents through
+ * @ref lazybiosDMI_t.
  *
  * @section sources_merged Merged file
  *
- * @ref lazybiosSingleFile expects the SMBIOS entry point at offset zero. It
+ * `lazybiosInit(ctx, NULL, bin_path)` expects the SMBIOS entry point at offset
+ * zero of a single file. It
  * accepts both a tightly concatenated entry-point-plus-table dump and an image
  * whose entry point contains a valid file-relative table offset, including
  * SunOS (Solaris/illumos) `/dev/smbios` snapshots that align the table with
@@ -188,13 +192,22 @@
  * following the entry point as the table, preserving support for dumps that
  * retain a physical firmware address.
  *
+ * @section sources_index Type index
+ *
+ * Whichever mode succeeded, @ref lazybiosInit finishes by building the per-type
+ * index described in @ref concepts_index, so every loading path arrives at the
+ * parsers with the same cache in place. A table it cannot index leaves
+ * `index_valid` clear and the parsers walk it directly; the parsed results are
+ * the same either way.
+ *
  * @section sources_failure Failure behavior
  *
- * Loading functions return `0` on success and `-1` on invalid input, I/O
+ * @ref lazybiosInit returns `0` on success and `-1` on invalid input, I/O
  * failure, allocation failure, unsupported backend, or invalid entry-point
- * data. A failed load must not be followed by a structure getter. Release the
- * context with @ref lazybiosCleanup before returning or attempting a fresh
- * lifecycle.
+ * data. It also rejects an entry-point path given without a table path, since
+ * the entry point alone describes nothing to parse. A failed load must not be
+ * followed by a structure getter. Release the context with
+ * @ref lazybiosCleanup before returning or attempting a fresh lifecycle.
  *
  * @see @ref api_context
  * @see @ref api_entry

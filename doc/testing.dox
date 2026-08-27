@@ -9,10 +9,12 @@
  *
  * - `lazybios_semantic_test` verifies specification-derived values and public
  *   API contracts. It catches wrong-but-memory-safe behavior such as signed
- *   temperature interpretation.
+ *   temperature interpretation. Several of its cases assemble a
+ *   @ref lazybiosDMI_t by hand, which leaves the type index absent and keeps the
+ *   parsers' table-walking fallback continuously exercised.
  * - Seven libFuzzer targets search for memory errors and undefined behavior in
- *   entry points, DMI tables, decoders, traversal helpers, lifecycle cleanup,
- *   file loaders, and platform-neutral backend transformations.
+ *   entry points, DMI tables, traversal helpers, lifecycle cleanup, file
+ *   loaders, JSON serialization, and platform-neutral backend transformations.
  * - Saved regression inputs replay every previously fixed fuzzing crash.
  *
  * Fuzzing is not an oracle for SMBIOS meaning. Add a semantic test whenever a
@@ -48,9 +50,12 @@
  *
  * @section testing_targets Fuzz target coverage
  *
- * - `fuzz_dmi_table`: every Type 0 through Type 46 getter.
+ * - `fuzz_dmi_table`: every Type 0 through Type 46 getter, plus the OEM getters.
  * - `fuzz_entry_point`: entry-point parsing and version helpers.
- * - `fuzz_decoders`: every public decoder.
+ * - `fuzz_json`: the cJSON serializers, driven from structures parsed out of an
+ *   arbitrary table. Because the serializers read string pointers the parsers
+ *   left pointing into that table, a parser that produced an out-of-bounds or
+ *   unterminated string surfaces here rather than going unnoticed.
  * - `fuzz_helpers`: bounded traversal, counting, partial cleanup, and
  *   unavailable backend dispatch.
  * - `fuzz_backend_buffers`: Windows RawSMBIOSData conversion, raw-buffer
@@ -59,8 +64,12 @@
  *   extraction used by NetBSD.
  * - `fuzz_single_file`: offset-aware and tightly concatenated merged files,
  *   including entry-point sizing, padding, seeking, and short reads.
- * - `fuzz_two_files`: the separate entry-point and table loader on POSIX
+ * - `fuzz_two_files`: the separate entry-point and table input mode on POSIX
  *   platforms.
+ *
+ * The two file targets load through @ref lazybiosInit, so the type index is
+ * built from every arbitrary table they generate and is fuzzed alongside the
+ * loaders themselves.
  *
  * Operating-system calls themselves, including FreeBSD and DragonFly BSD
  * `kenv(2)`, NetBSD's `sysctlbyname`, the NetBSD and SunOS

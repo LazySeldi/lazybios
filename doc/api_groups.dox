@@ -1,6 +1,6 @@
 /**
  * @defgroup api Public API
- * @brief Entry points, data types, constants, and decoders exposed by lazybios.
+ * @brief Entry points, data types, constants, and macros exposed by lazybios.
  */
 
 /**
@@ -18,7 +18,7 @@
 /**
  * @defgroup api_parsing Core Parsing Helpers
  * @ingroup api
- * @brief DMI traversal, string extraction, entry parsing, and version reporting.
+ * @brief Whole-table parsing and SMBIOS version reporting.
  */
 
 /**
@@ -30,7 +30,7 @@
 /**
  * @defgroup api_types SMBIOS Structure APIs
  * @ingroup api
- * @brief Parsers, decoded structures, formatters, and cleanup functions by SMBIOS type.
+ * @brief Parsers, parsed structures, and cleanup functions by SMBIOS type.
  */
 
 /**

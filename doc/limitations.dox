@@ -31,9 +31,9 @@
  *   target with `/dev/mem` or `/dev/misc/mem`; non-x86 targets fail cleanly
  *   instead of scanning the legacy address range. It is not a universal
  *   backend for unknown operating systems or architectures.
- * - File-based loaders remain independent of host backend selection. Merged
- *   files may contain either a tightly concatenated table or a valid embedded
- *   table offset.
+ * - The file input modes of @ref lazybiosInit remain independent of host backend
+ *   selection and need no privileges. Merged files may contain either a tightly
+ *   concatenated table or a valid embedded table offset.
  *
  * @section limits_types Implemented structures
  *
@@ -53,16 +53,30 @@
  *
  * @section limits_normalization Raw representation
  *
- * Entry-point structures and many decoded fields intentionally retain their
- * SMBIOS representation. The API does not normalize all sizes, identifiers,
- * handles, or version-specific alternatives into a single schema. Use the
- * relevant type guide and decoder functions when interpreting those values.
+ * Entry-point structures and many raw fields intentionally retain their SMBIOS
+ * representation. The API does not normalize all sizes, identifiers, handles, or
+ * version-specific alternatives into a single schema. The `decoded` member
+ * carries the interpreted form where one exists; consult the relevant type guide
+ * for the fields where the raw encoding still matters.
  *
  * @section limits_lifetime Lifetime boundaries
  *
- * Pointers returned by getters are allocated. Pointers returned by @ref DMIString
- * refer to the context-owned DMI table. Pointers in
- * the entry union refer to context-owned entry data. Static strings returned by
- * enum decoders must not be freed. See @ref core_concepts for the complete
- * ownership model.
+ * Result sets returned by getters are allocated and are released either by
+ * @ref lazybiosCleanup, when assigned to their context member, or by the
+ * matching `lazybiosFreeType*` function.
+ *
+ * Inside a parsed record, string members fall into two groups. Those that
+ * reproduce a string the firmware wrote point into the context-owned DMI table;
+ * those in `decoded` are either static text or owned by the record and released
+ * with it. Either way, no string member is separately freeable. Pointers in the
+ * entry union refer to context-owned entry data. See @ref core_concepts for the
+ * complete ownership model.
+ *
+ * @section limits_index Type index validity
+ *
+ * The cached type index in @ref lazybiosDMI_t describes the exact `dmi_data`
+ * buffer it was built from. Replacing that buffer on an existing container
+ * without clearing `index_valid` leaves stale offsets behind. Code that
+ * assembles a @ref lazybiosDMI_t by hand rather than through @ref lazybiosInit
+ * should leave `index_valid` at zero and let the parsers walk the table.
  */

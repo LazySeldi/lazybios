@@ -8,13 +8,30 @@
  * Every ordinary workflow follows the same ownership sequence:
  *
  * 1. Allocate a @ref lazybiosCTX with @ref lazybiosCTXNew.
- * 2. Load raw SMBIOS data with @ref lazybiosInit, @ref lazybiosFile, or
- *    @ref lazybiosSingleFile.
- * 3. Parse the required structures with the corresponding getter, which takes
- *    only the raw @ref lazybiosDMI_t table.
+ * 2. Load raw SMBIOS data with @ref lazybiosInit, from the host system or from
+ *    captured files.
+ * 3. Parse the structures you need with the corresponding getter, which takes
+ *    only the raw @ref lazybiosDMI_t table, or parse every implemented type at
+ *    once with @ref lazybiosParseAll.
  * 4. Store the returned result set in the context when @ref lazybiosCleanup
  *    should own it.
  * 5. Call @ref lazybiosCleanup exactly once.
+ *
+ * @section start_modes Choosing an input mode
+ *
+ * @ref lazybiosInit is the only loader. Its two path arguments select where the
+ * data comes from:
+ *
+ * | Call | Source |
+ * | :--- | :--- |
+ * | `lazybiosInit(ctx, NULL, NULL)` | this machine, through the platform backend |
+ * | `lazybiosInit(ctx, NULL, "dump.bin")` | one merged file holding both parts |
+ * | `lazybiosInit(ctx, "smbios_entry_point", "DMI")` | two separate raw files |
+ *
+ * The entry point comes first because it describes the table that follows.
+ * Passing an entry point with no table is rejected. File modes need no
+ * privileges and behave identically on every platform, which makes them the
+ * practical choice for tests and for reproducing a report from another machine.
  *
  * @section start_host Read from the host system
  *
@@ -35,6 +52,15 @@
  * the table holds no structure of that type; NULL means the call itself failed.
  *
  * @snippet quick_start.c processor-array
+ *
+ * @section start_parseall Parse everything at once
+ *
+ * When an application wants the whole table rather than a few types,
+ * @ref lazybiosParseAll fills every context member in one call. It skips
+ * members that are already populated, so calling it after parsing some types by
+ * hand does not strand the earlier results.
+ *
+ * @snippet quick_start.c parse-all
  *
  * @section start_next Next steps
  *

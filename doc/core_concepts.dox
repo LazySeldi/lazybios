@@ -34,6 +34,25 @@
  * The entry union points into `entry_data`; its members become invalid when the
  * context is cleaned up.
  *
+ * @section concepts_index Type index
+ *
+ * @ref lazybiosDMI_t also carries a small cache describing where each structure
+ * type lives in the table: one @ref lazybiosTypeIndex_t per possible type byte,
+ * holding how many structures of that type the table contains and the byte
+ * offset of the first one. @ref lazybiosInit fills it once, after the table is
+ * loaded.
+ *
+ * Parsers use it to size their result array and to start walking at the first
+ * matching structure instead of at the start of the table. Without it, every
+ * getter had to walk the entire table just to count, which dominated parse time
+ * on tables with many structures.
+ *
+ * The cache is an optimization, never a precondition. `index_valid` is zero in
+ * a zero-initialized or hand-assembled @ref lazybiosDMI_t, and the parsers then
+ * walk the table exactly as they did before, producing identical results. Code
+ * that replaces `dmi_data` on an existing container must clear `index_valid`,
+ * since the cached offsets describe the buffer they were built from.
+ *
  * @section concepts_ownership Ownership rules
  *
  * Getters allocate their return values. Each takes only the raw
@@ -42,6 +61,11 @@
  * NULL is reserved for a genuine failure, either unusable arguments or a failed
  * allocation. Because the two cases are distinguishable, a caller can tell
  * "this machine has no TPM" from "we ran out of memory".
+ *
+ * @ref lazybiosParseAll runs every implemented getter and assigns each result to
+ * its context member, so the context owns all of it. It leaves members that are
+ * already populated alone, which makes it safe to call after parsing a few types
+ * by hand and safe to call twice.
  *
  * Assign getter results to the matching context member when using
  * @ref lazybiosCleanup. If a caller keeps a result outside the context, it must
@@ -115,22 +139,14 @@
  * parsed type can include its `lazybios/typeN.h` header directly. Every public
  * header is independently includable from C and C++.
  *
- * @section concepts_decoders Decoder output buffers
+ * @section concepts_internal What is deliberately not exposed
  *
- * Functions ending in `Str` either return a pointer to static text or write
- * formatted text to a caller-provided buffer. For buffer-writing decoders,
- * provide a valid writable buffer and its full capacity. Use
- * @ref LAZYBIOS_DECODER_BUF_SIZE as the baseline capacity unless the decoded
- * bit field can require a larger application-specific buffer.
+ * Decoding is done during parsing, so there are no decoder functions to call
+ * and none are declared in any public header. The table walkers that back the
+ * parsers are internal for the same reason: they take bare pointers into a raw
+ * firmware buffer, and a caller holding one has no way to keep it valid across
+ * a reload. Everything a consumer needs is reachable from the parsed records.
  *
- * @section concepts_traversal Low-level traversal
- *
- * @ref DMINext advances over a formatted structure and its trailing string-set.
- * @ref DMIString returns a pointer to a one-based string entry in the DMI table.
- * @ref lazybiosCountStructsByType counts matching structures before array
- * allocation. These helpers operate on bounded raw buffers; pass the exact end
- * of the DMI allocation.
- *
- * @see @ref api_parsing
+ * @see @ref api_context
  * @see @ref api_constants
  */

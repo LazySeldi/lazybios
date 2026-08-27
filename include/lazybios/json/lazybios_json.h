@@ -538,15 +538,22 @@ void lazybiosExtJSONAddOemDellType218(const lazybiosOemDellType218Array_t* dell2
 void lazybiosExtJSONAddOemHpType204(const lazybiosOemHpType204Array_t* hp204, cJSON* root);
 
 /**
-@brief Parses every implemented structure type and serialises the lot into @p root.
-
-       Equivalent to calling lazybiosParseAll() followed by every
-       lazybiosExtJSONAdd*() function, including "smbios_info". Types already
-       parsed in @p ctx are reused rather than parsed again.
-@param ctx  Context holding loaded SMBIOS data.
-@param root cJSON object to attach the results to.
-@return 0 on success, or -1 if @p ctx holds no usable table or @p root is NULL.
-*/
+ * @brief Parses every implemented structure type and serializes the lot into @p root.
+ * @ingroup api_extensions
+ *
+ * Equivalent to calling @ref lazybiosParseAll followed by every
+ * `lazybiosExtJSONAdd*()` function, including `smbios_info`. Types already
+ * parsed in @p ctx are reused rather than parsed again, so this is safe to call
+ * after parsing some types by hand.
+ *
+ * The parsed structures stay owned by @p ctx; the serializers copy what they
+ * need, so the resulting tree outlives @ref lazybiosCleanup. Release @p root
+ * with `cJSON_Delete()`.
+ *
+ * @param ctx  Context holding loaded SMBIOS data.
+ * @param root cJSON object to attach the results to.
+ * @return 0 on success, or -1 if @p ctx holds no usable table or @p root is NULL.
+ */
 LAZYBIOS_WARN_UNUSED int lazybiosParseJSONAll(lazybiosCTX_t* ctx, cJSON* root);
 
 /** @} */

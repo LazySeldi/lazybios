@@ -39,10 +39,15 @@ Every workflow follows the same three steps: create a context, load data into
 it, then parse the types you care about. The context owns what it hands you, so
 a single @ref lazybiosCleanup at the end releases all of it.
 
+@ref lazybiosInit is the one loader. Two NULL paths read this machine; a single
+path reads a merged dump; two paths read a separate entry point and table. The
+file modes need no privileges and behave the same on every platform.
+
 Each getter returns a result set holding an `entries` array and its `count`, so
 the two can never drift apart. A set whose `count` is zero means the machine has
-none of that structure — an ordinary answer, not a failure. The full lifecycle
-is described in @ref core_concepts.
+none of that structure — an ordinary answer, not a failure. To fill the whole
+context in one call, use @ref lazybiosParseAll. The full lifecycle is described
+in @ref core_concepts.
 
 ## What's covered
 
@@ -56,7 +61,8 @@ is described in @ref core_concepts.
 - **Decoding** — every encoded field is decoded during parsing into `decoded`,
   including multi-flag text. There are no decoder functions to call.
 - **Extensions** — JSON output for every standard and OEM type, described in
-  @ref extensions.
+  @ref extensions. @ref lazybiosParseJSONAll serializes the whole table in one
+  call.
 
 ## Data sources
 
@@ -71,9 +77,9 @@ reproducing a report from another machine. Both modes are covered in
 ## Reliability
 
 Parsed input is untrusted firmware data, so the project treats it that way:
-libFuzzer targets cover the entry points, table walkers, loaders, and decoders,
-and a deterministic semantic suite checks specification conformance on a corpus
-of real machine dumps. See @ref testing.
+seven libFuzzer targets cover the entry points, table walkers, loaders, and JSON
+serializers, and a deterministic semantic suite checks specification conformance
+on a corpus of real machine dumps. See @ref testing.
 
 ## Project
 
