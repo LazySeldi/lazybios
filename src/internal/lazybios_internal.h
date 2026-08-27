@@ -86,6 +86,23 @@ static inline void lazybiosDecoderAppend(char* buf, size_t buf_len, size_t* len,
 	if (!buf || buf_len == 0 || *len + 1 >= buf_len) return;
 
 	size_t remaining = buf_len - *len;
+
+	/*
+	 * Nearly every decoder appends a plain literal, so checking for a
+	 * conversion first lets the common case copy the bytes straight in and
+	 * never enter the format-parsing machinery. strchr/strlen measured faster
+	 * than a hand-rolled scan here; the strings are long enough that the
+	 * vectorized libc versions win.
+	 */
+	if (!strchr(fmt, '%')) {
+		size_t n = strlen(fmt);
+		if (n >= remaining) n = remaining - 1;
+		memcpy(buf + *len, fmt, n);
+		buf[*len + n] = '\0';
+		*len += n;
+		return;
+	}
+
 	va_list args;
 	va_start(args, fmt);
 	int written = vsnprintf(buf + *len, remaining, fmt, args);
@@ -281,7 +298,8 @@ int lazybiosGetSingleFileLayout(const uint8_t* entry_data, size_t available, siz
  * @param p Start of the SMBIOS structure.
  * @param length Length of the structure's formatted section.
  * @param index One-based index of the requested string.
- * @param end One-past-the-end address of the DMI table buffer.
+ * @param end Address of the next structure, as returned by DMINext, which is
+ * two bytes past this structure's string-set terminator.
  * @return Pointer to a string in the DMI table, or NULL if the string is unavailable or invalid.
  */
 const char* DMIString(const uint8_t* p, uint8_t length, uint8_t index, const uint8_t* end);
@@ -298,9 +316,26 @@ const uint8_t* DMINext(const uint8_t* p, const uint8_t* end);
  * @brief Counts SMBIOS structures having a specified type identifier.
  * @param DMIData Raw DMI table container to inspect.
  * @param target_type SMBIOS structure type identifier to count.
- * @return Number of matching structures in the table.
+ * @return Number of matching structures in the table, -1 if index is already filled.
  */
 size_t lazybiosCountStructsByType(const lazybiosDMI_t* DMIData, uint8_t target_type);
+/**
+ * @brief Loads an SMBIOS entry point and DMI table from separate files.
+ * @param ctx Context that receives the loaded data.
+ * @param entry_path Path to the raw SMBIOS entry point file.
+ * @param dmi_path Path to the raw DMI structure table file.
+ * @return 0 on success, or -1 on failure.
+ */
+LAZYBIOS_WARN_UNUSED int lazybiosFile(lazybiosCTX_t* ctx, const char* entry_path, const char* dmi_path);
+
+/**
+ * @brief Loads SMBIOS entry point and DMI data from one merged file.
+ * @param ctx Context that receives the loaded data.
+ * @param bin_path Path to a file containing the entry point and DMI table,
+ * either concatenated or separated by an advertised file-relative offset.
+ * @return 0 on success, or -1 on failure.
+ */
+LAZYBIOS_WARN_UNUSED int lazybiosSingleFile(lazybiosCTX_t* ctx, const char* bin_path);
 
 /**
  * @brief Validates and identifies an SMBIOS entry point.
