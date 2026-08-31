@@ -369,7 +369,14 @@ int main(int argc, char* argv[]) {
     }
 
     char *json_string = cJSON_Print(root);
+    if (!json_string) {
+        fprintf(stderr, "Failed to serialize the JSON tree\n");
+        cJSON_Delete(root);
+        lazybiosCleanup(ctx);
+        return -1;
+    }
     printf("%s\n", json_string);
+    free(json_string);
 
     cJSON_Delete(root);
     lazybiosCleanup(ctx);
