@@ -580,21 +580,75 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
 		return -1;
 	}
 
-	ctx->DMIData->entry_tag = inspection.tag;
 	if (inspection.tag == SMBIOS_VER_3X) {
+		lazybiosSMBIOS3Entry* v3 = calloc(1, sizeof(*v3));
+		if (!v3) {
+			lb_log("Failed to allocate the parsed SMBIOS 3.x entry point");
+			return -1;
+		}
+
 		if (!inspection.checksum_valid)
 			lb_dbg("Warning: SMBIOS 3.x Entry Point Checksum failed! "
 				"(Proceeding anyway)");
-		ctx->DMIData->entry_union.v3 = (lazybiosSMBIOS3Entry*)entry_buf;
-	} else {
-		if (!inspection.checksum_valid)
-			lb_dbg("Warning: SMBIOS 2.x Main Checksum failed! "
-				"(Proceeding anyway)");
-		if (!inspection.intermediate_checksum_valid)
-			lb_dbg("Warning: SMBIOS 2.x Intermediate (_DMI_) "
-				"Checksum failed! (Proceeding anyway)");
-		ctx->DMIData->entry_union.v2 = (lazybiosSMBIOS2Entry*)entry_buf;
+
+		memcpy(v3->anchor, entry_buf + SMBIOS3_ANCHOR_OFFSET,
+			sizeof(v3->anchor));
+		v3->checksum = entry_buf[SMBIOS3_CHECKSUM_OFFSET];
+		v3->entry_point_length = entry_buf[SMBIOS3_LENGTH_OFFSET];
+		v3->major_version = entry_buf[SMBIOS3_MAJOR_OFFSET];
+		v3->minor_version = entry_buf[SMBIOS3_MINOR_OFFSET];
+		v3->docrev = entry_buf[SMBIOS3_DOCREV_OFFSET];
+		v3->entry_point_revision = entry_buf[SMBIOS3_REVISION_OFFSET];
+		v3->reserved = entry_buf[SMBIOS3_RESERVED_OFFSET];
+		v3->structure_table_max_size = (uint32_t)lazybiosReadLE(
+			entry_buf + SMBIOS3_TABLE_MAX_SIZE_OFFSET, sizeof(uint32_t));
+		v3->structure_table_address = lazybiosReadLE(
+			entry_buf + SMBIOS3_TABLE_ADDRESS_OFFSET, sizeof(uint64_t));
+
+		lazybiosReleaseParsedEntry(ctx->DMIData);
+		ctx->DMIData->entry_tag = SMBIOS_VER_3X;
+		ctx->DMIData->entry_union.v3 = v3;
+		return 0;
 	}
+
+	lazybiosSMBIOS2Entry* v2 = calloc(1, sizeof(*v2));
+	if (!v2) {
+		lb_log("Failed to allocate the parsed SMBIOS 2.x entry point");
+		return -1;
+	}
+
+	if (!inspection.checksum_valid)
+		lb_dbg("Warning: SMBIOS 2.x Main Checksum failed! "
+			"(Proceeding anyway)");
+	if (!inspection.intermediate_checksum_valid)
+		lb_dbg("Warning: SMBIOS 2.x Intermediate (_DMI_) "
+			"Checksum failed! (Proceeding anyway)");
+
+	memcpy(v2->anchor, entry_buf + SMBIOS2_ANCHOR_OFFSET, sizeof(v2->anchor));
+	v2->checksum = entry_buf[SMBIOS2_CHECKSUM_OFFSET];
+	v2->entry_point_length = entry_buf[SMBIOS2_LENGTH_OFFSET];
+	v2->major_version = entry_buf[SMBIOS2_MAJOR_OFFSET];
+	v2->minor_version = entry_buf[SMBIOS2_MINOR_OFFSET];
+	v2->maximum_structure_size = (uint16_t)lazybiosReadLE(
+		entry_buf + SMBIOS2_MAX_STRUCTURE_SIZE_OFFSET, sizeof(uint16_t));
+	v2->entry_point_revision = entry_buf[SMBIOS2_REVISION_OFFSET];
+	memcpy(v2->formatted_area, entry_buf + SMBIOS2_FORMATTED_AREA_OFFSET,
+		sizeof(v2->formatted_area));
+	memcpy(v2->intermediate_anchor,
+		entry_buf + SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
+		sizeof(v2->intermediate_anchor));
+	v2->intermediate_checksum = entry_buf[SMBIOS2_INTERMEDIATE_CHECKSUM_OFFSET];
+	v2->structure_table_length = (uint16_t)lazybiosReadLE(
+		entry_buf + SMBIOS2_TABLE_LENGTH_OFFSET, sizeof(uint16_t));
+	v2->structure_table_address = (uint32_t)lazybiosReadLE(
+		entry_buf + SMBIOS2_TABLE_ADDRESS_OFFSET, sizeof(uint32_t));
+	v2->structure_count = (uint16_t)lazybiosReadLE(
+		entry_buf + SMBIOS2_STRUCTURE_COUNT_OFFSET, sizeof(uint16_t));
+	v2->bcd_revision = entry_buf[SMBIOS2_BCD_REVISION_OFFSET];
+
+	lazybiosReleaseParsedEntry(ctx->DMIData);
+	ctx->DMIData->entry_tag = SMBIOS_VER_2X;
+	ctx->DMIData->entry_union.v2 = v2;
 
 	return 0;
 }
@@ -843,7 +897,7 @@ int lazybiosCleanup(lazybiosCTX_t* ctx) {
     ctx->DMIData->index_valid = 0;
 
 	free(ctx->DMIData->dmi_data);
-	free(ctx->DMIData->entry_data);
+	lazybiosReleaseEntry(ctx->DMIData);
 	free(ctx->DMIData);
 	free(ctx);
 	return 0;
