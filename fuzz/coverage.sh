@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: LGPL-2.1-or-later
+# SPDX-License-Identifier: MIT
 #
 # Produces an aggregate source-coverage report from every fuzz seed corpus.
 #

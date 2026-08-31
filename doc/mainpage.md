@@ -87,5 +87,4 @@ on a corpus of real machine dumps. See @ref testing.
 - @ref md_CONTRIBUTING "Contributing"
 - @ref md_ISSUES "Reporting issues"
 
-Licensed under LGPL-2.1-or-later, with a static-linking exception for
-open-source projects.
+Licensed under the MIT License.

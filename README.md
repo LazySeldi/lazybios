@@ -257,11 +257,9 @@ ctest --test-dir build --output-on-failure
 
 ## License
 
-lazybios is licensed under the LGPL-2.1-or-later with a static linking exception
-for open-source projects. See the [LICENSE](LICENSE) file for details and [LICENSE-EXCEPTIONS](LICENSE-EXCEPTIONS.md) file for exception details.
+lazybios is licensed under the MIT License. See the [LICENSE](LICENSE) file for
+the full text.
 
-For open-source projects: You may statically link lazybios and distribute the
-resulting binary under your own license, as long as the source code to
-lazybios (including any modifications) is made available under the LGPL.
-
-For proprietary projects: The standard LGPL terms apply.
+You may use, modify, statically or dynamically link, and redistribute lazybios,
+in open-source or proprietary software, provided the copyright notice and the
+permission notice are kept with the copies you distribute.
