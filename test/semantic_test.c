@@ -77,6 +77,27 @@ static int test_entry_points(void) {
 	CHECK(lazybiosIsVersionPlus(&dmi, 3, 9));
 	CHECK(!lazybiosIsVersionPlus(&dmi, 4, 0));
 
+	/*
+	 * The multi-byte entry-point fields are little-endian on the wire whatever
+	 * the host is, so these assert that the parse assembles them from bytes
+	 * rather than reading the buffer back in host order. On a big-endian host a
+	 * reinterpreting read returns the byte-reversed value and fails here.
+	 */
+	uint8_t wide[SMBIOS3_ENTRY_POINT_LENGTH];
+	make_entry3(wide, 3, 9, 0);
+	wide[SMBIOS3_TABLE_MAX_SIZE_OFFSET + 0] = 0xEF;
+	wide[SMBIOS3_TABLE_MAX_SIZE_OFFSET + 1] = 0xBE;
+	wide[SMBIOS3_TABLE_MAX_SIZE_OFFSET + 2] = 0xAD;
+	wide[SMBIOS3_TABLE_MAX_SIZE_OFFSET + 3] = 0xDE;
+	for (size_t i = 0; i < sizeof(uint64_t); i++)
+		wide[SMBIOS3_TABLE_ADDRESS_OFFSET + i] = (uint8_t)(0x11 * (i + 1));
+	set_checksum(wide, 0, SMBIOS3_ENTRY_POINT_LENGTH,
+		SMBIOS3_CHECKSUM_OFFSET);
+	CHECK(lazybiosParseEntry(&ctx, wide, sizeof(wide)) == 0);
+	CHECK(dmi.entry_union.v3->structure_table_max_size == UINT32_C(0xDEADBEEF));
+	CHECK(dmi.entry_union.v3->structure_table_address ==
+		UINT64_C(0x8877665544332211));
+
 	CHECK(lazybiosParseEntry(NULL, entry, sizeof(entry)) == -1);
 	CHECK(lazybiosParseEntry(&ctx, NULL, sizeof(entry)) == -1);
 	CHECK(lazybiosParseEntry(&ctx, entry, SMBIOS3_ENTRY_POINT_LENGTH - 1) == -1);
@@ -91,8 +112,19 @@ static int test_entry_points(void) {
 	CHECK(lazybiosParseEntry(&ctx, entry2, sizeof(entry2)) == -1);
 	memcpy(entry2 + SMBIOS2_INTERMEDIATE_ANCHOR_OFFSET,
 		SMBIOS2_INTERMEDIATE_ANCHOR, SMBIOS2_INTERMEDIATE_ANCHOR_SIZE);
+	entry2[SMBIOS2_TABLE_LENGTH_OFFSET] = 0x34;
+	entry2[SMBIOS2_TABLE_LENGTH_OFFSET + 1] = 0x12;
+	entry2[SMBIOS2_TABLE_ADDRESS_OFFSET + 0] = 0x78;
+	entry2[SMBIOS2_TABLE_ADDRESS_OFFSET + 1] = 0x56;
+	entry2[SMBIOS2_TABLE_ADDRESS_OFFSET + 2] = 0x34;
+	entry2[SMBIOS2_TABLE_ADDRESS_OFFSET + 3] = 0x12;
 	CHECK(lazybiosParseEntry(&ctx, entry2, sizeof(entry2)) == 0);
+	CHECK(dmi.entry_union.v2->structure_table_length == 0x1234);
+	CHECK(dmi.entry_union.v2->structure_table_address == UINT32_C(0x12345678));
 	CHECK(lazybiosCleanup(NULL) == -1);
+
+	/* The container is on the stack, so nothing else will release the parse. */
+	lazybiosReleaseParsedEntry(&dmi);
 	return 0;
 }
 
@@ -181,6 +213,7 @@ static int test_type28_signed_temperature(void) {
 	CHECK(LAZYBIOS_FIELD_STATUS(&probes->entries[0], maximum_value) == LAZYBIOS_FIELD_PRESENT);
 	CHECK(LAZYBIOS_FIELD_STATUS(&probes->entries[0], minimum_value) == LAZYBIOS_FIELD_ABSENT);
 	lazybiosFreeType28(probes);
+	lazybiosReleaseParsedEntry(&dmi);
 	return 0;
 }
 
@@ -220,6 +253,7 @@ static int test_type0_type1_counts(void) {
 	CHECK(type1->count == 2);
 	lazybiosFreeType0(type0);
 	lazybiosFreeType1(type1);
+	lazybiosReleaseParsedEntry(&dmi);
 	return 0;
 }
 
@@ -362,6 +396,7 @@ static int test_decoded_numeric_values(void) {
 	CHECK(ipmis->count == 1);
 	CHECK(ipmis->entries[0].decoded.base_address == UINT64_C(0x1001));
 	lazybiosFreeType38(ipmis);
+	lazybiosReleaseParsedEntry(&dmi);
 
 	return 0;
 }
@@ -386,6 +421,7 @@ static int test_numeric_decoders(void) {
 	CHECK(controls->entries[0].decoded.next_scheduled_power_on != NULL);
 	CHECK(strcmp(controls->entries[0].decoded.next_scheduled_power_on, "12-31 23:59:58") == 0);
 	lazybiosFreeType25(controls);
+	lazybiosReleaseParsedEntry(&dmi);
 	return 0;
 }
 

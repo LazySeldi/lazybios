@@ -100,7 +100,11 @@ lazybiosType28Array_t* lazybiosGetType28(const lazybiosDMI_t* DMIData) {
 			READU8(current, location_and_status, len, LOCATION_AND_STATUS, p);
 			READU16(current, maximum_value, len, MAXIMUM_VALUE, p);
 			if ((size_t)len >= (size_t)MINIMUM_VALUE + sizeof(current->minimum_value)) {
-				memcpy(&current->minimum_value, p + MINIMUM_VALUE, sizeof(int16_t));
+				/* Signed field, so the raw word is read first and then converted;
+				 * 0x8000 is the spec's "unknown" sentinel and has to survive as
+				 * INT16_MIN rather than as a positive 32768. */
+				const uint16_t raw_minimum = (uint16_t)lazybiosReadLE(p + MINIMUM_VALUE, sizeof(int16_t));
+				current->minimum_value = (int16_t)raw_minimum;
 				LAZYBIOS_MARK_PRESENT(current, minimum_value);
 			} else {
 				current->minimum_value = 0;

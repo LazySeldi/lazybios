@@ -127,8 +127,10 @@ lazybiosType45Array_t* lazybiosGetType45(const lazybiosDMI_t* DMIData) {
 							lazybiosFreeType45(out);
 							return NULL;
 						}
-						memcpy(current->associated_component_handles, p + ASSOCIATED_COMPONENT_HANDLES,
-							associated_handles_size);
+						for (size_t i = 0; i < current->number_of_associated_components; i++) {
+							current->associated_component_handles[i] = (uint16_t)lazybiosReadLE(
+								p + ASSOCIATED_COMPONENT_HANDLES + (i * sizeof(uint16_t)), sizeof(uint16_t));
+						}
 					}
 					LAZYBIOS_MARK_PRESENT(current, associated_component_handles);
 				} else {

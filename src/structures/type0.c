@@ -81,7 +81,7 @@ lazybiosType0Array_t* lazybiosGetType0(const lazybiosDMI_t* DMIData) {
 
 			if (len > FIRMWARE_ROM_SIZE && p[FIRMWARE_ROM_SIZE] == 0xFF) {
 				if (lazybiosIsVersionPlus(DMIData, 3, 1) && len >= EXTENDED_FIRMWARE_ROM_SIZE + sizeof(uint16_t)) {
-					memcpy(&current->extended_rom_size, p + EXTENDED_FIRMWARE_ROM_SIZE, sizeof(uint16_t));
+					current->extended_rom_size = (uint16_t)lazybiosReadLE(p + EXTENDED_FIRMWARE_ROM_SIZE, sizeof(uint16_t));
 					lazybiosType0ExtendedROMSizeU16(current->extended_rom_size, current->unit);
 					LAZYBIOS_MARK_PRESENT(current, extended_rom_size);
 					LAZYBIOS_MARK_PRESENT(current, unit);

@@ -98,8 +98,8 @@ lazybiosType40Array_t* lazybiosGetType40(const lazybiosDMI_t* DMIData) {
 						for (size_t i = 0; i < current->additional_information_entry_count; i++) {
 							lazybiosType40Entry_t* entry = &current->additional_information_entries[i];
 							entry->entry_length = p[entry_offset + ENTRY_LENGTH];
-							memcpy(&entry->referenced_handle, p + entry_offset + ENTRY_REFERENCED_HANDLE,
-								   sizeof(uint16_t));
+							entry->referenced_handle = (uint16_t)lazybiosReadLE(
+								p + entry_offset + ENTRY_REFERENCED_HANDLE, sizeof(uint16_t));
 							entry->referenced_offset = p[entry_offset + ENTRY_REFERENCED_OFFSET];
 							uint8_t string_number = p[entry_offset + ENTRY_STRING];
 							entry->string = DMIString(p, len, string_number, structure_end);

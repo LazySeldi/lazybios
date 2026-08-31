@@ -85,7 +85,7 @@ lazybiosType37Array_t* lazybiosGetType37(const lazybiosDMI_t* DMIData) {
 						for (size_t i = 0; i < current->memory_device_count; i++) {
 							const uint8_t* entry = p + MEMORY_DEVICES + (i * MEMORY_DEVICE_ENTRY_LENGTH);
 							current->memory_devices[i].load = entry[0];
-							memcpy(&current->memory_devices[i].handle, entry + 1, sizeof(uint16_t));
+							current->memory_devices[i].handle = (uint16_t)lazybiosReadLE(entry + 1, sizeof(uint16_t));
 							current->memory_devices[i].field_status.load = LAZYBIOS_FIELD_PRESENT;
 							current->memory_devices[i].field_status.handle = LAZYBIOS_FIELD_PRESENT;
 							if (current->memory_devices[i].handle == 0xFFFF) {

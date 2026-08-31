@@ -74,7 +74,7 @@ lazybiosType14Array_t* lazybiosGetType14(const lazybiosDMI_t* DMIData) {
 					for (size_t i = 0; i < current->item_count; i++) {
 						const size_t item_offset = ITEMS + (i * ITEM_SIZE);
 						current->items[i].item_type = p[item_offset];
-						memcpy(&current->items[i].item_handle, p + item_offset + 1, sizeof(uint16_t));
+						current->items[i].item_handle = (uint16_t)lazybiosReadLE(p + item_offset + 1, sizeof(uint16_t));
 						LAZYBIOS_MARK_PRESENT(&current->items[i], item_type);
 						LAZYBIOS_MARK_PRESENT(&current->items[i], item_handle);
 						if (current->items[i].item_handle == 0xFFFF) {

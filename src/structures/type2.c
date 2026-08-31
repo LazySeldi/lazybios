@@ -115,7 +115,10 @@ lazybiosType2Array_t* lazybiosGetType2(const lazybiosDMI_t* DMIData) {
 				if (len >= CONTAINED_OBJECT_HANDLES + array_bytes) {
 					current->contained_object_handles = malloc(array_bytes);
 					if (current->contained_object_handles) {
-						memcpy(current->contained_object_handles, p + CONTAINED_OBJECT_HANDLES, array_bytes);
+						for (size_t i = 0; i < current->number_of_contained_object_handles; i++) {
+							current->contained_object_handles[i] = (uint16_t)lazybiosReadLE(
+								p + CONTAINED_OBJECT_HANDLES + (i * sizeof(uint16_t)), sizeof(uint16_t));
+						}
 						LAZYBIOS_MARK_PRESENT(current, contained_object_handles);
 					}
 				} else {

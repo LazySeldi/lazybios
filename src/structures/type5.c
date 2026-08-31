@@ -116,7 +116,7 @@ lazybiosType5Array_t* lazybiosGetType5(const lazybiosDMI_t* DMIData) {
 							return NULL;
 						}
 						for (size_t i = 0; i < current->number_of_associated_memory_slots; i++) {
-							memcpy(&current->memory_module_configuration_handles[i],
+							current->memory_module_configuration_handles[i] = (uint16_t)lazybiosReadLE(
 								p + MEMORY_MODULE_CONFIGURATION_HANDLES + (i * sizeof(uint16_t)), sizeof(uint16_t));
 						}
 					}

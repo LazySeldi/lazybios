@@ -56,7 +56,7 @@ lazybiosOemDellType177Array_t* lazybiosGetOemDellType177(const lazybiosDMI_t* DM
 
 		    // The 64-bit flags word at 0x04 is kept raw; the bit of interest is decoded.
 		    if (len >= 0x0C) {
-		        memcpy(&current->bios_flags, p + BIOS_FLAGS, sizeof(current->bios_flags));
+		        current->bios_flags = lazybiosReadLE(p + BIOS_FLAGS, sizeof(current->bios_flags));
 		        LAZYBIOS_MARK_PRESENT(current, bios_flags);
 		    } else {
 		        current->bios_flags = 0;

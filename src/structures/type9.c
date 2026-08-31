@@ -250,7 +250,8 @@ lazybiosType9Array_t* lazybiosGetType9(const lazybiosDMI_t* DMIData) {
 						if (current->peer_groups) {
 							for (size_t i = 0; i < declared_peer_grouping_count; i++) {
 								const size_t peer_offset = PEER_GROUPS + (i * PEER_GROUP_SIZE);
-								memcpy(&current->peer_groups[i].segment_group_number, p + peer_offset, sizeof(uint16_t));
+								current->peer_groups[i].segment_group_number =
+									(uint16_t)lazybiosReadLE(p + peer_offset, sizeof(uint16_t));
 								current->peer_groups[i].bus_number = p[peer_offset + 2];
 								current->peer_groups[i].device_function_number = p[peer_offset + 3];
 								current->peer_groups[i].data_bus_width = p[peer_offset + 4];
