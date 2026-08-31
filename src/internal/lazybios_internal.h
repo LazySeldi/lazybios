@@ -125,6 +125,63 @@ static inline char* lazybiosDup(const char* src) {
 	return out;
 }
 
+/**
+ * @brief Assembles a little-endian integer from a byte buffer.
+ *
+ * SMBIOS stores multi-byte fields little-endian whatever the host is, so a
+ * value is built from single-byte reads rather than copied over an integer.
+ * A byte read has no byte order to get wrong and no alignment requirement, and
+ * the shifts are arithmetic on the value rather than a claim about storage, so
+ * the result is the same number on a big-endian machine as on a little-endian
+ * one. Compilers fold this back into a plain load, plus a byte swap where the
+ * target needs one.
+ *
+ * @param p Buffer positioned at the field, which need not be aligned.
+ * @param n Field width in bytes, at most 8.
+ * @return Field value, zero-extended to 64 bits.
+ */
+static inline uint64_t lazybiosReadLE(const uint8_t* p, size_t n) {
+	uint64_t value = 0;
+	for (size_t i = 0; i < n; i++) value |= (uint64_t)p[i] << (i * 8);
+	return value;
+}
+
+/**
+ * @brief Frees the parsed entry-point struct, leaving the raw bytes alone.
+ *
+ * lazybiosParseEntry() owns what entry_union points at, so replacing a parse
+ * has to release the previous one. The raw buffer is untouched here because a
+ * re-parse reads from it.
+ *
+ * @param DMIData Container whose parsed entry point is released, may be NULL.
+ */
+static inline void lazybiosReleaseParsedEntry(lazybiosDMI_t* DMIData) {
+	if (!DMIData) return;
+
+	if (DMIData->entry_tag == SMBIOS_VER_3X) free(DMIData->entry_union.v3);
+	else free(DMIData->entry_union.v2);
+
+	DMIData->entry_union.v2 = NULL;
+	DMIData->entry_tag = SMBIOS_VER_UNKNOWN;
+}
+
+/**
+ * @brief Releases a container's entry point, raw bytes and parsed struct both.
+ *
+ * The two are allocated separately but have one lifetime: freeing only
+ * entry_data would leave entry_union pointing at an entry whose bytes are gone.
+ *
+ * @param DMIData Container whose entry point is released, may be NULL.
+ */
+static inline void lazybiosReleaseEntry(lazybiosDMI_t* DMIData) {
+	if (!DMIData) return;
+
+	lazybiosReleaseParsedEntry(DMIData);
+	free(DMIData->entry_data);
+	DMIData->entry_data = NULL;
+	DMIData->entry_len = 0;
+}
+
 /** @brief Size of an SMBIOS structure header (type, length, handle). */
 #define SMBIOS_HEADER_SIZE 4
 
@@ -360,7 +417,7 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
 
 #define READU16(record, field, len, offset, p) do { \
 	if ((size_t)(len) >= (size_t)(offset) + sizeof(uint16_t)) { \
-		memcpy(&(record)->field, (p) + (offset), sizeof(uint16_t)); \
+		(record)->field = (uint16_t)lazybiosReadLE((p) + (offset), sizeof(uint16_t)); \
 		LAZYBIOS_MARK_PRESENT((record), field); \
 	} else { \
 		(record)->field = 0; \
@@ -370,7 +427,7 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
 
 #define READU32(record, field, len, offset, p) do { \
 	if ((size_t)(len) >= (size_t)(offset) + sizeof(uint32_t)) { \
-		memcpy(&(record)->field, (p) + (offset), sizeof(uint32_t)); \
+		(record)->field = (uint32_t)lazybiosReadLE((p) + (offset), sizeof(uint32_t)); \
 		LAZYBIOS_MARK_PRESENT((record), field); \
 	} else { \
 		(record)->field = 0; \
@@ -380,7 +437,7 @@ int lazybiosParseEntry(lazybiosCTX_t* ctx, const uint8_t* entry_buf, size_t buf_
 
 #define READU64(record, field, len, offset, p) do { \
 	if ((size_t)(len) >= (size_t)(offset) + sizeof(uint64_t)) { \
-		memcpy(&(record)->field, (p) + (offset), sizeof(uint64_t)); \
+		(record)->field = (uint64_t)lazybiosReadLE((p) + (offset), sizeof(uint64_t)); \
 		LAZYBIOS_MARK_PRESENT((record), field); \
 	} else { \
 		(record)->field = 0; \
