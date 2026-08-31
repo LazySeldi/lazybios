@@ -116,8 +116,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 
 	if (lazybiosParseEntry(ctx, ctx->DMIData->entry_data, ctx->DMIData->entry_len) != 0) {
 		lb_log("Failed to parse SMBIOS entry point");
-		free(ctx->DMIData->entry_data);
-		ctx->DMIData->entry_data = NULL;
+		lazybiosReleaseEntry(ctx->DMIData);
 		munmap(mapped_data, map_size);
 		close(fd);
 		return -1;
@@ -140,8 +139,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 	off_t table_addr_off = 0;
 	if (uint64_to_off_t(table_addr, &table_addr_off) != 0) {
 		lb_log("SMBIOS table address does not fit in off_t: 0x%016lx", (unsigned long)table_addr);
-		free(ctx->DMIData->entry_data);
-		ctx->DMIData->entry_data = NULL;
+		lazybiosReleaseEntry(ctx->DMIData);
 		close(fd);
 		return -1;
 	}
@@ -153,8 +151,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 	// We'll calculate map size by rounding up to the nearest page
 	if (table_len > SIZE_MAX - table_offset_unsigned) {
 		lb_log("SMBIOS table mapping size overflow");
-		free(ctx->DMIData->entry_data);
-		ctx->DMIData->entry_data = NULL;
+		lazybiosReleaseEntry(ctx->DMIData);
 		close(fd);
 		return -1;
 	}
@@ -165,8 +162,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 	if (mapped_table == MAP_FAILED) {
 		lb_log("Failed to mmap DMI/SMBIOS table at 0x%016lx", (unsigned long)table_addr);
 		lb_dbg("Error: %s", strerror(errno));
-		free(ctx->DMIData->entry_data);
-		ctx->DMIData->entry_data = NULL;
+		lazybiosReleaseEntry(ctx->DMIData);
 		close(fd);
 		return -1;
 	}
@@ -179,8 +175,7 @@ static inline int lazybiosDevMem(lazybiosCTX_t *ctx, uint64_t addr) {
 	if (!ctx->DMIData->dmi_data) {
 		lb_log("Failed to allocate DMI buffer (%zu bytes)", table_len);
 		munmap(mapped_table, table_map_size);
-		free(ctx->DMIData->entry_data);
-		ctx->DMIData->entry_data = NULL;
+		lazybiosReleaseEntry(ctx->DMIData);
 		close(fd);
 		return -1;
 	}
